@@ -1,0 +1,16 @@
+Source: testrunner-lite
+Section: misc
+Priority: optional
+Maintainer: Sampo Saaristo <ext-sampo.1.saaristo@nokia.com>
+Build-Depends: debhelper (>= 5), libtool
+Standards-Version: 3.8.0
+
+Package: testrunner-lite
+Architecture: any
+Description: New testrunner with smaller memory footprint for CITA
+
+Package: testrunner-lite-tests
+Section: tests
+Architecture: any
+Depends: testrunner-lite
+Description: Unit tests for testrunner

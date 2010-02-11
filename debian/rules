@@ -1,0 +1,57 @@
+#!/usr/bin/make -f
+CC = gcc
+CFLAGS = -g -Wall
+export DH_VERBOSE=1
+
+package = testrunner-lite
+
+ifeq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+  CFLAGS += -O2
+endif
+
+DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+confflags += --build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE)
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+	autoreconf --install
+	./configure --prefix=/usr  $(confflags)
+	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS)"; 
+	touch build-stamp; 
+	$(MAKE) || exit 1; 
+	touch NEWS 
+	touch ChangeLog
+	touch build-stamp
+
+clean: 
+	dh_clean
+	rm -f build-stamp
+	[ ! -f Makefile ] || $(MAKE) distclean; 
+
+install: build
+	dh_clean
+	dh_installdirs 
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp; 
+
+binary-indep: install
+
+binary-arch: install
+	dh_testroot -A
+	dh_installdocs -a NEWS
+	dh_installchangelogs -a ChangeLog
+	dh_installdirs -A
+	dh_install --sourcedir=debian/tmp
+	dh_strip  -A
+	dh_makeshlibs -A
+	dh_compress -A
+	dh_fixperms -A
+	dh_installdeb 
+	dh_shlibdeps
+	dh_gencontrol -A
+	dh_builddeb -a
+
+binary: binary-indep binary-arch
+.PHONY: binary binary-arch binary-indep clean checkroot
