@@ -33,7 +33,8 @@
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
 typedef struct {
-        char *input_filename;
+	char *input_filename;
+	int   disable_schema;
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

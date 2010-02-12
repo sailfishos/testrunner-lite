@@ -123,7 +123,7 @@ LOCAL void usage()
  */
 int main (int argc, char *argv[], char *envp[])
 {
-	int h_flag = 0, v_flag = 0, a_flag = 0, m_flag = 0, c_flag = 0;
+	int h_flag = 0, v_flag = 0, a_flag = 0, m_flag = 0;
 	int opt_char, option_idx;
 	FILE *ifile = NULL, *ofile = NULL;
 	int retval = EXIT_SUCCESS;
@@ -139,7 +139,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"automatic", no_argument, &a_flag, 1},
 			{"manual", no_argument, &m_flag, 1},
 			{"filter", required_argument, NULL, 'l'},
-			{"ci", no_argument, &c_flag}
+			{"ci", no_argument, &opts.disable_schema}
 		};
 
 	memset (&opts, 0x0, sizeof (testrunner_lite_options));
@@ -169,7 +169,7 @@ int main (int argc, char *argv[], char *envp[])
 			m_flag = 1;
 			break;
 		case 'c':
-			c_flag = 1;
+			opts.disable_schema = 1;
 			break;
 		case 'f':
 			ifile = fopen (optarg, "r");
