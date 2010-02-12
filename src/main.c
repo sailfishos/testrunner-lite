@@ -23,6 +23,8 @@
 #include <string.h>
 
 #include "testrunnerlite.h"
+#include "testdefinitionparser.h"
+
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
 /* None */
@@ -122,7 +124,7 @@ int main (int argc, char *argv[], char *envp[])
 	int opt_char, option_idx;
 	FILE *ifile = NULL, *ofile = NULL;
 	int retval = EXIT_SUCCESS;
-	
+	testrunner_lite_options opts;
 	struct option testrunnerlite_options[] =
 		{
 			{"help", no_argument, &h_flag, 1},
@@ -136,6 +138,8 @@ int main (int argc, char *argv[], char *envp[])
 			{"filter", required_argument, NULL, 'l'},
 			{"ci", no_argument, &c_flag}
 		};
+
+	memset (&opts, 0x0, sizeof (testrunner_lite_options));
 
 	while (1) {
 		option_idx = 0;
@@ -170,6 +174,9 @@ int main (int argc, char *argv[], char *envp[])
 				retval = EXIT_FAILURE;
 				goto OUT;
 			}
+			fclose (ifile);
+			opts.input_filename = malloc (strlen (optarg) + 1);
+			strcpy (opts.input_filename, optarg); 
 			break;
 		case 'o':
 			ofile = fopen (optarg, "w");
@@ -186,12 +193,8 @@ int main (int argc, char *argv[], char *envp[])
 	if (h_flag)
 	  usage();
 	
-	
+	retval = parse_test_definition (&opts);
 OUT:
-	if (ifile)
-	  fclose (ifile);
-	if (ofile)
-	  fclose (ofile);
 
 	return retval;
 }	

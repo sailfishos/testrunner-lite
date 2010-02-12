@@ -14,12 +14,12 @@
  *
  */
 
-#ifndef TESTRUNNERLITE_H
-#define TESTRUNNERLITE_H
+#ifndef TESTDEFINITIONPARSER_H
+#define TESTDEFINITIONPARSER_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
-/* None */
+#include "testrunnerlite.h"
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -27,14 +27,11 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-#define LOCAL static
-#define PROGNAME "testrunner-lite"
+
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
-typedef struct {
-        char *input_filename;
-} testrunner_lite_options;    
+
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -45,8 +42,7 @@ typedef struct {
 
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
-/* None */
-
+int parse_test_definition(testrunner_lite_options *);
 /* ------------------------------------------------------------------------- */
-#endif                          /* TESTRUNNERLITE_H */
+#endif                          /* TESTDEFINITIONPARSER_H */
 /* End of file */
