@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="examplebinary-tests1" domain="sample_suite_domain" timeout="10" type="unknown">  
+    <set name="testset11" description="sample_description" type="unknown" feature="sample_set_feature" timeout="15">    
+      <pre_steps>
+         <step>sleep 30 <![CDATA[&]]></step>
+         <step>/home/ubuntu/testscript.sh;pwd;ls;uname</step>
+      </pre_steps>
+            
+      <case name="serm002" description="description1" requirement="10001, 20001, 3000" timeout="30">
+        <step expected_result="0">cd</step>
+        <step expected_result="0">pwd</step>
+      </case>     
+
+      <case name="serm003" description="description2" requirement="10004">
+        <step>cd</step>
+      </case>
+
+      <case name="serm004" description="change to home directory">
+        <step>cd</step>
+      </case>
+
+      <environments> 
+        <scratchbox>true</scratchbox>
+        <hardware>false</hardware>
+      </environments>
+
+      <get>
+        <file>/tmp/*.txt</file>
+      </get>
+    </set>
+       
+    <set name="testset12" description="test set description" feature="feature2">
+        <post_steps>
+          <step>fasdffe</step>
+          <step>pwd</step>
+        </post_steps>
+        <case name="serm005" description="automatic test 1" timeout="20">
+            <step>uname</step>
+        </case>
+        <case name="manual_test_1" description="first manual test" manual="true" requirement="8000, 8001">
+            <step>first step</step>
+            <step>second step</step>
+        </case>
+        <case name="manual_test_2" description="second manual test" manual="true">
+            <step>Open a calculator. Expected result: the calculator is opened.</step>
+        </case>
+        <case name="serm006" description="automatic test 2">
+            <step>pwd</step>
+        </case>
+    </set>
+  </suite>
+
+  <suite name="examplebinary-tests2" domain="filtertest-domain2">
+    <set name="testset21" description="set description A" type="unknown" feature="feature2">
+      <pre_steps>
+         <step>cd</step>
+      </pre_steps>
+      <case name="abc111" description="case description 1" requirement="50001, 66666">
+        <step>cd</step>
+      </case>     
+      <case name="abc112" description="case description 2" requirement="50004">
+        <step>cd</step>
+      </case>
+      <case name="abc113" description="case description 3">
+        <step>cd</step>
+      </case>
+    </set>
+  </suite>
+
+  <suite name="examplebinary-tests3" domain="domain name with spaces">
+    <set name="testset31" description="set description B" type="unknown">
+      <pre_steps>
+         <step>cd</step>
+      </pre_steps>
+      <case name="abc211" description="case description 1" requirement="50001, 50002, 50003">
+        <step>cd</step>
+      </case>     
+      <case name="abc212" description="case description 2" requirement="66666">
+        <step>cd</step>
+      </case>
+      <case name="abc213" description="case description 3" requirement="50001">
+        <step>cd</step>
+      </case>
+    </set>
+  </suite>
+
+  <suite name="examplebinary-tests4" domain="domain &quot;name&quot; containing quotes">
+    <set name="Yet-another-test-set" description="set description C" type="Integration"> 
+      <!-- test for type filter -->
+      <pre_steps>
+         <step>cd</step>
+      </pre_steps>
+      <case name="xxx311" description="case description 1" insignificant="true" level="System" subfeature="my subfeature">
+        <!-- test for insignificant, level and subfeature filters -->
+        <step>cd</step>
+      </case>     
+      <case name="xxx312" description="case description 2">
+        <step>cd</step>
+      </case>
+      <case name="xxx313" description="case description 3">
+        <step>cd</step>
+      </case>
+    </set>
+
+  </suite>
+
+</testdefinition>
+

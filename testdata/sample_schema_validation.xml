@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="examplebinary-tests" domain="sample_suite_domain" timeout="10" type="acceptanceTest">  
+    <set name="" description="sample_description" type="bat" feature="sample_set_feature" timeout="15">    
+      <pre_steps>
+         <step>sleep 30 <![CDATA[&]]></step>
+         <step>/home/ubuntu/testscript.sh;pwd;ls;uname</step>
+      </pre_steps>
+            
+      <case name="serm002" description="combined commands" requirement="10001, 20001, 3000" timeout="30">
+        <step expected_result="1c">ls /opt> /tmp/tmpgetoptspecial.txt</step>
+        <step expected_result="0">pwd</step>
+      </case>     
+
+      <case name="serm002" description="tar a log file" requirement="10004" CI="false">
+        <step>tar -cvf logs.tar /home/ubuntu/*.log</step>
+      </case>
+
+      <case name="serm004" description="change to home directory" CI="false">
+        <step>cd</step>
+      </case>
+
+      <environments> 
+        <scratchbox>true</scratchbox>
+        <hardware>false</hardware>
+      </environments>
+
+      <get>
+      </get>
+    </set>
+       
+    <set name="testset2" description="test set description" feature="feature2" CI="true">
+    <!--
+        <case name="serm005" description="automatic test 1" timeout="20">
+            <step>uname</step>
+        </case>
+        <case name="manual_test_1" description="first manual test" manual="true" requirement="8000, 8001">
+            <step>first step</step>
+            <step>second step</step>
+        </case>
+        <case name="manual_test_2" description="second manual test" manual="true">
+            <step>Open a calculator. Expected result: the calculator is opened.</step>
+        </case>
+        <case name="serm006" description="automatic test 2">
+            <step>pwd</step>
+        </case>
+     -->
+        <post_steps>
+          <step>fasdffe</step>
+          <step>pwd</step>
+        </post_steps>
+    </set>
+  </suite>
+
+</testdefinition>
+

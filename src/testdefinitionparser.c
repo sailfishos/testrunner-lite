@@ -22,8 +22,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+#include <libxml/xmlreader.h>
+#include <libxml/xmlschemas.h>
 
 #include "testrunnerlite.h"
 /* ------------------------------------------------------------------------- */
@@ -77,48 +77,69 @@
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-
 int parse_test_definition (testrunner_lite_options *opts){
-    xmlParserCtxtPtr ctxt; 
-    xmlDocPtr doc; 
-    xmlParserInputPtr inp;
-    
-    ctxt = xmlNewParserCtxt();
-    if (ctxt == NULL) {
-	    fprintf (stderr, "%s: Failed to allocate parser context\n",
-		     PROGNAME);
-	    return 1;
-    }
-    inp =  xmlLoadExternalEntity("testdefinition.xsd",
-				 "testdefinition",
-				 ctxt);
-    if (inp == NULL) {
-	    fprintf (stderr, "%s: Failed to load DTD\n",
-		     PROGNAME);
-	    return 1;
+	int ret;
+	xmlParserCtxtPtr ctxt; 
+	xmlDocPtr doc; 
+	xmlSchemaPtr sch;
+	xmlSchemaValidCtxtPtr valid_ctxt;
+	xmlSchemaParserCtxtPtr schema_ctxt;
+	
+	/*
+	 * 1) Create basic parser context and validate it.
+	 */
+	ctxt = xmlNewParserCtxt();
+	if (ctxt == NULL) {
+		fprintf (stderr, "%s: Failed to allocate parser context\n",
+			 PROGNAME);
+		return 1;
+	}
+	
+	doc = xmlCtxtReadFile(ctxt, opts->input_filename, NULL, 0);
+	if (doc == NULL) {
+		fprintf(stderr, "%s: Failed to parse %s\n", PROGNAME,
+			opts->input_filename);
+		return 1;
+	} else if (!ctxt->valid) {
+		fprintf(stderr, "%s: Failed to validate %s\n", PROGNAME, 
+			opts->input_filename);
+		xmlFreeDoc(doc);
+		return 1;
+	}
 
-    }
-    doc = xmlCtxtReadFile(ctxt, opts->input_filename, NULL, 0);
+	/*
+	 * 2) Create schema context from test defintion and validate against i
+	 */
+	schema_ctxt = xmlSchemaNewParserCtxt("testdefinition.xsd");
+	if (schema_ctxt == NULL) {
+		fprintf (stderr, "%s: Failed to allocate schema context\n",
+			 PROGNAME);
+		return 1;
+	}
+
+	sch = xmlSchemaParse(schema_ctxt);
+	if (sch == NULL) {
+		fprintf (stderr, "%s: Failed to parse schema\n",
+			 PROGNAME);
+		return 1;
+	}
+
+	
+	valid_ctxt = xmlSchemaNewValidCtxt (sch);
+	if (valid_ctxt == NULL) {
+		fprintf (stderr, "%s: Failed to create schema validation "
+			 "context\n", PROGNAME);
+		return 1;
+	}
+	
+	ret = xmlSchemaValidateDoc(valid_ctxt, doc);
     
-    /* XML_PARSE_DTDLOAD | XML_PARSE_DTDVALID);  */
-    if (doc == NULL) {
-	    fprintf(stderr, "%s: Failed to parse %s\n", PROGNAME,
-		    opts->input_filename);
-	    return 1;
-    } else if (!ctxt->valid) {
-	    fprintf(stderr, "%s: Failed to validate %s\n", PROGNAME, 
-		    opts->input_filename);
-	    xmlFreeDoc(doc);
-	    return 1;
-    }
-    
-    xmlFreeParserCtxt(ctxt);
-    xmlFreeDoc(doc);
-    
-    xmlCleanupParser();
-    xmlMemoryDump();
-  
-    return 0;
+	/* 
+	 * 3) Clean up
+	 */
+	xmlFreeDoc(doc);
+
+	return ret;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

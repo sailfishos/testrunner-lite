@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/testing/!svn/ver/5702/tools/testrunner/trunk/src/testdata
+END
+tests.xml
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/testing/!svn/ver/5702/tools/testrunner/trunk/src/testdata/tests.xml
+END
+bad.xml
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/testing/!svn/ver/5276/tools/testrunner/trunk/src/testdata/bad.xml
+END
+bad_output.xml
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/testing/!svn/ver/5558/tools/testrunner/trunk/src/testdata/bad_output.xml
+END
+invalid.xml
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/testing/!svn/ver/5276/tools/testrunner/trunk/src/testdata/invalid.xml
+END
+filter_tests.xml
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/testing/!svn/ver/5178/tools/testrunner/trunk/src/testdata/filter_tests.xml
+END
+sample_automatic_tests.xml
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/testing/!svn/ver/5086/tools/testrunner/trunk/src/testdata/sample_automatic_tests.xml
+END
+sample_schema_validation.xml
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/testing/!svn/ver/4029/tools/testrunner/trunk/src/testdata/sample_schema_validation.xml
+END
+sample_input_file.xml
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/testing/!svn/ver/5113/tools/testrunner/trunk/src/testdata/sample_input_file.xml
+END
