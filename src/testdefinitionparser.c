@@ -22,6 +22,9 @@
 #include <errno.h>
 #include <string.h>
 
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
 #include "testrunnerlite.h"
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -62,7 +65,6 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-/* ------------------------------------------------------------------------- */
 
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -77,8 +79,46 @@
 /* ------------------------------------------------------------------------- */
 
 int parse_test_definition (testrunner_lite_options *opts){
+    xmlParserCtxtPtr ctxt; 
+    xmlDocPtr doc; 
+    xmlParserInputPtr inp;
+    
+    ctxt = xmlNewParserCtxt();
+    if (ctxt == NULL) {
+	    fprintf (stderr, "%s: Failed to allocate parser context\n",
+		     PROGNAME);
+	    return 1;
+    }
+    inp =  xmlLoadExternalEntity("testdefinition.xsd",
+				 "testdefinition",
+				 ctxt);
+    if (inp == NULL) {
+	    fprintf (stderr, "%s: Failed to load DTD\n",
+		     PROGNAME);
+	    return 1;
+
+    }
+    doc = xmlCtxtReadFile(ctxt, opts->input_filename, NULL, 0);
+    
+    /* XML_PARSE_DTDLOAD | XML_PARSE_DTDVALID);  */
+    if (doc == NULL) {
+	    fprintf(stderr, "%s: Failed to parse %s\n", PROGNAME,
+		    opts->input_filename);
+	    return 1;
+    } else if (!ctxt->valid) {
+	    fprintf(stderr, "%s: Failed to validate %s\n", PROGNAME, 
+		    opts->input_filename);
+	    xmlFreeDoc(doc);
+	    return 1;
+    }
+    
+    xmlFreeParserCtxt(ctxt);
+    xmlFreeDoc(doc);
+    
+    xmlCleanupParser();
+    xmlMemoryDump();
   
-      return 0;
+    return 0;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
@@ -86,3 +126,4 @@ int parse_test_definition (testrunner_lite_options *opts){
 
 /* ------------------------------------------------------------------------- */
 /* End of file */
+

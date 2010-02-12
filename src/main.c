@@ -22,6 +22,9 @@
 #include <errno.h>
 #include <string.h>
 
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
 
@@ -140,6 +143,8 @@ int main (int argc, char *argv[], char *envp[])
 		};
 
 	memset (&opts, 0x0, sizeof (testrunner_lite_options));
+	
+	LIBXML_TEST_VERSION
 
 	while (1) {
 		option_idx = 0;
