@@ -118,7 +118,7 @@ LOCAL void usage()
 /** main() for testrunnerlite - handle command line switches and call parser
  *  @param argc argument count
  *  @param argv arguments
- *  @param evnp environment
+ *  @param envp environment
  *  @return EXIT_SUCCESS if all is well
  */
 int main (int argc, char *argv[], char *envp[])
