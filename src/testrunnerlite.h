@@ -32,9 +32,10 @@
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
+/** Used for storing and passing user (command line) options.*/
 typedef struct {
-	char *input_filename;
-	int   disable_schema;
+	char *input_filename; /** the input xml file */
+	int   disable_schema; /** flag for disabling DTD validation */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

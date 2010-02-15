@@ -19,9 +19,10 @@ build-stamp:
 	dh_testdir
 	autoreconf --install
 	./configure --prefix=/usr  $(confflags)
-	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS)"; 
-	touch build-stamp; 
-	$(MAKE) || exit 1; 
+	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS)" 
+	touch build-stamp 
+	$(MAKE) || exit 1 
+	$(MAKE) html || exit 1 
 	touch NEWS 
 	touch ChangeLog
 	touch build-stamp
@@ -29,29 +30,30 @@ build-stamp:
 clean: 
 	dh_clean
 	rm -f build-stamp
-	[ ! -f Makefile ] || $(MAKE) distclean; 
+	[ ! -f Makefile ] || $(MAKE) distclean 
 
 install: build
 	dh_clean
 	dh_installdirs 
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp; 
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp 
+	$(MAKE) install-html DESTDIR=$(CURDIR)/debian/tmp
 
 binary-indep: install
 
 binary-arch: install
-	dh_testroot -A
+	dh_testroot -Aai	
 	dh_installdocs -a NEWS
 	dh_installchangelogs -a ChangeLog
-	dh_installdirs -A
-	dh_install --sourcedir=debian/tmp
-	dh_strip  -A
-	dh_makeshlibs -A
-	dh_compress -A
-	dh_fixperms -A
-	dh_installdeb 
-	dh_shlibdeps
-	dh_gencontrol -A
-	dh_builddeb -a
+	dh_installdirs -Aai
+	dh_install -Aai --sourcedir=debian/tmp
+	dh_strip  -Aai
+	dh_makeshlibs -Aai
+	dh_compress -Aai
+	dh_fixperms -Aai
+	dh_installdeb -Aai
+	dh_shlibdeps -Aai
+	dh_gencontrol -Aai
+	dh_builddeb -Aai
 
 binary: binary-indep binary-arch
 .PHONY: binary binary-arch binary-indep clean checkroot

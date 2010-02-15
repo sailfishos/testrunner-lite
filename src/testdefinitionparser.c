@@ -141,11 +141,10 @@ int parse_test_definition (testrunner_lite_options *opts){
 	}
 	
 	ret = xmlSchemaValidateDoc(valid_ctxt, doc);
-    
+out:
 	/* 
 	 * 3) Clean up
 	 */
-out:
 	if (doc) xmlFreeDoc (doc);
 	if (ctxt) xmlFreeParserCtxt (ctxt);
 	if (sch) xmlSchemaFree (sch);
