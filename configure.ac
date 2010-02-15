@@ -6,6 +6,8 @@ AC_CONFIG_FILES([
                  Makefile
 		 src/Makefile
 		 doc/Makefile
+         tests/Makefile
+         testdata/Makefile
                 ])
 AC_OUTPUT
 

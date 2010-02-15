@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+ <testdefinition version="0.1">
+  <suite name="testrunner-lite-tests" domain="AutomatedTesting">
+   <set name="testrunner-lite-unit-tests" description="Unit tests for testrunner-lite">
+
+    <case type="Functional" name="testrunnerlitetests" description="testrunner-lite tests">
+     <step>/usr/lib/testrunner-lite-tests/testrunnerlitetests</step>
+    </case>  
+
+    <environments>
+     <scratchbox>false</scratchbox>
+     <hardware>true</hardware>
+    </environments>
+   </set>
+  </suite>
+ </testdefinition>   
+   
