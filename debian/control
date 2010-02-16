@@ -17,7 +17,7 @@ Description: Doxygen documentation in html format
 Package: testrunner-lite-tests
 Section: tests
 Architecture: any
-Depends: testrunner-lite, check
+Depends: ci-testing, testrunner-lite, check
 XB-Maemo-CI-Packages: testrunner-lite
 XB-Maemo-CI-Stage: fast, staging, acceptance, validation
 Description: Unit tests for testrunner
