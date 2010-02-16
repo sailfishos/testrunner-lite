@@ -26,6 +26,8 @@
 #include <libxml/xmlschemas.h>
 
 #include "testrunnerlite.h"
+#include "testdefinitionparser.h"
+
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
 /* None */
@@ -40,7 +42,8 @@
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-/* None */
+td_parser_callbacks *cbs;
+xmlTextReaderPtr reader;
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -65,6 +68,8 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
+LOCAL int td_parse_suite (void);
+/* ------------------------------------------------------------------------- */
 
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -73,7 +78,55 @@
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+/** Read test suite in to td_suite data structure and call pass it to callback
+ *  @return 0 on success
+ */
+LOCAL int td_parse_suite ()
+{
+	td_suite *s;
+	xmlChar *name, *value;
 
+	if (!cbs->test_suite)
+		return 1;
+	
+	s = (td_suite *)malloc (sizeof (td_suite));
+	if (s == NULL) {
+		fprintf (stderr, "%s: FATAL : OOM", PROGNAME);
+		return 1;
+	}
+
+	memset (s, 0x0, sizeof (td_suite));
+
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderName(reader);
+		if (!xmlStrcmp (name, "name")) {
+			s->name= xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, "domain")) {
+			s->domain = xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, "type")) {
+			s->suite_type = xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, "level")) {
+			s->level = xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, "timeout")) {
+			s->timeout = xmlTextReaderValue(reader);
+			continue;
+		}
+		fprintf (stderr, "%s :suite contains unhandle attribute %s\n",
+			 PROGNAME, name);
+	}
+	
+	cbs->test_suite(s);
+
+	return 0;
+}
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -83,8 +136,8 @@
  */
 int parse_test_definition (testrunner_lite_options *opts){
 	int ret = 1;
-	xmlParserCtxtPtr ctxt = NULL; 
 	xmlDocPtr doc = NULL; 
+	xmlParserCtxtPtr ctxt = NULL; 
 	xmlSchemaPtr sch = NULL;
 	xmlSchemaValidCtxtPtr valid_ctxt = NULL;
 	xmlSchemaParserCtxtPtr schema_ctxt = NULL;
@@ -108,6 +161,7 @@ int parse_test_definition (testrunner_lite_options *opts){
 		fprintf(stderr, "%s: Failed to validate %s\n", PROGNAME, 
 			opts->input_filename);
 		xmlFreeDoc(doc);
+		doc = NULL;
 		goto out;
 	}
 	
@@ -132,7 +186,7 @@ int parse_test_definition (testrunner_lite_options *opts){
 		goto out;
 	}
 
-	valid_ctxt = xmlSchemaNewValidCtxt (sch);
+	valid_ctxt = xmlSchemaNewValidCtxt(sch);
 	if (valid_ctxt == NULL) {
 		fprintf (stderr, "%s: Failed to create schema validation "
 			 "context\n", PROGNAME);
@@ -145,13 +199,62 @@ out:
 	/* 
 	 * 3) Clean up
 	 */
-	if (doc) xmlFreeDoc (doc);
-	if (ctxt) xmlFreeParserCtxt (ctxt);
-	if (sch) xmlSchemaFree (sch);
-	if (valid_ctxt) xmlSchemaFreeValidCtxt (valid_ctxt);
-	if (schema_ctxt) xmlSchemaFreeParserCtxt (schema_ctxt);
+	if (doc) xmlFreeDoc(doc);
+	if (ctxt) xmlFreeParserCtxt(ctxt);
+	if (sch) xmlSchemaFree(sch);
+	if (valid_ctxt) xmlSchemaFreeValidCtxt(valid_ctxt);
+	if (schema_ctxt) xmlSchemaFreeParserCtxt(schema_ctxt);
 	
 	return ret;
+}
+/* ------------------------------------------------------------------------- */
+/** Initialize the xml reader instance
+ *  @param opts testrunner-lite options given by user
+ *  @return 0 on success
+ */
+int td_reader_init (testrunner_lite_options *opts)
+{
+	reader =  xmlNewTextReaderFilename(opts->input_filename);
+
+	if (!reader) {
+		fprintf(stderr, "%s: failed to create xml reader for %s\n", 
+			PROGNAME, opts->input_filename);
+		return 1;
+		
+	}
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Process next node from XML reader instance.
+ *  @return 0 on success
+ */
+int td_next_node(void) {
+	int ret;
+	xmlChar *name, *value;
+	
+        ret = xmlTextReaderRead(reader);
+	
+	if (!ret)
+		return !ret;
+
+	name = xmlTextReaderName(reader);
+	if (!name)
+		return 1;
+	
+	if (!xmlStrcmp (name, "suite"))
+		return td_parse_suite();
+
+	return !ret;
+} 
+/* ------------------------------------------------------------------------- */
+/** Set the callbacks for parser
+ *  @return 0 (always so far)
+ */
+int td_register_callbacks(td_parser_callbacks *pcbs)
+{
+	cbs = pcbs;
+
+	return 0;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

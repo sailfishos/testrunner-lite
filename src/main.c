@@ -69,7 +69,7 @@ extern char* optarg;
 /* ------------------------------------------------------------------------- */
 LOCAL void usage();
 /* ------------------------------------------------------------------------- */
-
+LOCAL void print_suite(td_suite *);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -111,7 +111,16 @@ LOCAL void usage()
 		"definition against schema.\n");
 	return;
 }
+/* ------------------------------------------------------------------------- */
+/** Just print out the suite given as parameter
+ *  @param td_suite suite data
+ */
+LOCAL void print_suite (td_suite *s)
+{
+	printf ("SUITE = name:%s domain:%s level:%s timeout:%s type %s\n",
+		s->name, s->domain, s->level, s->timeout, s->suite_type); 
 
+}
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -128,6 +137,8 @@ int main (int argc, char *argv[], char *envp[])
 	FILE *ifile = NULL, *ofile = NULL;
 	int retval = EXIT_SUCCESS;
 	testrunner_lite_options opts;
+	td_parser_callbacks cbs;
+
 	struct option testrunnerlite_options[] =
 		{
 			{"help", no_argument, &h_flag, 1},
@@ -142,9 +153,11 @@ int main (int argc, char *argv[], char *envp[])
 			{"ci", no_argument, &opts.disable_schema}
 		};
 
-	memset (&opts, 0x0, sizeof (testrunner_lite_options));
-	
+
 	LIBXML_TEST_VERSION
+
+	memset (&opts, 0x0, sizeof(testrunner_lite_options));
+        memset (&cbs, 0x0, sizeof(td_parser_callbacks));
 
 	while (1) {
 		option_idx = 0;
@@ -196,9 +209,29 @@ int main (int argc, char *argv[], char *envp[])
 	}
 	
 	if (h_flag)
-	  usage();
+		usage();
 	
 	retval = parse_test_definition (&opts);
+	if (retval)
+		goto OUT;
+
+	/*
+	** Set callbacks for parser
+	*/
+	cbs.test_suite = print_suite; 
+	retval = td_register_callbacks (&cbs);
+	
+	/*
+	** Initialize the reader
+	*/
+	retval = td_reader_init(&opts);
+	if (retval)
+		goto OUT;
+	
+	/*
+	** Call td_next_node untill error occurs or the end of data is reached
+	*/
+	while (td_next_node() == 0);
 OUT:
 
 	return retval;
