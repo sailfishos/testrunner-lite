@@ -7,6 +7,7 @@ Standards-Version: 3.8.0
 
 Package: testrunner-lite
 Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libxml2
 Description: New testrunner with smaller memory footprint for CITA
 
 Package: testrunner-lite-doc
@@ -17,7 +18,7 @@ Description: Doxygen documentation in html format
 Package: testrunner-lite-tests
 Section: tests
 Architecture: any
-Depends: ci-testing, testrunner-lite, check
+Depends: ci-testing, testrunner-lite, check, ${shlibs:Depends}
 XB-Maemo-CI-Packages: testrunner-lite
 XB-Maemo-CI-Stage: fast, staging, acceptance, validation
 Description: Unit tests for testrunner
