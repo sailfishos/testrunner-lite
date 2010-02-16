@@ -76,6 +76,7 @@ START_TEST (test_parse_cmd_line_arguments)
     /* Test parsing command line arguments. */
     int ret;
     char cmd[128];
+    char *out_file = "/tmp/testrunner-lite.out.xml";
 
     /* Test -f flag. */
     sprintf (cmd, "%s -f %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
@@ -84,10 +85,35 @@ START_TEST (test_parse_cmd_line_arguments)
 
     memset (cmd, 0, sizeof(cmd));
     
+    /* Test -f with -o flag. */
+    sprintf (cmd, "%s -f %s -o %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_if (ret != 0, NULL);
+
+END_TEST
+
+START_TEST (test_parse_cmd_line_invalid_arguments)
+
+    /* Test parsing command line arguments. */
+    int ret;
+    char cmd[128];
+
+    /* Test -f flag without argument. */
+    sprintf (cmd, "%s -f", TESTRUNNERLITE_BIN);
+    ret = system (cmd);
+    fail_unless (ret != 0, NULL);
+
+    memset (cmd, 0, sizeof(cmd));
+    
     /* Test invalid flag. */
     sprintf (cmd, "%s -x %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
     ret = system (cmd);
-    fail_if (ret == 0, NULL);
+    fail_unless (ret != 0, NULL);
+
+    /* Test -o flag only. */
+    sprintf (cmd, "%s -o %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_unless (ret != 0, NULL);
 
 END_TEST
 
@@ -106,6 +132,10 @@ Suite *make_argumentparser_suite (void)
     tcase_add_test (tc, test_parse_cmd_line_arguments);
     suite_add_tcase (s, tc);
 
+    tc = tcase_create ("Test parsing invalid cmd line arguments.");
+    tcase_add_test (tc, test_parse_cmd_line_invalid_arguments);
+    suite_add_tcase (s, tc);
+    
     return s;
 }
 

@@ -15,9 +15,12 @@ testrunnerlitetests_SOURCES = main.c \
 AM_CFLAGS = -I. \
             -I/usr/include \
             -I/usr/include/libxml2 \
-            -I$(top_builddir)/src
+            -I$(top_builddir)/src \
+            -fprofile-arcs \
+            -ftest-coverage
     
 testrunnerlitetests_LDFLAGS = -lxml2
 
 testrunnerlitetests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
-                             -lcheck
+                            -lcheck \
+                            -lgcov

@@ -17,5 +17,5 @@ Description: Doxygen documentation in html format
 Package: testrunner-lite-tests
 Section: tests
 Architecture: any
-Depends: testrunner-lite
+Depends: testrunner-lite, check
 Description: Unit tests for testrunner

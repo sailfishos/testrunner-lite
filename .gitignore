@@ -21,3 +21,10 @@ debian/files
 *.deps
 *.html
 doc/html
+install 
+missing 
+configure 
+depcomp
+aclocal.m4 
+install-sh
+config.h.in
