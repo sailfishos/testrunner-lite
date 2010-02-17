@@ -84,7 +84,7 @@ LOCAL int td_parse_suite (void);
 LOCAL int td_parse_suite ()
 {
 	td_suite *s;
-	xmlChar *name, *value;
+	xmlChar *name;
 
 	if (!cbs->test_suite)
 		return 1;
@@ -230,7 +230,7 @@ int td_reader_init (testrunner_lite_options *opts)
  */
 int td_next_node(void) {
 	int ret;
-	xmlChar *name, *value;
+	xmlChar *name;
 	
         ret = xmlTextReaderRead(reader);
 	
