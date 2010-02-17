@@ -117,9 +117,9 @@ LOCAL void usage()
  */
 LOCAL void print_suite (td_suite *s)
 {
-	printf ("SUITE = name:%s domain:%s level:%s timeout:%s type:%s "
-		"desc:%s\n", s->name, s->domain, s->level, s->timeout, 
-		s->suite_type, s->description); 
+	printf ("SUITE = name:%s domain:%s level:%s timeout:%s type:%s\n", 
+		s->name, s->domain, s->level, s->timeout, 
+		s->suite_type); 
 
 }
 /* ------------------------------------------------------------------------- */
