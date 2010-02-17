@@ -172,7 +172,7 @@ int parse_test_definition (testrunner_lite_options *opts){
 	/*
 	 * 2) Create schema context from test defintion and validate against i
 	 */
-	schema_ctxt = xmlSchemaNewParserCtxt("testdefinition.xsd");
+	schema_ctxt = xmlSchemaNewParserCtxt("/usr/bin/testdefinition.xsd");
 	if (schema_ctxt == NULL) {
 		fprintf (stderr, "%s: Failed to allocate schema context\n",
 			 PROGNAME);

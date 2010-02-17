@@ -2,7 +2,6 @@ testsdefinitiondir = /usr/share/testrunner-lite-tests/
 testsdefinition_DATA = tests.xml
 
 testrunnerlitetestsdir = $(libdir)/testrunner-lite-tests
-testrunnerlitetests_DATA = testdefinition.xsd
 
 testrunnerlitetests_PROGRAMS = testrunnerlitetests
 
