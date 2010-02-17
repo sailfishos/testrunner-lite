@@ -99,27 +99,27 @@ LOCAL int td_parse_suite ()
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
 		name = xmlTextReaderName(reader);
-		if (!xmlStrcmp (name, "name")) {
+		if (!xmlStrcmp (name, (xmlChar *)"name")) {
 			s->name= xmlTextReaderValue(reader);
 			continue;
 		}
-		if (!xmlStrcmp (name, "domain")) {
+		if (!xmlStrcmp (name, (xmlChar *)"domain")) {
 			s->domain = xmlTextReaderValue(reader);
 			continue;
 		}
-		if (!xmlStrcmp (name, "type")) {
+		if (!xmlStrcmp (name, (xmlChar *)"type")) {
 			s->suite_type = xmlTextReaderValue(reader);
 			continue;
 		}
-		if (!xmlStrcmp (name, "level")) {
+		if (!xmlStrcmp (name, (xmlChar *)"level")) {
 			s->level = xmlTextReaderValue(reader);
 			continue;
 		}
-		if (!xmlStrcmp (name, "timeout")) {
+		if (!xmlStrcmp (name, (xmlChar *)"timeout")) {
 			s->timeout = xmlTextReaderValue(reader);
 			continue;
 		}
-		fprintf (stderr, "%s :suite contains unhandle attribute %s\n",
+		fprintf (stderr, "%s :suite contains unhandled attribute %s\n",
 			 PROGNAME, name);
 	}
 	
@@ -241,7 +241,7 @@ int td_next_node(void) {
 	if (!name)
 		return 1;
 	
-	if (!xmlStrcmp (name, "suite"))
+	if (!xmlStrcmp (name, (xmlChar *)"suite"))
 		return td_parse_suite();
 
 	return !ret;
