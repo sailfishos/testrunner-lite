@@ -1,3 +1,9 @@
+testrunner-lite (0.0.1-1) unstable; urgency=low
+
+  * Implemented MTT-160.
+
+ -- Sampo Saaristo <ext-sampo.1.saaristo@nokia.com>  Wed, 17 Feb 2010 15:07:13 +0200
+
 testrunner-lite (0.0.1) UNRELEASED; urgency=low
 
   * Initial release. 
