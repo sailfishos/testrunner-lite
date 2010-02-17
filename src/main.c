@@ -117,8 +117,9 @@ LOCAL void usage()
  */
 LOCAL void print_suite (td_suite *s)
 {
-	printf ("SUITE = name:%s domain:%s level:%s timeout:%s type %s\n",
-		s->name, s->domain, s->level, s->timeout, s->suite_type); 
+	printf ("SUITE = name:%s domain:%s level:%s timeout:%s type:%s "
+		"desc:%s\n", s->name, s->domain, s->level, s->timeout, 
+		s->suite_type, s->description); 
 
 }
 /* ------------------------------------------------------------------------- */
@@ -204,13 +205,32 @@ int main (int argc, char *argv[], char *envp[])
 				retval = EXIT_FAILURE;
 				goto OUT;
 			}
+			fclose (ofile);
 			break;
 		}
 	}
 	
-	if (h_flag)
+	if (h_flag) {
 		usage();
-	
+		goto OUT;
+	}
+
+	if (!ifile) {
+		fprintf (stderr, 
+			 "%s: mandatory option missing -f input_file\n",
+			 PROGNAME);
+		retval = EXIT_FAILURE;
+		goto OUT;
+	}
+		
+	if (!ofile) {
+		fprintf (stderr, 
+			 "%s: mandatory option missing -o output_file\n",
+			 PROGNAME);
+		retval = EXIT_FAILURE;
+		goto OUT;
+	}
+
 	retval = parse_test_definition (&opts);
 	if (retval)
 		goto OUT;
