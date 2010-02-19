@@ -78,6 +78,102 @@ LOCAL int td_parse_suite (void);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+LOCAL int td_parse_pre_steps(td_set *s)
+{
+	xmlChar *name;
+	td_step *step;
+	int ret;
+
+	printf ("pre-step: %d\n",
+		xmlTextReaderDepth(reader));	
+
+	while (!(xmlTextReaderNodeType(reader) == XML_READER_TYPE_END_ELEMENT &&
+		 xmlTextReaderDepth(reader) == 3)) {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			fprintf (stderr, "%s: ReaderRead() fail\n",
+				 PROGNAME);
+
+			goto ERROUT;
+		}
+		name = xmlTextReaderName(reader);
+		if (!name) {
+			fprintf (stderr, "%s: ReaderName() fail\n",
+				 PROGNAME);
+			goto ERROUT;
+		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, (xmlChar *)"step")) {
+			step = td_step_create();
+			step->step = xmlTextReaderReadInnerXml (reader);
+			if (xmlListInsert (s->pre_steps, step)) {
+				fprintf (stderr, "%s: list insert failed\n",
+					 PROGNAME);
+				goto ERROUT;
+			
+			}
+				
+		}
+	}
+	return 0;
+ ERROUT:
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
+LOCAL int td_parse_post_steps(td_set *s)
+{
+	xmlChar *name;
+	td_step *step;
+	int ret;
+
+	while (!(xmlTextReaderNodeType(reader) == XML_READER_TYPE_END_ELEMENT &&
+		 xmlTextReaderDepth(reader) == 3)) {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			fprintf (stderr, "%s: ReaderRead() fail\n",
+				 PROGNAME);
+
+			goto ERROUT;
+		}
+		name = xmlTextReaderName(reader);
+		if (!name) {
+			fprintf (stderr, "%s: ReaderName() fail\n",
+				 PROGNAME);
+			goto ERROUT;
+		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, (xmlChar *)"step")) {
+			step = td_step_create();
+			step->step = xmlTextReaderReadInnerXml (reader);
+			if (xmlListInsert (s->post_steps, step)) {
+				fprintf (stderr, "%s: list insert failed\n",
+					 PROGNAME);
+				goto ERROUT;
+			
+			}
+				
+		}
+	}
+	return 0;
+ ERROUT:
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
+LOCAL int td_parse_case(td_set *s)
+{
+	printf ("case\n");
+	return 0;
+
+}
+/* ------------------------------------------------------------------------- */
+LOCAL int td_parse_environments(td_set *s)
+{
+	printf ("environments\n");
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
 /** Read test suite in to td_suite data structure and call pass it to callback
  *  @return 0 on success
  */
@@ -119,8 +215,8 @@ LOCAL int td_parse_suite ()
 			s->timeout = xmlTextReaderValue(reader);
 			continue;
 		}
-		fprintf (stderr, "%s :suite contains unhandled attribute %s\n",
-			 PROGNAME, name);
+		//fprintf (stderr, "%s :suite contains unhandled attribute %s\n",
+		// PROGNAME, name);
 	}
 	
 	cbs->test_suite(s);
@@ -128,13 +224,79 @@ LOCAL int td_parse_suite ()
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Read test set in to td_set data structure and call pass it to callback
+ *  @return 0 on success
+ */
+LOCAL int td_parse_set ()
+{
+	int ret = 0;
+	td_set *s;
+	xmlChar *name;
+
+	if (!cbs->test_set)
+		return 1;
+	s = td_set_create ();
+
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderName(reader);
+		if (!xmlStrcmp (name, (xmlChar *)"name")) {
+			s->name= xmlTextReaderValue(reader);
+			continue;
+		}
+		//fprintf (stderr, "%s :suite contains unhandled attribute %s\n",
+		// PROGNAME, name);
+	}
+	
+	while (!(xmlTextReaderNodeType(reader) == XML_READER_TYPE_END_ELEMENT &&
+		 xmlTextReaderDepth(reader) == 2)) {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			fprintf (stderr, "%s: ReaderRead() fail\n",
+				 PROGNAME);
+
+			goto ERROUT;
+		}
+		name = xmlTextReaderName(reader);
+		if (!name) {
+			fprintf (stderr, "%s: ReaderName() fail\n",
+				 PROGNAME);
+			goto ERROUT;
+		}
+		if (!xmlStrcmp (name, (xmlChar *)"pre_steps"))
+			ret = !td_parse_pre_steps(s);
+		if (!xmlStrcmp (name, (xmlChar *)"post_steps"))
+			ret = !td_parse_post_steps(s);
+		if (!xmlStrcmp (name, (xmlChar *)"case"))
+			ret = !td_parse_case(s);
+		if (!xmlStrcmp (name, (xmlChar *)"environments"))
+			ret = !td_parse_environments(s);
+
+		if (!ret)
+			goto ERROUT;
+
+
+	}
+
+	
+	cbs->test_set(s);
+
+	return 0;
+ ERROUT:
+	printf ("ERROR!!!\n");
+	/* FIXME CLEANUP */
+	return 1;
+}
+
+
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** parse testdefinition xml file and validate it agains testdefinition schema
  *  @param opts testrunner-lite options given by user
  *  @return 0 if validation is succesfull
  */
-int parse_test_definition (testrunner_lite_options *opts){
+int parse_test_definition (testrunner_lite_options *opts)
+{
 	int ret = 1;
 	xmlDocPtr doc = NULL; 
 	xmlParserCtxtPtr ctxt = NULL; 
@@ -243,6 +405,9 @@ int td_next_node(void) {
 	
 	if (!xmlStrcmp (name, (xmlChar *)"suite"))
 		return td_parse_suite();
+
+	if (!xmlStrcmp (name, (xmlChar *)"set"))
+		return td_parse_set();
 
 	return !ret;
 } 

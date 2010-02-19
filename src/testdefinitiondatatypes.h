@@ -14,14 +14,14 @@
  *
  */
 
-#ifndef TESTDEFINITIONPARSER_H
-#define TESTDEFINITIONPARSER_H
+#ifndef TESTDEFINITIONDATATYPES_H
+#define TESTDEFINITIONDATATYPES_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
 #include "testrunnerlite.h"
-#include "testdefinitiondatatypes.h"
 #include <libxml/xmlstring.h>
+#include <libxml/list.h>
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -34,9 +34,30 @@
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
 typedef struct {
-        void (*test_suite) (td_suite *); /**< call back for suite handler    */
-	void (*test_set) (td_set *);     /**< call back for set handler      */
-} td_parser_callbacks;
+	xmlChar *name;
+        xmlChar *domain;
+        xmlChar *suite_type;
+        xmlChar *level;
+        xmlChar *timeout;
+        xmlChar *requirement;
+        xmlChar *description;
+} td_suite;
+/* ------------------------------------------------------------------------- */
+typedef struct {
+	xmlChar   *name;
+	xmlListPtr pre_steps;
+	xmlListPtr post_steps;
+	xmlListPtr cases;
+	xmlListPtr environments;
+	xmlListPtr gets;
+	td_suite  *suite;
+} td_set;
+/* ------------------------------------------------------------------------- */
+typedef struct {
+	xmlChar *step;
+	xmlChar *c_data;
+} td_step;
+
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -48,14 +69,12 @@ typedef struct {
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-int parse_test_definition(testrunner_lite_options *);
+td_set *td_set_create();
 /* ------------------------------------------------------------------------- */
-int td_reader_init(testrunner_lite_options *);
+td_step *td_step_create();
 /* ------------------------------------------------------------------------- */
-int td_register_callbacks(td_parser_callbacks *);
-/* ------------------------------------------------------------------------- */
-int td_next_node(void);
+void td_step_delete(xmlLinkPtr);
 /* ------------------------------------------------------------------------- */
 
-#endif                          /* TESTDEFINITIONPARSER_H */
+#endif                          /* TESTDEFINITIONDATATYPES_H */
 /* End of file */

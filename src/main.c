@@ -71,6 +71,8 @@ LOCAL void usage();
 /* ------------------------------------------------------------------------- */
 LOCAL void print_suite(td_suite *);
 /* ------------------------------------------------------------------------- */
+LOCAL void print_set(td_set *);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -112,16 +114,32 @@ LOCAL void usage()
 	return;
 }
 /* ------------------------------------------------------------------------- */
+LOCAL int step_print (const void *data, const void *user) {
+	td_step *step = (td_step *)data;
+	printf ("\t%s\n", step->step);
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
 /** Just print out the suite given as parameter
  *  @param td_suite suite data
  */
 LOCAL void print_suite (td_suite *s)
 {
-	printf ("SUITE = name:%s domain:%s level:%s timeout:%s type:%s\n", 
-		s->name, s->domain, s->level, s->timeout, 
-		s->suite_type); 
+	printf ("SUITE = name:%s\n", s->name); 
 
 }
+/* ------------------------------------------------------------------------- */
+LOCAL void print_set (td_set *s)
+{
+	printf ("SET = name:%s\n", s->name); 
+	printf ("\tPre-steps:\n"); 
+	xmlListWalk (s->pre_steps, step_print, NULL);
+	printf ("\tPost-steps:\n"); 
+	xmlListWalk (s->post_steps, step_print, NULL);
+
+	return;
+}
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -238,7 +256,9 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	** Set callbacks for parser
 	*/
-	cbs.test_suite = print_suite; 
+	cbs.test_suite = print_suite;
+	cbs.test_set = print_set;
+	
 	retval = td_register_callbacks (&cbs);
 	
 	/*
