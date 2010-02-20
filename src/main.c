@@ -116,7 +116,7 @@ LOCAL void usage()
 /* ------------------------------------------------------------------------- */
 LOCAL int step_print (const void *data, const void *user) {
 	td_step *step = (td_step *)data;
-	printf ("\t%s\n", step->step);
+	if (step->step) printf ("\t%s\n", step->step);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */

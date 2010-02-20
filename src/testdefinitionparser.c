@@ -26,6 +26,7 @@
 #include <libxml/xmlschemas.h>
 
 #include "testrunnerlite.h"
+#include "testdefinitiondatatypes.h"
 #include "testdefinitionparser.h"
 
 /* ------------------------------------------------------------------------- */
@@ -70,7 +71,7 @@ xmlTextReaderPtr reader;
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_suite (void);
 /* ------------------------------------------------------------------------- */
-
+LOCAL int td_parse_steps(xmlListPtr, const char *);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -78,20 +79,23 @@ LOCAL int td_parse_suite (void);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-LOCAL int td_parse_pre_steps(td_set *s)
+/** Parse step elements ([pre|post]_step and save them in list 
+ *  @param list list into which the steps are to be inserted
+ *  @param tag element name
+ *  @return 0 on success, 1 on error
+ */
+LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 {
 	xmlChar *name;
-	td_step *step;
+	td_step *step = NULL;
+	xmlNodePtr node;
 	int ret;
 
-	printf ("pre-step: %d\n",
-		xmlTextReaderDepth(reader));	
-
-	while (!(xmlTextReaderNodeType(reader) == XML_READER_TYPE_END_ELEMENT &&
-		 xmlTextReaderDepth(reader) == 3)) {
-		ret = xmlTextReaderRead(reader);
-		if (!ret) {
-			fprintf (stderr, "%s: ReaderRead() fail\n",
+	
+	do {
+	    ret = xmlTextReaderRead(reader);
+	    if (!ret) {
+		fprintf (stderr, "%s: ReaderRead() fail\n",
 				 PROGNAME);
 
 			goto ERROUT;
@@ -106,56 +110,37 @@ LOCAL int td_parse_pre_steps(td_set *s)
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, (xmlChar *)"step")) {
 			step = td_step_create();
-			step->step = xmlTextReaderReadInnerXml (reader);
-			if (xmlListInsert (s->pre_steps, step)) {
+			if (xmlListInsert (list, step)) {
 				fprintf (stderr, "%s: list insert failed\n",
 					 PROGNAME);
 				goto ERROUT;
 			
 			}
-				
 		}
-	}
-	return 0;
- ERROUT:
-	return 1;
-}
-/* ------------------------------------------------------------------------- */
-LOCAL int td_parse_post_steps(td_set *s)
-{
-	xmlChar *name;
-	td_step *step;
-	int ret;
+		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
+			if (step->step)
+				step->step = xmlStrcat 
+					(step->step, 
+					 xmlTextReaderReadString (reader));
+			else
+				step->step = xmlTextReaderReadString (reader);
+		}
 
-	while (!(xmlTextReaderNodeType(reader) == XML_READER_TYPE_END_ELEMENT &&
-		 xmlTextReaderDepth(reader) == 3)) {
-		ret = xmlTextReaderRead(reader);
-		if (!ret) {
-			fprintf (stderr, "%s: ReaderRead() fail\n",
-				 PROGNAME);
-
-			goto ERROUT;
+		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_CDATA) {
+			node = xmlTextReaderCurrentNode (reader);
+			if (step->step)
+				step->step = xmlStrcat 
+					(step->step, 
+					 node->content);
+			else
+				step->step = xmlStrdup(node->content);
+		
 		}
-		name = xmlTextReaderName(reader);
-		if (!name) {
-			fprintf (stderr, "%s: ReaderName() fail\n",
-				 PROGNAME);
-			goto ERROUT;
-		}
-		if (xmlTextReaderNodeType(reader) == 
-		    XML_READER_TYPE_ELEMENT && 
-		    !xmlStrcmp (name, (xmlChar *)"step")) {
-			step = td_step_create();
-			step->step = xmlTextReaderReadInnerXml (reader);
-			if (xmlListInsert (s->post_steps, step)) {
-				fprintf (stderr, "%s: list insert failed\n",
-					 PROGNAME);
-				goto ERROUT;
-			
-			}
-				
-		}
-	}
+		
+	} while  (!(xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_END_ELEMENT &&
+		    !xmlStrcmp (name, (xmlChar *)tag)));
+	
 	return 0;
  ERROUT:
 	return 1;
@@ -247,8 +232,7 @@ LOCAL int td_parse_set ()
 		// PROGNAME, name);
 	}
 	
-	while (!(xmlTextReaderNodeType(reader) == XML_READER_TYPE_END_ELEMENT &&
-		 xmlTextReaderDepth(reader) == 2)) {
+	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
 			fprintf (stderr, "%s: ReaderRead() fail\n",
@@ -263,9 +247,9 @@ LOCAL int td_parse_set ()
 			goto ERROUT;
 		}
 		if (!xmlStrcmp (name, (xmlChar *)"pre_steps"))
-			ret = !td_parse_pre_steps(s);
+			ret = !td_parse_steps(s->pre_steps, "pre_steps");
 		if (!xmlStrcmp (name, (xmlChar *)"post_steps"))
-			ret = !td_parse_post_steps(s);
+			ret = !td_parse_steps(s->post_steps, "post_steps");
 		if (!xmlStrcmp (name, (xmlChar *)"case"))
 			ret = !td_parse_case(s);
 		if (!xmlStrcmp (name, (xmlChar *)"environments"))
@@ -273,9 +257,11 @@ LOCAL int td_parse_set ()
 
 		if (!ret)
 			goto ERROUT;
+	} while (!(xmlTextReaderNodeType(reader) == 
+		   XML_READER_TYPE_END_ELEMENT &&
+		   !xmlStrcmp (name, (xmlChar *)"set")));
+	
 
-
-	}
 
 	
 	cbs->test_set(s);

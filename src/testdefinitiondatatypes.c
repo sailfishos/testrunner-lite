@@ -122,8 +122,6 @@ void td_step_delete(xmlLinkPtr lk)
 	td_step *step = xmlLinkGetData (lk);
 	if (step->step)
 		free (step->step);
-	if (step->c_data)
-		free (step->c_data);
 
 	free (step);
 }

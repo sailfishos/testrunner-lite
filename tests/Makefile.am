@@ -6,7 +6,7 @@ testrunnerlitetestsdir = $(libdir)/testrunner-lite-tests
 testrunnerlitetests_PROGRAMS = testrunnerlitetests
 
 datadir = .
- 
+
 testrunnerlitetests_SOURCES = main.c \
                               ut_testdefinitionparser.c \
                               ut_argumentparser.c
@@ -17,9 +17,10 @@ AM_CFLAGS = -I. \
             -I$(top_builddir)/src \
             -fprofile-arcs \
             -ftest-coverage
-    
+
 testrunnerlitetests_LDFLAGS = -lxml2
 
 testrunnerlitetests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
+			    $(top_builddir)/src/testdefinitiondatatypes.o \
                             -lcheck \
                             -lgcov
