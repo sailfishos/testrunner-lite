@@ -45,6 +45,8 @@
 /* GLOBAL VARIABLES */
 td_parser_callbacks *cbs;
 xmlTextReaderPtr reader;
+xmlSchemaParserCtxtPtr schema_context = NULL;
+xmlSchemaPtr schema = NULL;
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -89,7 +91,7 @@ LOCAL int td_parse_case (td_set *s);
  */
 LOCAL td_step *td_parse_step()
 {
-	xmlChar *name;
+	const xmlChar *name;
 	td_step *step = NULL;
 	xmlNodePtr node;
 	int ret;
@@ -105,7 +107,7 @@ LOCAL td_step *td_parse_step()
 			
 			goto ERROUT;
 		}
-		name = xmlTextReaderName(reader);
+		name = xmlTextReaderConstName(reader);
 		if (!name) {
 			fprintf (stderr, "%s: ReaderName() fail\n",
 				 PROGNAME);
@@ -152,7 +154,7 @@ LOCAL td_step *td_parse_step()
  */
 LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 {
-	xmlChar *name;
+	const xmlChar *name;
 	td_step *step = NULL;
 	int ret;
 	
@@ -165,7 +167,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 				 PROGNAME);
 			goto ERROUT;
 		}
-		name = xmlTextReaderName(reader);
+		name = xmlTextReaderConstName(reader);
 		if (!name) {
 			fprintf (stderr, "%s: ReaderName() fail\n",
 				 PROGNAME);
@@ -198,7 +200,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
  */
 LOCAL int td_parse_case(td_set *s)
 {
-	xmlChar *name;
+	const xmlChar *name;
 	td_step *step = NULL;
 	td_case *c = NULL;
 	int ret;
@@ -210,13 +212,13 @@ LOCAL int td_parse_case(td_set *s)
 		goto ERROUT;
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
-		name = xmlTextReaderName(reader);
+		name = xmlTextReaderConstName(reader);
 		if (!xmlStrcmp (name, (xmlChar *)"name")) {
 			c->name= xmlTextReaderValue(reader);
 			continue;
 		}
 		if (!xmlStrcmp (name, (xmlChar *)"timeout")) {
-			c->timeout = strtoul(xmlTextReaderValue(reader),
+			c->timeout = strtoul((char *)xmlTextReaderValue(reader),
 					     NULL, 10);
 			continue;
 		}
@@ -231,7 +233,7 @@ LOCAL int td_parse_case(td_set *s)
 			
 			goto ERROUT;
 		}
-		name = xmlTextReaderName(reader);
+		name = xmlTextReaderConstName(reader);
 		if (!name) {
 			fprintf (stderr, "%s: ReaderName() fail\n",
 				 PROGNAME);
@@ -277,7 +279,7 @@ LOCAL int td_parse_environments(td_set *s)
 LOCAL int td_parse_suite ()
 {
 	td_suite *s;
-	xmlChar *name;
+	const xmlChar *name;
 
 	if (!cbs->test_suite)
 		return 1;
@@ -291,7 +293,7 @@ LOCAL int td_parse_suite ()
 	memset (s, 0x0, sizeof (td_suite));
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
-		name = xmlTextReaderName(reader);
+		name = xmlTextReaderConstName(reader);
 		if (!xmlStrcmp (name, (xmlChar *)"name")) {
 			s->name= xmlTextReaderValue(reader);
 			continue;
@@ -328,14 +330,14 @@ LOCAL int td_parse_set ()
 {
 	int ret = 0;
 	td_set *s;
-	xmlChar *name;
+	const xmlChar *name;
 
 	if (!cbs->test_set)
 		return 1;
 	s = td_set_create ();
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
-		name = xmlTextReaderName(reader);
+		name = xmlTextReaderConstName(reader);
 		if (!xmlStrcmp (name, (xmlChar *)"name")) {
 			s->name= xmlTextReaderValue(reader);
 			continue;
@@ -352,7 +354,7 @@ LOCAL int td_parse_set ()
 
 			goto ERROUT;
 		}
-		name = xmlTextReaderName(reader);
+		name = xmlTextReaderConstName(reader);
 		if (!name) {
 			fprintf (stderr, "%s: ReaderName() fail\n",
 				 PROGNAME);
@@ -380,7 +382,6 @@ LOCAL int td_parse_set ()
 	fprintf (stderr, "%s: exiting with error\n",
 		 __FUNCTION__);
 	
-	/* FIXME CLEANUP */
 	return 1;
 }
 
@@ -473,15 +474,44 @@ out:
  */
 int td_reader_init (testrunner_lite_options *opts)
 {
-	reader =  xmlNewTextReaderFilename(opts->input_filename);
 
+	reader =  xmlNewTextReaderFilename(opts->input_filename);
 	if (!reader) {
 		fprintf(stderr, "%s: failed to create xml reader for %s\n", 
 			PROGNAME, opts->input_filename);
-		return 1;
 		
 	}
+
+	schema_context = xmlSchemaNewParserCtxt("/usr/bin/testdefinition.xsd");
+	if (schema_context == NULL) {
+		fprintf (stderr, "%s: Failed to allocate schema context\n",
+			 PROGNAME);
+		goto err_out;
+	}
+
+	schema = xmlSchemaParse(schema_context);
+	if (schema == NULL) {
+		fprintf (stderr, "%s: Failed to parse schema\n",
+			 PROGNAME);
+		goto err_out;
+	}
+
+	xmlTextReaderSetSchema (reader, schema);
+
 	return 0;
+ err_out:
+	td_reader_close ();
+	return 1;
+		
+}
+/* ------------------------------------------------------------------------- */
+/** De-init the reader instance
+ */
+void td_reader_close ()
+{
+	if (reader) xmlFreeTextReader (reader); 
+	if (schema) xmlSchemaFree(schema);
+	if (schema_context) xmlSchemaFreeParserCtxt(schema_context);
 }
 /* ------------------------------------------------------------------------- */
 /** Process next node from XML reader instance.
@@ -489,14 +519,14 @@ int td_reader_init (testrunner_lite_options *opts)
  */
 int td_next_node(void) {
 	int ret;
-	xmlChar *name;
+	const xmlChar *name;
 	
         ret = xmlTextReaderRead(reader);
 	
 	if (!ret)
 		return !ret;
 
-	name = xmlTextReaderName(reader);
+	name = xmlTextReaderConstName(reader);
 	if (!name)
 		return 1;
 	
@@ -508,7 +538,6 @@ int td_next_node(void) {
 	
 	fprintf (stderr, "Unhandled tag %s\n", name);
 	
-
 	return !ret;
 } 
 /* ------------------------------------------------------------------------- */

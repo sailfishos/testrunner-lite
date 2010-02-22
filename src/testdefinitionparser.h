@@ -52,6 +52,8 @@ int parse_test_definition(testrunner_lite_options *);
 /* ------------------------------------------------------------------------- */
 int td_reader_init(testrunner_lite_options *);
 /* ------------------------------------------------------------------------- */
+void td_reader_close(void);
+/* ------------------------------------------------------------------------- */
 int td_register_callbacks(td_parser_callbacks *);
 /* ------------------------------------------------------------------------- */
 int td_next_node(void);

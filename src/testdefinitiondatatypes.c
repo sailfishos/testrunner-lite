@@ -98,6 +98,20 @@ td_set *td_set_create ()
 	return set;
 }
 /* ------------------------------------------------------------------------- */
+/** De-allocate td_set data structure
+ *  @param *td_set td_set data 
+ */
+void td_set_delete(td_set *s)
+{
+	free (s->name);
+	xmlListDelete (s->pre_steps);
+	xmlListDelete (s->post_steps);
+	xmlListDelete (s->cases);
+	xmlListDelete (s->environments);
+	xmlListDelete (s->gets);
+	free (s);
+}
+/* ------------------------------------------------------------------------- */
 /** Creates a td_step data structure
  *  @return pointer to td_step or NULL in case of OOM
  */
@@ -132,7 +146,7 @@ td_case *td_case_create()
 	return td_c;
 }
 /* ------------------------------------------------------------------------- */
-/** Deallocator for td_step called by xmlListFree
+/** Deallocator for td_step called by xmlListDelete
  */
 void td_step_delete(xmlLinkPtr lk)
 {

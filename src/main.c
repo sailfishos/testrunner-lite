@@ -151,6 +151,8 @@ LOCAL void print_set (td_set *s)
 	xmlListWalk (s->post_steps, step_print, NULL);
 	printf ("\tPost-steps:\n"); 
 	xmlListWalk (s->cases, case_print, NULL);
+	
+	td_set_delete (s);
 	return;
 }
 
@@ -286,6 +288,8 @@ int main (int argc, char *argv[], char *envp[])
 	** Call td_next_node untill error occurs or the end of data is reached
 	*/
 	while (td_next_node() == 0);
+	
+	td_reader_close();
 OUT:
 
 	return retval;
