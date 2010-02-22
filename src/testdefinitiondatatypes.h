@@ -59,7 +59,7 @@ typedef struct {
 typedef struct {
 	xmlChar   *name;
 	xmlChar   *description;
-	xmlChar   *timeout;
+	unsigned long timeout;
 	xmlListPtr steps;
 } td_case;
 /* ------------------------------------------------------------------------- */

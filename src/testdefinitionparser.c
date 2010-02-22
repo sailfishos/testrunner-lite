@@ -215,6 +215,11 @@ LOCAL int td_parse_case(td_set *s)
 			c->name= xmlTextReaderValue(reader);
 			continue;
 		}
+		if (!xmlStrcmp (name, (xmlChar *)"timeout")) {
+			c->timeout = strtoul(xmlTextReaderValue(reader),
+					     NULL, 10);
+			continue;
+		}
 	}
 
 	
@@ -335,7 +340,7 @@ LOCAL int td_parse_set ()
 			s->name= xmlTextReaderValue(reader);
 			continue;
 		}
-		//fprintf (stderr, "%s :suite contains unhandled attribute %s\n",
+		//fprintf (stderr, "%s :set contains unhandled attribute %s\n",
 		// PROGNAME, name);
 	}
 	
@@ -372,7 +377,9 @@ LOCAL int td_parse_set ()
 
 	return 0;
  ERROUT:
-	printf ("ERROR!!!\n");
+	fprintf (stderr, "%s: exiting with error\n",
+		 __FUNCTION__);
+	
 	/* FIXME CLEANUP */
 	return 1;
 }

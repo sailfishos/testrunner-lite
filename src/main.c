@@ -126,6 +126,7 @@ LOCAL int case_print (const void *data, const void *user) {
 
 	td_case *c = (td_case *)data;
 	printf ("\tCASE: %s\n", c->name);
+	if (c->timeout) printf ("\ttimeout: %lu\n", c->timeout);
 	printf ("\tsteps:\n");
 	xmlListWalk (c->steps, step_print, NULL);
 
