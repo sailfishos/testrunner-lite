@@ -83,8 +83,8 @@ LOCAL void print_set(td_set *);
  */
 LOCAL void usage()
 {
-	printf ("\nUsage: testrunnerlite [options]\n");
-	printf ("Example: testrunnerlite -f tests.xml -o ~/results.xml "
+	printf ("\nUsage: testrunner-lite [options]\n");
+	printf ("Example: testrunner-lite -f tests.xml -o ~/results.xml "
 		"-e hardware\n");
 	printf ("\nOptions:\n");
 	printf ("  -h, --help\tShow this help message and exit.\n");
