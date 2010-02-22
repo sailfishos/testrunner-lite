@@ -71,7 +71,12 @@ xmlTextReaderPtr reader;
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_suite (void);
 /* ------------------------------------------------------------------------- */
-LOCAL int td_parse_steps(xmlListPtr, const char *);
+LOCAL int td_parse_steps (xmlListPtr, const char *);
+/* ------------------------------------------------------------------------- */
+LOCAL td_step *td_parse_step (void);
+/* ------------------------------------------------------------------------- */
+LOCAL int td_parse_case (td_set *s);
+/* ------------------------------------------------------------------------- */
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -79,25 +84,25 @@ LOCAL int td_parse_steps(xmlListPtr, const char *);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/** Parse step elements ([pre|post]_step and save them in list 
- *  @param list list into which the steps are to be inserted
- *  @param tag element name
- *  @return 0 on success, 1 on error
+/** Parse one step  
+ *  @return *td_step on success, NULL on error
  */
-LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
+LOCAL td_step *td_parse_step()
 {
 	xmlChar *name;
 	td_step *step = NULL;
 	xmlNodePtr node;
 	int ret;
 
-	
-	do {
-	    ret = xmlTextReaderRead(reader);
-	    if (!ret) {
-		fprintf (stderr, "%s: ReaderRead() fail\n",
-				 PROGNAME);
+	printf ("%s\n", __FUNCTION__);
 
+	step = td_step_create();
+	do {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			fprintf (stderr, "%s:%s: ReaderRead() fail\n",
+				 PROGNAME, __FUNCTION__);
+			
 			goto ERROUT;
 		}
 		name = xmlTextReaderName(reader);
@@ -106,17 +111,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 				 PROGNAME);
 			goto ERROUT;
 		}
-		if (xmlTextReaderNodeType(reader) == 
-		    XML_READER_TYPE_ELEMENT && 
-		    !xmlStrcmp (name, (xmlChar *)"step")) {
-			step = td_step_create();
-			if (xmlListInsert (list, step)) {
-				fprintf (stderr, "%s: list insert failed\n",
-					 PROGNAME);
-				goto ERROUT;
-			
-			}
-		}
+
 		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
 			if (step->step)
 				step->step = xmlStrcat 
@@ -136,7 +131,58 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 				step->step = xmlStrdup(node->content);
 		
 		}
-		
+		printf ("%s:%s:%d\n", __FUNCTION__, name,
+		    xmlTextReaderNodeType(reader));
+
+	} while  (!(xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_END_ELEMENT &&
+		    !xmlStrcmp (name, (xmlChar *)"step")));
+	
+	return step;
+ ERROUT:
+	free (step);
+	
+	return NULL;
+}
+/* ------------------------------------------------------------------------- */
+/** Parse step elements ([pre|post]_step and save them in list 
+ *  @param list list into which the steps are to be inserted
+ *  @param tag element name
+ *  @return 0 on success, 1 on error
+ */
+LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
+{
+	xmlChar *name;
+	td_step *step = NULL;
+	int ret;
+	
+	printf ("%s: %s\n", __FUNCTION__, tag);
+	
+	do {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			fprintf (stderr, "%s: ReaderRead() fail\n",
+				 PROGNAME);
+			goto ERROUT;
+		}
+		name = xmlTextReaderName(reader);
+		if (!name) {
+			fprintf (stderr, "%s: ReaderName() fail\n",
+				 PROGNAME);
+			goto ERROUT;
+		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, (xmlChar *)"step")) {
+			step = td_parse_step();
+			if (!step)
+				goto ERROUT;
+			if (xmlListInsert (list, step)) {
+				fprintf (stderr, "%s: list insert failed\n",
+					 PROGNAME);
+				goto ERROUT;
+			}
+		}
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
 		    !xmlStrcmp (name, (xmlChar *)tag)));
@@ -146,11 +192,72 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/** Parse test case and insert to set list of cases.
+ *  @param *s td_set structure
+ *  @return 0 on success, 1 on error 
+ */
 LOCAL int td_parse_case(td_set *s)
 {
-	printf ("case\n");
-	return 0;
+	xmlChar *name;
+	td_step *step = NULL;
+	td_case *c = NULL;
+	int ret;
 
+	printf ("%s\n", __FUNCTION__);
+
+	c = td_case_create();
+	if (!c)
+		goto ERROUT;
+
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderName(reader);
+		if (!xmlStrcmp (name, (xmlChar *)"name")) {
+			c->name= xmlTextReaderValue(reader);
+			continue;
+		}
+	}
+
+	
+	do {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			fprintf (stderr, "%s: ReaderRead() fail\n",
+				 PROGNAME);
+			
+			goto ERROUT;
+		}
+		name = xmlTextReaderName(reader);
+		if (!name) {
+			fprintf (stderr, "%s: ReaderName() fail\n",
+				 PROGNAME);
+			goto ERROUT;
+		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, (xmlChar *)"step")) {
+		    step = td_parse_step();
+		    if (!step)
+			    goto ERROUT;
+		    if (xmlListInsert (c->steps, step)) {
+			    fprintf (stderr, "%s: list insert failed\n",
+				     PROGNAME);
+			    goto ERROUT;
+		    }
+		}
+	    
+	} while  (!(xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_END_ELEMENT &&
+		    !xmlStrcmp (name, (xmlChar *)"case")));
+	
+	xmlListInsert (s->cases, c);
+	
+	return 0;
+ERROUT:
+	xmlListDelete (c->steps);
+	if (c->name) free (c->name);
+	if (c->description) free (c->description);
+	free (c);
+	return 1;
 }
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_environments(td_set *s)
@@ -235,8 +342,8 @@ LOCAL int td_parse_set ()
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			fprintf (stderr, "%s: ReaderRead() fail\n",
-				 PROGNAME);
+			fprintf (stderr, "%s:%s: ReaderRead() fail\n",
+				 PROGNAME, __FUNCTION__);
 
 			goto ERROUT;
 		}
@@ -260,9 +367,6 @@ LOCAL int td_parse_set ()
 	} while (!(xmlTextReaderNodeType(reader) == 
 		   XML_READER_TYPE_END_ELEMENT &&
 		   !xmlStrcmp (name, (xmlChar *)"set")));
-	
-
-
 	
 	cbs->test_set(s);
 
@@ -394,6 +498,9 @@ int td_next_node(void) {
 
 	if (!xmlStrcmp (name, (xmlChar *)"set"))
 		return td_parse_set();
+	
+	fprintf (stderr, "Unhandled tag %s\n", name);
+	
 
 	return !ret;
 } 

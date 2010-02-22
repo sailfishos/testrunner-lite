@@ -114,8 +114,25 @@ td_step *td_step_create()
 	return step;
 }
 /* ------------------------------------------------------------------------- */
+/** Creates a td_case data structure
+ *  @return pointer to td_case or NULL in case of OOM
+ */
+td_case *td_case_create()
+{
+	td_case *td_c;
+
+	td_c = (td_case *) malloc (sizeof (td_case));
+	if (td_c == NULL) {
+		fprintf (stderr, "%s: FATAL : OOM", PROGNAME);
+		return NULL;
+	}
+	memset (td_c, 0x0, sizeof (td_case));
+	td_c->steps = xmlListCreate (td_step_delete, NULL);
+
+	return td_c;
+}
+/* ------------------------------------------------------------------------- */
 /** Deallocator for td_step called by xmlListFree
- *  @return pointer to td_step or NULL in case of OOM
  */
 void td_step_delete(xmlLinkPtr lk)
 {
@@ -125,6 +142,19 @@ void td_step_delete(xmlLinkPtr lk)
 
 	free (step);
 }
+/* ------------------------------------------------------------------------- */
+/** Deallocator for  td_case data structure
+ */
+void td_case_delete(xmlLinkPtr lk)
+{
+	td_case *td_c = xmlLinkGetData (lk);
+	xmlListDelete (td_c->steps);
+	
+	if (td_c->name) free (td_c->name);
+	if (td_c->description) free (td_c->description);
+	free (td_c);
+}
+
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */
 

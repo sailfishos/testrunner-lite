@@ -115,8 +115,20 @@ LOCAL void usage()
 }
 /* ------------------------------------------------------------------------- */
 LOCAL int step_print (const void *data, const void *user) {
+
 	td_step *step = (td_step *)data;
 	if (step->step) printf ("\t%s\n", step->step);
+
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
+LOCAL int case_print (const void *data, const void *user) {
+
+	td_case *c = (td_case *)data;
+	printf ("\tCASE: %s\n", c->name);
+	printf ("\tsteps:\n");
+	xmlListWalk (c->steps, step_print, NULL);
+
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -131,12 +143,13 @@ LOCAL void print_suite (td_suite *s)
 /* ------------------------------------------------------------------------- */
 LOCAL void print_set (td_set *s)
 {
-	printf ("SET = name:%s\n", s->name); 
+	printf ("SET: %s\n", s->name); 
 	printf ("\tPre-steps:\n"); 
 	xmlListWalk (s->pre_steps, step_print, NULL);
 	printf ("\tPost-steps:\n"); 
 	xmlListWalk (s->post_steps, step_print, NULL);
-
+	printf ("\tPost-steps:\n"); 
+	xmlListWalk (s->cases, case_print, NULL);
 	return;
 }
 

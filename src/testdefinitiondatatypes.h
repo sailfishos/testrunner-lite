@@ -50,13 +50,18 @@ typedef struct {
 	xmlListPtr cases;
 	xmlListPtr environments;
 	xmlListPtr gets;
-	td_suite  *suite;
 } td_set;
 /* ------------------------------------------------------------------------- */
 typedef struct {
 	xmlChar *step;
 } td_step;
-
+/* ------------------------------------------------------------------------- */
+typedef struct {
+	xmlChar   *name;
+	xmlChar   *description;
+	xmlChar   *timeout;
+	xmlListPtr steps;
+} td_case;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -71,6 +76,8 @@ typedef struct {
 td_set *td_set_create();
 /* ------------------------------------------------------------------------- */
 td_step *td_step_create();
+/* ------------------------------------------------------------------------- */
+td_case *td_case_create();
 /* ------------------------------------------------------------------------- */
 void td_step_delete(xmlLinkPtr);
 /* ------------------------------------------------------------------------- */
