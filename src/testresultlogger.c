@@ -58,7 +58,7 @@ struct
     int (*write_pre_suite_tag) (td_suite *);
     int (*write_post_suite_tag) (void);
     int (*write_pre_set_tag) (td_set *);
-    int (*write_post_set_tag) (void);
+    int (*write_post_set_tag) (td_set *);
 
 } out_cbs;
 /* ------------------------------------------------------------------------- */
@@ -90,6 +90,22 @@ err_out:
 }
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_pre_set_tag (td_set *set)
+{
+	int ret = 0;
+	
+	ret = xmlTextWriterStartElement (writer, BAD_CAST "set");
+	if (ret < 0)
+		goto err_out;
+	
+	ret = xmlTextWriterWriteAttribute (writer, 
+					   BAD_CAST "name", 
+					   set->name);
+	return 0;
+err_out:
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_post_set_tag (td_set *set)
 {
 	int ret = 0;
 	
@@ -146,7 +162,7 @@ int init_result_logger (testrunner_lite_options *opts)
 	    out_cbs.write_pre_suite_tag = xml_write_pre_suite_tag;
 	    out_cbs.write_post_suite_tag = xml_end_element;
 	    out_cbs.write_pre_set_tag = xml_write_pre_set_tag;
-	    out_cbs.write_post_set_tag = xml_end_element;
+	    out_cbs.write_post_set_tag = xml_write_post_set_tag;
 	    
 	    
 	    break;
@@ -179,10 +195,10 @@ int write_pre_set_tag (td_set *set)
 	return out_cbs.write_pre_set_tag (set);
 }
 /* ------------------------------------------------------------------------- */
-int write_post_set_tag ()
+int write_post_set_tag (td_set *set)
 {
 	
-	return out_cbs.write_post_set_tag ();
+	return out_cbs.write_post_set_tag (set);
 }
 /* ------------------------------------------------------------------------- */
 void close_result_logger (void)
