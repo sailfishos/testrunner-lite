@@ -19,9 +19,10 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
-#include "testrunnerlite.h"
+#include <sys/time.h>
 #include <libxml/xmlstring.h>
 #include <libxml/list.h>
+#include "testrunnerlite.h"
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -56,15 +57,28 @@ typedef struct {
 /* ------------------------------------------------------------------------- */
 /** Test step. */
 typedef struct {
-	xmlChar *step; /**< Test step as a string (with possible CDATA)    */
+	/* Parser fills */
+	xmlChar *step;            /**< Test step as a string 
+				     (with possible CDATA)    */
+	int      expected_result; /**< expected result of step */
+	int      return_code;     /**< actual result of step */
+	/* Executor fills */
+	xmlChar *failure_info;    /**< expected result of step */
+	struct   timeval start;   /**< step execution start time */
+	struct   timeval end;     /**< step execution end time */
+	xmlChar *stdout_;         /**< step stdout printouts */
+	xmlChar *stderr_;         /**< step stderr printouts */
 } td_step;
 /* ------------------------------------------------------------------------- */
 /** Test case */
 typedef struct {
+	/* Parser fills */
 	xmlChar   *name;        /**< Test case name */
 	xmlChar   *description; /**< Test case description */
 	unsigned long timeout;  /**< Test case timeout */
 	xmlListPtr steps;       /**< Steps in this test case */
+	/* Executor fills */
+	int        passed;      /**< Flag stating whether this case is passed */
 } td_case;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
