@@ -27,6 +27,7 @@
 
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
+#include "executor.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -122,13 +123,53 @@ LOCAL int step_print (const void *data, const void *user) {
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+LOCAL void output_processor(int stdout_fd, int stderr_fd) {
+	char out[1024];
+	char err[1024];
+	ssize_t bytes = 0;
+	char* p = out;
+
+	while ((bytes = read(stdout_fd, p, 128))) {
+		if(bytes < 0) {
+			break;
+		}
+		p += bytes;
+	}
+	*p = '\0';
+
+	p = err;
+	while ((bytes = read(stderr_fd, p, 128))) {
+		if(bytes < 0) {
+			break;
+		}
+		p += bytes;
+	}
+	*p = '\0';
+
+	printf("stdout:\n");
+	printf("%s", out);
+	printf("stderr:\n");
+	printf("%s", err);
+
+}
+/* ------------------------------------------------------------------------- */
+LOCAL int step_execute (const void *data, const void *user) {
+
+	td_step *step = (td_step *)data;
+	if (step->step) {
+		printf ("\t%s\n", step->step);
+		execute(step->step, output_processor);
+	}
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
 LOCAL int case_print (const void *data, const void *user) {
 
 	td_case *c = (td_case *)data;
 	printf ("\tCASE: %s\n", c->name);
 	if (c->timeout) printf ("\ttimeout: %lu\n", c->timeout);
 	printf ("\tsteps:\n");
-	xmlListWalk (c->steps, step_print, NULL);
+	xmlListWalk (c->steps, step_execute, NULL);
 
 	return 1;
 }
@@ -286,6 +327,7 @@ int main (int argc, char *argv[], char *envp[])
 	** Call td_next_node untill error occurs or the end of data is reached
 	*/
 	while (td_next_node() == 0);
+
 OUT:
 
 	return retval;
