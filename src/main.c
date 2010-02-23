@@ -139,7 +139,7 @@ LOCAL int case_print (const void *data, const void *user) {
 LOCAL void print_suite (td_suite *s)
 {
 	printf ("SUITE = name:%s\n", s->name); 
-
+	td_suite_delete (s);
 }
 /* ------------------------------------------------------------------------- */
 LOCAL void print_set (td_set *s)
@@ -155,7 +155,6 @@ LOCAL void print_set (td_set *s)
 	td_set_delete (s);
 	return;
 }
-
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -291,7 +290,8 @@ int main (int argc, char *argv[], char *envp[])
 	
 	td_reader_close();
 OUT:
-
+	if (opts.input_filename) free (opts.input_filename);
+	
 	return retval;
 }	
 

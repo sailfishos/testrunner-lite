@@ -218,8 +218,9 @@ LOCAL int td_parse_case(td_set *s)
 			continue;
 		}
 		if (!xmlStrcmp (name, (xmlChar *)"timeout")) {
-			c->timeout = strtoul((char *)xmlTextReaderValue(reader),
-					     NULL, 10);
+			c->timeout = strtoul(
+				(char *)xmlTextReaderConstValue(reader),
+				NULL, 10);
 			continue;
 		}
 	}
@@ -284,14 +285,9 @@ LOCAL int td_parse_suite ()
 	if (!cbs->test_suite)
 		return 1;
 	
-	s = (td_suite *)malloc (sizeof (td_suite));
-	if (s == NULL) {
-		fprintf (stderr, "%s: FATAL : OOM", PROGNAME);
-		return 1;
-	}
-
-	memset (s, 0x0, sizeof (td_suite));
-
+	s = td_suite_create();
+	if (!s) return 1;
+	
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
 		name = xmlTextReaderConstName(reader);
 		if (!xmlStrcmp (name, (xmlChar *)"name")) {
@@ -384,7 +380,6 @@ LOCAL int td_parse_set ()
 	
 	return 1;
 }
-
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -496,8 +491,13 @@ int td_reader_init (testrunner_lite_options *opts)
 		goto err_out;
 	}
 
-	xmlTextReaderSetSchema (reader, schema);
-
+	if (xmlTextReaderSetSchema (reader, schema)) {
+		fprintf (stderr, "%s: Failed to set schema for xml reader\n",
+			 PROGNAME);
+		goto err_out;
+	}
+	
+	
 	return 0;
  err_out:
 	td_reader_close ();

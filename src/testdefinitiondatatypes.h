@@ -33,34 +33,38 @@
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
+/** Test suite. */
 typedef struct {
-	xmlChar *name;
+	xmlChar *name;        /**< Suite name */
         xmlChar *domain;
         xmlChar *suite_type;
         xmlChar *level;
         xmlChar *timeout;
         xmlChar *requirement;
-        xmlChar *description;
+        xmlChar *description; /**< Suite description */
 } td_suite;
 /* ------------------------------------------------------------------------- */
+/** Test set. */
 typedef struct {
-	xmlChar   *name;
-	xmlListPtr pre_steps;
-	xmlListPtr post_steps;
-	xmlListPtr cases;
-	xmlListPtr environments;
-	xmlListPtr gets;
+	xmlChar   *name;         /**< Set name */
+	xmlListPtr pre_steps;    /**< Steps executed before each test case */
+	xmlListPtr post_steps;   /**< Steps executed after each test case */
+	xmlListPtr cases;        /**< Test cases in this set */
+	xmlListPtr environments; /**< Environments (hardware, scratchbox) */
+	xmlListPtr gets;         /**< Get commands */
 } td_set;
 /* ------------------------------------------------------------------------- */
+/** Test step. */
 typedef struct {
-	xmlChar *step;
+	xmlChar *step; /**< Test step as a string (with possible CDATA)    */
 } td_step;
 /* ------------------------------------------------------------------------- */
+/** Test case */
 typedef struct {
-	xmlChar   *name;
-	xmlChar   *description;
-	unsigned long timeout;
-	xmlListPtr steps;
+	xmlChar   *name;        /**< Test case name */
+	xmlChar   *description; /**< Test case description */
+	unsigned long timeout;  /**< Test case timeout */
+	xmlListPtr steps;       /**< Steps in this test case */
 } td_case;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -73,6 +77,10 @@ typedef struct {
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
+td_suite *td_suite_create();
+/* ------------------------------------------------------------------------- */
+void td_suite_delete(td_suite *);
+/* ------------------------------------------------------------------------- */
 td_set *td_set_create();
 /* ------------------------------------------------------------------------- */
 void td_set_delete(td_set *);
@@ -83,6 +91,7 @@ void td_step_delete(xmlLinkPtr);
 /* ------------------------------------------------------------------------- */
 td_case *td_case_create();
 /* ------------------------------------------------------------------------- */
-
+void td_case_delete(xmlLinkPtr);
+/* ------------------------------------------------------------------------- */
 #endif                          /* TESTDEFINITIONDATATYPES_H */
 /* End of file */

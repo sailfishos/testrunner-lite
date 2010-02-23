@@ -33,9 +33,10 @@
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
+/** Callbacks for parser. Parser uses these to pass parsed data to caller. */
 typedef struct {
-        void (*test_suite) (td_suite *); /**< call back for suite handler    */
-	void (*test_set) (td_set *);     /**< call back for set handler      */
+        void (*test_suite) (td_suite *); /**< callback for suite handler    */
+	void (*test_set) (td_set *);     /**< callback for set handler      */
 } td_parser_callbacks;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

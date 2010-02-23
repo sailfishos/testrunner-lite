@@ -79,6 +79,34 @@
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
+/** Creates a td_suite data structure, initializes lists for pre_steps etc.
+ *  @return pointer to td_set or NULL in case of OOM
+ */
+td_suite *td_suite_create()
+{
+	td_suite *s = (td_suite *)malloc (sizeof (td_suite));
+	if (s == NULL) {
+		fprintf (stderr, "%s: FATAL : OOM", PROGNAME);
+		return NULL;
+	}
+
+	memset (s, 0x0, sizeof (td_suite));
+	return s;
+}
+/* ------------------------------------------------------------------------- */
+/** De-allocate td_suite data structure
+ *  @param *s td_suite data 
+ */
+void td_suite_delete(td_suite *s)
+{
+    if (s->name) free (s->name);
+    if (s->domain) free (s->domain);
+    if (s->suite_type) free (s->suite_type);
+    if (s->level) free (s->level);
+    if (s->timeout) free (s->timeout);
+    free (s);
+}
+/* ------------------------------------------------------------------------- */
 /** Creates a td_set data structure, initializes lists for pre_steps etc.
  *  @return pointer to td_set or NULL in case of OOM
  */
@@ -91,7 +119,7 @@ td_set *td_set_create ()
 	}
 	set->pre_steps = xmlListCreate (td_step_delete, NULL);
 	set->post_steps = xmlListCreate (td_step_delete, NULL);
-	set->cases = xmlListCreate (NULL, NULL);
+	set->cases = xmlListCreate (td_case_delete, NULL);
 	set->environments = xmlListCreate (NULL, NULL);
 	set->gets = xmlListCreate (NULL, NULL);
 	
@@ -99,7 +127,7 @@ td_set *td_set_create ()
 }
 /* ------------------------------------------------------------------------- */
 /** De-allocate td_set data structure
- *  @param *td_set td_set data 
+ *  @param *s td_set data 
  */
 void td_set_delete(td_set *s)
 {
