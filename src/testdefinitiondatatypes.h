@@ -64,8 +64,8 @@ typedef struct {
 	int      return_code;     /**< actual result of step */
 	/* Executor fills */
 	xmlChar *failure_info;    /**< expected result of step */
-	struct   timeval start;   /**< step execution start time */
-	struct   timeval end;     /**< step execution end time */
+	time_t   start;           /**< step execution start time */
+	time_t   end;             /**< step execution end time */
 	xmlChar *stdout_;         /**< step stdout printouts */
 	xmlChar *stderr_;         /**< step stderr printouts */
 } td_step;

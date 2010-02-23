@@ -16,8 +16,10 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
-#include "testresultlogger.h"
+#include <time.h>
 #include <libxml/xmlwriter.h>
+#include "testresultlogger.h"
+
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
 /* None */
@@ -64,7 +66,8 @@ struct
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-/* None */
+LOCAL int xml_end_element ();
+
 
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -100,25 +103,141 @@ LOCAL int xml_write_pre_set_tag (td_set *set)
 	ret = xmlTextWriterWriteAttribute (writer, 
 					   BAD_CAST "name", 
 					   set->name);
+	if (ret < 0)
+		goto err_out;
+
 	return 0;
 err_out:
 	return 1;
+}
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_step (const void *data, const void *user)
+{
+	int ret;
+	td_step *step = (td_step *)data;
+	struct tm *tm;
+
+	ret = xmlTextWriterStartElement (writer, BAD_CAST "step");
+	if (ret < 0)
+		goto err_out;
+
+	ret = xmlTextWriterWriteAttribute (writer, 
+					   BAD_CAST "command", 
+					   step->step);
+	
+	ret = xmlTextWriterWriteFormatElement (writer,
+					       BAD_CAST "expected_result",
+					       "%d", step->expected_result);
+	if (ret < 0)
+		goto err_out;
+	
+	ret = xmlTextWriterWriteFormatElement (writer,
+					       BAD_CAST "return_code",
+					       "%d", step->return_code);
+	if (ret < 0)
+		goto err_out;
+	
+	tm =  localtime (&step->start);
+	ret = xmlTextWriterWriteFormatElement (writer,
+					       BAD_CAST "start",
+					       "%02d-%02d-%02d %02d:%02d:%02d", 
+					       tm->tm_year+1900,
+					       tm->tm_mon+1,
+					       tm->tm_mday,
+					       tm->tm_hour,
+					       tm->tm_min,
+					       tm->tm_sec);
+	if (ret < 0)
+		goto err_out;
+
+	tm =  localtime (&step->end);
+	ret = xmlTextWriterWriteFormatElement (writer,
+					       BAD_CAST "end",
+					       "%02d-%02d-%02d %02d:%02d:%02d", 
+					       tm->tm_year+1900,
+					       tm->tm_mon+1,
+					       tm->tm_mday,
+					       tm->tm_hour,
+					       tm->tm_min,
+					       tm->tm_sec);
+	if (ret < 0)
+		goto err_out;
+
+	if (step->stdout_)
+		ret = xmlTextWriterWriteFormatElement (writer,
+						       BAD_CAST "stdout",
+						       "%s", 
+						       step->stdout_);
+	if (ret < 0)
+		goto err_out;
+
+	if (step->stderr_)
+		ret = xmlTextWriterWriteFormatElement (writer,
+						       BAD_CAST "stderr",
+						       "%s", 
+						       step->stderr_);
+	if (ret < 0)
+		goto err_out;
+
+
+	xml_end_element();
+	
+
+	return 1;
+	
+err_out:
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_case (const void *data, const void *user)
+{
+	int ret;
+	td_case *c = (td_case *)data;
+
+	ret = xmlTextWriterStartElement (writer, BAD_CAST "case");
+	if (ret < 0)
+		goto err_out;
+
+	ret = xmlTextWriterWriteAttribute (writer, 
+					   BAD_CAST "name", 
+					   c->name);
+	if (ret < 0)
+		goto err_out;
+
+	if (c->description)
+		ret = xmlTextWriterWriteAttribute (writer, 
+						   BAD_CAST "description", 
+						   c->description);
+	if (ret < 0)
+		goto err_out;
+
+	ret = xmlTextWriterWriteAttribute (writer, 
+					   BAD_CAST "result", 
+					   c->passed ?
+					   BAD_CAST "FAIL" : BAD_CAST "PASS");
+	
+	if (ret < 0)
+		goto err_out;
+
+	xmlListWalk (c->steps, xml_write_step, NULL);
+
+	xml_end_element ();
+
+	return 1;
+
+err_out:
+	fprintf (stderr, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	
+	return 0;
 }
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_post_set_tag (td_set *set)
 {
 	int ret = 0;
 	
-	ret = xmlTextWriterStartElement (writer, BAD_CAST "set");
-	if (ret < 0)
-		goto err_out;
+	xmlListWalk (set->cases, xml_write_case, NULL);
 	
-	ret = xmlTextWriterWriteAttribute (writer, 
-					   BAD_CAST "name", 
-					   set->name);
-	return 0;
-err_out:
-	return 1;
+	return xml_end_element();
 }
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_end_element ()
