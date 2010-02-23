@@ -194,7 +194,7 @@ int execute(const char* command, output_processor_callback process_output) {
 	int ret = 0;
 	char* argv[256];
 
-	parse_command_args(command, argv, 256);
+	parse_command_args(command, argv, sizeof(argv)-1);
 
 	pid = my_popen(&stdout_fd, &stderr_fd, argv[0], argv);
 
