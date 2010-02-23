@@ -32,10 +32,18 @@
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
+/** Result output type */
+typedef enum {
+	OUTPUT_TYPE_XML = 1,
+	OUTPUT_TYPE_TXT 
+} result_output;
+
 /** Used for storing and passing user (command line) options.*/
 typedef struct {
-	char *input_filename; /** the input xml file */
-	int   disable_schema; /** flag for disabling DTD validation */
+	char *input_filename; /**< the input xml file */
+	char *output_filename; /**< the result file */
+	int   disable_schema; /**< flag for disabling DTD validation */
+	result_output   output_type;   /**< result output type selector */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

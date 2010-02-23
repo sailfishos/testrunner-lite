@@ -27,6 +27,7 @@
 
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
+#include "testresultlogger.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -54,7 +55,7 @@ extern char* optarg;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-/* None */
+td_suite *current_suite = NULL;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -139,8 +140,17 @@ LOCAL int case_print (const void *data, const void *user) {
 LOCAL void print_suite (td_suite *s)
 {
 	printf ("SUITE = name:%s\n", s->name); 
-	td_suite_delete (s);
+	write_pre_suite_tag (s);
+	current_suite = s;
+	
 }
+/* ------------------------------------------------------------------------- */
+LOCAL void end_suite ()
+{
+	write_post_suite_tag ();
+	td_suite_delete (current_suite);
+}
+
 /* ------------------------------------------------------------------------- */
 LOCAL void print_set (td_set *s)
 {
@@ -151,7 +161,9 @@ LOCAL void print_set (td_set *s)
 	xmlListWalk (s->post_steps, step_print, NULL);
 	printf ("\tPost-steps:\n"); 
 	xmlListWalk (s->cases, case_print, NULL);
-	
+	write_pre_set_tag (s);
+	write_post_set_tag ();
+
 	td_set_delete (s);
 	return;
 }
@@ -192,11 +204,12 @@ int main (int argc, char *argv[], char *envp[])
 
 	memset (&opts, 0x0, sizeof(testrunner_lite_options));
         memset (&cbs, 0x0, sizeof(td_parser_callbacks));
-
+	opts.output_type = OUTPUT_TYPE_XML;
+	
 	while (1) {
 		option_idx = 0;
      
-		opt_char = getopt_long (argc, argv, "hvamcf:o:e:l:",
+		opt_char = getopt_long (argc, argv, "hvamcf:o:e:l:r:",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -217,6 +230,18 @@ int main (int argc, char *argv[], char *envp[])
 			break;
 		case 'c':
 			opts.disable_schema = 1;
+			break;
+		case 'r':
+			if (!strcmp (optarg, "xml"))
+				opts.output_type = OUTPUT_TYPE_XML;
+			else if (!strcmp (optarg, "text"))
+				opts.output_type = OUTPUT_TYPE_TXT;
+			else {
+				fprintf (stderr, "%s Unknown format %s\n",
+					 PROGNAME, optarg);
+				retval = EXIT_FAILURE;
+				goto OUT;
+			}
 			break;
 		case 'f':
 			ifile = fopen (optarg, "r");
@@ -239,6 +264,8 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			fclose (ofile);
+			opts.output_filename = malloc (strlen (optarg) + 1);
+			strcpy (opts.output_filename, optarg); 
 			break;
 		}
 	}
@@ -272,14 +299,21 @@ int main (int argc, char *argv[], char *envp[])
 	** Set callbacks for parser
 	*/
 	cbs.test_suite = print_suite;
+	cbs.test_suite_end = end_suite;
 	cbs.test_set = print_set;
-	
+
 	retval = td_register_callbacks (&cbs);
 	
 	/*
 	** Initialize the reader
 	*/
 	retval = td_reader_init(&opts);
+	if (retval)
+		goto OUT;
+	/*
+	** Initialize result logger
+	*/
+	retval =  init_result_logger(&opts);
 	if (retval)
 		goto OUT;
 	
@@ -289,8 +323,11 @@ int main (int argc, char *argv[], char *envp[])
 	while (td_next_node() == 0);
 	
 	td_reader_close();
+	close_result_logger();
+	
 OUT:
 	if (opts.input_filename) free (opts.input_filename);
+	if (opts.output_filename) free (opts.output_filename);
 	
 	return retval;
 }	

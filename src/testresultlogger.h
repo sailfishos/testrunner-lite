@@ -1,9 +1,9 @@
-/* * This file is part of testrunnerlite *
+/* * This file is part of testrunner-lite *
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  * All rights reserved.
  *
- * Contact: Sampo Saaristo <ext-sampo.1.saaristo@nokia.com>
+ * Contact: John Doe <John.Doe@nokia.com>
  *
  * This software, including documentation, is protected by copyright
  * controlled by Nokia Corporation. All rights are reserved. Copying,
@@ -14,14 +14,13 @@
  *
  */
 
-#ifndef TESTDEFINITIONPARSER_H
-#define TESTDEFINITIONPARSER_H
+#ifndef TESTRESULTLOGGER_H
+#define TESTRESULTLOGGER_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
 #include "testrunnerlite.h"
 #include "testdefinitiondatatypes.h"
-#include <libxml/xmlstring.h>
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -29,19 +28,13 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
+/* None */
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
-/** Callbacks for parser. Parser uses these to pass parsed data to caller. */
-typedef struct {
-        void (*test_suite) (td_suite *); /**< callback for suite handler    */
-        void (*test_suite_end) (); /**< callback for suite end handler */
-        void (*test_suite_description) (char *); /**< callback for suite 
-						    description */
+/* None */
 
-	void (*test_set) (td_set *);     /**< callback for set handler      */
-} td_parser_callbacks;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -52,17 +45,18 @@ typedef struct {
 
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
+int init_result_logger (testrunner_lite_options *);
 /* ------------------------------------------------------------------------- */
-int parse_test_definition(testrunner_lite_options *);
+void close_result_logger (void);
 /* ------------------------------------------------------------------------- */
-int td_reader_init(testrunner_lite_options *);
+int write_pre_suite_tag (td_suite *);
 /* ------------------------------------------------------------------------- */
-void td_reader_close(void);
+int write_post_suite_tag ();
 /* ------------------------------------------------------------------------- */
-int td_register_callbacks(td_parser_callbacks *);
+int write_pre_set_tag (td_set *);
 /* ------------------------------------------------------------------------- */
-int td_next_node(void);
+int write_post_set_tag ();
 /* ------------------------------------------------------------------------- */
 
-#endif                          /* TESTDEFINITIONPARSER_H */
+#endif                          /* TESTRESULTLOGGER_H */
 /* End of file */

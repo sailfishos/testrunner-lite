@@ -138,7 +138,7 @@ LOCAL td_step *td_parse_step()
 
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
-		    !xmlStrcmp (name, (xmlChar *)"step")));
+		    !xmlStrcmp (name, BAD_CAST "step")));
 	
 	return step;
  ERROUT:
@@ -175,7 +175,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 		}
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
-		    !xmlStrcmp (name, (xmlChar *)"step")) {
+		    !xmlStrcmp (name, BAD_CAST "step")) {
 			step = td_parse_step();
 			if (!step)
 				goto ERROUT;
@@ -187,7 +187,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 		}
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
-		    !xmlStrcmp (name, (xmlChar *)tag)));
+		    !xmlStrcmp (name, BAD_CAST tag)));
 	
 	return 0;
  ERROUT:
@@ -213,11 +213,11 @@ LOCAL int td_parse_case(td_set *s)
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
 		name = xmlTextReaderConstName(reader);
-		if (!xmlStrcmp (name, (xmlChar *)"name")) {
+		if (!xmlStrcmp (name, BAD_CAST "name")) {
 			c->name= xmlTextReaderValue(reader);
 			continue;
 		}
-		if (!xmlStrcmp (name, (xmlChar *)"timeout")) {
+		if (!xmlStrcmp (name, BAD_CAST "timeout")) {
 			c->timeout = strtoul(
 				(char *)xmlTextReaderConstValue(reader),
 				NULL, 10);
@@ -242,7 +242,7 @@ LOCAL int td_parse_case(td_set *s)
 		}
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
-		    !xmlStrcmp (name, (xmlChar *)"step")) {
+		    !xmlStrcmp (name, BAD_CAST "step")) {
 		    step = td_parse_step();
 		    if (!step)
 			    goto ERROUT;
@@ -255,7 +255,7 @@ LOCAL int td_parse_case(td_set *s)
 	    
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
-		    !xmlStrcmp (name, (xmlChar *)"case")));
+		    !xmlStrcmp (name, BAD_CAST "case")));
 	
 	xmlListInsert (s->cases, c);
 	
@@ -290,23 +290,23 @@ LOCAL int td_parse_suite ()
 	
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
 		name = xmlTextReaderConstName(reader);
-		if (!xmlStrcmp (name, (xmlChar *)"name")) {
+		if (!xmlStrcmp (name, BAD_CAST "name")) {
 			s->name= xmlTextReaderValue(reader);
 			continue;
 		}
-		if (!xmlStrcmp (name, (xmlChar *)"domain")) {
+		if (!xmlStrcmp (name, BAD_CAST "domain")) {
 			s->domain = xmlTextReaderValue(reader);
 			continue;
 		}
-		if (!xmlStrcmp (name, (xmlChar *)"type")) {
+		if (!xmlStrcmp (name, BAD_CAST "type")) {
 			s->suite_type = xmlTextReaderValue(reader);
 			continue;
 		}
-		if (!xmlStrcmp (name, (xmlChar *)"level")) {
+		if (!xmlStrcmp (name, BAD_CAST "level")) {
 			s->level = xmlTextReaderValue(reader);
 			continue;
 		}
-		if (!xmlStrcmp (name, (xmlChar *)"timeout")) {
+		if (!xmlStrcmp (name, BAD_CAST "timeout")) {
 			s->timeout = xmlTextReaderValue(reader);
 			continue;
 		}
@@ -334,7 +334,7 @@ LOCAL int td_parse_set ()
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
 		name = xmlTextReaderConstName(reader);
-		if (!xmlStrcmp (name, (xmlChar *)"name")) {
+		if (!xmlStrcmp (name, BAD_CAST "name")) {
 			s->name= xmlTextReaderValue(reader);
 			continue;
 		}
@@ -356,20 +356,20 @@ LOCAL int td_parse_set ()
 				 PROGNAME);
 			goto ERROUT;
 		}
-		if (!xmlStrcmp (name, (xmlChar *)"pre_steps"))
+		if (!xmlStrcmp (name, BAD_CAST "pre_steps"))
 			ret = !td_parse_steps(s->pre_steps, "pre_steps");
-		if (!xmlStrcmp (name, (xmlChar *)"post_steps"))
+		if (!xmlStrcmp (name, BAD_CAST "post_steps"))
 			ret = !td_parse_steps(s->post_steps, "post_steps");
-		if (!xmlStrcmp (name, (xmlChar *)"case"))
+		if (!xmlStrcmp (name, BAD_CAST "case"))
 			ret = !td_parse_case(s);
-		if (!xmlStrcmp (name, (xmlChar *)"environments"))
+		if (!xmlStrcmp (name, BAD_CAST "environments"))
 			ret = !td_parse_environments(s);
 
 		if (!ret)
 			goto ERROUT;
 	} while (!(xmlTextReaderNodeType(reader) == 
 		   XML_READER_TYPE_END_ELEMENT &&
-		   !xmlStrcmp (name, (xmlChar *)"set")));
+		   !xmlStrcmp (name, BAD_CAST "set")));
 	
 	cbs->test_set(s);
 
@@ -517,9 +517,10 @@ void td_reader_close ()
 /** Process next node from XML reader instance.
  *  @return 0 on success
  */
-int td_next_node(void) {
+int td_next_node (void) {
 	int ret;
 	const xmlChar *name;
+	xmlReaderTypes type;
 	
         ret = xmlTextReaderRead(reader);
 	
@@ -527,13 +528,24 @@ int td_next_node(void) {
 		return !ret;
 
 	name = xmlTextReaderConstName(reader);
+	type = xmlTextReaderNodeType(reader);
+
 	if (!name)
 		return 1;
 	
-	if (!xmlStrcmp (name, (xmlChar *)"suite"))
-		return td_parse_suite();
+	if (!xmlStrcmp (name, BAD_CAST "suite")) {
+		if (type == XML_READER_TYPE_ELEMENT)
+			return td_parse_suite();
+		else if (type == XML_READER_TYPE_END_ELEMENT) {
+			cbs->test_suite_end();
+			return 0;
+		}
+	}
+	
 
-	if (!xmlStrcmp (name, (xmlChar *)"set"))
+			
+
+	if (!xmlStrcmp (name, BAD_CAST "set"))
 		return td_parse_set();
 	
 	fprintf (stderr, "Unhandled tag %s\n", name);
