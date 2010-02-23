@@ -1,12 +1,18 @@
 bin_PROGRAMS = testrunner-lite
+
 testrunner_lite_SOURCES = main.c \
 	                  testdefinitionparser.c \
-	                  testdefinitiondatatypes.c
+	                  testdefinitiondatatypes.c \
+			  testresultlogger.c 
+
 testrunner_lite_LDFLAGS = -lxml2
+
 AM_CFLAGS = -I/usr/include/libxml2
+
 noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \
-	         testdefinitiondatatypes.h
+	         testdefinitiondatatypes.h \
+		 testresultlogger.h 
 
 install-data-local:
 	cp testdefinition.xsd $(DESTDIR)/usr/bin
