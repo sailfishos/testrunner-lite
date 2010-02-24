@@ -61,7 +61,6 @@ struct
     int (*write_post_suite_tag) (void);
     int (*write_pre_set_tag) (td_set *);
     int (*write_post_set_tag) (td_set *);
-
 } out_cbs;
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
@@ -78,15 +77,13 @@ LOCAL int xml_end_element ();
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_pre_suite_tag (td_suite *suite)
 {
-	int ret = 0;
 	
-	ret = xmlTextWriterStartElement (writer, BAD_CAST "suite");
-	if (ret < 0)
+	if (xmlTextWriterStartElement (writer, BAD_CAST "suite") < 0)
 		goto err_out;
 	
-	ret = xmlTextWriterWriteAttribute (writer, 
-					   BAD_CAST "name", 
-					   suite->name);
+	if (xmlTextWriterWriteAttribute (writer,  BAD_CAST "name", 
+					 suite->name) < 0)
+		goto err_out;
 	return 0;
 err_out:
 	return 1;
@@ -94,18 +91,15 @@ err_out:
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_pre_set_tag (td_set *set)
 {
-	int ret = 0;
 	
-	ret = xmlTextWriterStartElement (writer, BAD_CAST "set");
-	if (ret < 0)
+	if (xmlTextWriterStartElement (writer, BAD_CAST "set") < 0)
 		goto err_out;
 	
-	ret = xmlTextWriterWriteAttribute (writer, 
-					   BAD_CAST "name", 
-					   set->name);
-	if (ret < 0)
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "name", 
+					 set->name) < 0)
 		goto err_out;
-
+	
 	return 0;
 err_out:
 	return 1;
@@ -113,71 +107,79 @@ err_out:
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_step (const void *data, const void *user)
 {
-	int ret;
 	td_step *step = (td_step *)data;
 	struct tm *tm;
 
-	ret = xmlTextWriterStartElement (writer, BAD_CAST "step");
-	if (ret < 0)
+	if (xmlTextWriterStartElement (writer, BAD_CAST "step") < 0)
 		goto err_out;
 
-	ret = xmlTextWriterWriteAttribute (writer, 
-					   BAD_CAST "command", 
-					   step->step);
-	
-	ret = xmlTextWriterWriteFormatElement (writer,
-					       BAD_CAST "expected_result",
-					       "%d", step->expected_result);
-	if (ret < 0)
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "command", 
+					 step->step) < 0)
 		goto err_out;
 	
-	ret = xmlTextWriterWriteFormatElement (writer,
-					       BAD_CAST "return_code",
-					       "%d", step->return_code);
-	if (ret < 0)
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "result", 
+					 step->expected_result == 
+					 step->return_code ? 
+					 BAD_CAST "PASS" :
+					 BAD_CAST "FAIL") < 0)
+		goto err_out;
+
+	if (step->failure_info) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "result", 
+						 step->failure_info) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "expected_result",
+					     "%d", step->expected_result) < 0)
+		goto err_out;
+	
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "return_code",
+					     "%d", step->return_code) < 0)
 		goto err_out;
 	
 	tm =  localtime (&step->start);
-	ret = xmlTextWriterWriteFormatElement (writer,
-					       BAD_CAST "start",
-					       "%02d-%02d-%02d %02d:%02d:%02d", 
-					       tm->tm_year+1900,
-					       tm->tm_mon+1,
-					       tm->tm_mday,
-					       tm->tm_hour,
-					       tm->tm_min,
-					       tm->tm_sec);
-	if (ret < 0)
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "start",
+					     "%02d-%02d-%02d %02d:%02d:%02d", 
+					     tm->tm_year+1900,
+					     tm->tm_mon+1,
+					     tm->tm_mday,
+					     tm->tm_hour,
+					     tm->tm_min,
+					     tm->tm_sec) < 0)
 		goto err_out;
 
 	tm =  localtime (&step->end);
-	ret = xmlTextWriterWriteFormatElement (writer,
-					       BAD_CAST "end",
-					       "%02d-%02d-%02d %02d:%02d:%02d", 
-					       tm->tm_year+1900,
-					       tm->tm_mon+1,
-					       tm->tm_mday,
-					       tm->tm_hour,
-					       tm->tm_min,
-					       tm->tm_sec);
-	if (ret < 0)
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "end",
+					     "%02d-%02d-%02d %02d:%02d:%02d", 
+					     tm->tm_year+1900,
+					     tm->tm_mon+1,
+					     tm->tm_mday,
+					     tm->tm_hour,
+					     tm->tm_min,
+					     tm->tm_sec) < 0)
 		goto err_out;
 
 	if (step->stdout_)
-		ret = xmlTextWriterWriteFormatElement (writer,
-						       BAD_CAST "stdout",
-						       "%s", 
-						       step->stdout_);
-	if (ret < 0)
-		goto err_out;
+		if (xmlTextWriterWriteFormatElement (writer,
+						     BAD_CAST "stdout",
+						     "%s", 
+						     step->stdout_) < 0)
+			goto err_out;
 
 	if (step->stderr_)
-		ret = xmlTextWriterWriteFormatElement (writer,
-						       BAD_CAST "stderr",
-						       "%s", 
-						       step->stderr_);
-	if (ret < 0)
-		goto err_out;
+		if (xmlTextWriterWriteFormatElement (writer,
+						     BAD_CAST "stderr",
+						     "%s", 
+						     step->stderr_) < 0)
+			goto err_out;
 
 
 	xml_end_element();
@@ -191,32 +193,27 @@ err_out:
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_case (const void *data, const void *user)
 {
-	int ret;
 	td_case *c = (td_case *)data;
 
-	ret = xmlTextWriterStartElement (writer, BAD_CAST "case");
-	if (ret < 0)
+	if (xmlTextWriterStartElement (writer, BAD_CAST "case") < 0)
 		goto err_out;
 
-	ret = xmlTextWriterWriteAttribute (writer, 
-					   BAD_CAST "name", 
-					   c->name);
-	if (ret < 0)
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "name", 
+					 c->name) < 0)
 		goto err_out;
 
 	if (c->description)
-		ret = xmlTextWriterWriteAttribute (writer, 
-						   BAD_CAST "description", 
-						   c->description);
-	if (ret < 0)
-		goto err_out;
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "description", 
+						 c->description) < 0)
+			goto err_out;
 
-	ret = xmlTextWriterWriteAttribute (writer, 
-					   BAD_CAST "result", 
-					   c->passed ?
-					   BAD_CAST "FAIL" : BAD_CAST "PASS");
-	
-	if (ret < 0)
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "result", 
+					 c->passed ?
+					 BAD_CAST "FAIL" : BAD_CAST "PASS") < 0)
+	    
 		goto err_out;
 
 	xmlListWalk (c->steps, xml_write_step, NULL);
@@ -233,7 +230,6 @@ err_out:
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_post_set_tag (td_set *set)
 {
-	int ret = 0;
 	
 	xmlListWalk (set->cases, xml_write_case, NULL);
 	
@@ -242,10 +238,8 @@ LOCAL int xml_write_post_set_tag (td_set *set)
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_end_element ()
 {
-	int ret = 0;
 	
-	ret = xmlTextWriterFullEndElement (writer);
-	if (ret < 0)
+	if (xmlTextWriterFullEndElement (writer) < 0)
 		goto err_out;
 	return 0;
 err_out:
@@ -275,6 +269,7 @@ int init_result_logger (testrunner_lite_options *opts)
 			     PROGNAME, __FUNCTION__, opts->output_filename);
 		    return 1;
 	    }
+	    xmlTextWriterSetIndent (writer, 1);
 	    /*
 	     * Set callbacks
 	     */
@@ -282,7 +277,7 @@ int init_result_logger (testrunner_lite_options *opts)
 	    out_cbs.write_post_suite_tag = xml_end_element;
 	    out_cbs.write_pre_set_tag = xml_write_pre_set_tag;
 	    out_cbs.write_post_set_tag = xml_write_post_set_tag;
-	    
+	     
 	    
 	    break;
 	    
