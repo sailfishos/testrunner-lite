@@ -18,9 +18,12 @@
 /* INCLUDE FILES */
 #include <stdlib.h>
 #include <unistd.h>  		/* dup, pipe, fork, close, execvp */
-#include <string.h>		/* strtok */
+#include <string.h>		/* strtok, strncpy */
+#include <poll.h>
 #include <sys/wait.h>
 #include <stdio.h>
+
+#include <errno.h>
 
 #include "executor.h"
 
@@ -66,7 +69,7 @@
 static void parse_command_args(const char* command, char* argv[], int max_args);
 static void free_args(char* argv[]);
 static int my_popen(int* stdout_fd, int* stderr_fd, const char *command, char * argv[]);
-static int my_pclose(int pid, int* stdout_fd, int* stderr_fd);
+static int my_pclose(int pid, int stdout_fd, int stderr_fd);
 
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -112,8 +115,7 @@ static void free_args(char* argv[]) {
 	}
 }
 
-static int my_popen(int* stdout_fd, int* stderr_fd, const char *command, char * argv[])
-{
+static int my_popen(int* stdout_fd, int* stderr_fd, const char *command, char * argv[]) {
 	int out_pipe[2];
 	int err_pipe[2];
 	int pid;
@@ -164,11 +166,10 @@ error_out:
 	return -1;
 }
 
-static int my_pclose(int pid, int* stdout_fd, int* stderr_fd)
-{
+static int my_pclose(int pid, int stdout_fd, int stderr_fd) {
 	int rc, status;
-	close(*stdout_fd);
-	close(*stderr_fd);
+	close(stdout_fd);
+	close(stderr_fd);
 
 	rc = waitpid(pid, &status, 0);
 
@@ -183,33 +184,135 @@ static int my_pclose(int pid, int* stdout_fd, int* stderr_fd)
 	}
 }
 
+static char* reallocate(stream_data* data, int size) {
+	char* newptr = (char*)malloc(size);
+	char* oldptr = data->buffer;
+
+	if (newptr) {
+		if (data->buffer != NULL) {
+			memcpy(newptr, data->buffer, data->size);
+		}
+		data->buffer = newptr;
+		data->size = size;
+		if (oldptr != NULL) {
+			free(oldptr);
+		}
+	}
+
+	return newptr;
+}
+
+static int read_and_append(int fd, stream_data* data) {
+	int ret = 0;
+
+	if (data->buffer == NULL || (data->size - data->length < 4)) {
+		if (reallocate(data, data->size+1024) == NULL) {
+			return -1;
+		}
+	}
+
+	while ((ret = read(fd, &data->buffer[data->length], 4)) > 0) {
+		data->length += ret;
+		data->buffer[data->length] = '\0';
+	}
+
+	return ret;
+}
+
+static void process_output_streams(int stdout_fd, int stderr_fd, stream_data* stdout_data, stream_data* stderr_data) {
+	char out[1024];
+	char err[1024];
+	ssize_t bytes = 0;
+	char* p = out;
+	int poll_timeout = -1;
+	struct pollfd fds[2];
+	int ret = 0;
+	int i = 0;
+	int outeof = 0;
+	int erreof = 0;
+
+	fds[0].fd = stdout_fd;
+	fds[0].events = POLLIN;
+	fds[1].fd = stderr_fd;
+	fds[1].events = POLLIN;
+
+	while (!outeof && !erreof) {
+		ret = poll(fds, 2, poll_timeout);
+
+		switch(ret) {
+		case 0:
+			/* timeout */
+			return;
+			break;
+		case -1:
+			/* error */
+			printf("poll error\n");
+			return;
+			break;
+		default:
+			for(i = 0; i < 2; i++) {
+				if (fds[i].revents & POLLIN) {
+					if (fds[i].fd == stdout_fd) {
+						bytes = read_and_append(stdout_fd, stdout_data);
+						if (bytes <= 0) {
+							outeof = 1;
+						}
+					} else if (fds[i].fd == stderr_fd) {
+						bytes = read_and_append(stderr_fd, stderr_data);
+						if (bytes <= 0) {
+							erreof = 1;
+						}
+					}
+				}
+				if (fds[i].revents & POLLHUP) {
+					/* EOF for a pipe */
+					if (fds[i].fd == stdout_fd) {
+						outeof = 1;
+					} else if (fds[i].fd == stderr_fd) {
+						erreof = 1;
+					}
+				}
+			}
+			break;
+		}
+	}
+}
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 
-int execute(const char* command, output_processor_callback process_output) {
+int execute(const char* command, exec_data* data) {
 	int pid = 0;
 	int stdout_fd = 0;
 	int stderr_fd = 0;
 	int ret = 0;
 	char* argv[256];
 
-	parse_command_args(command, argv, 256);
+	parse_command_args(command, argv, sizeof(argv)-1);
 
 	pid = my_popen(&stdout_fd, &stderr_fd, argv[0], argv);
 
 	if (pid > 0) {
-		if (process_output != NULL) {
-			process_output(stdout_fd, stderr_fd);
-		}
-
-		ret = my_pclose(pid, &stdout_fd, &stderr_fd);
-		printf("retval=%d\n", ret);
+		process_output_streams(stdout_fd, stderr_fd, &data->stdout_data, &data->stderr_data);
+		ret = my_pclose(pid, stdout_fd, stderr_fd);
+		data->result = ret;
 	}
 
 	free_args(argv);
 
 	return 0;
+}
+
+void init_exec_data(exec_data* data) {
+	init_stream_data(&data->stdout_data);
+	init_stream_data(&data->stderr_data);
+}
+
+void init_stream_data(stream_data* data) {
+	data->buffer = NULL;
+	data->size = 0;
+	data->length = 0;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
