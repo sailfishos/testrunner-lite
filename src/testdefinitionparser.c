@@ -43,11 +43,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-td_parser_callbacks *cbs;
-xmlTextReaderPtr reader;
-xmlSchemaParserCtxtPtr schema_context = NULL;
-xmlSchemaPtr schema = NULL;
-
+/* None */
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
 /* None */
@@ -58,7 +54,10 @@ xmlSchemaPtr schema = NULL;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-/* None */
+LOCAL td_parser_callbacks *cbs;
+LOCAL xmlTextReaderPtr reader;
+LOCAL xmlSchemaParserCtxtPtr schema_context = NULL;
+LOCAL xmlSchemaPtr schema = NULL;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -79,6 +78,9 @@ LOCAL td_step *td_parse_step (void);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_case (td_set *s);
 /* ------------------------------------------------------------------------- */
+LOCAL int td_parse_environments(xmlListPtr);
+/* ------------------------------------------------------------------------- */
+LOCAL int td_parse_set ();
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -199,8 +201,6 @@ LOCAL int td_parse_case(td_set *s)
 	td_case *c = NULL;
 	int ret;
 
-	printf ("%s\n", __FUNCTION__);
-
 	c = td_case_create();
 	if (!c)
 		goto ERROUT;
@@ -262,6 +262,10 @@ ERROUT:
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/** Parse set environments and save them in list
+ *  @param list used for saving the enabled environments
+ *  @return 0 on success, 1 on error
+ */
 LOCAL int td_parse_environments(xmlListPtr list)
 {
 	int ret;

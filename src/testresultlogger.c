@@ -46,7 +46,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-xmlTextWriterPtr writer;
+LOCAL xmlTextWriterPtr writer;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -64,7 +64,19 @@ struct
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
+LOCAL int xml_write_pre_suite_tag (td_suite *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_pre_set_tag (td_set *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_step (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_case (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_post_set_tag (td_set *);
+/* ------------------------------------------------------------------------- */
 LOCAL int xml_end_element ();
+/* ------------------------------------------------------------------------- */
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -74,6 +86,10 @@ LOCAL int xml_end_element ();
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+/** Write suite start xml tag
+ * @param suite suite data
+ * @return 0 on success, 1 on error
+ */
 LOCAL int xml_write_pre_suite_tag (td_suite *suite)
 {
 	
@@ -88,11 +104,20 @@ err_out:
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/** Write pre-set xml tag, does nothing currently
+ * @param set set data
+ * @return 0 always
+ */
 LOCAL int xml_write_pre_set_tag (td_set *set)
 {
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Write step result xml
+ * @param data step data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
 LOCAL int xml_write_step (const void *data, const void *user)
 {
 	td_step *step = (td_step *)data;
@@ -179,6 +204,11 @@ err_out:
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Write case result xml
+ * @param data case data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
 LOCAL int xml_write_case (const void *data, const void *user)
 {
 	td_case *c = (td_case *)data;
@@ -216,6 +246,10 @@ err_out:
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Write set start tag and cases result xml
+ * @param set set data
+ * @return 0 on success, 1 on error
+ */
 LOCAL int xml_write_post_set_tag (td_set *set)
 {
 	
@@ -248,6 +282,9 @@ LOCAL int xml_write_post_set_tag (td_set *set)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/** Write end element tag
+ * @return 0 on success, 1 on error.
+ */
 LOCAL int xml_end_element ()
 {
 	
@@ -325,34 +362,54 @@ int init_result_logger (testrunner_lite_options *opts)
     return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Call pre_suite_tag callback
+ *  @param suite suite data
+ *  @return 0 on success
+ */
 int write_pre_suite_tag (td_suite *suite)
 {
 	return out_cbs.write_pre_suite_tag (suite);
 }
 /* ------------------------------------------------------------------------- */
+/** Call post_suite_tag callback
+ *  @param suite suite data
+ *  @return 0 on success
+ */
 int write_post_suite_tag (td_suite *suite)
 {
 	
 	return out_cbs.write_post_suite_tag ();
 }
 /* ------------------------------------------------------------------------- */
+/** Call pre_set_tag callback
+ *  @param set set data
+ *  @return 0 on success
+ */
 int write_pre_set_tag (td_set *set)
 {
 	return out_cbs.write_pre_set_tag (set);
 }
 /* ------------------------------------------------------------------------- */
+/** Call post_set_tag callback
+ *  @param set set data
+ *  @return 0 on success
+ */
 int write_post_set_tag (td_set *set)
 {
 	
 	return out_cbs.write_post_set_tag (set);
 }
 /* ------------------------------------------------------------------------- */
+/** Close the resul logger */
 void close_result_logger (void)
 {
-	xml_end_element(); /* </testresults> */	
-	xmlTextWriterFlush (writer);
-	xmlFreeTextWriter (writer);
-	
+	if (writer) {
+		xml_end_element(); /* </testresults> */	
+		xmlTextWriterFlush (writer);
+		xmlFreeTextWriter (writer);
+		writer = NULL;
+	}
+
 	return;
 }
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
