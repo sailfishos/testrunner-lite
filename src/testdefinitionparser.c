@@ -43,11 +43,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-td_parser_callbacks *cbs;
-xmlTextReaderPtr reader;
-xmlSchemaParserCtxtPtr schema_context = NULL;
-xmlSchemaPtr schema = NULL;
-
+/* None */
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
 /* None */
@@ -58,7 +54,10 @@ xmlSchemaPtr schema = NULL;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-/* None */
+LOCAL td_parser_callbacks *cbs;
+LOCAL xmlTextReaderPtr reader;
+LOCAL xmlSchemaParserCtxtPtr schema_context = NULL;
+LOCAL xmlSchemaPtr schema = NULL;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -79,6 +78,9 @@ LOCAL td_step *td_parse_step (void);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_case (td_set *s);
 /* ------------------------------------------------------------------------- */
+LOCAL int td_parse_environments(xmlListPtr);
+/* ------------------------------------------------------------------------- */
+LOCAL int td_parse_set ();
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -95,8 +97,6 @@ LOCAL td_step *td_parse_step()
 	td_step *step = NULL;
 	xmlNodePtr node;
 	int ret;
-
-	printf ("%s\n", __FUNCTION__);
 
 	step = td_step_create();
 	do {
@@ -133,8 +133,6 @@ LOCAL td_step *td_parse_step()
 				step->step = xmlStrdup(node->content);
 		
 		}
-		printf ("%s:%s:%d\n", __FUNCTION__, name,
-		    xmlTextReaderNodeType(reader));
 
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
@@ -157,8 +155,6 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 	const xmlChar *name;
 	td_step *step = NULL;
 	int ret;
-	
-	printf ("%s: %s\n", __FUNCTION__, tag);
 	
 	do {
 		ret = xmlTextReaderRead(reader);
@@ -204,8 +200,6 @@ LOCAL int td_parse_case(td_set *s)
 	td_step *step = NULL;
 	td_case *c = NULL;
 	int ret;
-
-	printf ("%s\n", __FUNCTION__);
 
 	c = td_case_create();
 	if (!c)
@@ -268,10 +262,57 @@ ERROUT:
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
-LOCAL int td_parse_environments(td_set *s)
+/** Parse set environments and save them in list
+ *  @param list used for saving the enabled environments
+ *  @return 0 on success, 1 on error
+ */
+LOCAL int td_parse_environments(xmlListPtr list)
 {
-	printf ("environments\n");
+	int ret;
+	const xmlChar *name;
+	xmlChar *value;
+	xmlChar *env;
+	printf ("%s\n", __FUNCTION__);
+
+	do {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			fprintf (stderr, "%s:%s: ReaderRead() fail\n",
+				 PROGNAME, __FUNCTION__);
+			
+			goto ERROUT;
+		}
+		/* Environment name (scratchbox, hardware) */
+		if (xmlTextReaderNodeType(reader) ==  XML_READER_TYPE_ELEMENT) {
+			name = xmlTextReaderConstName(reader);
+			if (!name) {
+				fprintf (stderr, "%s: ReaderName() fail\n",
+					 PROGNAME);
+				goto ERROUT;
+			}
+		}
+		/* add to list of environments if "true" */
+		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
+			value = xmlTextReaderReadString (reader);
+			if (!xmlStrcmp (value, BAD_CAST "true")) {
+				env = xmlStrdup(name);
+				if (xmlListInsert (list, env)) {
+					fprintf (stderr, 
+						 "%s:%s list insert failed\n",
+						 PROGNAME, __FUNCTION__);
+					goto ERROUT;
+				}
+			}
+			free (value);
+		}
+	} while (!(xmlTextReaderNodeType(reader) == 
+		   XML_READER_TYPE_END_ELEMENT &&
+		   !xmlStrcmp (xmlTextReaderConstName(reader), 
+			       BAD_CAST "environments")));
+	
 	return 0;
+ ERROUT:
+	return 1;
 }
 /* ------------------------------------------------------------------------- */
 /** Read test suite in to td_suite data structure and call pass it to callback
@@ -335,11 +376,16 @@ LOCAL int td_parse_set ()
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
 		name = xmlTextReaderConstName(reader);
 		if (!xmlStrcmp (name, BAD_CAST "name")) {
-			s->name= xmlTextReaderValue(reader);
+			s->name = xmlTextReaderValue(reader);
 			continue;
 		}
-		//fprintf (stderr, "%s :set contains unhandled attribute %s\n",
-		// PROGNAME, name);
+		if (!xmlStrcmp (name, BAD_CAST "description")) {
+			s->description = xmlTextReaderValue(reader);
+			continue;
+		}
+			
+		fprintf (stderr, "%s :set contains unhandled attribute %s\n",
+		PROGNAME, name);
 	}
 	
 	do {
@@ -363,8 +409,8 @@ LOCAL int td_parse_set ()
 		if (!xmlStrcmp (name, BAD_CAST "case"))
 			ret = !td_parse_case(s);
 		if (!xmlStrcmp (name, BAD_CAST "environments"))
-			ret = !td_parse_environments(s);
-
+			ret = !td_parse_environments(s->environments);
+		
 		if (!ret)
 			goto ERROUT;
 	} while (!(xmlTextReaderNodeType(reader) == 
@@ -545,7 +591,8 @@ int td_next_node (void) {
 
 			
 
-	if (!xmlStrcmp (name, BAD_CAST "set"))
+	if (!xmlStrcmp (name, BAD_CAST "set") && 
+	    type == XML_READER_TYPE_ELEMENT)
 		return td_parse_set();
 	
 	fprintf (stderr, "Unhandled tag %s\n", name);

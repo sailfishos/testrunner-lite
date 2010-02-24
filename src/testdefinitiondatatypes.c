@@ -117,6 +117,7 @@ td_set *td_set_create ()
 		fprintf (stderr, "%s: FATAL : OOM", PROGNAME);
 		return NULL;
 	}
+	memset (set, 0x0, sizeof (td_set));
 	set->pre_steps = xmlListCreate (td_step_delete, NULL);
 	set->post_steps = xmlListCreate (td_step_delete, NULL);
 	set->cases = xmlListCreate (td_case_delete, NULL);

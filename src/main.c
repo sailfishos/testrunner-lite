@@ -147,9 +147,6 @@ LOCAL int step_execute (const void *data, const void *user) {
 LOCAL int case_print (const void *data, const void *user) {
 
 	td_case *c = (td_case *)data;
-	printf ("\tCASE: %s\n", c->name);
-	if (c->timeout) printf ("\ttimeout: %lu\n", c->timeout);
-	printf ("\tsteps:\n");
 	xmlListWalk (c->steps, step_execute, NULL);
 
 	return 1;
@@ -160,7 +157,6 @@ LOCAL int case_print (const void *data, const void *user) {
  */
 LOCAL void print_suite (td_suite *s)
 {
-	printf ("SUITE = name:%s\n", s->name); 
 	write_pre_suite_tag (s);
 	current_suite = s;
 	
@@ -175,12 +171,8 @@ LOCAL void end_suite ()
 /* ------------------------------------------------------------------------- */
 LOCAL void print_set (td_set *s)
 {
-	printf ("SET: %s\n", s->name); 
-	printf ("\tPre-steps:\n"); 
 	xmlListWalk (s->pre_steps, step_print, NULL);
-	printf ("\tPost-steps:\n"); 
 	xmlListWalk (s->post_steps, step_print, NULL);
-	printf ("\tPost-steps:\n"); 
 	xmlListWalk (s->cases, case_print, NULL);
 	write_pre_set_tag (s);
 	write_post_set_tag (s);
@@ -288,6 +280,10 @@ int main (int argc, char *argv[], char *envp[])
 			opts.output_filename = malloc (strlen (optarg) + 1);
 			strcpy (opts.output_filename, optarg); 
 			break;
+		case 'e':
+			opts.environment = malloc (strlen (optarg) + 1);
+			strcpy (opts.environment, optarg); 
+			break;
 		}
 	}
 	
@@ -310,6 +306,11 @@ int main (int argc, char *argv[], char *envp[])
 			 PROGNAME);
 		retval = EXIT_FAILURE;
 		goto OUT;
+	}
+
+	if (!opts.environment) {
+		opts.environment = (char *)malloc (strlen ("hardware") + 1);
+		strcpy (opts.environment, "hardware");
 	}
 
 	retval = parse_test_definition (&opts);
@@ -349,6 +350,7 @@ int main (int argc, char *argv[], char *envp[])
 OUT:
 	if (opts.input_filename) free (opts.input_filename);
 	if (opts.output_filename) free (opts.output_filename);
+	if (opts.environment) free (opts.environment);
 	
 	return retval;
 }	

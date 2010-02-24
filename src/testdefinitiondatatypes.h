@@ -48,11 +48,14 @@ typedef struct {
 /** Test set. */
 typedef struct {
 	xmlChar   *name;         /**< Set name */
+	xmlChar   *description;  /**< Set description */
 	xmlListPtr pre_steps;    /**< Steps executed before each test case */
 	xmlListPtr post_steps;   /**< Steps executed after each test case */
 	xmlListPtr cases;        /**< Test cases in this set */
 	xmlListPtr environments; /**< Environments (hardware, scratchbox) */
 	xmlListPtr gets;         /**< Get commands */
+	/* Executor fills */
+	xmlChar    *environment; /**< Current environment */
 } td_set;
 /* ------------------------------------------------------------------------- */
 /** Test step. */
@@ -63,7 +66,7 @@ typedef struct {
 	int      expected_result; /**< expected result of step */
 	int      return_code;     /**< actual result of step */
 	/* Executor fills */
-	xmlChar *failure_info;    /**< expected result of step */
+	xmlChar *failure_info;    /**< optional failure info */
 	time_t   start;           /**< step execution start time */
 	time_t   end;             /**< step execution end time */
 	xmlChar *stdout_;         /**< step stdout printouts */
