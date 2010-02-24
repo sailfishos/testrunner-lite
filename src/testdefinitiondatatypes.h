@@ -34,28 +34,36 @@
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
-/** Test suite. */
+/** General attributes */
 typedef struct {
-	xmlChar *name;        /**< Suite name */
-        xmlChar *domain;
-        xmlChar *suite_type;
-        xmlChar *level;
-        xmlChar *timeout;
-        xmlChar *requirement;
-        xmlChar *description; /**< Suite description */
+	xmlChar *name;          /**< Name (for suite, set, case ...) */
+        xmlChar *description;   /**< Description */
+        xmlChar *requirement;   /**< Requirement attribute */
+	unsigned long timeout;  /**< Timeout (defaults to 90) */
+	xmlChar *level;         /**< Level (Component, Feature, System) */
+	int      manual;        /**< Manual flag (default false) */
+	int      insignificant; /**< Insignificant flag (default false) */
+} td_gen_attribs;
+
+/** Test suite */
+typedef struct {
+	td_gen_attribs gen;   /**< General attributes */
+	xmlChar    *domain;   /**< Domain */
+
 } td_suite;
 /* ------------------------------------------------------------------------- */
 /** Test set. */
 typedef struct {
-	xmlChar   *name;         /**< Set name */
-	xmlChar   *description;  /**< Set description */
+	td_gen_attribs gen;      /**< General attributes */
 	xmlListPtr pre_steps;    /**< Steps executed before each test case */
 	xmlListPtr post_steps;   /**< Steps executed after each test case */
 	xmlListPtr cases;        /**< Test cases in this set */
 	xmlListPtr environments; /**< Environments (hardware, scratchbox) */
 	xmlListPtr gets;         /**< Get commands */
+	
 	/* Executor fills */
 	xmlChar    *environment; /**< Current environment */
+	
 } td_set;
 /* ------------------------------------------------------------------------- */
 /** Test step. */
@@ -76,9 +84,8 @@ typedef struct {
 /** Test case */
 typedef struct {
 	/* Parser fills */
-	xmlChar   *name;        /**< Test case name */
-	xmlChar   *description; /**< Test case description */
-	unsigned long timeout;  /**< Test case timeout */
+	td_gen_attribs gen;     /**< General attributes */
+	xmlChar   *subfeature;   /**< Sub feature attribute */
 	xmlListPtr steps;       /**< Steps in this test case */
 	/* Executor fills */
 	int        passed;      /**< Flag stating whether this case is passed */

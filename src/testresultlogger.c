@@ -107,7 +107,7 @@ LOCAL int xml_write_pre_suite_tag (td_suite *suite)
 		goto err_out;
 	
 	if (xmlTextWriterWriteAttribute (writer,  BAD_CAST "name", 
-					 suite->name) < 0)
+					 suite->gen.name) < 0)
 		goto err_out;
 	return 0;
 err_out:
@@ -125,13 +125,13 @@ LOCAL int xml_write_pre_set_tag (td_set *set)
 	
 	if (xmlTextWriterWriteAttribute (writer, 
 					 BAD_CAST "name", 
-					 set->name) < 0)
+					 set->gen.name) < 0)
 		goto err_out;
 	
-	if (set->description)
+	if (set->gen.description)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "description", 
-						 set->description) < 0)
+						 set->gen.description) < 0)
 			goto err_out;
 	
 	if (set->environment)
@@ -249,14 +249,28 @@ LOCAL int xml_write_case (const void *data, const void *user)
 
 	if (xmlTextWriterWriteAttribute (writer, 
 					 BAD_CAST "name", 
-					 c->name) < 0)
+					 c->gen.name) < 0)
 		goto err_out;
-
-	if (c->description)
+	
+	if (c->gen.description)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "description", 
-						 c->description) < 0)
-			goto err_out;
+						 c->gen.description) < 0)
+		goto err_out;
+
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "manual", 
+					 BAD_CAST (c->gen.manual ? "true" :
+						   "false")) < 0)
+		goto err_out;
+
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "insignificant", 
+					 BAD_CAST (c->gen.insignificant ? 
+						   "true" :
+						   "false")) < 0)
+		goto err_out;
+
 
 	if (xmlTextWriterWriteAttribute (writer, 
 					 BAD_CAST "result", 
@@ -264,6 +278,25 @@ LOCAL int xml_write_case (const void *data, const void *user)
 					 BAD_CAST "FAIL" : BAD_CAST "PASS") < 0)
 	    
 		goto err_out;
+
+	if (c->subfeature)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "subfeature", 
+						 c->subfeature) < 0)
+		goto err_out;
+
+	if (c->gen.requirement)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "requirement", 
+						 c->gen.requirement) < 0)
+		goto err_out;
+
+	if (c->gen.level)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "level", 
+						 c->gen.level) < 0)
+		goto err_out;
+
 
 	xmlListWalk (c->steps, xml_write_step, NULL);
 
@@ -378,9 +411,9 @@ LOCAL int txt_write_case (const void *data, const void *user)
 	
 	fprintf (ofile, "----------------------------------"
 		 "----------------------------------\n");
-        fprintf (ofile, "    Test case name  : %s\n", c->name);
-        fprintf (ofile, "      description   : %s\n", c->description ? 
-		 (char *)c->description : "");
+        fprintf (ofile, "    Test case name  : %s\n", c->gen.name);
+        fprintf (ofile, "      description   : %s\n", c->gen.description ? 
+		 (char *)c->gen.description : "");
 	/*
 	self._writeline("      manual        : %s\n",)
         self._writeline("      requirement   : %s\n")
@@ -402,9 +435,9 @@ LOCAL int txt_write_pre_suite_tag (td_suite *suite)
 	fprintf (ofile, "----------------------------------"
 		 "----------------------------------\n");
 
-        fprintf (ofile, "Test suite name : %s\n", suite->name);
-	fprintf (ofile, "  description   : %s\n", suite->description ? 
-		 (char *)suite->description : " ");
+        fprintf (ofile, "Test suite name : %s\n", suite->gen.name);
+	fprintf (ofile, "  description   : %s\n", suite->gen.description ? 
+		 (char *)suite->gen.description : " ");
 	return 0;
 }
 
@@ -419,9 +452,9 @@ LOCAL int txt_write_pre_set_tag (td_set *set)
 	fprintf (ofile, "----------------------------------"
 		 "----------------------------------\n");
 
-	fprintf (ofile, "  Test set name   : %s\n", set->name);
-	fprintf (ofile,"    description   : %s\n", set->description ? 
-		 (char *)set->description : "");
+	fprintf (ofile, "  Test set name   : %s\n", set->gen.name);
+	fprintf (ofile,"    description   : %s\n", set->gen.description ? 
+		 (char *)set->gen.description : "");
 
 	return 0;
 

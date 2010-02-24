@@ -88,6 +88,56 @@ LOCAL int td_parse_set ();
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+LOCAL int td_parse_gen_attribs (td_gen_attribs *attr)
+{
+	const xmlChar *name;
+
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderConstName(reader);
+		if (!xmlStrcmp (name, BAD_CAST "name")) {
+			attr->name= xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "timeout")) {
+			attr->timeout = strtoul(
+						(char *)
+						xmlTextReaderConstValue(reader),
+						NULL, 10);
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "description")) {
+			attr->description =  xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "requirement")) {
+			attr->requirement =  xmlTextReaderValue(reader);
+			continue;
+		}
+		
+		if (!xmlStrcmp (name, BAD_CAST "level")) {
+			attr->level =  xmlTextReaderValue(reader);
+			continue;
+		}
+		
+		if (!xmlStrcmp (name, BAD_CAST "manual")) {
+			attr->manual = !xmlStrcmp (xmlTextReaderConstValue
+						   (reader), BAD_CAST "true");
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "insignificant")) {
+			attr->insignificant = 
+				!xmlStrcmp (xmlTextReaderConstValue (reader), 
+					    BAD_CAST "true");
+			continue;
+		}
+
+		fprintf (stderr, "%s :Unknown general attribute %s\n",
+			 PROGNAME, name);
+
+	}
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
 /** Parse one step  
  *  @return *td_step on success, NULL on error
  */
@@ -205,19 +255,8 @@ LOCAL int td_parse_case(td_set *s)
 	if (!c)
 		goto ERROUT;
 
-	while (xmlTextReaderMoveToNextAttribute(reader)) {
-		name = xmlTextReaderConstName(reader);
-		if (!xmlStrcmp (name, BAD_CAST "name")) {
-			c->name= xmlTextReaderValue(reader);
-			continue;
-		}
-		if (!xmlStrcmp (name, BAD_CAST "timeout")) {
-			c->timeout = strtoul(
-				(char *)xmlTextReaderConstValue(reader),
-				NULL, 10);
-			continue;
-		}
-	}
+	if (td_parse_gen_attribs (&c->gen))
+		goto ERROUT;
 
 	
 	do {
@@ -256,8 +295,8 @@ LOCAL int td_parse_case(td_set *s)
 	return 0;
 ERROUT:
 	xmlListDelete (c->steps);
-	if (c->name) free (c->name);
-	if (c->description) free (c->description);
+	if (c->gen.name) free (c->gen.name);
+	if (c->gen.description) free (c->gen.description);
 	free (c);
 	return 1;
 }
@@ -329,31 +368,12 @@ LOCAL int td_parse_suite ()
 	s = td_suite_create();
 	if (!s) return 1;
 	
-	while (xmlTextReaderMoveToNextAttribute(reader)) {
-		name = xmlTextReaderConstName(reader);
-		if (!xmlStrcmp (name, BAD_CAST "name")) {
-			s->name= xmlTextReaderValue(reader);
-			continue;
-		}
-		if (!xmlStrcmp (name, BAD_CAST "domain")) {
-			s->domain = xmlTextReaderValue(reader);
-			continue;
-		}
-		if (!xmlStrcmp (name, BAD_CAST "type")) {
-			s->suite_type = xmlTextReaderValue(reader);
-			continue;
-		}
-		if (!xmlStrcmp (name, BAD_CAST "level")) {
-			s->level = xmlTextReaderValue(reader);
-			continue;
-		}
-		if (!xmlStrcmp (name, BAD_CAST "timeout")) {
-			s->timeout = xmlTextReaderValue(reader);
-			continue;
-		}
-		//fprintf (stderr, "%s :suite contains unhandled attribute %s\n",
-		// PROGNAME, name);
-	}
+	//	if (!xmlStrcmp (name, BAD_CAST "domain")) {
+	//s->domain = xmlTextReaderValue(reader);
+	//continue;
+	//}
+	
+	td_parse_gen_attribs (&s->gen);
 	
 	cbs->test_suite(s);
 
@@ -373,21 +393,8 @@ LOCAL int td_parse_set ()
 		return 1;
 	s = td_set_create ();
 
-	while (xmlTextReaderMoveToNextAttribute(reader)) {
-		name = xmlTextReaderConstName(reader);
-		if (!xmlStrcmp (name, BAD_CAST "name")) {
-			s->name = xmlTextReaderValue(reader);
-			continue;
-		}
-		if (!xmlStrcmp (name, BAD_CAST "description")) {
-			s->description = xmlTextReaderValue(reader);
-			continue;
-		}
-			
-		fprintf (stderr, "%s :set contains unhandled attribute %s\n",
-		PROGNAME, name);
-	}
-	
+	if (td_parse_gen_attribs(&s->gen))
+		goto ERROUT;
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
@@ -473,7 +480,8 @@ int parse_test_definition (testrunner_lite_options *opts)
 	/*
 	 * 2) Create schema context from test defintion and validate against i
 	 */
-	schema_ctxt = xmlSchemaNewParserCtxt("/usr/bin/testdefinition.xsd");
+	schema_ctxt = xmlSchemaNewParserCtxt("/usr/share/test-definition/"
+					     "testdefinition-syntax.xsd");
 	if (schema_ctxt == NULL) {
 		fprintf (stderr, "%s: Failed to allocate schema context\n",
 			 PROGNAME);
@@ -523,7 +531,8 @@ int td_reader_init (testrunner_lite_options *opts)
 		
 	}
 
-	schema_context = xmlSchemaNewParserCtxt("/usr/bin/testdefinition.xsd");
+	schema_context = xmlSchemaNewParserCtxt("/usr/share/test-definition/"
+						"testdefinition-syntax.xsd");
 	if (schema_context == NULL) {
 		fprintf (stderr, "%s: Failed to allocate schema context\n",
 			 PROGNAME);
@@ -587,9 +596,6 @@ int td_next_node (void) {
 			return 0;
 		}
 	}
-	
-
-			
 
 	if (!xmlStrcmp (name, BAD_CAST "set") && 
 	    type == XML_READER_TYPE_ELEMENT)

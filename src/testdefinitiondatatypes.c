@@ -99,11 +99,12 @@ td_suite *td_suite_create()
  */
 void td_suite_delete(td_suite *s)
 {
-    if (s->name) free (s->name);
+    if (s->gen.name) free (s->gen.name);
     if (s->domain) free (s->domain);
+#if 0
     if (s->suite_type) free (s->suite_type);
-    if (s->level) free (s->level);
-    if (s->timeout) free (s->timeout);
+#endif
+    if (s->gen.level) free (s->gen.level);
     free (s);
 }
 /* ------------------------------------------------------------------------- */
@@ -132,7 +133,7 @@ td_set *td_set_create ()
  */
 void td_set_delete(td_set *s)
 {
-	free (s->name);
+	free (s->gen.name);
 	xmlListDelete (s->pre_steps);
 	xmlListDelete (s->post_steps);
 	xmlListDelete (s->cases);
@@ -193,8 +194,8 @@ void td_case_delete(xmlLinkPtr lk)
 	td_case *td_c = xmlLinkGetData (lk);
 	xmlListDelete (td_c->steps);
 	
-	if (td_c->name) free (td_c->name);
-	if (td_c->description) free (td_c->description);
+	if (td_c->gen.name) free (td_c->gen.name);
+	if (td_c->gen.description) free (td_c->gen.description);
 	free (td_c);
 }
 
