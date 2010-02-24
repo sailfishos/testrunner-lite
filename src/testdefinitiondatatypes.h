@@ -66,7 +66,7 @@ typedef struct {
 	int      expected_result; /**< expected result of step */
 	int      return_code;     /**< actual result of step */
 	/* Executor fills */
-	xmlChar *failure_info;    /**< expected result of step */
+	xmlChar *failure_info;    /**< optional failure info */
 	time_t   start;           /**< step execution start time */
 	time_t   end;             /**< step execution end time */
 	xmlChar *stdout_;         /**< step stdout printouts */

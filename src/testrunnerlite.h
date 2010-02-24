@@ -40,9 +40,10 @@ typedef enum {
 
 /** Used for storing and passing user (command line) options.*/
 typedef struct {
-	char *input_filename; /**< the input xml file */
+	char *input_filename;  /**< the input xml file */
 	char *output_filename; /**< the result file */
-	int   disable_schema; /**< flag for disabling DTD validation */
+	char *environment;     /**< execution environment */
+	int   disable_schema;  /**< flag for disabling DTD validation */
 	result_output   output_type;   /**< result output type selector */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */

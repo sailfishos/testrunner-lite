@@ -299,6 +299,10 @@ int main (int argc, char *argv[], char *envp[])
 			opts.output_filename = malloc (strlen (optarg) + 1);
 			strcpy (opts.output_filename, optarg); 
 			break;
+		case 'e':
+			opts.environment = malloc (strlen (optarg) + 1);
+			strcpy (opts.environment, optarg); 
+			break;
 		}
 	}
 	
@@ -321,6 +325,11 @@ int main (int argc, char *argv[], char *envp[])
 			 PROGNAME);
 		retval = EXIT_FAILURE;
 		goto OUT;
+	}
+
+	if (!opts.environment) {
+		opts.environment = (char *)malloc (strlen ("hardware") + 1);
+		strcpy (opts.environment, "hardware");
 	}
 
 	retval = parse_test_definition (&opts);
@@ -360,6 +369,7 @@ int main (int argc, char *argv[], char *envp[])
 OUT:
 	if (opts.input_filename) free (opts.input_filename);
 	if (opts.output_filename) free (opts.output_filename);
+	if (opts.environment) free (opts.environment);
 	
 	return retval;
 }	
