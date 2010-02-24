@@ -124,42 +124,22 @@ LOCAL int step_print (const void *data, const void *user) {
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
-LOCAL void output_processor(int stdout_fd, int stderr_fd) {
-	char out[1024];
-	char err[1024];
-	ssize_t bytes = 0;
-	char* p = out;
-
-	while ((bytes = read(stdout_fd, p, 128))) {
-		if(bytes < 0) {
-			break;
-		}
-		p += bytes;
-	}
-	*p = '\0';
-
-	p = err;
-	while ((bytes = read(stderr_fd, p, 128))) {
-		if(bytes < 0) {
-			break;
-		}
-		p += bytes;
-	}
-	*p = '\0';
-
-	printf("stdout:\n");
-	printf("%s", out);
-	printf("stderr:\n");
-	printf("%s", err);
-
-}
-/* ------------------------------------------------------------------------- */
 LOCAL int step_execute (const void *data, const void *user) {
 
 	td_step *step = (td_step *)data;
+	exec_data edata;
+	init_exec_data(&edata);
+
 	if (step->step) {
-		printf ("\t%s\n", step->step);
-		execute(step->step, output_processor);
+		execute(step->step, &edata);
+
+		if (edata.stdout_data.buffer) {
+			step->stdout_ = edata.stdout_data.buffer;
+		}
+		if (edata.stderr_data.buffer) {
+			step->stderr_ = edata.stderr_data.buffer;
+		}
+		step->return_code = edata.result;
 	}
 	return 1;
 }

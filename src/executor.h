@@ -34,6 +34,23 @@
 /* ------------------------------------------------------------------------- */
 typedef void (*output_processor_callback)(int stdout_fd, int stderr_fd);
 
+struct _stream_data {
+	char* buffer;
+	int size;
+	int length;
+};
+
+typedef struct _stream_data stream_data;
+
+struct _exec_data {
+	stream_data stdout_data;
+	stream_data stderr_data;
+	int result;
+	unsigned timeout;
+};
+
+typedef struct _exec_data exec_data;
+
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -45,7 +62,9 @@ typedef void (*output_processor_callback)(int stdout_fd, int stderr_fd);
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 
-int execute(const char* command, output_processor_callback process_output);
+int execute(const char* command, exec_data* data);
+void init_exec_data(exec_data* data);
+void init_stream_data(stream_data* data);
 
 /* ------------------------------------------------------------------------- */
 #endif                          /* TEMPLATE_H */
