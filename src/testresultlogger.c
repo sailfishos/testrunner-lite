@@ -48,7 +48,6 @@
 /* LOCAL GLOBAL VARIABLES */
 xmlTextWriterPtr writer;
 
-
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -91,18 +90,7 @@ err_out:
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_pre_set_tag (td_set *set)
 {
-	
-	if (xmlTextWriterStartElement (writer, BAD_CAST "set") < 0)
-		goto err_out;
-	
-	if (xmlTextWriterWriteAttribute (writer, 
-					 BAD_CAST "name", 
-					 set->name) < 0)
-		goto err_out;
-	
 	return 0;
-err_out:
-	return 1;
 }
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_step (const void *data, const void *user)
@@ -231,9 +219,33 @@ err_out:
 LOCAL int xml_write_post_set_tag (td_set *set)
 {
 	
+	if (xmlTextWriterStartElement (writer, BAD_CAST "set") < 0)
+		goto err_out;
+	
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "name", 
+					 set->name) < 0)
+		goto err_out;
+	
+	if (set->description)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "description", 
+						 set->description) < 0)
+			goto err_out;
+	
+	if (set->environment)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "environment", 
+						 set->environment) < 0)
+			goto err_out;
+	
+
+	
 	xmlListWalk (set->cases, xml_write_case, NULL);
 	
 	return xml_end_element();
+ err_out:
+	return 1;
 }
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_end_element ()
@@ -270,6 +282,26 @@ int init_result_logger (testrunner_lite_options *opts)
 		    return 1;
 	    }
 	    xmlTextWriterSetIndent (writer, 1);
+	    if (xmlTextWriterStartDocument(writer, 
+					   "1.0", 
+					   "UTF-8", 
+					   NULL) < 0) {
+		    fprintf (stderr, "%s:%s:failed to write document start\n",
+			     PROGNAME, __FUNCTION__);
+		    return 1;
+	    }
+		    
+	    if (xmlTextWriterStartElement (writer, BAD_CAST "testresults") 
+		< 0) {
+		    fprintf (stderr, "%s:%s:failed to write testsresults tag\n",
+			     PROGNAME, __FUNCTION__);
+		    return 1;
+	    }
+	    if (xmlTextWriterWriteAttribute (writer, 
+					     BAD_CAST "version", 
+					     BAD_CAST "1.0") < 0)
+		    return 1;
+
 	    /*
 	     * Set callbacks
 	     */
@@ -317,6 +349,7 @@ int write_post_set_tag (td_set *set)
 /* ------------------------------------------------------------------------- */
 void close_result_logger (void)
 {
+	xml_end_element(); /* </testresults> */	
 	xmlTextWriterFlush (writer);
 	xmlFreeTextWriter (writer);
 	

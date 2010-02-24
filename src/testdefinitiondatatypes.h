@@ -48,11 +48,14 @@ typedef struct {
 /** Test set. */
 typedef struct {
 	xmlChar   *name;         /**< Set name */
+	xmlChar   *description;  /**< Set description */
 	xmlListPtr pre_steps;    /**< Steps executed before each test case */
 	xmlListPtr post_steps;   /**< Steps executed after each test case */
 	xmlListPtr cases;        /**< Test cases in this set */
 	xmlListPtr environments; /**< Environments (hardware, scratchbox) */
 	xmlListPtr gets;         /**< Get commands */
+	/* Executor fills */
+	xmlChar    *environment; /**< Current environment */
 } td_set;
 /* ------------------------------------------------------------------------- */
 /** Test step. */
