@@ -55,6 +55,7 @@ typedef struct {
 /** Test set. */
 typedef struct {
 	td_gen_attribs gen;      /**< General attributes */
+	xmlChar   *feature;      /**< Feature attribute */
 	xmlListPtr pre_steps;    /**< Steps executed before each test case */
 	xmlListPtr post_steps;   /**< Steps executed after each test case */
 	xmlListPtr cases;        /**< Test cases in this set */

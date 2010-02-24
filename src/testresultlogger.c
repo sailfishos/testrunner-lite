@@ -279,7 +279,7 @@ LOCAL int xml_write_case (const void *data, const void *user)
 	    
 		goto err_out;
 
-	if (c->subfeature)
+	if (c->subfeature && strlen (c->subfeature))
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "subfeature", 
 						 c->subfeature) < 0)
@@ -296,7 +296,6 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 BAD_CAST "level", 
 						 c->gen.level) < 0)
 		goto err_out;
-
 
 	xmlListWalk (c->steps, xml_write_step, NULL);
 
@@ -347,24 +346,6 @@ LOCAL int txt_write_step (const void *data, const void *user)
 {
 	td_step *step = (td_step *)data;
 	struct tm *tm;
-	/*
-	  #show failure_info if there's any.
-	  if automatic_test.step_failure_info[index]:
-	  result_str = "%s (%s)" % (automatic_test.step_result[index],
-	  automatic_test.step_failure_info[index])
-	  else:
-	  result_str = automatic_test.step_result[index]
-	  
-            self._writeline(70*'-')
-            self._writeline("      Test step       : %s" % case.getSteps()[index]) #this is "description" in XML
-            self._writeline("        start         : %s" % automatic_test.started_on[index])
-            self._writeline("        end           : %s" % automatic_test.end_on[index])
-            self._writeline("        expected code : %s" % case.getExpectedResults()[index])
-            self._writeline("        return code   : %s" % automatic_test.return_code[index])
-            self._writeline("        result        : %s" % result_str)
-            self._writeline("        stdout        : %s" % automatic_test.stdout[index])
-            self._writeline("        stderr        : %s" % automatic_test.stderr[index])
-	*/
 	fprintf (ofile, "----------------------------------"
 		 "----------------------------------\n");
 	fprintf (ofile, "      Test step       : %s\n", step->step);

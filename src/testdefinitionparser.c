@@ -131,8 +131,6 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr)
 			continue;
 		}
 
-		fprintf (stderr, "%s :Unknown general attribute %s\n",
-			 PROGNAME, name);
 
 	}
 	return 0;
@@ -258,7 +256,11 @@ LOCAL int td_parse_case(td_set *s)
 	if (td_parse_gen_attribs (&c->gen))
 		goto ERROUT;
 
-	
+	if (xmlTextReaderMoveToAttribute (reader, 
+					  BAD_CAST "subfeature") == 1) {
+		c->subfeature =  xmlTextReaderValue(reader);
+	}
+
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
@@ -368,13 +370,11 @@ LOCAL int td_parse_suite ()
 	s = td_suite_create();
 	if (!s) return 1;
 	
-	//	if (!xmlStrcmp (name, BAD_CAST "domain")) {
-	//s->domain = xmlTextReaderValue(reader);
-	//continue;
-	//}
-	
 	td_parse_gen_attribs (&s->gen);
-	
+	if (xmlTextReaderMoveToAttribute (reader, 
+					  BAD_CAST "domain") == 1) {
+		s->domain =  xmlTextReaderValue(reader);
+	}
 	cbs->test_suite(s);
 
 	return 0;
@@ -395,6 +395,12 @@ LOCAL int td_parse_set ()
 
 	if (td_parse_gen_attribs(&s->gen))
 		goto ERROUT;
+
+	if (xmlTextReaderMoveToAttribute (reader, 
+					  BAD_CAST "feature") == 1) {
+		s->feature =  xmlTextReaderValue(reader);
+	}
+
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {

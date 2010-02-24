@@ -213,7 +213,7 @@ static int read_and_append(int fd, stream_data* data) {
 
 	while ((ret = read(fd, &data->buffer[data->length], 4)) > 0) {
 		data->length += ret;
-		data->buffer[data->length] = '\0';
+		data->buffer[data->length - 1] = '\0';
 	}
 
 	return ret;
