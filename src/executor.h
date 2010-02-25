@@ -65,6 +65,7 @@ typedef struct _exec_data exec_data;
 int execute(const char* command, exec_data* data);
 void init_exec_data(exec_data* data);
 void init_stream_data(stream_data* data);
+void clean_stream_data(stream_data* data);
 
 /* ------------------------------------------------------------------------- */
 #endif                          /* TEMPLATE_H */

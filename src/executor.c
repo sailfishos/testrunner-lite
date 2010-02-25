@@ -66,10 +66,13 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
+
 static void parse_command_args(const char* command, char* argv[], int max_args);
 static void free_args(char* argv[]);
 static int my_popen(int* stdout_fd, int* stderr_fd, const char *command, char * argv[]);
 static int my_pclose(int pid, int stdout_fd, int stderr_fd);
+static char* stream_data_realloc(stream_data* data, int size);
+static void stream_data_free(stream_data* data);
 
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -184,29 +187,35 @@ static int my_pclose(int pid, int stdout_fd, int stderr_fd) {
 	}
 }
 
-static char* reallocate(stream_data* data, int size) {
+static char* stream_data_realloc(stream_data* data, int size) {
 	char* newptr = (char*)malloc(size);
 	char* oldptr = data->buffer;
+	int length = data->size <= size ? data->size : size;
 
 	if (newptr) {
 		if (data->buffer != NULL) {
-			memcpy(newptr, data->buffer, data->size);
+			memcpy(newptr, oldptr, length);
 		}
 		data->buffer = newptr;
 		data->size = size;
-		if (oldptr != NULL) {
-			free(oldptr);
-		}
+		free(oldptr);
 	}
 
 	return newptr;
+}
+
+static void stream_data_free(stream_data* data) {
+	free(data->buffer);
+	data->buffer = NULL;
+	data->size = 0;
+	data->length = 0;
 }
 
 static int read_and_append(int fd, stream_data* data) {
 	int ret = 0;
 
 	if (data->buffer == NULL || (data->size - data->length < 4)) {
-		if (reallocate(data, data->size+1024) == NULL) {
+		if (stream_data_realloc(data, data->size+1024) == NULL) {
 			return -1;
 		}
 	}
@@ -214,7 +223,7 @@ static int read_and_append(int fd, stream_data* data) {
 	while ((ret = read(fd, &data->buffer[data->length], 4)) > 0) {
 		data->length += ret;
 		if (data->size - data->length < 4) {
-		    if (reallocate(data, data->size+1024) == NULL) {
+		    if (stream_data_realloc(data, data->size+1024) == NULL) {
 			return -1;
 		    }
 		}
@@ -319,6 +328,16 @@ void init_stream_data(stream_data* data) {
 	data->buffer = NULL;
 	data->size = 0;
 	data->length = 0;
+
+	/* try to allocate memory for stream data */
+	if (stream_data_realloc(data, 1024)) {
+		/* initialize with an empty string */
+		data->buffer[0] = '\0';
+	}
+}
+
+void clean_stream_data(stream_data* data) {
+	stream_data_free(data);
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
