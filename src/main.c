@@ -195,7 +195,7 @@ LOCAL void print_set (td_set *s)
  */
 int main (int argc, char *argv[], char *envp[])
 {
-	int h_flag = 0, v_flag = 0, a_flag = 0, m_flag = 0, A_flag;
+	int h_flag = 0, v_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0;
 	int opt_char, option_idx;
 	FILE *ifile = NULL, *ofile = NULL;
 	int retval = EXIT_SUCCESS;
