@@ -362,7 +362,6 @@ LOCAL int td_parse_environments(xmlListPtr list)
 LOCAL int td_parse_gets(xmlListPtr list)
 {
 	int ret;
-	const xmlChar *name;
 	xmlChar *value;
 
 	do {
@@ -401,7 +400,6 @@ LOCAL int td_parse_gets(xmlListPtr list)
 LOCAL int td_parse_suite ()
 {
 	td_suite *s;
-	const xmlChar *name;
 
 	if (!cbs->test_suite)
 		return 1;
@@ -527,8 +525,13 @@ int parse_test_definition (testrunner_lite_options *opts)
 	/*
 	 * 2) Create schema context from test defintion and validate against i
 	 */
-	schema_ctxt = xmlSchemaNewParserCtxt("/usr/share/test-definition/"
-					     "testdefinition-syntax.xsd");
+	if (opts->semantic_schema)
+	    schema_ctxt = xmlSchemaNewParserCtxt("/usr/share/test-definition/"
+						 "testdefinition-tm_terms.xsd");
+	else
+	    schema_ctxt = xmlSchemaNewParserCtxt("/usr/share/test-definition/"
+						 "testdefinition-syntax.xsd");
+	    
 	if (schema_ctxt == NULL) {
 		fprintf (stderr, "%s: Failed to allocate schema context\n",
 			 PROGNAME);
@@ -578,8 +581,17 @@ int td_reader_init (testrunner_lite_options *opts)
 		
 	}
 
-	schema_context = xmlSchemaNewParserCtxt("/usr/share/test-definition/"
-						"testdefinition-syntax.xsd");
+	if (opts->disable_schema)
+		return 0;
+	
+	if (opts->semantic_schema)
+		schema_context = xmlSchemaNewParserCtxt
+			("/usr/share/test-definition/"
+			 "testdefinition-tm_terms.xsd");
+	else
+		schema_context = xmlSchemaNewParserCtxt
+			("/usr/share/test-definition/"
+			 "testdefinition-syntax.xsd");
 	if (schema_context == NULL) {
 		fprintf (stderr, "%s: Failed to allocate schema context\n",
 			 PROGNAME);

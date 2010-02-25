@@ -113,6 +113,10 @@ LOCAL void usage()
 		"executed.\n");
 	printf ("  -c, --ci\tDisable validation of test "
 		"definition against schema.\n");
+	printf ("  -s, --semantic\n\t\tEnable validation of test "
+		"definition against stricter (semantics) schema.\n");
+	printf ("  -A, --validate-only\n\t\tDo only input xml validation, do not execute tests.\n");
+
 	return;
 }
 /* ------------------------------------------------------------------------- */
@@ -191,7 +195,7 @@ LOCAL void print_set (td_set *s)
  */
 int main (int argc, char *argv[], char *envp[])
 {
-	int h_flag = 0, v_flag = 0, a_flag = 0, m_flag = 0;
+	int h_flag = 0, v_flag = 0, a_flag = 0, m_flag = 0, A_flag;
 	int opt_char, option_idx;
 	FILE *ifile = NULL, *ofile = NULL;
 	int retval = EXIT_SUCCESS;
@@ -209,7 +213,10 @@ int main (int argc, char *argv[], char *envp[])
 			{"automatic", no_argument, &a_flag, 1},
 			{"manual", no_argument, &m_flag, 1},
 			{"filter", required_argument, NULL, 'l'},
-			{"ci", no_argument, &opts.disable_schema}
+			{"ci", no_argument, &opts.disable_schema},
+			{"semantic", no_argument, &opts.semantic_schema},
+			{"validate-only", no_argument, &A_flag}
+
 		};
 
 
@@ -218,11 +225,12 @@ int main (int argc, char *argv[], char *envp[])
 	memset (&opts, 0x0, sizeof(testrunner_lite_options));
         memset (&cbs, 0x0, sizeof(td_parser_callbacks));
 	opts.output_type = OUTPUT_TYPE_XML;
+	opts.run_automatic = opts.run_manual = 1;
 	
 	while (1) {
 		option_idx = 0;
      
-		opt_char = getopt_long (argc, argv, "hvamcf:o:e:l:r:",
+		opt_char = getopt_long (argc, argv, "hvaAsmcf:o:e:l:r:",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -243,6 +251,9 @@ int main (int argc, char *argv[], char *envp[])
 			break;
 		case 'c':
 			opts.disable_schema = 1;
+			break;
+		case 's':
+			opts.semantic_schema = 1;
 			break;
 		case 'r':
 			if (!strcmp (optarg, "xml"))
@@ -284,6 +295,9 @@ int main (int argc, char *argv[], char *envp[])
 			opts.environment = malloc (strlen (optarg) + 1);
 			strcpy (opts.environment, optarg); 
 			break;
+		case 'A':
+			A_flag = 1;
+			break;
 		}
 	}
 	
@@ -291,6 +305,19 @@ int main (int argc, char *argv[], char *envp[])
 		usage();
 		goto OUT;
 	}
+	
+	if (m_flag && a_flag) {
+		fprintf (stderr, 
+			 "%s: -a and -m are mutually exclusive\n",
+			 PROGNAME);
+		retval = EXIT_FAILURE;
+		goto OUT;
+	}
+
+	if (m_flag) 
+		opts.run_automatic = 0;
+	if (a_flag)
+		opts.run_manual = 0;
 
 	if (!ifile) {
 		fprintf (stderr, 
@@ -300,6 +327,13 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	}
 		
+	if (A_flag) {
+		retval = parse_test_definition (&opts);
+		printf ("%s: %s %s\n", PROGNAME, opts.input_filename, retval ?
+			"fails to validate" : "validates");
+		goto OUT;
+	}
+
 	if (!ofile) {
 		fprintf (stderr, 
 			 "%s: mandatory option missing -o output_file\n",
@@ -313,10 +347,7 @@ int main (int argc, char *argv[], char *envp[])
 		strcpy (opts.environment, "hardware");
 	}
 
-	retval = parse_test_definition (&opts);
-	if (retval)
-		goto OUT;
-
+	
 	/*
 	** Set callbacks for parser
 	*/

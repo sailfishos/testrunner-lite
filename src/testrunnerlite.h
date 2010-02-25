@@ -44,7 +44,11 @@ typedef struct {
 	char *output_filename; /**< the result file */
 	char *environment;     /**< execution environment */
 	int   disable_schema;  /**< flag for disabling DTD validation */
-	result_output   output_type;   /**< result output type selector */
+	int   semantic_schema; /**< flag for enabling sricter DTD */
+        result_output   output_type;   /**< result output type selector */
+	int   run_automatic;   /**< flag for automatic tests */  
+	int   run_manual;      /**< flag for manual tests */
+	int   verbose;         /**< print debug is set */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
