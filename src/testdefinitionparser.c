@@ -639,7 +639,7 @@ int td_next_node (void) {
 		if (type == XML_READER_TYPE_ELEMENT)
 			return td_parse_suite();
 		else if (type == XML_READER_TYPE_END_ELEMENT) {
-			cbs->test_suite_end();
+			if (cbs->test_suite_end) cbs->test_suite_end();
 			return 0;
 		}
 	}
