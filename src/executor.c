@@ -20,10 +20,8 @@
 #include <unistd.h>  		/* dup, pipe, fork, close, execvp */
 #include <string.h>		/* strtok, strncpy */
 #include <poll.h>
+#include <fcntl.h>
 #include <sys/wait.h>
-#include <stdio.h>
-
-#include <errno.h>
 
 #include "executor.h"
 
@@ -73,6 +71,8 @@ static int my_popen(int* stdout_fd, int* stderr_fd, const char *command, char * 
 static int my_pclose(int pid, int stdout_fd, int stderr_fd);
 static char* stream_data_realloc(stream_data* data, int size);
 static void stream_data_free(stream_data* data);
+static int read_and_append(int fd, stream_data* data);
+static void process_output_streams(int stdout_fd, int stderr_fd, stream_data* stdout_data, stream_data* stderr_data);
 
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -212,24 +212,31 @@ static void stream_data_free(stream_data* data) {
 }
 
 static int read_and_append(int fd, stream_data* data) {
+	const int read_size = 255;	/* number of bytes to read */
 	int ret = 0;
 
-	if (data->buffer == NULL || (data->size - data->length < 4)) {
-		if (stream_data_realloc(data, data->size+1024) == NULL) {
-			return -1;
-		}
+	if (data->buffer == NULL) {
+		return -2;
 	}
-	
-	while ((ret = read(fd, &data->buffer[data->length], 4)) > 0) {
-		data->length += ret;
-		if (data->size - data->length < 4) {
-		    if (stream_data_realloc(data, data->size+1024) == NULL) {
-			return -1;
-		    }
-		}
-		data->buffer[data->length] = '\0';
 
+	do {
+		/* is there allocated memory left for read_size bytes + terminating null ? */
+		if (data->size - data->length < read_size + 1) {
+			if (stream_data_realloc(data, data->size + 1024) == NULL) {
+				/* memory allocation failed */
+				return -3;
+			}
+		}
+
+		ret = read(fd, &data->buffer[data->length], read_size);
+
+		if (ret > 0) {
+			/* read was successful, update stream_data */
+			data->length += ret;
+			data->buffer[data->length] = '\0';
+		}
 	}
+	while (ret > 0);
 
 	return ret;
 }
@@ -246,6 +253,10 @@ static void process_output_streams(int stdout_fd, int stderr_fd, stream_data* st
 	int outeof = 0;
 	int erreof = 0;
 
+	/* Use non blocking mode suhc that read will not block */
+	fcntl(stdout_fd, F_SETFL, O_NONBLOCK);
+	fcntl(stderr_fd, F_SETFL, O_NONBLOCK);
+
 	fds[0].fd = stdout_fd;
 	fds[0].events = POLLIN;
 	fds[1].fd = stderr_fd;
@@ -261,7 +272,7 @@ static void process_output_streams(int stdout_fd, int stderr_fd, stream_data* st
 			break;
 		case -1:
 			/* error */
-			printf("poll error\n");
+			/* printf("poll error\n"); */
 			return;
 			break;
 		default:
@@ -269,12 +280,12 @@ static void process_output_streams(int stdout_fd, int stderr_fd, stream_data* st
 				if (fds[i].revents & POLLIN) {
 					if (fds[i].fd == stdout_fd) {
 						bytes = read_and_append(stdout_fd, stdout_data);
-						if (bytes <= 0) {
+						if (bytes == 0) {
 							outeof = 1;
 						}
 					} else if (fds[i].fd == stderr_fd) {
 						bytes = read_and_append(stderr_fd, stderr_data);
-						if (bytes <= 0) {
+						if (bytes == 0) {
 							erreof = 1;
 						}
 					}
