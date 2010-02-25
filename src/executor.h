@@ -35,7 +35,7 @@
 typedef void (*output_processor_callback)(int stdout_fd, int stderr_fd);
 
 struct _stream_data {
-	char* buffer;
+	unsigned char* buffer;
 	int size;
 	int length;
 };

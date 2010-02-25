@@ -69,7 +69,7 @@ static void parse_command_args(const char* command, char* argv[], int max_args);
 static void free_args(char* argv[]);
 static int my_popen(int* stdout_fd, int* stderr_fd, const char *command, char * argv[]);
 static int my_pclose(int pid, int stdout_fd, int stderr_fd);
-static char* stream_data_realloc(stream_data* data, int size);
+static void* stream_data_realloc(stream_data* data, int size);
 static void stream_data_free(stream_data* data);
 static int read_and_append(int fd, stream_data* data);
 static void process_output_streams(int stdout_fd, int stderr_fd, stream_data* stdout_data, stream_data* stderr_data);
@@ -187,9 +187,9 @@ static int my_pclose(int pid, int stdout_fd, int stderr_fd) {
 	}
 }
 
-static char* stream_data_realloc(stream_data* data, int size) {
-	char* newptr = (char*)malloc(size);
-	char* oldptr = data->buffer;
+static void* stream_data_realloc(stream_data* data, int size) {
+	unsigned char* newptr = (unsigned char*)malloc(size);
+	unsigned char* oldptr = data->buffer;
 	int length = data->size <= size ? data->size : size;
 
 	if (newptr) {
@@ -201,7 +201,7 @@ static char* stream_data_realloc(stream_data* data, int size) {
 		free(oldptr);
 	}
 
-	return newptr;
+	return (void*)newptr;
 }
 
 static void stream_data_free(stream_data* data) {
@@ -242,10 +242,7 @@ static int read_and_append(int fd, stream_data* data) {
 }
 
 static void process_output_streams(int stdout_fd, int stderr_fd, stream_data* stdout_data, stream_data* stderr_data) {
-	char out[1024];
-	char err[1024];
-	ssize_t bytes = 0;
-	char* p = out;
+	int bytes = 0;
 	int poll_timeout = -1;
 	struct pollfd fds[2];
 	int ret = 0;
@@ -310,8 +307,8 @@ static void process_output_streams(int stdout_fd, int stderr_fd, stream_data* st
 
 int execute(const char* command, exec_data* data) {
 	int pid = 0;
-	int stdout_fd = 0;
-	int stderr_fd = 0;
+	int stdout_fd = -1;
+	int stderr_fd = -1;
 	int ret = 0;
 	char* argv[256];
 
