@@ -210,10 +210,16 @@ static int read_and_append(int fd, stream_data* data) {
 			return -1;
 		}
 	}
-
+	
 	while ((ret = read(fd, &data->buffer[data->length], 4)) > 0) {
 		data->length += ret;
-		data->buffer[data->length - 1] = '\0';
+		if (data->size - data->length < 4) {
+		    if (reallocate(data, data->size+1024) == NULL) {
+			return -1;
+		    }
+		}
+		data->buffer[data->length] = '\0';
+
 	}
 
 	return ret;

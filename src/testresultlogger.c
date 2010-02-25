@@ -279,7 +279,7 @@ LOCAL int xml_write_case (const void *data, const void *user)
 	    
 		goto err_out;
 
-	if (c->subfeature && strlen (c->subfeature))
+	if (c->subfeature)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "subfeature", 
 						 c->subfeature) < 0)

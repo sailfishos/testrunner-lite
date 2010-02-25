@@ -177,7 +177,7 @@ LOCAL void print_set (td_set *s)
 	write_pre_set_tag (s);
 	write_post_set_tag (s);
 
-	//td_set_delete (s);
+	td_set_delete (s);
 	return;
 }
 /* ------------------------------------------------------------------------- */
