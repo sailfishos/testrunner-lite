@@ -1,4 +1,4 @@
-/* * This file is part of testrunnerlite *
+/* * This file is part of testrunner-lite *
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  * All rights reserved.
@@ -79,6 +79,8 @@ LOCAL td_step *td_parse_step (void);
 LOCAL int td_parse_case (td_set *s);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_environments(xmlListPtr);
+/* ------------------------------------------------------------------------- */
+LOCAL int td_parse_gets(xmlListPtr);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_set ();
 /* ------------------------------------------------------------------------- */
@@ -303,7 +305,7 @@ ERROUT:
 /* ------------------------------------------------------------------------- */
 /** Parse set environments and save them in list
  *  @param list used for saving the enabled environments
- *  @return 0 on success, 1 on error
+ *  @retunr 0 on success, 1 on error
  */
 LOCAL int td_parse_environments(xmlListPtr list)
 {
@@ -311,7 +313,6 @@ LOCAL int td_parse_environments(xmlListPtr list)
 	const xmlChar *name;
 	xmlChar *value;
 	xmlChar *env;
-	printf ("%s\n", __FUNCTION__);
 
 	do {
 		ret = xmlTextReaderRead(reader);
@@ -348,6 +349,46 @@ LOCAL int td_parse_environments(xmlListPtr list)
 		   XML_READER_TYPE_END_ELEMENT &&
 		   !xmlStrcmp (xmlTextReaderConstName(reader), 
 			       BAD_CAST "environments")));
+	
+	return 0;
+ ERROUT:
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
+/** Parse <get> element, add filenames to list
+ *  @param list used for saving "get" filenames
+ *  @retunr 0 on success, 1 on error
+ */
+LOCAL int td_parse_gets(xmlListPtr list)
+{
+	int ret;
+	const xmlChar *name;
+	xmlChar *value;
+
+	do {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			fprintf (stderr, "%s:%s: ReaderRead() fail\n",
+				 PROGNAME, __FUNCTION__);
+			
+			goto ERROUT;
+		}
+		/* add to list get files */
+		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
+			value = xmlTextReaderReadString (reader);
+			if (xmlListInsert (list, value)) {
+				fprintf (stderr, 
+					 "%s:%s list insert failed\n",
+					 PROGNAME, __FUNCTION__);
+				goto ERROUT;
+			}
+			printf ("GET %s\n", value);
+			
+		}
+	} while (!(xmlTextReaderNodeType(reader) == 
+		   XML_READER_TYPE_END_ELEMENT &&
+		   !xmlStrcmp (xmlTextReaderConstName(reader), 
+			       BAD_CAST "get")));
 	
 	return 0;
  ERROUT:
@@ -420,8 +461,10 @@ LOCAL int td_parse_set ()
 		if (!xmlStrcmp (name, BAD_CAST "case"))
 			ret = !td_parse_case(s);
 		if (!xmlStrcmp (name, BAD_CAST "environments"))
-			ret = !td_parse_environments(s->environments);
-		
+		    ret = !td_parse_environments(s->environments);
+		if (!xmlStrcmp (name, BAD_CAST "get"))
+		    ret = !td_parse_gets(s->gets);
+
 		if (!ret)
 			goto ERROUT;
 	} while (!(xmlTextReaderNodeType(reader) == 

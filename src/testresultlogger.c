@@ -440,13 +440,20 @@ LOCAL int txt_write_pre_suite_tag (td_suite *suite)
 	
 	return 0;
 }
-
+/* ------------------------------------------------------------------------- */
+/** Write post suite to text file - does not do anything at the moment
+ * @return 0 on always
+ */
 LOCAL int txt_write_post_suite_tag ()
 {
 	return 0;
 
 }
-
+/* ------------------------------------------------------------------------- */
+/** Write pre set information to text file
+ * @param set set data
+ * @return 0 on always
+ */
 LOCAL int txt_write_pre_set_tag (td_set *set)
 {
 	fprintf (ofile, "----------------------------------"
@@ -465,7 +472,11 @@ LOCAL int txt_write_pre_set_tag (td_set *set)
 	return 0;
 
 }
-
+/* ------------------------------------------------------------------------- */
+/** Write post set information to text file - loop through test cases
+ * @param set set data
+ * @return 0 on always
+ */
 LOCAL int txt_write_post_set_tag (td_set *set)
 {
 	
