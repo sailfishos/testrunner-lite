@@ -130,8 +130,6 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr)
 					    BAD_CAST "true");
 			continue;
 		}
-
-
 	}
 	return 0;
 }

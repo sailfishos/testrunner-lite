@@ -67,7 +67,9 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-
+LOCAL void list_string_delete (xmlLinkPtr);
+/* ------------------------------------------------------------------------- */
+LOCAL void gen_attribs_delete (td_gen_attribs *);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -75,7 +77,26 @@
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-
+/* ------------------------------------------------------------------------- */
+/** Deallocator for list with xmlchar* items
+ *  @param lk list item
+ */
+LOCAL void list_string_delete (xmlLinkPtr lk)
+{
+	xmlChar *string = (xmlChar *)xmlLinkGetData (lk);
+	free (string);
+}
+/* ------------------------------------------------------------------------- */
+/** Deallocator for general attributes 
+ *  @param gen general attributes 
+ */
+LOCAL void gen_attribs_delete (td_gen_attribs *gen)
+{
+	free (gen->name);
+	free (gen->description);
+	free (gen->requirement);
+	free (gen->level);
+}
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -99,13 +120,12 @@ td_suite *td_suite_create()
  */
 void td_suite_delete(td_suite *s)
 {
-    if (s->gen.name) free (s->gen.name);
-    if (s->domain) free (s->domain);
+	gen_attribs_delete (&s->gen);
+	if (s->domain) free (s->domain);
 #if 0
-    if (s->suite_type) free (s->suite_type);
+	if (s->suite_type) free (s->suite_type);
 #endif
-    if (s->gen.level) free (s->gen.level);
-    free (s);
+	free (s);
 }
 /* ------------------------------------------------------------------------- */
 /** Creates a td_set data structure, initializes lists for pre_steps etc.
@@ -122,9 +142,9 @@ td_set *td_set_create ()
 	set->pre_steps = xmlListCreate (td_step_delete, NULL);
 	set->post_steps = xmlListCreate (td_step_delete, NULL);
 	set->cases = xmlListCreate (td_case_delete, NULL);
-	set->environments = xmlListCreate (NULL, NULL);
-	set->gets = xmlListCreate (NULL, NULL);
-	
+	set->environments = xmlListCreate (list_string_delete, NULL);
+	set->gets = xmlListCreate (list_string_delete, NULL);
+
 	return set;
 }
 /* ------------------------------------------------------------------------- */
@@ -133,12 +153,15 @@ td_set *td_set_create ()
  */
 void td_set_delete(td_set *s)
 {
-	free (s->gen.name);
+	gen_attribs_delete(&s->gen);
+	free (s->feature);
+	
 	xmlListDelete (s->pre_steps);
 	xmlListDelete (s->post_steps);
 	xmlListDelete (s->cases);
 	xmlListDelete (s->environments);
 	xmlListDelete (s->gets);
+	free (s->environment);
 	free (s);
 }
 /* ------------------------------------------------------------------------- */
@@ -184,6 +207,9 @@ void td_step_delete(xmlLinkPtr lk)
 	if (step->step)
 		free (step->step);
 
+	free (step->stdout_);
+	free (step->stderr_);
+	
 	free (step);
 }
 /* ------------------------------------------------------------------------- */
@@ -194,8 +220,7 @@ void td_case_delete(xmlLinkPtr lk)
 	td_case *td_c = xmlLinkGetData (lk);
 	xmlListDelete (td_c->steps);
 	
-	if (td_c->gen.name) free (td_c->gen.name);
-	if (td_c->gen.description) free (td_c->gen.description);
+	gen_attribs_delete(&td_c->gen);
 	free (td_c);
 }
 
