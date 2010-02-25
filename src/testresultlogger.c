@@ -87,6 +87,8 @@ LOCAL int txt_write_pre_set_tag (td_set *set);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_post_set_tag (td_set *set);
 /* ------------------------------------------------------------------------- */
+LOCAL int txt_write_case (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -377,7 +379,8 @@ LOCAL int txt_write_step (const void *data, const void *user)
 		 step->stdout_ ? (char *)step->stdout_ : " ");
 	fprintf (ofile, "        stderr        : %s\n",
 		 step->stderr_ ? (char *)step->stderr_ : " ");
-	
+	fflush (ofile);
+
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -395,14 +398,25 @@ LOCAL int txt_write_case (const void *data, const void *user)
         fprintf (ofile, "    Test case name  : %s\n", c->gen.name);
         fprintf (ofile, "      description   : %s\n", c->gen.description ? 
 		 (char *)c->gen.description : "");
-	/*
-	self._writeline("      manual        : %s\n",)
-        self._writeline("      requirement   : %s\n")
-        self._writeline("      subfeature    : %s\n")
-        self._writeline("      type          : %s\n")
-        self._writeline("      level         : %s\n")
-        self._writeline("      insignificant : %s\n")
-	*/
+	fprintf (ofile, "      manual        : %s\n", c->gen.manual ?
+		 "true" : "false");
+	
+	if (c->gen.requirement)
+	    fprintf (ofile, "      requirement   : %s\n", c->gen.requirement);
+	if (c->subfeature)
+	    fprintf (ofile, "      subfeature    : %s\n", c->subfeature);
+#if 0
+	if (c->gen.type)
+	    fprintf (ofile, "      type          : %s\n", c->gen.type);
+#endif
+	if (c->gen.level)
+	    fprintf (ofile, "      level         : %s\n", c->gen.level);
+	
+        fprintf (ofile, "      insignificant : %s\n", c->gen.insignificant ?
+		 "true" : "false");
+	
+	fflush (ofile);
+
 	xmlListWalk (c->steps, txt_write_step, NULL);
 
 	return 0;
@@ -419,32 +433,55 @@ LOCAL int txt_write_pre_suite_tag (td_suite *suite)
         fprintf (ofile, "Test suite name : %s\n", suite->gen.name);
 	fprintf (ofile, "  description   : %s\n", suite->gen.description ? 
 		 (char *)suite->gen.description : " ");
+	if (suite->domain)
+		fprintf (ofile, "  domain        : %s\n", suite->domain);
+	
+	fflush (ofile);
+	
 	return 0;
 }
-
+/* ------------------------------------------------------------------------- */
+/** Write post suite to text file - does not do anything at the moment
+ * @return 0 on always
+ */
 LOCAL int txt_write_post_suite_tag ()
 {
 	return 0;
 
 }
-
+/* ------------------------------------------------------------------------- */
+/** Write pre set information to text file
+ * @param set set data
+ * @return 0 on always
+ */
 LOCAL int txt_write_pre_set_tag (td_set *set)
 {
 	fprintf (ofile, "----------------------------------"
 		 "----------------------------------\n");
 
 	fprintf (ofile, "  Test set name   : %s\n", set->gen.name);
-	fprintf (ofile,"    description   : %s\n", set->gen.description ? 
+	fprintf (ofile, "    description   : %s\n", set->gen.description ? 
 		 (char *)set->gen.description : "");
+	if (set->feature)
+		fprintf (ofile, "    feature       : %s\n", set->feature);
+	
+	fprintf (ofile, "    environment   : %s\n", set->environment ? 
+		 (char *)set->environment : "");
 
+	fflush (ofile);
 	return 0;
 
 }
-
+/* ------------------------------------------------------------------------- */
+/** Write post set information to text file - loop through test cases
+ * @param set set data
+ * @return 0 on always
+ */
 LOCAL int txt_write_post_set_tag (td_set *set)
 {
 	
 	xmlListWalk (set->cases, txt_write_case, NULL);
+	fflush (ofile);
 	
 	return 0;
 }
@@ -505,7 +542,7 @@ int init_result_logger (testrunner_lite_options *opts)
 	    /*
 	     * Open results file
 	     */
-	    ofile = fopen (opts->output_filename, "w");
+	    ofile = fopen (opts->output_filename, "w+");
 	    if (!ofile)  {
 		    fprintf (stderr, "%s:%s:failed to open file %s %s\n",
 			     PROGNAME, __FUNCTION__, opts->output_filename,
