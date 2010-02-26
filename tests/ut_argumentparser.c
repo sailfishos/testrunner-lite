@@ -148,6 +148,33 @@ START_TEST (test_parse_cmd_line_invalid_arguments)
 
 END_TEST
 
+START_TEST (test_semantic_and_validate_only_flags)
+
+    /* Test parsing command line arguments. */
+    int ret;
+    char cmd[1024];
+
+    /* Test invalid semantics with basic xsd  */
+    sprintf (cmd, "%s -A -f %s ", TESTRUNNERLITE_BIN, 
+	     TESTDATA_INVALID_SEMANTIC_XML_1);
+    ret = system (cmd);
+    fail_if (ret, cmd);
+
+    /* Test invalid semantics with stricter xsd  */
+    sprintf (cmd, "%s -s -A -f %s ", TESTRUNNERLITE_BIN, 
+	     TESTDATA_INVALID_SEMANTIC_XML_1);
+    ret = system (cmd);
+    fail_unless (ret, cmd);
+
+    /* Test invalid semantics with stricter xsd, but disable with -c  */
+    sprintf (cmd, "%s -c -s -A -f %s ", TESTRUNNERLITE_BIN, 
+	     TESTDATA_INVALID_SEMANTIC_XML_1);
+    ret = system (cmd);
+    fail_if (ret, cmd);
+
+END_TEST
+
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -166,6 +193,11 @@ Suite *make_argumentparser_suite (void)
     tc = tcase_create ("Test parsing invalid cmd line arguments.");
     tcase_add_test (tc, test_parse_cmd_line_invalid_arguments);
     suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test that -A and -s flags work correctly.");
+    tcase_add_test (tc, test_semantic_and_validate_only_flags);
+    suite_add_tcase (s, tc);
+
     
     return s;
 }

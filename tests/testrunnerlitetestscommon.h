@@ -29,6 +29,7 @@
 /* MACROS */
 #define TESTDATA_VALID_XML_1    "/usr/share/testrunner-lite-tests/testdata/sample_input_file.xml"
 #define TESTDATA_INVALID_XML_1    "/usr/share/testrunner-lite-tests/testdata/invalid.xml"
+#define TESTDATA_INVALID_SEMANTIC_XML_1    "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-semantic_invalid.xml"
 
 #define TESTRUNNERLITE_BIN  "/usr/bin/testrunner-lite"
 

@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="testrunner-tests">
+    <description>Tests for CITA Testrunner</description>
+
+    <set name="TestFilters" feature="Filtering">
+      <description>Unit tests for filters.</description>
+
+      <pre_steps> <!-- testing -->
+        <step>pwd</step> 
+      </pre_steps>
+
+      <!-- Attributes below are set for additional testing purposes only -->
+      <case name="testManualtestFilterForManualTests">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testManualtestFilterForManualTests</step>
+      </case>
+      <case name="testManualtestFilterForAutomaticTests">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testManualtestFilterForAutomaticTests</step>
+      </case>
+      <case name="testEnvironmentFilterHardware">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testEnvironmentFilterHardware</step>
+      </case>
+      <case name="testEnvironmentFilterScratchbox">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testEnvironmentFilterScratchbox</step>
+      </case>
+      <case name="testDomainFilter">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testDomainFilter</step>
+      </case>
+      <case name="testFeatureFilter">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testFeatureFilter</step>
+      </case>
+      <case name="testRequirementFilter">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testRequirementFilter</step>
+      </case>
+      <case name="testTypeFilter">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testTypeFilter</step>
+      </case>
+      <case name="testInsignificantFilter">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testInsignificantFilter</step>
+      </case>
+      <case name="testLevelFilter">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testLevelFilter</step>
+      </case>
+      <case name="testSubfeatureFilter">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestFilters.testSubfeatureFilter</step>
+      </case>
+
+      <post_steps> <!-- testing -->
+        <step>cd</step> 
+      </post_steps>
+
+      <environments> <!-- testing -->
+        <scratchbox>true</scratchbox> 
+        <hardware>true</hardware>
+      </environments>
+
+      <get> <!-- testing get tag. Any file will do here. -->
+        <file>/etc/services</file> 
+      </get>
+
+    </set>
+
+    <set name="TestHardwareInfo">
+      <description>Unit tests for HardwareInfo</description>
+      <case name="testDefaultData">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestHardwareInfo.testDefaultData</step>
+      </case>
+    </set>
+
+    <set name="TestTestrunnerBasic">
+      <description>Basic system level tests for testrunner.</description>
+      <case name="testCommandLineOptionsWrong">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerBasic.testCommandLineOptionsWrong</step>
+      </case>
+      <case name="testCommandLineOptionsInvalidFilters">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerBasic.testCommandLineOptionsInvalidFilters</step>
+      </case>
+      <case name="testBadInputXML">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerBasic.testBadInputXML</step>
+      </case>
+      <case name="testInvalidInputXML">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerBasic.testInvalidInputXML</step>
+      </case>
+      <case name="testAll">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerBasic.testAll</step>
+      </case>
+      <case name="testTextOutput">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerBasic.testTextOutput</step>
+      </case>
+    </set>
+
+    <set name="TestTestrunnerFiltering" feature="Testrunner" level="System">
+      <description>System level tests for filtering.</description>
+      <case name="testFilterStringEmpty">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerFiltering.testFilterStringEmpty</step>
+      </case>
+      <case name="testFilterByDomain">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerFiltering.testFilterByDomain</step>
+      </case>
+      <case name="testFilterByFeature">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerFiltering.testFilterByFeature</step>
+      </case>
+      <case name="testFilterInvalidValueSpaceNotQuoted">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerFiltering.testFilterInvalidValueSpaceNotQuoted</step>
+      </case>
+      <case name="testFilterValueWithSpace">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerFiltering.testFilterValueWithSpace</step>
+      </case>
+      <case name="testFilterValueHasQuotationMark">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerFiltering.testFilterValueHasQuotationMark</step>
+      </case>
+      <case name="testFilterCombo">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerFiltering.testFilterCombo</step>
+      </case>
+      <!-- case name="">
+        <step>cd /usr/share/testrunner; python2.5 tests.py TestTestrunnerFiltering.testFilterValueHasEqualSign</step>
+      </case -->
+    </set>
+  </suite>
+
+  <suite name="testsuite2" domain="cita" type="Robustness" level="System"> 
+    <description>Second test suite is to verify that multiple test suites can be given.</description>
+    <set name="testset2">
+      <case name="meaningless_test">
+        <description>Meaningless test</description>
+        <step>cd</step>
+      </case>
+      <case name="insignificant_test_failing" insignificant="true">
+        <description>Insignificant test that just fails.</description>
+        <step expected_result="1">echo moi</step>
+      </case>
+      <case name="insignificant_test_timing_out" insignificant="true" timeout="1">
+        <description>Insignificant test that fails by timing out.</description>
+        <step>sleep 2</step>
+      </case>
+    </set>
+  </suite>
+
+  <suite name="testsuite3" domain="cita" type="Robustness" level="FOO"> 
+    <description>Tests defined for specific environments: HW-only and SB-only</description>
+    <set name="sb-testset">
+      <case name="sb_test">
+        <description>A test defined only for scratchbox</description>
+        <step>cd</step>
+      </case>
+      <environments>
+        <scratchbox>true</scratchbox>
+        <hardware>false</hardware>
+      </environments>
+    </set>
+    <set name="hw-testset">
+      <case name="hw_test">
+        <description>A test defined only for hardware</description>
+        <step>cd</step>
+      </case>
+      <environments>
+        <scratchbox>false</scratchbox>
+        <hardware>true</hardware>
+      </environments>
+    </set>
+  </suite>
+
+
+  <suite name="requirements_tests"> 
+    <description>Tests for testing correct handling of requirements</description>
+    <set name="requirements_tests">
+      <case name="one_requirement" requirement="MTIS-188">
+        <description>This test tests the basic case of only one requirement defined</description>
+        <step>cd</step>
+      </case>
+      <case name="many_requirements" requirement="MTIS-188,MTIS-202,MTIS-162">
+        <description>This test case defines multiple requirements as a comma separated list</description>
+        <step>cd</step>
+      </case>
+      <case name="many_requirements_with_whitespace" requirement="  MTIS-188 ,MTIS-202   ,MTIS-162 ">
+        <description>This test case defines multiple requirements as a comma separated list and some extra whitespaces</description>
+        <step>cd</step>
+      </case>
+      <case name="empty_requirement" requirement="">
+        <description>This test has an empty requirement string</description>
+        <step>cd</step>
+      </case>
+      <case name="no_requirement">
+        <description>This test does not have a requirement attribute at all</description>
+        <step>cd</step>
+      </case>
+    </set>
+  </suite>
+  <suite name="utf8_tests" domain="cita" type="Functional" level="System"> 
+    <description>Tests for checking non-utf8 output handling</description>
+    <set name="utf8_tests">
+      <case name="utf8_test_with_bad_output" requirement="MTIS-188">
+    <description>Test for checking non-utf8 output handling</description>
+        <step>cat /usr/share/testrunner/testdata/bad_output.xml</step>
+      </case>
+      <case name="xml_encoding_test" requirement="MTIS-188">
+    <description>Test that outputs some xml</description>
+        <step>cat /usr/share/testrunner/testdata/bad.xml</step>
+      </case>
+    </set>
+  </suite>
+</testdefinition>
+
