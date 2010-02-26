@@ -75,7 +75,7 @@ START_TEST (test_parse_cmd_line_arguments)
 
     /* Test parsing command line arguments. */
     int ret;
-    char cmd[128];
+    char cmd[1024];
     char *out_file = "/tmp/testrunner-lite.out.xml";
     
     /* Test -f and -o flag. */
@@ -95,10 +95,9 @@ START_TEST (test_parse_cmd_line_arguments)
     fail_if (ret != 0, cmd);
 
     /* Test -r text */
-    sprintf (cmd, "%s -f %s -o -r text", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    sprintf (cmd, "%s -f %s -o %s -r text", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
-
 
 
 END_TEST

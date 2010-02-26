@@ -68,8 +68,6 @@ char  *suite_description;
 /* ------------------------------------------------------------------------- */
 LOCAL void ut_test_suite (td_suite *);
 /* ------------------------------------------------------------------------- */
-LOCAL void ut_test_suite_end (); 
-/* ------------------------------------------------------------------------- */
 LOCAL void ut_test_suite_description (char *); 
 /* ------------------------------------------------------------------------- */
 LOCAL void ut_test_set (td_set *);     
@@ -85,10 +83,6 @@ LOCAL void ut_test_suite (td_suite *s)
     if (suite)
 	td_suite_delete (suite);
     suite = s;
-}
-/* ------------------------------------------------------------------------- */
-LOCAL void ut_test_suite_end ()
-{
 }
 /* ------------------------------------------------------------------------- */
 LOCAL void ut_test_suite_description (char *desc)
