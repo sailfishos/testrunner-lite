@@ -67,8 +67,6 @@ char  *suite_description;
 /* ------------------------------------------------------------------------- */
 LOCAL void ut_test_suite (td_suite *);
 /* ------------------------------------------------------------------------- */
-LOCAL void ut_test_suite_end (); 
-/* ------------------------------------------------------------------------- */
 LOCAL void ut_test_suite_description (char *); 
 /* ------------------------------------------------------------------------- */
 LOCAL void ut_test_set (td_set *);     
@@ -84,10 +82,6 @@ LOCAL void ut_test_suite (td_suite *s)
     if (suite)
 	td_suite_delete (suite);
     suite = s;
-}
-/* ------------------------------------------------------------------------- */
-LOCAL void ut_test_suite_end ()
-{
 }
 /* ------------------------------------------------------------------------- */
 LOCAL void ut_test_suite_description (char *desc)
@@ -240,7 +234,7 @@ START_TEST (test_reader_set)
     td_suite_delete (suite);
     suite = NULL;
 
-    fail_unless (set);
+    fail_unless (set != NULL);
     fail_if (strcmp ((const char *)set->gen.name, "testset3"));
     fail_if (strcmp ((const char *)set->gen.name, "testset3"));
     fail_if (strcmp ((const char *)set->gen.description, "set description 1"));
