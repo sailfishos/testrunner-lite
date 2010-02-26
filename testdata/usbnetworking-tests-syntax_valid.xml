@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="1.0">
+  <description>USB networking tests</description>
+  <suite name="usb-networking-tests-suite" domain="AutomatedTesting">
+    <set name="usb-networking-tests">
+      <environments>
+        <scratchbox>false</scratchbox>
+      </environments>
+      <case name="usb-network-driver-test">
+	<description>Check that usb network driver has been installed</description>
+	<step>lsmod | cut -d ' ' -f 1 | grep g_nokia</step>
+      </case>
+      <case name="ping-executable-test">
+	<description>Test that ping executable can be found from system</description>
+	<step>which ping</step>
+      </case>
+      <case name="local-ping-test">
+
+	<step>ping -c 2 192.168.2.14</step>
+      </case>
+      <case name="pc-ping-test" type="Integration">
+	<description>Try to ping host PC</description>
+	<step>ping -c 2 192.168.2.15</step>
+      </case>
+    </set>
+  </suite>
+</testdefinition>
