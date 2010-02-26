@@ -327,12 +327,14 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	}
 		
+	retval = parse_test_definition (&opts);
 	if (A_flag) {
-		retval = parse_test_definition (&opts);
 		printf ("%s: %s %s\n", PROGNAME, opts.input_filename, retval ?
 			"fails to validate" : "validates");
 		goto OUT;
 	}
+	if (retval)
+		goto OUT;
 
 	if (!ofile) {
 		fprintf (stderr, 
