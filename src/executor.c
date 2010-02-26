@@ -67,7 +67,7 @@
 
 static void parse_command_args(const char* command, char* argv[], int max_args);
 static void free_args(char* argv[]);
-static int my_popen(int* stdout_fd, int* stderr_fd, const char *command, char * argv[]);
+static int my_popen(int* stdout_fd, int* stderr_fd, const char *command);
 static int my_pclose(int pid, int stdout_fd, int stderr_fd);
 static void* stream_data_realloc(stream_data* data, int size);
 static void stream_data_free(stream_data* data);
@@ -118,7 +118,29 @@ static void free_args(char* argv[]) {
 	}
 }
 
-static int my_popen(int* stdout_fd, int* stderr_fd, const char *command, char * argv[]) {
+static int exec_wrapper(const char *command) {
+	int ret = 0;
+	char* argv[4];
+
+	argv[0] = (char*)malloc(strlen(SHELLCMD) + 1);
+	strcpy(argv[0], SHELLCMD);
+	argv[1] = (char*)malloc(strlen(SHELLCMD_ARG1) + 1);
+	strcpy(argv[1], SHELLCMD_ARG1);
+	argv[2] = (char*)malloc(strlen(command) + 1);
+	strcpy(argv[2], command);
+	argv[3] = NULL;
+
+	/* on success, execvp does not return */
+	ret = execvp(argv[0], argv);
+
+	free(argv[0]);
+	free(argv[1]);
+	free(argv[2]);
+	
+	return ret;
+}
+
+static int my_popen(int* stdout_fd, int* stderr_fd, const char *command) {
 	int out_pipe[2];
 	int err_pipe[2];
 	int pid;
@@ -150,8 +172,8 @@ static int my_popen(int* stdout_fd, int* stderr_fd, const char *command, char * 
 		close(2);
 		dup(err_pipe[1]);
 
-		execvp(command, (char**)argv);
-		/* TODO: Handle error */
+		exec_wrapper(command);
+		/* execution should never reach this point */
 		exit(1);
 	} else {
 		goto error_fork;
@@ -310,12 +332,9 @@ int execute(const char* command, exec_data* data) {
 	int stdout_fd = -1;
 	int stderr_fd = -1;
 	int ret = 0;
-	char* argv[256];
-
-	parse_command_args(command, argv, sizeof(argv)-1);
 
 	data->start_time = time(NULL);
-	pid = my_popen(&stdout_fd, &stderr_fd, argv[0], argv);
+	pid = my_popen(&stdout_fd, &stderr_fd, command);
 
 	if (pid > 0) {
 		process_output_streams(stdout_fd, stderr_fd, &data->stdout_data, &data->stderr_data);
@@ -324,7 +343,6 @@ int execute(const char* command, exec_data* data) {
 	}
 
 	data->end_time = time(NULL);
-	free_args(argv);
 
 	return 0;
 }
