@@ -14,8 +14,10 @@
  *
  */
 
-#ifndef TEMPLATE_H
-#define TEMPLATE_H
+#ifndef EXECUTOR_H
+#define EXECUTOR_H
+
+#include <time.h>
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
@@ -46,7 +48,10 @@ struct _exec_data {
 	stream_data stdout_data;
 	stream_data stderr_data;
 	int result;
-	unsigned timeout;
+	time_t start_time;
+	time_t end_time;
+	unsigned soft_timeout;
+	unsigned hard_timeout;
 };
 
 typedef struct _exec_data exec_data;
@@ -68,6 +73,6 @@ void init_stream_data(stream_data* data);
 void clean_stream_data(stream_data* data);
 
 /* ------------------------------------------------------------------------- */
-#endif                          /* TEMPLATE_H */
+#endif                          /* EXECUTOR_H */
 /* End of file */
 

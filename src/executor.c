@@ -314,6 +314,7 @@ int execute(const char* command, exec_data* data) {
 
 	parse_command_args(command, argv, sizeof(argv)-1);
 
+	data->start_time = time(NULL);
 	pid = my_popen(&stdout_fd, &stderr_fd, argv[0], argv);
 
 	if (pid > 0) {
@@ -322,6 +323,7 @@ int execute(const char* command, exec_data* data) {
 		data->result = ret;
 	}
 
+	data->end_time = time(NULL);
 	free_args(argv);
 
 	return 0;

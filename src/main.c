@@ -134,8 +134,11 @@ LOCAL int step_execute (const void *data, const void *user) {
 	exec_data edata;
 	init_exec_data(&edata);
 
+	edata.soft_timeout = 90;
+	edata.hard_timeout = edata.soft_timeout + 5;
+
 	if (step->step) {
-		execute(step->step, &edata);
+		execute((char*)step->step, &edata);
 
 		if (edata.stdout_data.buffer) {
 			step->stdout_ = edata.stdout_data.buffer;
@@ -143,7 +146,10 @@ LOCAL int step_execute (const void *data, const void *user) {
 		if (edata.stderr_data.buffer) {
 			step->stderr_ = edata.stderr_data.buffer;
 		}
+
 		step->return_code = edata.result;
+		step->start = edata.start_time;
+		step->end = edata.end_time;
 	}
 	return 1;
 }
