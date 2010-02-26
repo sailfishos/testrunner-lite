@@ -79,9 +79,27 @@ START_TEST (test_parse_cmd_line_arguments)
     char *out_file = "/tmp/testrunner-lite.out.xml";
     
     /* Test -f and -o flag. */
-    sprintf (cmd, "%s -f %s -o %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    sprintf (cmd, "%s -f %s -o %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, 
+	     out_file);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
+
+    /* Test -A  */
+    sprintf (cmd, "%s -f %s -A", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
+    /* Test -A -s flag. */
+    sprintf (cmd, "%s -f %s -A --semantic", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
+    /* Test -r text */
+    sprintf (cmd, "%s -f %s -o -r text", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
+
 
 END_TEST
 
@@ -110,6 +128,24 @@ START_TEST (test_parse_cmd_line_invalid_arguments)
     sprintf (cmd, "%s -o %s", TESTRUNNERLITE_BIN, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
+
+    /* Test -a and -m both. */
+    sprintf (cmd, "%s -f  %s -a -m", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test invalid -r. */
+    sprintf (cmd, "%s -f %s -o %s -r foo", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test invalid -e without argument. */
+    sprintf (cmd, "%s -f %s -o %s -e", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
 
 END_TEST
 

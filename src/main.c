@@ -236,7 +236,7 @@ int main (int argc, char *argv[], char *envp[])
 	while (1) {
 		option_idx = 0;
      
-		opt_char = getopt_long (argc, argv, "hvaAsmcf:o:e:l:r:",
+		opt_char = getopt_long (argc, argv, ":hvaAsmcf:o:e:l:r:",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -304,9 +304,25 @@ int main (int argc, char *argv[], char *envp[])
 		case 'A':
 			A_flag = 1;
 			break;
+		case ':':
+			fprintf (stderr, "%s missing argument - exiting\n",
+				 PROGNAME);
+			retval = EXIT_FAILURE;
+			goto OUT;
+			break;
+		case '?':
+			fprintf (stderr, "%s unknown option - exiting\n",
+				 PROGNAME);
+			retval = EXIT_FAILURE;
+			goto OUT;
+			break;
+
 		}
 	}
 	
+	/*
+	 * Do some post-validation for the options
+	 */
 	if (h_flag) {
 		usage();
 		goto OUT;
@@ -332,7 +348,9 @@ int main (int argc, char *argv[], char *envp[])
 		retval = EXIT_FAILURE;
 		goto OUT;
 	}
-		
+	/*
+	 * Validate the input xml
+	 */
 	retval = parse_test_definition (&opts);
 	if (A_flag) {
 		printf ("%s: %s %s\n", PROGNAME, opts.input_filename, retval ?
