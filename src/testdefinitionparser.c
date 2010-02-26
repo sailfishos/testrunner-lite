@@ -660,7 +660,7 @@ int td_next_node (void) {
 	    type == XML_READER_TYPE_ELEMENT)
 		return td_parse_set();
 	
-	fprintf (stderr, "Unhandled tag %s\n", name);
+	/* fprintf (stderr, "Unhandled tag %s\n", name); */
 	
 	return !ret;
 } 
