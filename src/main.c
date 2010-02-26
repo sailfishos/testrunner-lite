@@ -71,9 +71,11 @@ td_suite *current_suite = NULL;
 /* ------------------------------------------------------------------------- */
 LOCAL void usage();
 /* ------------------------------------------------------------------------- */
-LOCAL void print_suite(td_suite *);
+LOCAL void process_suite(td_suite *);
 /* ------------------------------------------------------------------------- */
-LOCAL void print_set(td_set *);
+LOCAL void process_set(td_set *);
+/* ------------------------------------------------------------------------- */
+LOCAL int process_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -120,14 +122,6 @@ LOCAL void usage()
 	return;
 }
 /* ------------------------------------------------------------------------- */
-LOCAL int step_print (const void *data, const void *user) {
-
-	td_step *step = (td_step *)data;
-	if (step->step) printf ("\t%s\n", step->step);
-
-	return 1;
-}
-/* ------------------------------------------------------------------------- */
 LOCAL int step_execute (const void *data, const void *user) {
 
 	td_step *step = (td_step *)data;
@@ -154,7 +148,13 @@ LOCAL int step_execute (const void *data, const void *user) {
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
-LOCAL int case_print (const void *data, const void *user) {
+/** Process case data. execute steps in case.
+ *  @param data case data
+ *  @param user not used
+ *  @return 1 always
+ */
+LOCAL int process_case (const void *data, const void *user) 
+{
 
 	td_case *c = (td_case *)data;
 	xmlListWalk (c->steps, step_execute, NULL);
@@ -162,28 +162,31 @@ LOCAL int case_print (const void *data, const void *user) {
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
-/** Just print out the suite given as parameter
+/** Do processing on suite, currently just writes the pre suite tag to results
  *  @param td_suite suite data
  */
-LOCAL void print_suite (td_suite *s)
+LOCAL void process_suite (td_suite *s)
 {
 	write_pre_suite_tag (s);
 	current_suite = s;
 	
 }
 /* ------------------------------------------------------------------------- */
+/** Suite end function, write suite and delete the current_suite
+ */
 LOCAL void end_suite ()
 {
 	write_post_suite_tag ();
 	td_suite_delete (current_suite);
+	current_suite = NULL;
 }
-
 /* ------------------------------------------------------------------------- */
-LOCAL void print_set (td_set *s)
+/** Process set data. Walk through cases and free set when done.
+ *  @param s set data
+ */
+LOCAL void process_set (td_set *s)
 {
-	xmlListWalk (s->pre_steps, step_print, NULL);
-	xmlListWalk (s->post_steps, step_print, NULL);
-	xmlListWalk (s->cases, case_print, NULL);
+	xmlListWalk (s->cases, process_case, NULL);
 	write_pre_set_tag (s);
 	write_post_set_tag (s);
 
@@ -377,9 +380,9 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	** Set callbacks for parser
 	*/
-	cbs.test_suite = print_suite;
+	cbs.test_suite = process_suite;
 	cbs.test_suite_end = end_suite;
-	cbs.test_set = print_set;
+	cbs.test_set = process_set;
 
 	retval = td_register_callbacks (&cbs);
 	

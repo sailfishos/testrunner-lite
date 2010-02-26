@@ -82,6 +82,7 @@ int main (void)
 
     srunner_add_suite (sr, make_testdefinitionparser_suite ());
     srunner_add_suite (sr, make_argumentparser_suite ());
+    srunner_add_suite (sr, make_testresultlogger_suite ());
 
     srunner_run_all (sr, CK_VERBOSE);
     number_failed = srunner_ntests_failed (sr);
