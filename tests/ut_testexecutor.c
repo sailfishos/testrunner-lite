@@ -123,6 +123,34 @@ START_TEST (test_executor_stderr)
 	
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST (test_executor_terminating_process)
+	exec_data edata;
+	
+	init_exec_data(&edata);
+	edata.soft_timeout = 1;
+	edata.hard_timeout = 2;
+	fail_if (execute("/usr/share/testrunner-lite-tests/terminating_process.sh", &edata));
+	fail_unless (edata.result == 15);
+	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
+	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
+	fail_if(edata.failure_info.buffer == NULL);
+	fail_unless (strcmp((char*)edata.failure_info.buffer, "timeout") == 0);
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_killing_process)
+	exec_data edata;
+	
+	init_exec_data(&edata);
+	edata.soft_timeout = 1;
+	edata.hard_timeout = 2;
+	fail_if (execute("/usr/share/testrunner-lite-tests/unterminating_process.sh", &edata));
+	fail_unless (edata.result == 9);
+	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
+	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
+	fail_if(edata.failure_info.buffer == NULL);
+	fail_unless (strcmp((char*)edata.failure_info.buffer, "timeout") == 0);
+END_TEST
+/* ------------------------------------------------------------------------- */
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -149,6 +177,16 @@ Suite *make_testexecutor_suite (void)
 
     tc = tcase_create ("Test executor stderr output.");
     tcase_add_test (tc, test_executor_stderr);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor terminating process.");
+    tcase_set_timeout (tc, 5);
+    tcase_add_test (tc, test_executor_terminating_process);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor killing process.");
+    tcase_set_timeout (tc, 5);
+    tcase_add_test (tc, test_executor_killing_process);
     suite_add_tcase (s, tc);
 
     return s;
