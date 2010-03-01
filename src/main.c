@@ -135,7 +135,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	int fail = 0;
 	td_step *step = (td_step *)data;
 	td_case *c = (td_case *)user;
-
+	
 	exec_data edata;
 
 	if (c->gen.manual && !opts.run_manual) 
@@ -145,7 +145,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		return 1;
 	
 	init_exec_data(&edata);
-
+	
 	edata.soft_timeout = c->gen.timeout;
 	edata.hard_timeout = edata.soft_timeout + 5;
 
@@ -186,6 +186,13 @@ LOCAL int process_case (const void *data, const void *user)
 	td_set *set = (td_set *)user;
 
 	c->passed = 1;
+	c->gen.timeout = c->gen.timeout ? c->gen.timeout : 
+		(set->gen.timeout ? 
+		 set->gen.timeout : current_suite->gen.timeout);
+	if (c->gen.timeout == 0)
+		c->gen.timeout = 90; /* the default one */
+	 
+	    
 	xmlListWalk (set->pre_steps, step_execute, data);
 	/* execute test steps only if pre-steps passed */
 	if (c->passed)
