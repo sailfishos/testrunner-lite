@@ -194,6 +194,7 @@ td_case *td_case_create()
 		return NULL;
 	}
 	memset (td_c, 0x0, sizeof (td_case));
+	td_c->gen.timeout = 90;
 	td_c->steps = xmlListCreate (td_step_delete, NULL);
 
 	return td_c;
