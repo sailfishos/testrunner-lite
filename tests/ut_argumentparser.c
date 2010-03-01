@@ -186,8 +186,11 @@ Suite *make_argumentparser_suite (void)
     /* Create test cases and add to suite. */
     TCase *tc;
 
+
     tc = tcase_create ("Test parsing cmd line arguments.");
+    tcase_set_timeout(tc, 600);
     tcase_add_test (tc, test_parse_cmd_line_arguments);
+    
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test parsing invalid cmd line arguments.");

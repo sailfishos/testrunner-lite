@@ -16,9 +16,14 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
-#include <check.h>
 #include <stdlib.h>
+#include <check.h>
+#include <string.h>
 
+#include "executor.h"
+#include "testdefinitionparser.h"
+#include "testdefinitiondatatypes.h"
+#include "testrunnerlite.h"
 #include "testrunnerlitetestscommon.h"
 
 /* ------------------------------------------------------------------------- */
@@ -47,8 +52,9 @@
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-/* None */
-
+td_suite *suite;
+td_set   *set;
+char  *suite_description;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -69,27 +75,83 @@
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/* None */
+START_TEST (test_executor_null_command)
+	exec_data edata;
+
+	
+	init_exec_data(&edata);
+	edata.soft_timeout = 10;
+	edata.hard_timeout = edata.soft_timeout + 5;
+	fail_if (execute(NULL, &edata));
+
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_0_timeout)
+	exec_data edata;
+
+	
+	init_exec_data(&edata);
+	edata.soft_timeout = 0;
+	edata.hard_timeout = 0;
+	fail_if (execute(NULL, &edata));
+
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_stdout)
+	exec_data edata;
+
+	
+	init_exec_data(&edata);
+	edata.soft_timeout = 0;
+	edata.hard_timeout = 0;
+	fail_if (execute("ls", &edata));
+	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
+	fail_unless (strlen ((char *)edata.stderr_data.buffer) == 0);
+
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_stderr)
+	exec_data edata;
+
+	
+	init_exec_data(&edata);
+	edata.soft_timeout = 0;
+	edata.hard_timeout = 0;
+	fail_if (execute("cat can_of_food", &edata));
+	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
+	fail_unless (strlen ((char *)edata.stdout_data.buffer) == 0);
+	
+END_TEST
+/* ------------------------------------------------------------------------- */
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-int main (void)
+Suite *make_testexecutor_suite (void)
 {
-    int number_failed;
-    Suite *s = suite_create ("master");
-    SRunner *sr = srunner_create (s);
+    /* Create suite. */
+    Suite *s = suite_create ("testexecuter");
 
-    srunner_add_suite (sr, make_testdefinitionparser_suite ());
-    srunner_add_suite (sr, make_argumentparser_suite ());
-    srunner_add_suite (sr, make_testresultlogger_suite ());
-    srunner_add_suite (sr, make_testexecutor_suite ());
+    /* Create test cases and add to suite. */
+    TCase *tc;
 
-    srunner_run_all (sr, CK_VERBOSE);
-    number_failed = srunner_ntests_failed (sr);
-    srunner_free (sr);
-    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+    tc = tcase_create ("Test executor with null command.");
+    tcase_add_test (tc, test_executor_null_command);
+    suite_add_tcase (s, tc);
 
+    tc = tcase_create ("Test executor with 0 timeout.");
+    tcase_add_test (tc, test_executor_0_timeout);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor stdout output.");
+    tcase_add_test (tc, test_executor_stdout);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor stderr output.");
+    tcase_add_test (tc, test_executor_stderr);
+    suite_add_tcase (s, tc);
+
+    return s;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

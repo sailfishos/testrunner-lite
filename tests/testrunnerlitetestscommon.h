@@ -51,6 +51,7 @@
 Suite *make_testdefinitionparser_suite(void);
 Suite *make_argumentparser_suite(void);
 Suite *make_testresultlogger_suite(void);
+Suite *make_testexecutor_suite(void);
 /* ------------------------------------------------------------------------- */
 #endif                          /* TESTRUNNERLITE_SUITES */
 /* End of file */

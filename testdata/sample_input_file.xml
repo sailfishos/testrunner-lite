@@ -3,7 +3,7 @@
   <suite name="examplebinary-tests" domain="sample_suite_domain" timeout="10">  
     <set name="testset1" description="sample_description" feature="sample_set_feature" timeout="15">    
       <pre_steps>
-         <step>sleep 30 <![CDATA[&]]></step>
+         <step>sleep 5 <![CDATA[&]]></step>
          <step>/home/ubuntu/testscript.sh;pwd;ls;uname</step>
       </pre_steps>
             
