@@ -305,7 +305,7 @@ ERROUT:
 /* ------------------------------------------------------------------------- */
 /** Parse set environments and save them in list
  *  @param list used for saving the enabled environments
- *  @retunr 0 on success, 1 on error
+ *  @return 0 on success, 1 on error
  */
 LOCAL int td_parse_environments(xmlListPtr list)
 {
@@ -357,7 +357,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 /* ------------------------------------------------------------------------- */
 /** Parse <get> element, add filenames to list
  *  @param list used for saving "get" filenames
- *  @retunr 0 on success, 1 on error
+ *  @return 0 on success, 1 on error
  */
 LOCAL int td_parse_gets(xmlListPtr list)
 {

@@ -17,8 +17,10 @@
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>  		/* dup, pipe, fork, close, execvp */
 #include <string.h>		/* strtok, strncpy */
+#include <errno.h>
 #include <poll.h>
 #include <fcntl.h>
 #include <sys/time.h>
@@ -65,16 +67,18 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-
+#if 0
 static void parse_command_args(const char* command, char* argv[], int max_args);
 static void free_args(char* argv[]);
+#endif
 static int my_popen(int* stdout_fd, int* stderr_fd, const char *command);
 static int my_pclose(int pid, int stdout_fd, int stderr_fd);
 static void* stream_data_realloc(stream_data* data, int size);
 static void stream_data_free(stream_data* data);
 static void stream_data_append(stream_data* data, char* src);
 static int read_and_append(int fd, stream_data* data);
-static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data);
+static void process_output_streams(int stdout_fd, int stderr_fd, 
+				   exec_data* data);
 
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -83,13 +87,14 @@ static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-
+#if 0
 /** Parse a command
  * @param command Command string to parse
  * @param argv Array of strings to store parsed arguments
  * @param max_args Maximum number of arguments to parse
  */
-static void parse_command_args(const char* command, char* argv[], int max_args) {
+static void parse_command_args(const char* command, char* argv[], int max_args)
+{
 	int n = 0;
 	int size = strlen(command) + 1;
 	char* buff = NULL;
@@ -98,7 +103,9 @@ static void parse_command_args(const char* command, char* argv[], int max_args) 
 	buff = (char*)malloc(size);
 
 	if (buff != NULL) {
-		/* command must be copied because strtok modifies its first argument */
+		/* command must be copied because strtok modifies its
+		 * first argument 
+		 */
 		strncpy(buff, command, size);
 		buff[size - 1] = '\0';
 
@@ -127,12 +134,13 @@ static void free_args(char* argv[]) {
 		argv++;
 	}
 }
-
+#endif
 /** Executes a command using /bin/sh -c
  * @param command Command to execute
  * @return Does not return in success, error code from exec in case of error
  */
-static int exec_wrapper(const char *command) {
+static int exec_wrapper(const char *command) 
+{
 	int ret = 0;
 	char* argv[4];
 
@@ -155,8 +163,10 @@ static int exec_wrapper(const char *command) {
 }
 
 /** Execute a command and get file descriptors to its output streams
- * @param stdout_fd Pointer to a file descriptor used to read stdout of executed command
- * @param stdout_fd Pointer to a file descriptor used to read stderr of executed command
+ * @param stdout_fd Pointer to a file descriptor used to read stdout of
+ *        executed command
+ * @param stderr_fd Pointer to a file descriptor used to read stderr of 
+ *        executed command
  * @param command Command to execute
  * @return PID of process on success, -1 in error
  */
@@ -186,11 +196,22 @@ static int my_popen(int* stdout_fd, int* stderr_fd, const char *command) {
 
 		/* redirect stdout to the pipe */
 		close(1);
-		dup(out_pipe[1]);
+		if (dup(out_pipe[1]) < 0) {
+			fprintf (stderr, "%s dup() failed %s\n",
+				 __FUNCTION__, strerror(errno));
+			goto error_err;
+		}
+		
 
 		/* redirect stderr to the pipe */
 		close(2);
-		dup(err_pipe[1]);
+
+		if (dup(err_pipe[1]) < 0) {
+			fprintf (stderr, "%s dup() failed %s\n",
+				 __FUNCTION__, strerror(errno));
+			goto error_err;
+		}
+		
 
 		exec_wrapper(command);
 		/* execution should never reach this point */
@@ -228,7 +249,7 @@ static int my_pclose(int pid, int stdout_fd, int stderr_fd) {
 }
 
 /** Allocate memory for stream_data
- * @param stream_data Pointer to stream_data structure
+ * @param data Pointer to stream_data structure
  * @param size Number of bytes to be allocated
  * @return Non NULL on success, NULL in error
  */
@@ -250,7 +271,7 @@ static void* stream_data_realloc(stream_data* data, int size) {
 }
 
 /** Free memory allocated for stream_data
- * @param stream_data Pointer to stream_data structure
+ * @param data Pointer to stream_data structure
  */
 static void stream_data_free(stream_data* data) {
 	free(data->buffer);
@@ -260,7 +281,7 @@ static void stream_data_free(stream_data* data) {
 }
 
 /** Append data to stream_data and reallocate memory if necessary
- * @param stream_data Pointer to stream_data structure
+ * @param data Pointer to stream_data structure
  * @param src Data to append
  */
 static void stream_data_append(stream_data* data, char* src) {
@@ -268,13 +289,14 @@ static void stream_data_append(stream_data* data, char* src) {
 
 	if (data->size - data->length >= length + 1 || 
 	    stream_data_realloc(data, data->length + length + 1) != NULL) {
-		strcpy(&data->buffer[data->length], src);
+		strcpy((char *)&data->buffer[data->length], src);
 		data->length += length;
 	}
 
 }
 
-/** Read data from file descriptor and append to stream_data. Reallocates memory if necessary
+/** Read data from file descriptor and append to stream_data. Reallocates 
+ * memory if necessary
  * @param fd File descriptor to read
  * @param stream_data Pointer to stream_data structure
  * @return Value returned by read
@@ -288,9 +310,13 @@ static int read_and_append(int fd, stream_data* data) {
 	}
 
 	do {
-		/* is there allocated memory left for read_size bytes + terminating null ? */
+		/*
+		 * is there allocated memory left for read_size bytes + 
+		 * terminating null ? 
+		 */
 		if (data->size - data->length < read_size + 1) {
-			if (stream_data_realloc(data, data->size + 1024) == NULL) {
+			if (stream_data_realloc(data, data->size + 1024) 
+			    == NULL) {
 				/* memory allocation failed */
 				return -3;
 			}
@@ -312,9 +338,11 @@ static int read_and_append(int fd, stream_data* data) {
 /** Read output streams from executed process and handle timeouts
  * @param stdout_fd File descriptor to read stdout stream
  * @param stderr_fd File descriptor to read stderr stream
- * @param exec_data Input and output data controlling execution
+ * @param data Input and output data controlling execution
  */
-static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data) {
+static void process_output_streams(int stdout_fd, int stderr_fd, 
+				   exec_data* data) 
+{
 	int bytes = 0;
 	int poll_timeout = 500;	/* ms */
 	struct pollfd fds[2];
@@ -353,12 +381,18 @@ static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data
 			for(i = 0; i < 2; i++) {
 				if (fds[i].revents & POLLIN) {
 					if (fds[i].fd == stdout_fd) {
-						bytes = read_and_append(stdout_fd, &data->stdout_data);
+						bytes = 
+							read_and_append(
+								stdout_fd, 
+								&data->\
+								stdout_data);
 						if (bytes == 0) {
 							outeof = 1;
 						}
 					} else if (fds[i].fd == stderr_fd) {
-						bytes = read_and_append(stderr_fd, &data->stderr_data);
+						bytes = read_and_append(
+							stderr_fd, &data->\
+							stderr_data);
 						if (bytes == 0) {
 							erreof = 1;
 						}
@@ -418,7 +452,8 @@ int execute(const char* command, exec_data* data) {
 		} else if (WIFSIGNALED(status)) {
 			/* child terminated by a signal */
 			data->result = WTERMSIG(status);
-			stream_data_append(&data->failure_info, FAILURE_INFO_TIMEOUT);
+			stream_data_append(&data->failure_info, 
+					   FAILURE_INFO_TIMEOUT);
 		} else {
 			data->result = -1;
 		}

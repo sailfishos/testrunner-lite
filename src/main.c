@@ -203,7 +203,7 @@ LOCAL int process_case (const void *data, const void *user)
 }
 /* ------------------------------------------------------------------------- */
 /** Do processing on suite, currently just writes the pre suite tag to results
- *  @param td_suite suite data
+ *  @param s suite data
  */
 LOCAL void process_suite (td_suite *s)
 {
