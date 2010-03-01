@@ -32,12 +32,11 @@
 
 #define SHELLCMD       "/bin/sh"
 #define SHELLCMD_ARG1  "-c"
+#define FAILURE_INFO_TIMEOUT "timeout"
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
-typedef void (*output_processor_callback)(int stdout_fd, int stderr_fd);
-
 struct _stream_data {
 	unsigned char* buffer;
 	int size;
@@ -47,13 +46,17 @@ struct _stream_data {
 typedef struct _stream_data stream_data;
 
 struct _exec_data {
-	stream_data stdout_data;
-	stream_data stderr_data;
-	int result;
-	time_t start_time;
-	time_t end_time;
+	/* input parameters */
 	unsigned soft_timeout;
 	unsigned hard_timeout;
+	/* output parameters */
+	int pid;
+	stream_data stdout_data;
+	stream_data stderr_data;
+	stream_data failure_info;
+	time_t start_time;
+	time_t end_time;
+	int result;
 };
 
 typedef struct _exec_data exec_data;
