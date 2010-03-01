@@ -205,7 +205,7 @@ Suite *make_testresultlogger_suite (void)
     /* Create test cases and add to suite. */
     TCase *tc;
 
-    tc = tcase_create ("Test logge init with invalid arguments.");
+    tc = tcase_create ("Test logger init with invalid arguments.");
     tcase_add_test (tc, test_logger_init_inv_args);
     suite_add_tcase (s, tc);
 

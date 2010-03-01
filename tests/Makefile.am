@@ -10,7 +10,8 @@ datadir = .
 testrunnerlitetests_SOURCES = main.c \
                               ut_testdefinitionparser.c \
                               ut_argumentparser.c \
-			      ut_testresultlogger.c
+			      ut_testresultlogger.c \
+			      ut_testexecutor.c
 
 AM_CFLAGS = -I. \
             -I/usr/include \
@@ -24,5 +25,6 @@ testrunnerlitetests_LDFLAGS = -lxml2
 testrunnerlitetests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/testdefinitiondatatypes.o \
 			    $(top_builddir)/src/testresultlogger.o \
+			    $(top_builddir)/src/executor.o \
                             -lcheck \
                             -lgcov
