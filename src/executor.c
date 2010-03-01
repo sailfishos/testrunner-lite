@@ -72,6 +72,7 @@ static int my_popen(int* stdout_fd, int* stderr_fd, const char *command);
 static int my_pclose(int pid, int stdout_fd, int stderr_fd);
 static void* stream_data_realloc(stream_data* data, int size);
 static void stream_data_free(stream_data* data);
+static void stream_data_append(stream_data* data, char* src);
 static int read_and_append(int fd, stream_data* data);
 static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data);
 
@@ -193,21 +194,13 @@ error_out:
 }
 
 static int my_pclose(int pid, int stdout_fd, int stderr_fd) {
-	int rc, status;
+	int status = 0;
+
 	close(stdout_fd);
 	close(stderr_fd);
+	waitpid(pid, &status, 0);
 
-	rc = waitpid(pid, &status, 0);
-
-	if (WIFEXITED(status)) {
-		/* child exited noamally */
-		return WEXITSTATUS(status);
-	} else if (WIFSIGNALED(status)) {
-		/* child terminated by a signal */
-		return -2;
-	} else {
-		return -1;
-	}
+	return status;
 }
 
 static void* stream_data_realloc(stream_data* data, int size) {
@@ -232,6 +225,17 @@ static void stream_data_free(stream_data* data) {
 	data->buffer = NULL;
 	data->size = 0;
 	data->length = 0;
+}
+
+static void stream_data_append(stream_data* data, char* src) {
+	int length = strlen(src);
+
+	if (data->size - data->length >= length + 1 || 
+	    stream_data_realloc(data, data->length + length + 1) != NULL) {
+		strcpy(&data->buffer[data->length], src);
+		data->length += length;
+	}
+
 }
 
 static int read_and_append(int fd, stream_data* data) {
@@ -297,7 +301,6 @@ static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data
 			break;
 		case -1:
 			/* error */
-			/* printf("poll error\n"); */
 			return;
 			break;
 		default:
@@ -337,10 +340,6 @@ static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data
 		} else if (!terminated && elapsed_time > data->soft_timeout) {
 			/* try to terminate */
 			kill(data->pid, SIGTERM);
-			if (data->failure_info.size - data->failure_info.length >= strlen(FAILURE_INFO_TIMEOUT) + 1) {
-				strcpy(&data->failure_info.buffer[data->failure_info.length], FAILURE_INFO_TIMEOUT);
-				data->failure_info.length = strlen(FAILURE_INFO_TIMEOUT);
-			}
 			terminated = 1;
 		}
 	}
@@ -353,15 +352,25 @@ static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data
 int execute(const char* command, exec_data* data) {
 	int stdout_fd = -1;
 	int stderr_fd = -1;
-	int ret = 0;
+	int status = 0;
 
 	data->start_time = time(NULL);
 	data->pid = my_popen(&stdout_fd, &stderr_fd, command);
 
 	if (data->pid > 0) {
 		process_output_streams(stdout_fd, stderr_fd, data);
-		ret = my_pclose(data->pid, stdout_fd, stderr_fd);
-		data->result = ret;
+		status = my_pclose(data->pid, stdout_fd, stderr_fd);
+
+		if (WIFEXITED(status)) {
+			/* child exited noamally */
+			data->result = WEXITSTATUS(status);
+		} else if (WIFSIGNALED(status)) {
+			/* child terminated by a signal */
+			data->result = WTERMSIG(status);
+			stream_data_append(&data->failure_info, FAILURE_INFO_TIMEOUT);
+		} else {
+			data->result = -1;
+		}
 	}
 
 	data->end_time = time(NULL);
@@ -370,18 +379,18 @@ int execute(const char* command, exec_data* data) {
 }
 
 void init_exec_data(exec_data* data) {
-	init_stream_data(&data->stdout_data);
-	init_stream_data(&data->stderr_data);
-	init_stream_data(&data->failure_info);
+	init_stream_data(&data->stdout_data, 1024);
+	init_stream_data(&data->stderr_data, 1024);
+	init_stream_data(&data->failure_info, 0);
 }
 
-void init_stream_data(stream_data* data) {
+void init_stream_data(stream_data* data, int allocate) {
 	data->buffer = NULL;
 	data->size = 0;
 	data->length = 0;
 
 	/* try to allocate memory for stream data */
-	if (stream_data_realloc(data, 1024)) {
+	if (allocate && stream_data_realloc(data, allocate)) {
 		/* initialize with an empty string */
 		data->buffer[0] = '\0';
 	}
