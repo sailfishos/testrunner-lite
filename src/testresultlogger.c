@@ -174,7 +174,7 @@ LOCAL int xml_write_step (const void *data, const void *user)
 
 	if (step->failure_info) {
 		if (xmlTextWriterWriteAttribute (writer, 
-						 BAD_CAST "result", 
+						 BAD_CAST "failure_info", 
 						 step->failure_info) < 0)
 			goto err_out;
 	}
