@@ -86,7 +86,7 @@ typedef struct {
 typedef struct {
 	/* Parser fills */
 	td_gen_attribs gen;     /**< General attributes */
-	xmlChar   *subfeature;   /**< Sub feature attribute */
+	xmlChar   *subfeature;  /**< Sub feature attribute */
 	xmlListPtr steps;       /**< Steps in this test case */
 	/* Executor fills */
 	int        passed;      /**< Flag stating whether this case is passed */
