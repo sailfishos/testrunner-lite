@@ -77,6 +77,8 @@ LOCAL void process_set(td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+LOCAL int step_execute (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -122,13 +124,21 @@ LOCAL void usage()
 	return;
 }
 /* ------------------------------------------------------------------------- */
-LOCAL int step_execute (const void *data, const void *user) {
-
+/** Process step data. execute one step from case.
+ *  @param data step data
+ *  @param user case data
+ *  @return 1 always
+ */
+LOCAL int step_execute (const void *data, const void *user) 
+{
+	int fail = 0;
 	td_step *step = (td_step *)data;
+	td_case *c = (td_case *)user;
+
 	exec_data edata;
 	init_exec_data(&edata);
 
-	edata.soft_timeout = 90;
+	edata.soft_timeout = c->gen.timeout;
 	edata.hard_timeout = edata.soft_timeout + 5;
 
 	if (step->step) {
@@ -144,20 +154,32 @@ LOCAL int step_execute (const void *data, const void *user) {
 		step->return_code = edata.result;
 		step->start = edata.start_time;
 		step->end = edata.end_time;
+		if (step->return_code != step->expected_result)
+			fail = 1;
 	}
+	if (fail)
+		c->passed = 0;
+	
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
 /** Process case data. execute steps in case.
  *  @param data case data
- *  @param user not used
+ *  @param user set data
  *  @return 1 always
  */
 LOCAL int process_case (const void *data, const void *user) 
 {
 
 	td_case *c = (td_case *)data;
-	xmlListWalk (c->steps, step_execute, NULL);
+	td_set *set = (td_set *)user;
+
+	c->passed = 1;
+	xmlListWalk (set->pre_steps, step_execute, data);
+	/* execute test steps only if pre-steps passed */
+	if (c->passed)
+		xmlListWalk (c->steps, step_execute, data);
+	xmlListWalk (set->post_steps, step_execute, data);
 
 	return 1;
 }
@@ -186,7 +208,7 @@ LOCAL void end_suite ()
  */
 LOCAL void process_set (td_set *s)
 {
-	xmlListWalk (s->cases, process_case, NULL);
+	xmlListWalk (s->cases, process_case, s);
 	write_pre_set_tag (s);
 	write_post_set_tag (s);
 
