@@ -158,6 +158,9 @@ LOCAL int step_execute (const void *data, const void *user)
 		if (edata.stderr_data.buffer) {
 			step->stderr_ = edata.stderr_data.buffer;
 		}
+		if (edata.failure_info.buffer) {
+			step->failure_info = edata.failure_info.buffer;
+		}
 
 		step->return_code = edata.result;
 		step->start = edata.start_time;
