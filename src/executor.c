@@ -84,6 +84,11 @@ static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
 
+/** Parse a command
+ * @param command Command string to parse
+ * @param argv Array of strings to store parsed arguments
+ * @param max_args Maximum number of arguments to parse
+ */
 static void parse_command_args(const char* command, char* argv[], int max_args) {
 	int n = 0;
 	int size = strlen(command) + 1;
@@ -113,6 +118,9 @@ static void parse_command_args(const char* command, char* argv[], int max_args) 
 	free(buff);
 }
 
+/** Free argument strings
+ * @param argv Array of argument strings to free
+ */
 static void free_args(char* argv[]) {
 	while(*argv != NULL) {
 		free(*argv);
@@ -120,6 +128,10 @@ static void free_args(char* argv[]) {
 	}
 }
 
+/** Executes a command using /bin/sh -c
+ * @param command Command to execute
+ * @return Does not return in success, error code from exec in case of error
+ */
 static int exec_wrapper(const char *command) {
 	int ret = 0;
 	char* argv[4];
@@ -142,6 +154,12 @@ static int exec_wrapper(const char *command) {
 	return ret;
 }
 
+/** Execute a command and get file descriptors to its output streams
+ * @param stdout_fd Pointer to a file descriptor used to read stdout of executed command
+ * @param stdout_fd Pointer to a file descriptor used to read stderr of executed command
+ * @param command Command to execute
+ * @return PID of process on success, -1 in error
+ */
 static int my_popen(int* stdout_fd, int* stderr_fd, const char *command) {
 	int out_pipe[2];
 	int err_pipe[2];
@@ -193,6 +211,12 @@ error_out:
 	return -1;
 }
 
+/** Close file descriptors returned by my_popen and wait for process
+ * @param pid PID returned by my_popen
+ * @param stdout_fd File descriptor to close
+ * @param stderr_fd File descriptor to close
+ * @return Status given by waitpid command
+ */
 static int my_pclose(int pid, int stdout_fd, int stderr_fd) {
 	int status = 0;
 
@@ -203,6 +227,11 @@ static int my_pclose(int pid, int stdout_fd, int stderr_fd) {
 	return status;
 }
 
+/** Allocate memory for stream_data
+ * @param stream_data Pointer to stream_data structure
+ * @param size Number of bytes to be allocated
+ * @return Non NULL on success, NULL in error
+ */
 static void* stream_data_realloc(stream_data* data, int size) {
 	unsigned char* newptr = (unsigned char*)malloc(size);
 	unsigned char* oldptr = data->buffer;
@@ -220,6 +249,9 @@ static void* stream_data_realloc(stream_data* data, int size) {
 	return (void*)newptr;
 }
 
+/** Free memory allocated for stream_data
+ * @param stream_data Pointer to stream_data structure
+ */
 static void stream_data_free(stream_data* data) {
 	free(data->buffer);
 	data->buffer = NULL;
@@ -227,6 +259,10 @@ static void stream_data_free(stream_data* data) {
 	data->length = 0;
 }
 
+/** Append data to stream_data and reallocate memory if necessary
+ * @param stream_data Pointer to stream_data structure
+ * @param src Data to append
+ */
 static void stream_data_append(stream_data* data, char* src) {
 	int length = strlen(src);
 
@@ -238,6 +274,11 @@ static void stream_data_append(stream_data* data, char* src) {
 
 }
 
+/** Read data from file descriptor and append to stream_data. Reallocates memory if necessary
+ * @param fd File descriptor to read
+ * @param stream_data Pointer to stream_data structure
+ * @return Value returned by read
+ */
 static int read_and_append(int fd, stream_data* data) {
 	const int read_size = 255;	/* number of bytes to read */
 	int ret = 0;
@@ -268,6 +309,11 @@ static int read_and_append(int fd, stream_data* data) {
 	return ret;
 }
 
+/** Read output streams from executed process and handle timeouts
+ * @param stdout_fd File descriptor to read stdout stream
+ * @param stderr_fd File descriptor to read stderr stream
+ * @param exec_data Input and output data controlling execution
+ */
 static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data) {
 	int bytes = 0;
 	int poll_timeout = 500;	/* ms */
@@ -349,6 +395,11 @@ static void process_output_streams(int stdout_fd, int stderr_fd, exec_data* data
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 
+/** Execute a test step command
+ * @param command Command to execute
+ * @param data Input and output data controlling execution
+ * @return 0 in success
+ */
 int execute(const char* command, exec_data* data) {
 	int stdout_fd = -1;
 	int stderr_fd = -1;
@@ -362,7 +413,7 @@ int execute(const char* command, exec_data* data) {
 		status = my_pclose(data->pid, stdout_fd, stderr_fd);
 
 		if (WIFEXITED(status)) {
-			/* child exited noamally */
+			/* child exited normally */
 			data->result = WEXITSTATUS(status);
 		} else if (WIFSIGNALED(status)) {
 			/* child terminated by a signal */
@@ -378,12 +429,19 @@ int execute(const char* command, exec_data* data) {
 	return 0;
 }
 
+/** Initialize exec_data structure
+ * @param data Pointer to data
+ */
 void init_exec_data(exec_data* data) {
 	init_stream_data(&data->stdout_data, 1024);
 	init_stream_data(&data->stderr_data, 1024);
 	init_stream_data(&data->failure_info, 0);
 }
 
+/** Initialize stream_data structure
+ * @param data Pointer to data
+ * @param allocate Number of bytes to allocate for string buffer
+ */
 void init_stream_data(stream_data* data, int allocate) {
 	data->buffer = NULL;
 	data->size = 0;
@@ -396,6 +454,9 @@ void init_stream_data(stream_data* data, int allocate) {
 	}
 }
 
+/** Clean stream_data structure
+ * @param data Pointer to data
+ */
 void clean_stream_data(stream_data* data) {
 	stream_data_free(data);
 }
