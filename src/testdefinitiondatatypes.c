@@ -209,6 +209,7 @@ void td_step_delete(xmlLinkPtr lk)
 
 	free (step->stdout_);
 	free (step->stderr_);
+	free (step->failure_info);
 	
 	free (step);
 }
