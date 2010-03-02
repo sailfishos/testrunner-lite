@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <check.h>
 #include <string.h>
+#include <signal.h>
 
 #include "executor.h"
 #include "testdefinitionparser.h"
@@ -130,11 +131,11 @@ START_TEST (test_executor_terminating_process)
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 2;
 	fail_if (execute("/usr/share/testrunner-lite-tests/terminating_process.sh", &edata));
-	fail_unless (edata.result == 15);
+	fail_unless (edata.result == SIGTERM);
 	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
 	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
 	fail_if(edata.failure_info.buffer == NULL);
-	fail_unless (strcmp((char*)edata.failure_info.buffer, "timeout") == 0);
+	fail_unless (strcmp((char*)edata.failure_info.buffer, FAILURE_INFO_TIMEOUT) == 0);
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_killing_process)
@@ -144,11 +145,11 @@ START_TEST (test_executor_killing_process)
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 2;
 	fail_if (execute("/usr/share/testrunner-lite-tests/unterminating_process.sh", &edata));
-	fail_unless (edata.result == 9);
+	fail_unless (edata.result == SIGKILL);
 	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
 	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
 	fail_if(edata.failure_info.buffer == NULL);
-	fail_unless (strcmp((char*)edata.failure_info.buffer, "timeout") == 0);
+	fail_unless (strcmp((char*)edata.failure_info.buffer, FAILURE_INFO_TIMEOUT) == 0);
 END_TEST
 /* ------------------------------------------------------------------------- */
 
