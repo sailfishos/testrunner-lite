@@ -135,8 +135,9 @@ LOCAL int step_execute (const void *data, const void *user)
 	int fail = 0;
 	td_step *step = (td_step *)data;
 	td_case *c = (td_case *)user;
-	
 	exec_data edata;
+
+	memset (&edata, 0x0, sizeof (exec_data));
 
 	if (c->gen.manual && !opts.run_manual) 
 		return 1;
@@ -151,6 +152,10 @@ LOCAL int step_execute (const void *data, const void *user)
 
 	if (step->step) {
 		execute((char*)step->step, &edata);
+
+		if (step->stdout_) free (step->stdout_);
+		if (step->stderr_) free (step->stderr_);
+		if (step->failure_info) free (step->failure_info);
 
 		if (edata.stdout_data.buffer) {
 			step->stdout_ = edata.stdout_data.buffer;
@@ -171,6 +176,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	if (fail)
 		c->passed = 0;
 	
+
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
