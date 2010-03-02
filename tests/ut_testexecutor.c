@@ -105,7 +105,7 @@ START_TEST (test_executor_stdout)
 	init_exec_data(&edata);
 	edata.soft_timeout = 0;
 	edata.hard_timeout = 0;
-	fail_if (execute("ls", &edata));
+	fail_if (execute("pwd", &edata));
 	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
 	fail_unless (strlen ((char *)edata.stderr_data.buffer) == 0);
 
@@ -122,6 +122,18 @@ START_TEST (test_executor_stderr)
 	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
 	fail_unless (strlen ((char *)edata.stdout_data.buffer) == 0);
 	
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_long_input_streams)
+	exec_data edata;
+	
+	init_exec_data(&edata);
+	edata.soft_timeout = 2;
+	edata.hard_timeout = 3;
+	fail_if (execute("/usr/share/testrunner-lite-tests/long_output.sh", &edata));
+	fail_unless (edata.result == 0);
+	fail_unless (strlen ((char *)edata.stdout_data.buffer) == 4380);
+	fail_unless (strlen ((char *)edata.stderr_data.buffer) == 2190);
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_terminating_process)
@@ -178,6 +190,11 @@ Suite *make_testexecutor_suite (void)
 
     tc = tcase_create ("Test executor stderr output.");
     tcase_add_test (tc, test_executor_stderr);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor long input streams.");
+    tcase_set_timeout (tc, 5);
+    tcase_add_test (tc, test_executor_long_input_streams);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor terminating process.");

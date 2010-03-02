@@ -2,7 +2,8 @@ testsdefinitiondir = /usr/share/testrunner-lite-tests/
 testsdefinition_DATA = tests.xml
 
 testsscriptsdir = /usr/share/testrunner-lite-tests/
-testsscripts_DATA = scripts/terminating_process.sh scripts/unterminating_process.sh
+testsscripts_SCRIPTS = scripts/terminating_process.sh scripts/unterminating_process.sh \
+                       scripts/long_output.sh
 
 testrunnerlitetestsdir = $(libdir)/testrunner-lite-tests
 
