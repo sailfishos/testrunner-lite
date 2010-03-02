@@ -157,7 +157,7 @@ START_TEST (test_executor_killing_process)
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 2;
 	fail_if (execute("/usr/share/testrunner-lite-tests/unterminating_process.sh", &edata));
-	fail_unless (edata.result == SIGKILL);
+	fail_unless (edata.result == SIGTERM || edata.result == SIGKILL);
 	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
 	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
 	fail_if(edata.failure_info.buffer == NULL);
