@@ -278,26 +278,26 @@ LOCAL int xml_write_case (const void *data, const void *user)
 					 BAD_CAST "result", 
 					 c->passed ?
 					 BAD_CAST "PASS" : BAD_CAST "FAIL") < 0)
-	    
+		
 		goto err_out;
 
 	if (c->subfeature)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "subfeature", 
 						 c->subfeature) < 0)
-		goto err_out;
+			goto err_out;
 
 	if (c->gen.requirement)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "requirement", 
 						 c->gen.requirement) < 0)
-		goto err_out;
+			goto err_out;
 
 	if (c->gen.level)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "level", 
 						 c->gen.level) < 0)
-		goto err_out;
+			goto err_out;
 
 	xmlListWalk (c->steps, xml_write_step, NULL);
 
@@ -381,7 +381,7 @@ LOCAL int txt_write_step (const void *data, const void *user)
 		 step->stderr_ ? (char *)step->stderr_ : " ");
 	fflush (ofile);
 
-	return 0;
+	return 1;
 }
 /* ------------------------------------------------------------------------- */
 /** Write case result to text file
@@ -419,7 +419,7 @@ LOCAL int txt_write_case (const void *data, const void *user)
 
 	xmlListWalk (c->steps, txt_write_step, NULL);
 
-	return 0;
+	return 1;
 }
 /** Write suite start txt tag
  * @param suite suite data
