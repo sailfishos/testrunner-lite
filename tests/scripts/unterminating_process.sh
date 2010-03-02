@@ -1,6 +1,6 @@
 #!/bin/sh
 
-trap '' SIGTERM
+trap '' TERM
 
 echo "echoing to stdout"
 echo "echoing to stderr" 1>&2
