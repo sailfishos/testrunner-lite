@@ -277,7 +277,7 @@ LOCAL int xml_write_case (const void *data, const void *user)
 	if (xmlTextWriterWriteAttribute (writer, 
 					 BAD_CAST "result", 
 					 c->passed ?
-					 BAD_CAST "FAIL" : BAD_CAST "PASS") < 0)
+					 BAD_CAST "PASS" : BAD_CAST "FAIL") < 0)
 	    
 		goto err_out;
 
