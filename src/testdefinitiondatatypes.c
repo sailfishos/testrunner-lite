@@ -71,6 +71,8 @@ LOCAL void list_string_delete (xmlLinkPtr);
 /* ------------------------------------------------------------------------- */
 LOCAL void gen_attribs_delete (td_gen_attribs *);
 /* ------------------------------------------------------------------------- */
+LOCAL int list_string_compare (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -85,6 +87,18 @@ LOCAL void list_string_delete (xmlLinkPtr lk)
 {
 	xmlChar *string = (xmlChar *)xmlLinkGetData (lk);
 	free (string);
+}
+/* ------------------------------------------------------------------------- */
+/** Comparison function for list with xmlchar* items
+ *  @param data0 string to compare
+ *  @param data1 string to compare
+ *  @return 0 if strings match 
+ */
+LOCAL int list_string_compare(const void * data0, 
+			      const void * data1)
+{
+	
+	return xmlStrcmp ((xmlChar *)data0, (xmlChar *)data1);
 }
 /* ------------------------------------------------------------------------- */
 /** Deallocator for general attributes 
@@ -142,7 +156,8 @@ td_set *td_set_create ()
 	set->pre_steps = xmlListCreate (td_step_delete, NULL);
 	set->post_steps = xmlListCreate (td_step_delete, NULL);
 	set->cases = xmlListCreate (td_case_delete, NULL);
-	set->environments = xmlListCreate (list_string_delete, NULL);
+	set->environments = xmlListCreate (list_string_delete, 
+					   list_string_compare);
 	set->gets = xmlListCreate (list_string_delete, NULL);
 
 	return set;

@@ -170,8 +170,12 @@ LOCAL int step_execute (const void *data, const void *user)
 		step->return_code = edata.result;
 		step->start = edata.start_time;
 		step->end = edata.end_time;
-		if (step->return_code != step->expected_result)
+		if (step->return_code != step->expected_result) {
+			printf ("step %s return %d expected %d\n",
+				step->step, step->return_code, 
+				step->expected_result);
 			fail = 1;
+		}
 	}
 	if (fail)
 		c->passed = 0;
@@ -232,10 +236,18 @@ LOCAL void end_suite ()
  */
 LOCAL void process_set (td_set *s)
 {
+	/*
+	** Check that the set is supposed to be executed in the current env
+	*/
+	if (xmlListSize(s->environments) > 0) {
+	        if (!xmlListSearch (s->environments, opts.environment)) {
+			goto skip;
+		}
+	}
 	xmlListWalk (s->cases, process_case, s);
 	write_pre_set_tag (s);
 	write_post_set_tag (s);
-
+ skip:
 	td_set_delete (s);
 	return;
 }
