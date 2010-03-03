@@ -147,6 +147,14 @@ LOCAL td_step *td_parse_step()
 	int ret;
 
 	step = td_step_create();
+	if (xmlTextReaderMoveToAttribute (reader, 
+					  BAD_CAST "expected_result") == 1) {
+		step->expected_result = strtoul((char *)
+						xmlTextReaderConstValue(reader),
+						NULL, 10);
+
+	}
+
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
