@@ -142,10 +142,13 @@ START_TEST (test_executor_terminating_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 2;
-	fail_if (execute("/usr/share/testrunner-lite-tests/terminating_process.sh", &edata));
+	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating" 
+			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM);
 	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
 	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
+	fail_unless (strcmp((char*)edata.stdout_data.buffer, "stdouttest") == 0);
+	fail_unless (strcmp((char*)edata.stderr_data.buffer, "stderrtest") == 0);
 	fail_if(edata.failure_info.buffer == NULL);
 	fail_unless (strcmp((char*)edata.failure_info.buffer, FAILURE_INFO_TIMEOUT) == 0);
 END_TEST
@@ -156,10 +159,13 @@ START_TEST (test_executor_killing_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 2;
-	fail_if (execute("/usr/share/testrunner-lite-tests/unterminating_process.sh", &edata));
-	fail_unless (edata.result == SIGTERM || edata.result == SIGKILL);
+	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
+			 "stdouttest stderrtest", &edata));
+	fail_unless (edata.result == SIGKILL);
 	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
 	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
+	fail_unless (strcmp((char*)edata.stdout_data.buffer, "stdouttest") == 0);
+	fail_unless (strcmp((char*)edata.stderr_data.buffer, "stderrtest") == 0);
 	fail_if(edata.failure_info.buffer == NULL);
 	fail_unless (strcmp((char*)edata.failure_info.buffer, FAILURE_INFO_TIMEOUT) == 0);
 END_TEST

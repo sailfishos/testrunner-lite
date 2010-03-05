@@ -2,8 +2,7 @@ testsdefinitiondir = /usr/share/testrunner-lite-tests/
 testsdefinition_DATA = tests.xml
 
 testsscriptsdir = /usr/share/testrunner-lite-tests/
-testsscripts_SCRIPTS = scripts/terminating_process.sh scripts/unterminating_process.sh \
-                       scripts/long_output.sh
+testsscripts_SCRIPTS = scripts/long_output.sh
 
 testrunnerlitetestsdir = $(libdir)/testrunner-lite-tests
 
@@ -32,3 +31,5 @@ testrunnerlitetests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/executor.o \
                             -lcheck \
                             -lgcov
+
+SUBDIRS = utils
