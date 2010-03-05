@@ -128,7 +128,7 @@ LOCAL void usage()
 /** Process step data. execute one step from case.
  *  @param data step data
  *  @param user case data
- *  @return 1 always
+ *  @return 1 if step is passed 0 if not
  */
 LOCAL int step_execute (const void *data, const void *user) 
 {
@@ -170,14 +170,18 @@ LOCAL int step_execute (const void *data, const void *user)
 		step->return_code = edata.result;
 		step->start = edata.start_time;
 		step->end = edata.end_time;
-		if (step->return_code != step->expected_result)
+		if (step->return_code != step->expected_result) {
+			printf ("step %s return %d expected %d\n",
+				step->step, step->return_code, 
+				step->expected_result);
 			fail = 1;
+		}
 	}
 	if (fail)
 		c->passed = 0;
 	
 
-	return 1;
+	return !fail;
 }
 /* ------------------------------------------------------------------------- */
 /** Process case data. execute steps in case.
@@ -201,10 +205,11 @@ LOCAL int process_case (const void *data, const void *user)
 	    
 	xmlListWalk (set->pre_steps, step_execute, data);
 	/* execute test steps only if pre-steps passed */
-	if (c->passed)
+	if (c->passed) {
 		xmlListWalk (c->steps, step_execute, data);
-	xmlListWalk (set->post_steps, step_execute, data);
-
+		xmlListWalk (set->post_steps, step_execute, data);
+	}
+	
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -232,10 +237,18 @@ LOCAL void end_suite ()
  */
 LOCAL void process_set (td_set *s)
 {
+	/*
+	** Check that the set is supposed to be executed in the current env
+	*/
+	if (xmlListSize(s->environments) > 0) {
+	        if (!xmlListSearch (s->environments, opts.environment)) {
+			goto skip;
+		}
+	}
 	xmlListWalk (s->cases, process_case, s);
 	write_pre_set_tag (s);
 	write_post_set_tag (s);
-
+ skip:
 	td_set_delete (s);
 	return;
 }

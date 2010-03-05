@@ -149,7 +149,7 @@ LOCAL int xml_write_pre_set_tag (td_set *set)
 /** Write step result xml
  * @param data step data 
  * @param user not used
- * @return 1 on success, 0 on error
+ * @return 1 on success, 0 on error if the step is failed
  */
 LOCAL int xml_write_step (const void *data, const void *user)
 {
@@ -231,7 +231,7 @@ LOCAL int xml_write_step (const void *data, const void *user)
 	xml_end_element();
 	
 
-	return 1;
+	return !(step->expected_result == step->return_code);
 	
 err_out:
 	return 0;
