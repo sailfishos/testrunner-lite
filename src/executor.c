@@ -431,7 +431,7 @@ static void process_output_streams(int stdout_fd, int stderr_fd,
 static void strip_ctrl_chars (stream_data* data)
 {
 	size_t clean_len = 0, tmp;
-	char *p = data->buffer;
+	char *p = (char *)data->buffer, *endp;
 	
 	/* \x01-\x09\x0B\x0C\x0E-\x1F\x7F */
 	const char rej[] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,
@@ -450,6 +450,15 @@ static void strip_ctrl_chars (stream_data* data)
 			*p = ' ';
 	} while (clean_len < data->length);
 
+	/* \0 needs special handling */
+	endp = &data->buffer [data->length];
+	do {
+		p = rawmemchr(data->buffer, '\0');
+
+		if (p && p != endp)
+			*p = ' ';
+	} while (p != endp);
+	
 }
 
 /* ------------------------------------------------------------------------- */
