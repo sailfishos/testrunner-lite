@@ -233,7 +233,7 @@ LOCAL int xml_write_step (const void *data, const void *user)
 	xml_end_element();
 	
 
-	return !(step->expected_result == step->return_code);
+	return (step->expected_result == step->return_code);
 	
 err_out:
 	return 0;
@@ -383,7 +383,7 @@ LOCAL int txt_write_step (const void *data, const void *user)
 		 step->stderr_ ? (char *)step->stderr_ : " ");
 	fflush (ofile);
 
-	return 1;
+	return (step->expected_result == step->return_code);
 }
 /* ------------------------------------------------------------------------- */
 /** Write case result to text file
