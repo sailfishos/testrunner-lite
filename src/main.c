@@ -21,7 +21,10 @@
 #include <getopt.h>
 #include <errno.h>
 #include <string.h>
-
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
@@ -79,6 +82,8 @@ LOCAL void process_set(td_set *);
 LOCAL int process_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_execute (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int create_output_folder ();
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -253,6 +258,48 @@ LOCAL void process_set (td_set *s)
 	return;
 }
 /* ------------------------------------------------------------------------- */
+/** Create output folder based on the argument for -o
+ *  @return 0 on success 1 on failure
+ */
+LOCAL int create_output_folder ()
+{
+	int len;
+	char *p;
+	char *pwd;
+	int fd;
+	
+	
+	if ((p = strrchr (opts.output_filename, '/'))) {
+		len = p - opts.output_filename;
+		opts.output_folder = (char *)malloc (len + 2);
+		memset (opts.output_folder, 0x00, len + 2);
+		strncpy (opts.output_folder, opts.output_filename, len + 1);
+
+	} else {
+		pwd = getenv ("PWD");
+		if (!pwd) {
+			fprintf (stderr, "%s: getenv() failed %s\n",
+				 PROGNAME, strerror (errno));
+			return 1;
+		}
+		opts.output_folder = (char *)malloc (strlen (pwd) + 2);
+		strcpy (opts.output_folder, pwd);
+		opts.output_folder[strlen(pwd)] = '/';
+		opts.output_folder[strlen(pwd) + 1] = '\0';
+	}
+	
+	if  (mkdir (opts.output_folder, "rw") < 0 && errno != EEXIST) {
+		fprintf (stderr, "%s failed to create ouput "
+			 "directory %s: %s\n",
+			 PROGNAME, strerror (errno), opts.output_folder);
+		return 1;
+		
+	}
+	close (fd);
+	
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** main() for testrunnerlite - handle command line switches and call parser
@@ -265,7 +312,7 @@ int main (int argc, char *argv[], char *envp[])
 {
 	int h_flag = 0, v_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0;
 	int opt_char, option_idx;
-	FILE *ifile = NULL, *ofile = NULL;
+	FILE *ifile = NULL;
 	int retval = EXIT_SUCCESS;
 	td_parser_callbacks cbs;
 
@@ -347,14 +394,6 @@ int main (int argc, char *argv[], char *envp[])
 			strcpy (opts.input_filename, optarg); 
 			break;
 		case 'o':
-			ofile = fopen (optarg, "w");
-			if (!ofile) {
-				fprintf (stderr, "%s Failed to open %s %s\n",
-					 PROGNAME, optarg, strerror (errno));
-				retval = EXIT_FAILURE;
-				goto OUT;
-			}
-			fclose (ofile);
 			opts.output_filename = malloc (strlen (optarg) + 1);
 			strcpy (opts.output_filename, optarg); 
 			break;
@@ -409,7 +448,8 @@ int main (int argc, char *argv[], char *envp[])
 		retval = EXIT_FAILURE;
 		goto OUT;
 	}
-	/*
+	
+        /*
 	 * Validate the input xml
 	 */
 	retval = parse_test_definition (&opts);
@@ -421,10 +461,14 @@ int main (int argc, char *argv[], char *envp[])
 	if (retval)
 		goto OUT;
 
-	if (!ofile) {
+	if (!opts.output_filename) {
 		fprintf (stderr, 
 			 "%s: mandatory option missing -o output_file\n",
 			 PROGNAME);
+		retval = EXIT_FAILURE;
+		goto OUT;
+	}
+	if (create_output_folder(&opts)) {
 		retval = EXIT_FAILURE;
 		goto OUT;
 	}

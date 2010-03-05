@@ -42,7 +42,8 @@ typedef enum {
 typedef struct {
 	char *input_filename;  /**< the input xml file */
 	char *output_filename; /**< the result file */
-	char *environment;     /**< execution environment */
+	char *output_folder;   /**< folder for storing results */
+        char *environment;     /**< execution environment */
 	int   disable_schema;  /**< flag for disabling DTD validation */
 	int   semantic_schema; /**< flag for enabling sricter DTD */
         result_output   output_type;   /**< result output type selector */
