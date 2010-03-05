@@ -128,7 +128,7 @@ LOCAL void usage()
 /** Process step data. execute one step from case.
  *  @param data step data
  *  @param user case data
- *  @return 1 always
+ *  @return 1 if step is passed 0 if not
  */
 LOCAL int step_execute (const void *data, const void *user) 
 {
@@ -181,7 +181,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		c->passed = 0;
 	
 
-	return 1;
+	return !fail;
 }
 /* ------------------------------------------------------------------------- */
 /** Process case data. execute steps in case.
@@ -205,10 +205,11 @@ LOCAL int process_case (const void *data, const void *user)
 	    
 	xmlListWalk (set->pre_steps, step_execute, data);
 	/* execute test steps only if pre-steps passed */
-	if (c->passed)
+	if (c->passed) {
 		xmlListWalk (c->steps, step_execute, data);
-	xmlListWalk (set->post_steps, step_execute, data);
-
+		xmlListWalk (set->post_steps, step_execute, data);
+	}
+	
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
