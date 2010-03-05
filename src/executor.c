@@ -79,7 +79,7 @@ static void stream_data_append(stream_data* data, char* src);
 static int read_and_append(int fd, stream_data* data);
 static void process_output_streams(int stdout_fd, int stderr_fd, 
 				   exec_data* data);
-
+static void strip_ctrl_chars (stream_data* data);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -424,6 +424,42 @@ static void process_output_streams(int stdout_fd, int stderr_fd,
 		}
 	}
 }
+/* ------------------------------------------------------------------------- */
+/** Replace control characters with <space> 
+ * @param data stream data to mangle
+ */
+static void strip_ctrl_chars (stream_data* data)
+{
+	size_t clean_len = 0, tmp;
+	char *p = (char *)data->buffer, *endp;
+	
+	/* \x01-\x09\x0B\x0C\x0E-\x1F\x7F */
+	const char rej[] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,
+			    0x0B,
+			    0x0C,
+			    0x0E,0x0F,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,
+			    0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F, 
+			    0x7F};
+
+	
+	do {
+		tmp = strcspn(p, rej);
+		clean_len += tmp;
+		p += tmp;
+		if (clean_len < data->length)
+			*p = ' ';
+	} while (clean_len < data->length);
+
+	/* \0 needs special handling */
+	endp = &data->buffer [data->length];
+	do {
+		p = rawmemchr(data->buffer, '\0');
+
+		if (p && p != endp)
+			*p = ' ';
+	} while (p != endp);
+	
+}
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -460,7 +496,9 @@ int execute(const char* command, exec_data* data) {
 	}
 
 	data->end_time = time(NULL);
-
+	if (data->stdout_data.length) strip_ctrl_chars (&data->stdout_data);
+	if (data->stderr_data.length) strip_ctrl_chars (&data->stderr_data);
+	
 	return 0;
 }
 
