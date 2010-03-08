@@ -25,6 +25,8 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <signal.h>
+#include <stdio.h>
 
 #include "executor.h"
 
@@ -54,7 +56,8 @@
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-/* None */
+static volatile sig_atomic_t timer_value = 0;
+static struct sigaction default_alarm_action;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -72,13 +75,17 @@ static void parse_command_args(const char* command, char* argv[], int max_args);
 static void free_args(char* argv[]);
 #endif
 static int my_popen(int* stdout_fd, int* stderr_fd, const char *command);
-static int my_pclose(int pid, int stdout_fd, int stderr_fd);
 static void* stream_data_realloc(stream_data* data, int size);
 static void stream_data_free(stream_data* data);
 static void stream_data_append(stream_data* data, char* src);
 static int read_and_append(int fd, stream_data* data);
+static void timer_handler(int signum);
+static int set_timer(long secs);
+static void reset_timer();
+static int execution_terminated(exec_data* data);
 static void process_output_streams(int stdout_fd, int stderr_fd, 
 				   exec_data* data);
+static void communicate(int stdout_fd, int stderr_fd, exec_data* data);
 static void strip_ctrl_chars (stream_data* data);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -142,23 +149,10 @@ static void free_args(char* argv[]) {
 static int exec_wrapper(const char *command) 
 {
 	int ret = 0;
-	char* argv[4];
-
-	argv[0] = (char*)malloc(strlen(SHELLCMD) + 1);
-	strcpy(argv[0], SHELLCMD);
-	argv[1] = (char*)malloc(strlen(SHELLCMD_ARG1) + 1);
-	strcpy(argv[1], SHELLCMD_ARG1);
-	argv[2] = (char*)malloc(strlen(command) + 1);
-	strcpy(argv[2], command);
-	argv[3] = NULL;
 
 	/* on success, execvp does not return */
-	ret = execvp(argv[0], argv);
+	ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARG1, command, (char*)NULL);
 
-	free(argv[0]);
-	free(argv[1]);
-	free(argv[2]);
-	
 	return ret;
 }
 
@@ -190,6 +184,11 @@ static int my_popen(int* stdout_fd, int* stderr_fd, const char *command) {
 		*stderr_fd = err_pipe[0];
 		return pid;
 	} else if (pid == 0) { /* child */
+		/* Create new session id.
+		 * Process group ID and session ID
+		 * are set to PID (they were PPID) */
+		setsid();
+
 		/* close the read end of the pipes */
 		close(out_pipe[0]);
 		close(err_pipe[0]);
@@ -230,22 +229,6 @@ error_err:
 	close(out_pipe[1]);
 error_out:
 	return -1;
-}
-
-/** Close file descriptors returned by my_popen and wait for process
- * @param pid PID returned by my_popen
- * @param stdout_fd File descriptor to close
- * @param stderr_fd File descriptor to close
- * @return Status given by waitpid command
- */
-static int my_pclose(int pid, int stdout_fd, int stderr_fd) {
-	int status = 0;
-
-	close(stdout_fd);
-	close(stderr_fd);
-	waitpid(pid, &status, 0);
-
-	return status;
 }
 
 /** Allocate memory for stream_data
@@ -335,7 +318,122 @@ static int read_and_append(int fd, stream_data* data) {
 	return ret;
 }
 
-/** Read output streams from executed process and handle timeouts
+/** Signal handler for SIGALRM (timer)
+ * @param signum Identifier of received signal
+ */
+static void timer_handler(int signum) {
+	if (signum == SIGALRM) {
+		timer_value = 1;
+	}
+}
+
+/** Initialize timer and set signal action for SIGALRM
+ * @param secs Value in seconds after which global variable timer_value
+ * will be set
+ * @return 0 in success, -1 in error
+ */
+static int set_timer(long secs) {
+	struct sigaction act;
+	struct itimerval timer;
+
+	act.sa_handler = timer_handler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;
+
+	timer.it_interval.tv_sec = 0;
+	timer.it_interval.tv_usec = 0;
+	timer.it_value.tv_sec = secs;
+	timer.it_value.tv_usec = 0;
+
+	timer_value = 0;
+
+	/* set signal action. original action is stored in global 
+	 * default_alarm_action */
+	if (sigaction(SIGALRM, &act, &default_alarm_action) < 0) {
+		perror("sigaction");
+		return -1;
+	}
+
+	if (setitimer(ITIMER_REAL, &timer, NULL) < 0) {
+		perror("setitimer");
+		goto errtimer;
+	}
+
+	return 0;
+
+ errtimer:
+	if (sigaction(SIGALRM, &default_alarm_action, NULL) < 0) {
+		perror("sigaction");
+	}
+	return -1;
+}
+
+/** Reset timer and restore signal action of SIGALRM
+ */
+static void reset_timer() {
+	struct itimerval timer;
+
+	timer.it_interval.tv_sec = 0;
+	timer.it_interval.tv_usec = 0;
+	timer.it_value.tv_sec = 0;
+	timer.it_value.tv_usec = 0;
+
+	if (setitimer(ITIMER_REAL, &timer, NULL) < 0) {
+		perror("setitimer");
+	}
+
+	/* restore original action for signal SIGALRM */
+	if (sigaction(SIGALRM, &default_alarm_action, NULL) < 0) {
+		perror("sigaction");
+	}
+
+	timer_value = 0;
+}
+
+/** Do unblocking wait for state change of process(es)
+ * belonging to process group
+ * @param data Input and output data of the process
+ * @return 1 if process(es) has terminated, 0 otherwise
+ */
+static int execution_terminated(exec_data* data) {
+	pid_t pid = 0;
+	pid_t pgroup = getpgid(data->pid);
+	int ret = 0;
+	int status = 0;
+
+	pid = waitpid(-pgroup, &status, WNOHANG);
+
+	switch (pid) {
+	case -1:
+		if (errno == ECHILD) {
+			/* no more childs */
+			ret = 1;
+		}
+		break;
+	case 0:
+		/* unterminated child(s) exists */
+		break;
+	default:
+		if (pid == data->pid) {
+			if (WIFEXITED(status)) {
+				/* child exited normally */
+				data->result = WEXITSTATUS(status);
+			} else if (WIFSIGNALED(status)) {
+				/* child terminated by a signal */
+				data->result = WTERMSIG(status);
+				stream_data_append(&data->failure_info, 
+						   FAILURE_INFO_TIMEOUT);
+			} else {
+				data->result = -1;
+			}
+		}
+		break;
+	}
+
+	return ret;
+}
+
+/** Read output streams from executed process
  * @param stdout_fd File descriptor to read stdout stream
  * @param stderr_fd File descriptor to read stderr stream
  * @param data Input and output data controlling execution
@@ -343,87 +441,87 @@ static int read_and_append(int fd, stream_data* data) {
 static void process_output_streams(int stdout_fd, int stderr_fd, 
 				   exec_data* data) 
 {
-	int bytes = 0;
-	int poll_timeout = 500;	/* ms */
+	const int poll_timeout = 100;	/* ms */
 	struct pollfd fds[2];
-	int ret = 0;
 	int i = 0;
-	int outeof = 0;
-	int erreof = 0;
-	struct timeval start_time;
-	struct timeval current_time;
-	time_t elapsed_time = 0;
-	int terminated = 0;
-
-	/* Use non blocking mode such that read will not block */
-	fcntl(stdout_fd, F_SETFL, O_NONBLOCK);
-	fcntl(stderr_fd, F_SETFL, O_NONBLOCK);
 
 	fds[0].fd = stdout_fd;
 	fds[0].events = POLLIN;
 	fds[1].fd = stderr_fd;
 	fds[1].events = POLLIN;
 
-	gettimeofday(&start_time, NULL);
-
-	while (!outeof && !erreof) {
-		ret = poll(fds, 2, poll_timeout);
-
-		switch(ret) {
-		case 0:
-			/* poll timeout */
-			break;
-		case -1:
-			/* error */
-			return;
-			break;
-		default:
-			for(i = 0; i < 2; i++) {
-				if (fds[i].revents & POLLIN) {
-					if (fds[i].fd == stdout_fd) {
-						bytes = 
-							read_and_append(
-								stdout_fd, 
-								&data->\
-								stdout_data);
-						if (bytes == 0) {
-							outeof = 1;
-						}
-					} else if (fds[i].fd == stderr_fd) {
-						bytes = read_and_append(
-							stderr_fd, &data->\
-							stderr_data);
-						if (bytes == 0) {
-							erreof = 1;
-						}
-					}
-				}
-				if (fds[i].revents & POLLHUP) {
-					/* EOF for a pipe */
-					if (fds[i].fd == stdout_fd) {
-						outeof = 1;
-					} else if (fds[i].fd == stderr_fd) {
-						erreof = 1;
-					}
+	switch(poll(fds, 2, poll_timeout)) {
+	case 0:
+		/* poll timeout */
+		break;
+	case -1:
+		/* error */
+		break;
+	default:
+		for(i = 0; i < 2; i++) {
+			if (fds[i].revents & POLLIN) {
+				if (fds[i].fd == stdout_fd) {
+					read_and_append(stdout_fd, 
+							&data->stdout_data);
+				} else if (fds[i].fd == stderr_fd) {
+					read_and_append(stderr_fd,
+							&data->stderr_data);
 				}
 			}
+		}
+		break;
+	}
+
+}
+
+/** Set timeout timers, read output, and control execution of test step
+ * @param stdout_fd File descriptor to read stdout stream
+ * @param stderr_fd File descriptor to read stderr stream
+ * @param data Input and output data controlling execution
+ */
+static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
+	pid_t pgroup = 0;
+	int terminated = 0;
+	int killed = 0;
+
+	/* Use non blocking mode such that read will not block */
+	fcntl(stdout_fd, F_SETFL, O_NONBLOCK);
+	fcntl(stderr_fd, F_SETFL, O_NONBLOCK);
+
+	set_timer(data->soft_timeout);
+
+	while (1) {
+		/* read output streams. does sleeping in poll */
+		process_output_streams(stdout_fd, stderr_fd, data);
+
+		if (execution_terminated(data)) {
 			break;
 		}
 
-		gettimeofday(&current_time, NULL);
-		elapsed_time = current_time.tv_sec - start_time.tv_sec;
-
-		if (terminated && elapsed_time > data->hard_timeout) {
-			/* kill test process and stop reading its output */
-			kill(data->pid, SIGKILL);
-			break;
-		} else if (!terminated && elapsed_time > data->soft_timeout) {
+		if (timer_value && !terminated) {
 			/* try to terminate */
-			kill(data->pid, SIGTERM);
+			pgroup = getpgid(data->pid);
+			if (killpg(pgroup, SIGTERM) < 0) {
+				perror("killpg");
+			}
 			terminated = 1;
+			reset_timer();
+			set_timer(data->hard_timeout - data->soft_timeout);
+		} else if (timer_value && !killed) {
+			/* try to kill */
+			pgroup = getpgid(data->pid);
+			if (killpg(pgroup, SIGKILL) < 0) {
+				perror("killpg");
+			}
+			killed = 1;
 		}
 	}
+
+	reset_timer();
+	close(stdout_fd);
+	close(stderr_fd);
 }
+
 /* ------------------------------------------------------------------------- */
 /** Replace control characters with <space> 
  * @param data stream data to mangle
@@ -473,26 +571,12 @@ static void strip_ctrl_chars (stream_data* data)
 int execute(const char* command, exec_data* data) {
 	int stdout_fd = -1;
 	int stderr_fd = -1;
-	int status = 0;
 
 	data->start_time = time(NULL);
 	data->pid = my_popen(&stdout_fd, &stderr_fd, command);
 
 	if (data->pid > 0) {
-		process_output_streams(stdout_fd, stderr_fd, data);
-		status = my_pclose(data->pid, stdout_fd, stderr_fd);
-
-		if (WIFEXITED(status)) {
-			/* child exited normally */
-			data->result = WEXITSTATUS(status);
-		} else if (WIFSIGNALED(status)) {
-			/* child terminated by a signal */
-			data->result = WTERMSIG(status);
-			stream_data_append(&data->failure_info, 
-					   FAILURE_INFO_TIMEOUT);
-		} else {
-			data->result = -1;
-		}
+		communicate(stdout_fd, stderr_fd, data);
 	}
 
 	data->end_time = time(NULL);

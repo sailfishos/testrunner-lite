@@ -18,6 +18,7 @@
 #define EXECUTOR_H
 
 #include <time.h>
+#include <unistd.h>
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
@@ -50,7 +51,7 @@ struct _exec_data {
 	unsigned soft_timeout;
 	unsigned hard_timeout;
 	/* output parameters */
-	int pid;
+	pid_t pid;
 	stream_data stdout_data;
 	stream_data stderr_data;
 	stream_data failure_info;
