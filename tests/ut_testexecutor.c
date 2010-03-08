@@ -142,7 +142,7 @@ START_TEST (test_executor_terminating_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 2;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating" 
+	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM);
 	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
@@ -161,7 +161,7 @@ START_TEST (test_executor_killing_process)
 	edata.hard_timeout = 2;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
-	fail_unless (edata.result == SIGKILL);
+	fail_unless (edata.result == SIGTERM || edata.result == SIGKILL);
 	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
 	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
 	fail_unless (strcmp((char*)edata.stdout_data.buffer, "stdouttest") == 0);
