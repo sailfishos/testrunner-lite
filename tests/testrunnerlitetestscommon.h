@@ -31,6 +31,8 @@
 #define TESTDATA_INVALID_XML_1    "/usr/share/testrunner-lite-tests/testdata/invalid.xml"
 #define TESTDATA_INVALID_SEMANTIC_XML_1    "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-semantic_invalid.xml"
 
+#define TESTDATA_GET_XML_1    "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-get.xml"
+
 #define TESTRUNNERLITE_BIN  "/usr/bin/testrunner-lite"
 
 /* ------------------------------------------------------------------------- */

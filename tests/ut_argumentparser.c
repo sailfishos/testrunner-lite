@@ -76,11 +76,15 @@ START_TEST (test_parse_cmd_line_arguments)
     /* Test parsing command line arguments. */
     int ret;
     char cmd[1024];
-    char *out_file = "/tmp/testrunner-lite.out.xml";
+    char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
     
     /* Test -f and -o flag. */
     sprintf (cmd, "%s -f %s -o %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, 
 	     out_file);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
+    sprintf (cmd, "stat %s", out_file);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
@@ -173,6 +177,35 @@ START_TEST (test_semantic_and_validate_only_flags)
 
 END_TEST
 
+START_TEST (test_get)
+
+    int ret;
+    char cmd[1024];
+
+    /* Test that -o creates a directory and that get tag does what is 
+       supposed to  */
+    sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir/res.xml ", 
+	     TESTRUNNERLITE_BIN, 
+	     TESTDATA_GET_XML_1);
+    ret = system (cmd);
+    fail_if (ret, cmd);
+
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/");
+    fail_if (ret, cmd);
+    printf ("%s: Output folder created successfully\n",
+	    __FUNCTION__); 
+    
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest.txt");
+    fail_if (ret, cmd);
+    printf ("%s: get /tmp/gettest.txt worked\n",
+	    __FUNCTION__); 
+    
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest2.txt");
+    fail_if (ret, cmd);
+    printf ("%s: get /tmp/gettest2.txt worked\n",
+	    __FUNCTION__); 
+
+END_TEST
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -200,6 +233,9 @@ Suite *make_argumentparser_suite (void)
     tcase_add_test (tc, test_semantic_and_validate_only_flags);
     suite_add_tcase (s, tc);
 
+    tc = tcase_create ("Test output dir creation and get tag.");
+    tcase_add_test (tc, test_get);
+    suite_add_tcase (s, tc);
     
     return s;
 }

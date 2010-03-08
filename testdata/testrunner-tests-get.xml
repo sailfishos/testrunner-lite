@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="get-tests"  timeout="10">  
+    <set name="get set" description="try get tag handling"  timeout="15">    
+      <pre_steps>
+         <step>echo foo > /tmp/gettest.txt</step>
+         <step>echo bar > /tmp/gettest2.txt</step>
+      </pre_steps>
+            
+      <case name="check files" description="check that files created in pre-step exist" timeout="30">
+        <step expected_result="0">stat /tmp/gettest.txt</step>
+        <step expected_result="0">stat /tmp/gettest2.txt</step>
+      </case>     
+
+      <get>
+        <file>/tmp/gettest.txt</file>
+        <file>/tmp/gettest2.txt</file>
+      </get>
+    </set>
+ </suite>
+</testdefinition>
+
