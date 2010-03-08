@@ -22,7 +22,7 @@
 
       <environments> 
         <scratchbox>true</scratchbox>
-        <hardware>false</hardware>
+        <hardware>true</hardware>
       </environments>
 
       <get>

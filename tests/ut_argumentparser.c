@@ -145,7 +145,6 @@ START_TEST (test_parse_cmd_line_invalid_arguments)
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
-
 END_TEST
 
 START_TEST (test_semantic_and_validate_only_flags)

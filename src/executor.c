@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <string.h>
 
 #include "executor.h"
 
@@ -451,7 +452,7 @@ static void strip_ctrl_chars (stream_data* data)
 	} while (clean_len < data->length);
 
 	/* \0 needs special handling */
-	endp = &data->buffer [data->length];
+	endp = (char *)&data->buffer [data->length];
 	do {
 		p = rawmemchr(data->buffer, '\0');
 

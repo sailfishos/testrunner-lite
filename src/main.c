@@ -218,6 +218,51 @@ LOCAL int process_case (const void *data, const void *user)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/** Process get data. execute steps in case.
+ *  @param data case data
+ *  @param user set data
+ *  @return 1 always
+ */
+LOCAL int process_get (const void *data, const void *user) 
+{
+
+	xmlChar *fname = (xmlChar *)data;
+	td_set *set = (td_set *)user;
+	xmlChar *command;
+	exec_data edata;
+
+	/*
+	** Compose command 
+	*/
+	memset (&edata, 0x0, sizeof (exec_data));
+	edata.soft_timeout = set->gen.timeout ? set->gen.timeout : 90;
+	edata.hard_timeout = edata.soft_timeout + 5;
+
+	command = (xmlChar *)malloc (strlen ("cp ") + strlen ((char *)fname) +
+				     strlen (opts.output_folder) + 2);
+	sprintf (command, "cp %s %s", fname, opts.output_folder);
+	/*
+	** Execute it
+	*/
+	execute((char*)command, &edata);
+
+	if (edata.result) {
+		fprintf (stderr, "%s: %s failed: %s\n", PROGNAME, command,
+			 (char *)(edata.stderr_data.buffer ?
+				  edata.stderr_data.buffer : 
+				  "no info available"));
+	}
+	/*
+	** Inspect results
+	*/
+	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
+	if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
+	if (edata.failure_info.buffer) free (edata.failure_info.buffer);
+	free (command);
+
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
 /** Do processing on suite, currently just writes the pre suite tag to results
  *  @param s suite data
  */
@@ -251,6 +296,8 @@ LOCAL void process_set (td_set *s)
 		}
 	}
 	xmlListWalk (s->cases, process_case, s);
+	xmlListWalk (s->gets, process_get, s);
+
 	write_pre_set_tag (s);
 	write_post_set_tag (s);
  skip:
@@ -266,8 +313,6 @@ LOCAL int create_output_folder ()
 	int len;
 	char *p;
 	char *pwd;
-	int fd;
-	
 	
 	if ((p = strrchr (opts.output_filename, '/'))) {
 		len = p - opts.output_filename;
@@ -288,7 +333,7 @@ LOCAL int create_output_folder ()
 		opts.output_folder[strlen(pwd) + 1] = '\0';
 	}
 	
-	if  (mkdir (opts.output_folder, "rw") < 0 && errno != EEXIST) {
+	if  (mkdir (opts.output_folder, S_IWUSR | S_IXUSR | S_IRUSR) < 0 && errno != EEXIST) {
 		fprintf (stderr, "%s failed to create ouput "
 			 "directory %s: %s\n",
 			 PROGNAME, strerror (errno), opts.output_folder);
@@ -512,6 +557,7 @@ int main (int argc, char *argv[], char *envp[])
 OUT:
 	if (opts.input_filename) free (opts.input_filename);
 	if (opts.output_filename) free (opts.output_filename);
+	if (opts.output_folder) free (opts.output_folder);
 	if (opts.environment) free (opts.environment);
 	
 	return retval;

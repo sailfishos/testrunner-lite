@@ -89,8 +89,6 @@ LOCAL int txt_write_post_set_tag (td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
-LOCAL void strip_ctrl_chars (xmlChar *);
-/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 

@@ -242,7 +242,8 @@ START_TEST (test_reader_set)
     fail_unless (xmlListSize(set->environments) == 1);
     fail_unless (xmlListSize(set->pre_steps) == 1);
     fail_unless (xmlListSize(set->cases) == 3);
-    
+    fail_unless (xmlListSize(set->gets) == 0);
+
 END_TEST
 
 /* ------------------------------------------------------------------------- */
@@ -287,6 +288,7 @@ Suite *make_testdefinitionparser_suite (void)
     tc = tcase_create ("Validate set reading.");
     tcase_add_test (tc, test_reader_set);
     suite_add_tcase (s, tc);
+
 
     return s;
 }
