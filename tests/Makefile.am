@@ -15,7 +15,8 @@ testrunnerlitetests_SOURCES = main.c \
                               ut_testdefinitionparser.c \
                               ut_argumentparser.c \
 			      ut_testresultlogger.c \
-			      ut_testexecutor.c
+			      ut_testexecutor.c \
+			      ut_features.c
 
 AM_CFLAGS = -I. \
             -I/usr/include \
