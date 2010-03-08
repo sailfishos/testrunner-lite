@@ -340,7 +340,6 @@ LOCAL int create_output_folder ()
 		return 1;
 		
 	}
-	close (fd);
 	
 	return 0;
 }
