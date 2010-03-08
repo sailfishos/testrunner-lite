@@ -82,9 +82,9 @@ START_TEST (test_ctrl_char_strip)
 			     0x1C,0x1D,0x1E,0x1F,0x7F,'b','a','r'};
 
      const char valid_str[] = {'t',' ','e','s','t','f',' ',' ',' ',' ',
-			      'o',' ','o',' ',' ',' ',' ',' ',' ',
-			      ' ',' ',' ',' ',' ',' ',' ',' ',' ',
-			      ' ',' ',' ',' ',' ','b','a','r', '\0'};
+			       'o',' ','o',' ',' ',' ',' ',' ',' ',
+			       ' ',' ',' ',' ',' ',' ',' ',' ',' ',
+			       ' ',' ',' ',' ',' ','b','a','r', '\0'};
 
     
 
@@ -131,6 +131,23 @@ START_TEST (test_get)
 
 END_TEST
 
+START_TEST (test_utf8)
+    int ret;
+    char cmd[1024];
+    char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
+    
+    sprintf (cmd, "%s -f %s -o %s", TESTRUNNERLITE_BIN, TESTDATA_UTF8_XML_1, 
+	     out_file);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
+    sprintf (cmd, "out=$(cat /usr/share/testrunner-lite-tests/testdata/unicode.txt); grep \"$out\" %s", out_file);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
+
+END_TEST
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -152,6 +169,11 @@ Suite *make_features_suite (void)
     tcase_add_test (tc, test_get);
     suite_add_tcase (s, tc);
     
+    tc = tcase_create ("Test UTF-8 Support.");
+    tcase_add_test (tc, test_utf8);
+    suite_add_tcase (s, tc);
+    
+
     return s;
 }
 
