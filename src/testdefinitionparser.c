@@ -389,7 +389,6 @@ LOCAL int td_parse_gets(xmlListPtr list)
 					 PROGNAME, __FUNCTION__);
 				goto ERROUT;
 			}
-			printf ("GET %s\n", value);
 			
 		}
 	} while (!(xmlTextReaderNodeType(reader) == 
