@@ -342,7 +342,6 @@ LOCAL int create_output_folder ()
 			 "directory %s\n",
 			 PROGNAME, opts.output_folder);
 		free (cmd);
-		
 		return 1;
 	}
 	

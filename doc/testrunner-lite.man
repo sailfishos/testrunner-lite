@@ -1,0 +1,73 @@
+.\" Process this file with
+.\" groff -man -Tascii min.1
+.\" 
+.TH TESTRUNNER-LITE 1 "March 2010" Linux "User Manuals"
+.SH NAME
+testrunner-lite \- test executor tool for CITA
+.SH SYNOPSIS
+.B testrunner-lite [options]
+.SH DESCRIPTION
+.B testrunner-lite 
+is a tool for executing test commands. It is designed to be a lightweight 
+wrapper for various test harnesses. The tool is driven by input XML file containing the test definitions (suite, set, case, step). Tests are executed as
+instructed in the input XML file and the output is written to result XML 
+or text file. 
+.TP
+\fB\-h\fR,  \fB\-\-help\fR
+Display short help and exit
+.TP
+\fB\-f\fR,  \fB\-\-file\fR FILE
+Input file with test definitions in XML (required)
+.TP
+\fB\-o\fR,  \fB\-\-output\fR FILE
+Output file format; FORMAT can be xml or text (Default xml)
+.TP
+\fB\-v\fR,  \fB\-\-verbose\fR
+Enable verbosity mode to show debug messages
+.TP
+\fB\-a\fR,  \fB\-\-automatic\fR 
+Enable only automatic tests to be executed
+.TP
+\fB\-m\fR,  \fB\-\-manual\fR 
+Enable only manual tests to be executed
+.TP
+\fB\-l\fR,  \fB\-\-filter\fR FILTER
+Filtering option to select tests (not) to be executed.
+E.g. '-testcase=bad_test -type=unknown' first disables
+test case named as bad_test; Next, all tests with type
+unknown are disabled; The remaining tests will be
+executed
+.TP
+\fB\-c\fR,  \fB\-\-ci\fR 
+Disable validation of test definition against schema
+.TP
+\fB\-s\fR,  \fB\-\-semantic\fR 
+Enable validation of test definition against stricter (semantics) schema
+\fB\-A\fR,  \fB\-\-validate\-only\fR 
+Do only input xml validation, do not execute tests
+
+.SH FILES
+.I /usr/share/test-definition/testdefinition-syntax.xsd 
+.br
+.I /usr/share/test-definition/testdefinition-tm_terms.xsd
+.RS
+Test definition schema files. See
+.BR test-definition (5)
+for further details.
+
+.SH AUTHOR
+Written by Riku Halonen, Sami Lahtinen and Sampo Saaristo.
+
+.SH BUGS
+Filters do not work as of yet.
+ 
+.SH "REPORTING BUGS"
+Report bugs to test-tools-dev@projects.maemo.org
+
+.SH COPYRIGHT
+testrunner-lite, © Nokia 2010, All rights reserved
+Contact: Ville Ilvonen, test-tools-dev@projects.maemo.org
+
+.SH "SEE ALSO"
+.BR test-definition (5)
+

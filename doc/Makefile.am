@@ -1,3 +1,5 @@
+man1_MANS = testrunner-lite.man
+
 html-local: doxyhtml
 
 install-data-local:
