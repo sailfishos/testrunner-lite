@@ -312,7 +312,7 @@ LOCAL int create_output_folder ()
 {
 	int len;
 	char *p;
-	char *pwd;
+	char *pwd, *cmd;
 	
 	if ((p = strrchr (opts.output_filename, '/'))) {
 		len = p - opts.output_filename;
@@ -333,13 +333,20 @@ LOCAL int create_output_folder ()
 		opts.output_folder[strlen(pwd) + 1] = '\0';
 	}
 	
-	if  (mkdir (opts.output_folder, S_IWUSR | S_IXUSR | S_IRUSR) < 0 && errno != EEXIST) {
+	cmd = (char *)malloc (strlen(opts.output_folder) + 
+			      strlen("mkdir -p ") + 1);
+	sprintf (cmd, "mkdir -p %s", opts.output_folder);
+
+	if  (system (cmd)) {
 		fprintf (stderr, "%s failed to create ouput "
-			 "directory %s: %s\n",
-			 PROGNAME, strerror (errno), opts.output_folder);
-		return 1;
+			 "directory %s\n",
+			 PROGNAME, opts.output_folder);
+		free (cmd);
 		
+		return 1;
 	}
+	
+	free (cmd);
 	
 	return 0;
 }
