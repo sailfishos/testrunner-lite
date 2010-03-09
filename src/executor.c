@@ -16,7 +16,9 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
+#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500	/* required by getpgid() in unistd.h */
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>  		/* dup, pipe, fork, close, execvp */
