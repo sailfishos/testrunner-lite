@@ -240,7 +240,8 @@ LOCAL int process_get (const void *data, const void *user)
 
 	command = (xmlChar *)malloc (strlen ("cp ") + strlen ((char *)fname) +
 				     strlen (opts.output_folder) + 2);
-	sprintf (command, "cp %s %s", fname, opts.output_folder);
+	sprintf ((char *)command, "cp %s %s", (char *)fname, 
+		 opts.output_folder);
 	/*
 	** Execute it
 	*/
@@ -250,7 +251,7 @@ LOCAL int process_get (const void *data, const void *user)
 		fprintf (stderr, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
 				  edata.stderr_data.buffer : 
-				  "no info available"));
+				  BAD_CAST "no info available"));
 	}
 	/*
 	** Inspect results
