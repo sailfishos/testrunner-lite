@@ -14,6 +14,3 @@ noinst_HEADERS = testrunnerlite.h \
 	         testdefinitiondatatypes.h \
 		 testresultlogger.h \
 	         executor.h 
-
-install-data-local:
-	cp testdefinition.xsd $(DESTDIR)/usr/bin
