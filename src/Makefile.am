@@ -7,13 +7,10 @@ testrunner_lite_SOURCES = main.c \
 	                  executor.c
 testrunner_lite_LDFLAGS = -lxml2
 
-AM_CFLAGS = -I/usr/include/libxml2  
+AM_CFLAGS = -I/usr/include/libxml2 -D_GNU_SOURCE
 
 noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \
 	         testdefinitiondatatypes.h \
 		 testresultlogger.h \
 	         executor.h 
-
-install-data-local:
-	cp testdefinition.xsd $(DESTDIR)/usr/bin
