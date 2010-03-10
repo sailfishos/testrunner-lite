@@ -299,7 +299,8 @@ LOCAL void process_set (td_set *s)
 	}
 	xmlListWalk (s->cases, process_case, s);
 	xmlListWalk (s->gets, process_get, s);
-
+	s->environment = xmlCharStrdup (opts.environment);
+	
 	write_pre_set_tag (s);
 	write_post_set_tag (s);
  skip:
