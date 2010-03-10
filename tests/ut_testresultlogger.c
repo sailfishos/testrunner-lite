@@ -25,6 +25,7 @@
 #include "testdefinitiondatatypes.h"
 #include "testrunnerlite.h"
 #include "testrunnerlitetestscommon.h"
+#include "hwinfo.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -103,13 +104,16 @@ LOCAL void ut_test_set (td_set *s)
 START_TEST (test_logger_init_inv_args)
 
     testrunner_lite_options test_opts;
-
+    hw_info hwinfo;
+    
+    memset (&hwinfo, 0x0, sizeof (hw_info));
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
-    fail_unless (init_result_logger(&test_opts));
+
+    fail_unless (init_result_logger(&test_opts, &hwinfo));
     test_opts.output_type = OUTPUT_TYPE_XML;
-    fail_unless (init_result_logger(&test_opts));
+    fail_unless (init_result_logger(&test_opts, &hwinfo));
     test_opts.output_type = OUTPUT_TYPE_TXT;
-    fail_unless (init_result_logger(&test_opts));
+    fail_unless (init_result_logger(&test_opts, &hwinfo));
     
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -117,7 +121,9 @@ START_TEST (test_logger_write_xml)
 
     td_parser_callbacks cbs;
     testrunner_lite_options test_opts;
+    hw_info hwinfo;
     
+
     suite = NULL;
     set = NULL;
     
@@ -125,6 +131,8 @@ START_TEST (test_logger_write_xml)
     
     memset (&cbs, 0x0, sizeof (cbs));
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
+    memset (&hwinfo, 0x0, sizeof (hw_info));
+
     test_opts.input_filename = malloc (strlen(TESTDATA_VALID_XML_1)+1);
     strcpy (test_opts.input_filename, TESTDATA_VALID_XML_1);
     cbs.test_suite = ut_test_suite;
@@ -141,7 +149,7 @@ START_TEST (test_logger_write_xml)
 
     test_opts.output_type = OUTPUT_TYPE_XML;
     test_opts.output_filename = "/dev/null";
-    fail_if (init_result_logger (&test_opts));
+    fail_if (init_result_logger (&test_opts, &hwinfo));
     fail_if (write_pre_suite_tag (suite));
     fail_if (write_post_suite_tag ());
     fail_if (write_pre_set_tag (set));
@@ -158,7 +166,9 @@ START_TEST (test_logger_write_txt)
 
     td_parser_callbacks cbs;
     testrunner_lite_options test_opts;
+    hw_info hwinfo;
     
+
     suite = NULL;
     set = NULL;
     
@@ -166,6 +176,8 @@ START_TEST (test_logger_write_txt)
     
     memset (&cbs, 0x0, sizeof (cbs));
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
+    memset (&hwinfo, 0x0, sizeof (hw_info));
+
     test_opts.input_filename = malloc (strlen(TESTDATA_VALID_XML_1)+1);
     strcpy (test_opts.input_filename, TESTDATA_VALID_XML_1);
     cbs.test_suite = ut_test_suite;
@@ -182,7 +194,7 @@ START_TEST (test_logger_write_txt)
 
     test_opts.output_type = OUTPUT_TYPE_XML;
     test_opts.output_filename = "/dev/null";
-    fail_if (init_result_logger (&test_opts));
+    fail_if (init_result_logger (&test_opts, &hwinfo));
     fail_if (write_pre_suite_tag (suite));
     fail_if (write_post_suite_tag ());
     fail_if (write_pre_set_tag (set));

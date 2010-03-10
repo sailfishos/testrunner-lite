@@ -32,6 +32,7 @@
 #include "testdefinitionparser.h"
 #include "testresultlogger.h"
 #include "executor.h"
+#include "hwinfo.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -61,7 +62,7 @@ extern char* optarg;
 /* LOCAL GLOBAL VARIABLES */
 td_suite *current_suite = NULL;
 testrunner_lite_options opts;
-
+hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -389,6 +390,8 @@ int main (int argc, char *argv[], char *envp[])
 
 	memset (&opts, 0x0, sizeof(testrunner_lite_options));
         memset (&cbs, 0x0, sizeof(td_parser_callbacks));
+        memset (&hwinfo, 0x0, sizeof(hwinfo));
+
 	opts.output_type = OUTPUT_TYPE_XML;
 	opts.run_automatic = opts.run_manual = 1;
 	
@@ -539,16 +542,22 @@ int main (int argc, char *argv[], char *envp[])
 
 	retval = td_register_callbacks (&cbs);
 	
-	/*
+        /*
 	** Initialize the reader
 	*/
 	retval = td_reader_init(&opts);
 	if (retval)
 		goto OUT;
 	/*
+	** Obtain hardware info
+	*/
+	if (!read_hwinfo (&hwinfo))
+		print_hwinfo (&hwinfo);
+	
+	/*
 	** Initialize result logger
 	*/
-	retval =  init_result_logger(&opts);
+	retval =  init_result_logger(&opts, &hwinfo);
 	if (retval)
 		goto OUT;
 	

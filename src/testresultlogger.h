@@ -21,6 +21,7 @@
 /* INCLUDES */
 #include "testrunnerlite.h"
 #include "testdefinitiondatatypes.h"
+#include "hwinfo.h"
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -45,7 +46,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
-int init_result_logger (testrunner_lite_options *);
+int init_result_logger (testrunner_lite_options *, hw_info *);
 /* ------------------------------------------------------------------------- */
 void close_result_logger (void);
 /* ------------------------------------------------------------------------- */
