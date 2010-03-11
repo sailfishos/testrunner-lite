@@ -577,11 +577,13 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 	    fprintf (ofile,"Test results:\n");
 	    fprintf (ofile, "  environment : %s\n", opts->environment);
 
-	    fprintf (ofile, "  hwproduct   : %s\n", hwinfo->product ? 
-		     hwinfo->product : "unknown");
+	    fprintf (ofile, "  hwproduct   : %s\n", 
+		     (char *)(hwinfo->product ? hwinfo->product : 
+			      (unsigned char *)"unknown"));
 	    
-	    fprintf (ofile, "  hwbuild     : %s\n", hwinfo->hw_build ?
-		     hwinfo->hw_build : "unknown");
+	    fprintf (ofile, "  hwbuild     : %s\n", 
+		     (char *)(hwinfo->hw_build ? hwinfo->hw_build :
+			      (unsigned char *)"unknown");
 	    
 
 	    /*

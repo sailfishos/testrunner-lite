@@ -98,7 +98,7 @@ LOCAL unsigned char *get_sysinfo (const char *key)
 		free (edata.stdout_data.buffer);
 		return NULL;
 	}
-	p = strchr  (edata.stdout_data.buffer, '\n');
+	p = strchr  ((char *)edata.stdout_data.buffer, '\n');
 	if (p) *p ='\0';
 	
 	return edata.stdout_data.buffer;
