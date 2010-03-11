@@ -534,19 +534,21 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 						       "unknown")) < 0)
 		    return 1;
 
-
+	    
 	    if (xmlTextWriterWriteAttribute (writer, 
 					     BAD_CAST "hwproduct", 
-					     BAD_CAST (hwinfo->product ?
-						       hwinfo->product :
-						       "unknown")) < 0)
+					     (hwinfo->product ?
+					      hwinfo->product :
+					      BAD_CAST "unknown")) < 0)
 		    return 1;
 
+
+	    
 	    if (xmlTextWriterWriteAttribute (writer, 
 					     BAD_CAST "hwbuild", 
-					     BAD_CAST (hwinfo->hw_build ?
-						       hwinfo->hw_build :
-						       "unknown")) < 0)
+					     (hwinfo->hw_build ?
+					      hwinfo->hw_build :
+					      BAD_CAST "unknown")) < 0)
 		    return 1;
 
 

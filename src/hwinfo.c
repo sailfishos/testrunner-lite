@@ -61,7 +61,7 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-LOCAL char *get_sysinfo (const char *);
+LOCAL unsigned char *get_sysinfo (const char *);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -73,12 +73,13 @@ LOCAL char *get_sysinfo (const char *);
  *  @param key to be passed to sysinfo-tool e.g. "component/product"
  *  @return stdout output of the sysinfo-tool command
  */
-LOCAL char *get_sysinfo (const char *key)
+LOCAL unsigned char *get_sysinfo (const char *key)
 {
-	char *cmd;
+	char *cmd, *p;
 	exec_data edata;
 	memset (&edata, 0x0, sizeof (exec_data));
-
+	init_exec_data (&edata);
+	
 	edata.soft_timeout = 5;
 	edata.hard_timeout = edata.soft_timeout + 5;
 
@@ -87,13 +88,17 @@ LOCAL char *get_sysinfo (const char *key)
 	sprintf (cmd, "sysinfo-tool --get %s", key);
 	execute (cmd, &edata);
 	
-	if (edata.stderr_data.buffer) {
-		fprintf (stderr, "%s:%s():%s\n", PROGNAME, __FUNCTION__,
-			 edata.stderr_data.buffer);
+	if (edata.result) {
+		fprintf (stderr, "%s:%s():%d:%s\n", PROGNAME, __FUNCTION__,
+			 edata.result, (char *)edata.stderr_data.buffer ?
+			 (char *)edata.stderr_data.buffer : 
+			 "no info available");
 		free (edata.stderr_data.buffer);
 	}
-
-	return (char *)edata.stdout_data.buffer;
+	p = strchr  (edata.stdout_data.buffer, '\n');
+	if (p) *p ='\0';
+	
+	return edata.stdout_data.buffer;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -109,7 +114,7 @@ int read_hwinfo (hw_info *hi)
 	memset (hi, 0x0, sizeof (hw_info));
 	
 	hi->product = get_sysinfo("component/product");
-	hi->hw_build = get_sysinfo("component/product");
+	hi->hw_build = get_sysinfo("component/hw-build");
 	if (!hi->product || !hi->hw_build) {
 		fprintf (stderr, "%s: Failed to read basic HW "
 			 "information from sysinfo.\n", PROGNAME);

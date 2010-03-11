@@ -409,9 +409,12 @@ static int execution_terminated(exec_data* data) {
 	switch (pid) {
 	case -1:
 		if (errno == ECHILD) {
+		    
 			/* no more childs */
 			ret = 1;
-		}
+		} else
+		    fprintf (stderr, "waipid() %s", strerror (errno));
+		
 		break;
 	case 0:
 		/* unterminated child(s) exists */
@@ -494,6 +497,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 	set_timer(data->soft_timeout);
 
 	while (1) {
+	    
 		/* read output streams. does sleeping in poll */
 		process_output_streams(stdout_fd, stderr_fd, data);
 
@@ -504,6 +508,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		if (timer_value && !terminated) {
 			/* try to terminate */
 			pgroup = getpgid(data->pid);
+			printf ("TERMINATING  %d", data->pid);
+			
 			if (killpg(pgroup, SIGTERM) < 0) {
 				perror("killpg");
 			}
@@ -513,6 +519,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		} else if (timer_value && !killed) {
 			/* try to kill */
 			pgroup = getpgid(data->pid);
+			printf ("KILLING  %d", data->pid);
+
 			if (killpg(pgroup, SIGKILL) < 0) {
 				perror("killpg");
 			}
