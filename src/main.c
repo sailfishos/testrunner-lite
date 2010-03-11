@@ -64,6 +64,10 @@ extern char* optarg;
 td_suite *current_suite = NULL;
 testrunner_lite_options opts;
 hw_info hwinfo;
+int passcount = 0;
+int casecount = 0;
+
+
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -172,15 +176,17 @@ LOCAL int step_execute (const void *data, const void *user)
 		}
 		if (edata.failure_info.buffer) {
 			step->failure_info = edata.failure_info.buffer;
+			log_msg (LOG_INFO, "FAILURE INFO %s",
+				 step->failure_info);
 		}
 
 		step->return_code = edata.result;
 		step->start = edata.start_time;
 		step->end = edata.end_time;
 		if (step->return_code != step->expected_result) {
-			printf ("step %s return %d expected %d\n",
-				step->step, step->return_code, 
-				step->expected_result);
+			log_msg (LOG_INFO, "STEP: %s return %d expected %d\n",
+				 step->step, step->return_code, 
+				 step->expected_result);
 			fail = 1;
 		}
 	}
@@ -203,6 +209,7 @@ LOCAL int process_case (const void *data, const void *user)
 	td_set *set = (td_set *)user;
 	
 	log_msg (LOG_INFO, "Starting test case %s", c->gen.name);
+	casecount++;
 	
 
 	c->passed = 1;
@@ -212,15 +219,22 @@ LOCAL int process_case (const void *data, const void *user)
 	if (c->gen.timeout == 0)
 		c->gen.timeout = 90; /* the default one */
 	 
-	    
-	xmlListWalk (set->pre_steps, step_execute, data);
+	if (xmlListSize (set->pre_steps) > 0) {
+		log_msg (LOG_INFO, "Executing pre steps");
+		xmlListWalk (set->pre_steps, step_execute, data);
+	}
+	
 	/* execute test steps only if pre-steps passed */
 	if (c->passed) {
 		xmlListWalk (c->steps, step_execute, data);
-		xmlListWalk (set->post_steps, step_execute, data);
+		if (xmlListSize (set->post_steps) > 0) {
+			log_msg (LOG_INFO, "Executing post steps");
+			xmlListWalk (set->post_steps, step_execute, data);
+		}
 	}
 	log_msg (LOG_INFO, "Finished test case Result: %s", c->passed ?
 		 "PASS" : "FAIL");
+	passcount += c->passed;
 	
 	return 1;
 }
@@ -571,8 +585,7 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	** Obtain hardware info
 	*/
-	if (!read_hwinfo (&hwinfo))
-		print_hwinfo (&hwinfo);
+	read_hwinfo (&hwinfo);
 	
 	/*
 	** Initialize result logger
@@ -587,9 +600,13 @@ int main (int argc, char *argv[], char *envp[])
 	log_msg (LOG_INFO, "Starting to run tests...");
 
 	while (td_next_node() == 0);
+	log_msg (LOG_INFO, "Finished running tests.");
 	
 	td_reader_close();
 	close_result_logger();
+	log_msg (LOG_INFO, "Executed %d cases. Passed %d Failed %d",
+		 casecount, passcount, casecount - passcount);
+	log_msg (LOG_INFO, "Results were written to: %s", opts.output_filename);
 	log_msg (LOG_INFO, "Finished!");
 	
 OUT:
