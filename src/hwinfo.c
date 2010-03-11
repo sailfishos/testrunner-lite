@@ -23,6 +23,7 @@
 #include <libxml/xmlwriter.h>
 #include "executor.h"
 #include "hwinfo.h"
+#include "log.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -94,8 +95,10 @@ LOCAL unsigned char *get_sysinfo (const char *key)
 			 (char *)edata.stderr_data.buffer : 
 			 "no info available");
 		free (edata.stderr_data.buffer);
+		free (edata.stdout_data.buffer);
+		return NULL;
 	}
-	p = strchr  (edata.stdout_data.buffer, '\n');
+	p = strchr  ((char *)edata.stdout_data.buffer, '\n');
 	if (p) *p ='\0';
 	
 	return edata.stdout_data.buffer;
@@ -115,18 +118,37 @@ int read_hwinfo (hw_info *hi)
 	
 	hi->product = get_sysinfo("component/product");
 	hi->hw_build = get_sysinfo("component/hw-build");
-	if (!hi->product || !hi->hw_build) {
+	if (hi->product || !hi->hw_build) {
 		fprintf (stderr, "%s: Failed to read basic HW "
 			 "information from sysinfo.\n", PROGNAME);
 		return 1;
-	} 
+	} else {
+		log_msg (LOG_INFO, "Hardware: Product: %s HWbuild: %s",
+			 hi->product, hi->hw_build);
+	}
+	
 	hi->nolo = get_sysinfo("component/nolo");
 	hi->boot_mode = get_sysinfo("component/boot-mode");
 	hi->production_sn = get_sysinfo("device/production-sn");
 	hi->product_code = get_sysinfo("device/product-code");
 	hi->basic_product_code = get_sysinfo("device/basic-product-code");
-
 	
+	if (!hi->nolo)
+		return 0;
+	
+	log_msg(LOG_INFO, "Hardware: Nolo: %s"
+		" Boot_mode: %s"
+		" Production_sn: %s" 
+		" Product_code: %s"
+		" Basic_product_code: %s",
+		hi->nolo, 
+		hi->boot_mode ? hi->boot_mode : (unsigned char *)"unknown",
+		hi->production_sn ? hi->production_sn : 
+		(unsigned char *)"unknown",
+		hi->product_code ? hi->product_code : 
+		(unsigned char *)"unknown",
+		hi->basic_product_code ? hi->product_code : 
+		(unsigned char *)"unknown");
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -137,15 +159,21 @@ void print_hwinfo (hw_info *hi)
 {
 	printf ("Hardware Info:\n");
 	printf ("%s %s %s %s\n", 
-		(char *)(hi->product ? hi->product : "<none>"), 
-		(char *)(hi->hw_build ? hi->hw_build : "<none>"), 
-		(char *)(hi->nolo ? hi->nolo : "<none>"), 
-		(char *)(hi->boot_mode ? hi->boot_mode : "<none>"));
+		(char *)(hi->product ? hi->product : 
+			 (unsigned char *)"<none>"), 
+		(char *)(hi->hw_build ? hi->hw_build : 
+			 (unsigned char *)"<none>"), 
+		(char *)(hi->nolo ? hi->nolo : 
+			 (unsigned char *)"<none>"), 
+		(char *)(hi->boot_mode ? hi->boot_mode : 
+			 (unsigned char *)"<none>"));
 	printf ("%s %s %s\n", 
-		(char *)(hi->production_sn ? hi->production_sn : "<none>") , 
-		(char *)(hi->product_code ? hi->product_code : "<none>"),
+		(char *)(hi->production_sn ? hi->production_sn : 
+			 (unsigned char *)"<none>") , 
+		(char *)(hi->product_code ? hi->product_code : 
+			 (unsigned char *)"<none>"),
 		(char *)(hi->basic_product_code ? hi->basic_product_code : 
-			 "<none>"));
+			 (unsigned char *)"<none>"));
 }
 /* ------------------------------------------------------------------------- */
 /** Free the allocated data from hw_info
