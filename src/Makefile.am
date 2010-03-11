@@ -5,7 +5,8 @@ testrunner_lite_SOURCES = main.c \
 	                  testdefinitiondatatypes.c \
 			  testresultlogger.c \
 	                  executor.c \
-			  hwinfo.c
+			  hwinfo.c \
+			  log.c
 
 testrunner_lite_LDFLAGS = -lxml2
 
@@ -16,4 +17,5 @@ noinst_HEADERS = testrunnerlite.h \
 	         testdefinitiondatatypes.h \
 		 testresultlogger.h \
 	         executor.h \
-		 hwinfo.h
+		 hwinfo.h \
+		 log.h

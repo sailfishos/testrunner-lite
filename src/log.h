@@ -57,7 +57,7 @@ enum log_message_types {
 /* ------------------------------------------------------------------------- */
 void log_msg(int type, char *format, ...);
 /* ------------------------------------------------------------------------- */
-void set_verbosity_level(int level);
+void log_set_verbosity_level(int level);
 
 #endif                          /* LOG_H */
 /* End of file */
