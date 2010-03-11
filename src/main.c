@@ -32,6 +32,8 @@
 #include "testdefinitionparser.h"
 #include "testresultlogger.h"
 #include "executor.h"
+#include "hwinfo.h"
+#include "log.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -61,7 +63,7 @@ extern char* optarg;
 /* LOCAL GLOBAL VARIABLES */
 td_suite *current_suite = NULL;
 testrunner_lite_options opts;
-
+hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -199,6 +201,9 @@ LOCAL int process_case (const void *data, const void *user)
 
 	td_case *c = (td_case *)data;
 	td_set *set = (td_set *)user;
+	
+	log_msg (LOG_INFO, "Starting test case %s", c->gen.name);
+	
 
 	c->passed = 1;
 	c->gen.timeout = c->gen.timeout ? c->gen.timeout : 
@@ -214,6 +219,8 @@ LOCAL int process_case (const void *data, const void *user)
 		xmlListWalk (c->steps, step_execute, data);
 		xmlListWalk (set->post_steps, step_execute, data);
 	}
+	log_msg (LOG_INFO, "Finished test case Result: %s", c->passed ?
+		 "PASS" : "FAIL");
 	
 	return 1;
 }
@@ -240,7 +247,8 @@ LOCAL int process_get (const void *data, const void *user)
 
 	command = (xmlChar *)malloc (strlen ("cp ") + strlen ((char *)fname) +
 				     strlen (opts.output_folder) + 2);
-	sprintf (command, "cp %s %s", fname, opts.output_folder);
+	sprintf ((char *)command, "cp %s %s", (char *)fname, 
+		 opts.output_folder);
 	/*
 	** Execute it
 	*/
@@ -250,7 +258,7 @@ LOCAL int process_get (const void *data, const void *user)
 		fprintf (stderr, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
 				  edata.stderr_data.buffer : 
-				  "no info available"));
+				  BAD_CAST "no info available"));
 	}
 	/*
 	** Inspect results
@@ -268,6 +276,8 @@ LOCAL int process_get (const void *data, const void *user)
  */
 LOCAL void process_suite (td_suite *s)
 {
+	log_msg (LOG_INFO, "Test suite: %s", s->gen.name);
+
 	write_pre_suite_tag (s);
 	current_suite = s;
 	
@@ -287,6 +297,8 @@ LOCAL void end_suite ()
  */
 LOCAL void process_set (td_set *s)
 {
+	log_msg (LOG_INFO, "Test set: %s", s->gen.name);
+
 	/*
 	** Check that the set is supposed to be executed in the current env
 	*/
@@ -297,7 +309,8 @@ LOCAL void process_set (td_set *s)
 	}
 	xmlListWalk (s->cases, process_case, s);
 	xmlListWalk (s->gets, process_get, s);
-
+	s->environment = xmlCharStrdup (opts.environment);
+	
 	write_pre_set_tag (s);
 	write_post_set_tag (s);
  skip:
@@ -388,6 +401,8 @@ int main (int argc, char *argv[], char *envp[])
 
 	memset (&opts, 0x0, sizeof(testrunner_lite_options));
         memset (&cbs, 0x0, sizeof(td_parser_callbacks));
+        memset (&hwinfo, 0x0, sizeof(hwinfo));
+
 	opts.output_type = OUTPUT_TYPE_XML;
 	opts.run_automatic = opts.run_manual = 1;
 	
@@ -499,6 +514,15 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	}
 	
+	/*
+	** FIXME
+	*/
+	if (v_flag)
+	    log_set_verbosity_level (LOG_DEBUG);
+	else
+	    log_set_verbosity_level (LOG_INFO);
+	    
+		
         /*
 	 * Validate the input xml
 	 */
@@ -538,26 +562,35 @@ int main (int argc, char *argv[], char *envp[])
 
 	retval = td_register_callbacks (&cbs);
 	
-	/*
+        /*
 	** Initialize the reader
 	*/
 	retval = td_reader_init(&opts);
 	if (retval)
 		goto OUT;
 	/*
+	** Obtain hardware info
+	*/
+	if (!read_hwinfo (&hwinfo))
+		print_hwinfo (&hwinfo);
+	
+	/*
 	** Initialize result logger
 	*/
-	retval =  init_result_logger(&opts);
+	retval =  init_result_logger(&opts, &hwinfo);
 	if (retval)
 		goto OUT;
 	
 	/*
 	** Call td_next_node untill error occurs or the end of data is reached
 	*/
+	log_msg (LOG_INFO, "Starting to run tests...");
+
 	while (td_next_node() == 0);
 	
 	td_reader_close();
 	close_result_logger();
+	log_msg (LOG_INFO, "Finished!");
 	
 OUT:
 	if (opts.input_filename) free (opts.input_filename);

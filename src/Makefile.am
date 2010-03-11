@@ -4,7 +4,10 @@ testrunner_lite_SOURCES = main.c \
 	                  testdefinitionparser.c \
 	                  testdefinitiondatatypes.c \
 			  testresultlogger.c \
-	                  executor.c
+	                  executor.c \
+			  hwinfo.c \
+			  log.c
+
 testrunner_lite_LDFLAGS = -lxml2
 
 AM_CFLAGS = -I/usr/include/libxml2 -D_GNU_SOURCE
@@ -13,4 +16,6 @@ noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \
 	         testdefinitiondatatypes.h \
 		 testresultlogger.h \
-	         executor.h 
+	         executor.h \
+		 hwinfo.h \
+		 log.h

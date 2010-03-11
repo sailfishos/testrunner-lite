@@ -3,7 +3,7 @@
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  * All rights reserved.
  *
- * Contact: John Doe <John.Doe@nokia.com>
+ * Contact: 
  *
  * This software, including documentation, is protected by copyright
  * controlled by Nokia Corporation. All rights are reserved. Copying,
@@ -14,14 +14,15 @@
  *
  */
 
-#ifndef TESTRESULTLOGGER_H
-#define TESTRESULTLOGGER_H
+#ifndef LOG_H
+#define LOG_H
+
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
-#include "testrunnerlite.h"
-#include "testdefinitiondatatypes.h"
-#include "hwinfo.h"
+#include <sys/time.h>
+#include <time.h>
+#include <stdio.h>
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -29,12 +30,12 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-/* None */
+/* none */
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
-/* None */
+
 
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -42,22 +43,22 @@
 
 /* ------------------------------------------------------------------------- */
 /* STRUCTURES */
-/* None */
+enum log_message_types {
+  LOG_ERROR = 0,
+  LOG_INFO,
+  LOG_DEBUG,
+  LOG_TYPES_COUNT // number of entries in enum
+};
+
 
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
-int init_result_logger (testrunner_lite_options *, hw_info *);
-/* ------------------------------------------------------------------------- */
-void close_result_logger (void);
-/* ------------------------------------------------------------------------- */
-int write_pre_suite_tag (td_suite *);
-/* ------------------------------------------------------------------------- */
-int write_post_suite_tag ();
-/* ------------------------------------------------------------------------- */
-int write_pre_set_tag (td_set *);
-/* ------------------------------------------------------------------------- */
-int write_post_set_tag (td_set *);
-/* ------------------------------------------------------------------------- */
 
-#endif                          /* TESTRESULTLOGGER_H */
+/* ------------------------------------------------------------------------- */
+void log_msg(int type, char *format, ...);
+/* ------------------------------------------------------------------------- */
+void log_set_verbosity_level(int level);
+
+#endif                          /* LOG_H */
 /* End of file */
+

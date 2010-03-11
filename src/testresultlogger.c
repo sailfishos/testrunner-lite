@@ -492,7 +492,7 @@ LOCAL int txt_write_post_set_tag (td_set *set)
  *  @param opts commandline options 
  *  @return 0 on success
  */
-int init_result_logger (testrunner_lite_options *opts)
+int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 {
 
     switch (opts->output_type) {
@@ -527,6 +527,31 @@ int init_result_logger (testrunner_lite_options *opts)
 					     BAD_CAST "1.0") < 0)
 		    return 1;
 
+	    if (xmlTextWriterWriteAttribute (writer, 
+					     BAD_CAST "environment", 
+					     BAD_CAST (opts->environment ?
+						       opts->environment :
+						       "unknown")) < 0)
+		    return 1;
+
+	    
+	    if (xmlTextWriterWriteAttribute (writer, 
+					     BAD_CAST "hwproduct", 
+					     (hwinfo->product ?
+					      hwinfo->product :
+					      BAD_CAST "unknown")) < 0)
+		    return 1;
+
+
+	    
+	    if (xmlTextWriterWriteAttribute (writer, 
+					     BAD_CAST "hwbuild", 
+					     (hwinfo->hw_build ?
+					      hwinfo->hw_build :
+					      BAD_CAST "unknown")) < 0)
+		    return 1;
+
+
 	    /*
 	     * Set callbacks
 	     */
@@ -551,6 +576,13 @@ int init_result_logger (testrunner_lite_options *opts)
 	    }
 	    fprintf (ofile,"Test results:\n");
 	    fprintf (ofile, "  environment : %s\n", opts->environment);
+
+	    fprintf (ofile, "  hwproduct   : %s\n", hwinfo->product ? 
+		     hwinfo->product : "unknown");
+	    
+	    fprintf (ofile, "  hwbuild     : %s\n", hwinfo->hw_build ?
+		     hwinfo->hw_build : "unknown");
+	    
 
 	    /*
 	     * Set callbacks

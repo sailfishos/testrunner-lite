@@ -33,13 +33,13 @@
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
 typedef struct {
-        char *product; 
-	char *hw_build;
-        char *nolo;
-        char *boot_mode;
-        char *production_sn;
-        char *product_code; 
-	char *basic_product_code;
+        unsigned char *product; 
+	unsigned char *hw_build;
+        unsigned char *nolo;
+        unsigned char *boot_mode;
+        unsigned char *production_sn;
+        unsigned char *product_code; 
+	unsigned char *basic_product_code;
 } hw_info;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

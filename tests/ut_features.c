@@ -73,7 +73,6 @@
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
 START_TEST (test_ctrl_char_strip)
-    int ret;
     exec_data edata;
     char cmd[1024];
     const char test_str[] = {'t',0x02,'e','s','t','f',0x06,0x07,0x08,0x09,
