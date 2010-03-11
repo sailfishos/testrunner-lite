@@ -32,6 +32,7 @@
 #include <stdio.h>
 
 #include "executor.h"
+#include "log.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -180,6 +181,7 @@ static int my_popen(int* stdout_fd, int* stderr_fd, const char *command) {
 
 	pid = fork();
 	if (pid > 0) { /* parent */
+		log_msg(LOG_DEBUG, "Forked new process %d", pid);
 		/* close the write end of the pipes */
 		close(out_pipe[1]);
 		close(err_pipe[1]);
@@ -201,24 +203,21 @@ static int my_popen(int* stdout_fd, int* stderr_fd, const char *command) {
 		if (dup(out_pipe[1]) < 0) {
 			fprintf (stderr, "%s dup() failed %s\n",
 				 __FUNCTION__, strerror(errno));
-			goto error_err;
 		}
 		
-
 		/* redirect stderr to the pipe */
 		close(2);
 
 		if (dup(err_pipe[1]) < 0) {
 			fprintf (stderr, "%s dup() failed %s\n",
 				 __FUNCTION__, strerror(errno));
-			goto error_err;
 		}
 		
-
 		exec_wrapper(command);
 		/* execution should never reach this point */
 		exit(1);
 	} else {
+		log_msg(LOG_ERROR, "Fork failed: %s", strerror(errno));
 		goto error_fork;
 	}
 
@@ -251,6 +250,8 @@ static void* stream_data_realloc(stream_data* data, int size) {
 		data->buffer = newptr;
 		data->size = size;
 		free(oldptr);
+	} else {
+		log_msg(LOG_ERROR, "Stream data memory allocation failed");
 	}
 
 	return (void*)newptr;
@@ -292,6 +293,7 @@ static int read_and_append(int fd, stream_data* data) {
 	int ret = 0;
 
 	if (data->buffer == NULL) {
+		log_msg(LOG_ERROR, "Stream data buffer is NULL");
 		return -2;
 	}
 
@@ -409,11 +411,12 @@ static int execution_terminated(exec_data* data) {
 	switch (pid) {
 	case -1:
 		if (errno == ECHILD) {
-		    
 			/* no more childs */
+			log_msg(LOG_DEBUG, "waitpid() reported no more childs");
 			ret = 1;
-		} else
-		    fprintf (stderr, "waipid() %s", strerror (errno));
+		} else {
+			log_msg(LOG_ERROR, "waitpid(): %s", strerror (errno));
+		}
 		
 		break;
 	case 0:
@@ -424,13 +427,22 @@ static int execution_terminated(exec_data* data) {
 			if (WIFEXITED(status)) {
 				/* child exited normally */
 				data->result = WEXITSTATUS(status);
+				log_msg(LOG_DEBUG, 
+					"Process %d exited with status %d", 
+					pid, WEXITSTATUS(status));
 			} else if (WIFSIGNALED(status)) {
 				/* child terminated by a signal */
 				data->result = WTERMSIG(status);
 				stream_data_append(&data->failure_info, 
 						   FAILURE_INFO_TIMEOUT);
+				log_msg(LOG_DEBUG, 
+					"Process %d was terminated by signal %d",
+					pid, WTERMSIG(status));
 			} else {
 				data->result = -1;
+				log_msg(LOG_ERROR, 
+					"Unexpected return status %d from process %d",
+					status, pid);
 			}
 		}
 		break;
@@ -467,9 +479,15 @@ static void process_output_streams(int stdout_fd, int stderr_fd,
 		for(i = 0; i < 2; i++) {
 			if (fds[i].revents & POLLIN) {
 				if (fds[i].fd == stdout_fd) {
+					log_msg(LOG_DEBUG, 
+						"Reading stdout of process %d",
+						data->pid);
 					read_and_append(stdout_fd, 
 							&data->stdout_data);
 				} else if (fds[i].fd == stderr_fd) {
+					log_msg(LOG_DEBUG, 
+						"Reading stderr of process %d",
+						data->pid);
 					read_and_append(stderr_fd,
 							&data->stderr_data);
 				}
@@ -508,7 +526,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		if (timer_value && !terminated) {
 			/* try to terminate */
 			pgroup = getpgid(data->pid);
-			printf ("TERMINATING  %d", data->pid);
+			log_msg(LOG_DEBUG, "Terminating process %d", data->pid);
 			
 			if (killpg(pgroup, SIGTERM) < 0) {
 				perror("killpg");
@@ -519,7 +537,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		} else if (timer_value && !killed) {
 			/* try to kill */
 			pgroup = getpgid(data->pid);
-			printf ("KILLING  %d", data->pid);
+			log_msg(LOG_DEBUG, "Killing process %d", data->pid);
 
 			if (killpg(pgroup, SIGKILL) < 0) {
 				perror("killpg");
@@ -587,6 +605,7 @@ int execute(const char* command, exec_data* data) {
 	data->pid = my_popen(&stdout_fd, &stderr_fd, command);
 
 	if (data->pid > 0) {
+		log_msg(LOG_DEBUG, "Communicating with process %d", data->pid);
 		communicate(stdout_fd, stderr_fd, data);
 	}
 
