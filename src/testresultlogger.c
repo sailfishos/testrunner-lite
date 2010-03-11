@@ -583,7 +583,7 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 	    
 	    fprintf (ofile, "  hwbuild     : %s\n", 
 		     (char *)(hwinfo->hw_build ? hwinfo->hw_build :
-			      (unsigned char *)"unknown");
+			      (unsigned char *)"unknown"));
 	    
 
 	    /*
