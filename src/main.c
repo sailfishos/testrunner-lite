@@ -329,10 +329,11 @@ LOCAL void process_set (td_set *s)
 		dummy.dummy = 1;
 		log_msg (LOG_INFO, "Executing pre steps");
 		xmlListWalk (s->pre_steps, step_execute, &dummy);
-		if (dummy.passed == 0)
+		if (dummy.passed == 0) {
 			log_msg (LOG_ERROR, "Pre steps failed. "
 				 "Test set %s aborted.", s->gen.name); 
-		goto skip;
+			goto skip;
+		}
 	}
 	
 	xmlListWalk (s->cases, process_case, s);
