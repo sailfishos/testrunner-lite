@@ -316,12 +316,12 @@ LOCAL void process_set (td_set *s)
 	/*
 	** Check that the set is supposed to be executed in the current env
 	*/
+	write_pre_set_tag (s);
 	if (xmlListSize(s->environments) > 0) {
 	        if (!xmlListSearch (s->environments, opts.environment)) {
 			goto skip;
 		}
 	}
-	write_pre_set_tag (s);
 
 	if (xmlListSize (s->pre_steps) > 0) {
 		memset (&dummy, 0x0, sizeof (td_case));
@@ -350,6 +350,7 @@ LOCAL void process_set (td_set *s)
 	
 	write_post_set_tag (s);
  skip:
+	xml_end_element();
 	td_set_delete (s);
 	return;
 }
