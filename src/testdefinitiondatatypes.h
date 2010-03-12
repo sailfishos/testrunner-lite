@@ -72,6 +72,7 @@ typedef struct {
 	/* Parser fills */
 	xmlChar *step;            /**< Test step as a string 
 				     (with possible CDATA)    */
+	int      has_expected_result; /**< is expected result specified */
 	int      expected_result; /**< expected result of step */
 	int      return_code;     /**< actual result of step */
 	/* Executor fills */
@@ -90,6 +91,7 @@ typedef struct {
 	xmlListPtr steps;       /**< Steps in this test case */
 	/* Executor fills */
 	int        passed;      /**< Flag stating whether this case is passed */
+	int        dummy;       /**< Case is dummy - used with pre post steps */
 } td_case;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

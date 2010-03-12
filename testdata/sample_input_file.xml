@@ -4,7 +4,7 @@
     <set name="testset1" description="sample_description" feature="sample_set_feature" timeout="15">    
       <pre_steps>
          <step>sleep 5 <![CDATA[&]]></step>
-         <step>/home/ubuntu/testscript.sh;pwd;ls;uname</step>
+         <step expected_result="0">cat nonexistent</step>
       </pre_steps>
             
       <case name="serm002" description="combined commands" requirement="10001, 20001, 3000" timeout="30">

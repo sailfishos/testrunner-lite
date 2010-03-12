@@ -183,7 +183,17 @@ LOCAL int step_execute (const void *data, const void *user)
 		step->return_code = edata.result;
 		step->start = edata.start_time;
 		step->end = edata.end_time;
-		if (step->return_code != step->expected_result) {
+		/*
+		** Post and pre steps fail only if the expected result is 
+		*  specified
+		*/
+		if (c->dummy && step->has_expected_result &&
+		    (step->return_code != step->expected_result)) {
+			log_msg (LOG_INFO, "STEP: %s return %d expected %d\n",
+				 step->step, step->return_code, 
+				 step->expected_result);
+			fail = 1;
+		} else if (step->return_code != step->expected_result) {
 			log_msg (LOG_INFO, "STEP: %s return %d expected %d\n",
 				 step->step, step->return_code, 
 				 step->expected_result);
@@ -219,19 +229,7 @@ LOCAL int process_case (const void *data, const void *user)
 	if (c->gen.timeout == 0)
 		c->gen.timeout = 90; /* the default one */
 	 
-	if (xmlListSize (set->pre_steps) > 0) {
-		log_msg (LOG_INFO, "Executing pre steps");
-		xmlListWalk (set->pre_steps, step_execute, data);
-	}
-	
-	/* execute test steps only if pre-steps passed */
-	if (c->passed) {
-		xmlListWalk (c->steps, step_execute, data);
-		if (xmlListSize (set->post_steps) > 0) {
-			log_msg (LOG_INFO, "Executing post steps");
-			xmlListWalk (set->post_steps, step_execute, data);
-		}
-	}
+	xmlListWalk (c->steps, step_execute, data);
 	log_msg (LOG_INFO, "Finished test case Result: %s", c->passed ?
 		 "PASS" : "FAIL");
 	passcount += c->passed;
@@ -311,6 +309,8 @@ LOCAL void end_suite ()
  */
 LOCAL void process_set (td_set *s)
 {
+	td_case dummy;
+
 	log_msg (LOG_INFO, "Test set: %s", s->gen.name);
 
 	/*
@@ -321,11 +321,33 @@ LOCAL void process_set (td_set *s)
 			goto skip;
 		}
 	}
+	write_pre_set_tag (s);
+
+	if (xmlListSize (s->pre_steps) > 0) {
+		memset (&dummy, 0x0, sizeof (td_case));
+		dummy.passed = 1;
+		dummy.dummy = 1;
+		log_msg (LOG_INFO, "Executing pre steps");
+		xmlListWalk (s->pre_steps, step_execute, &dummy);
+		if (dummy.passed == 0)
+			log_msg (LOG_ERROR, "Pre steps failed. "
+				 "Test set %s aborted.", s->gen.name); 
+		goto skip;
+	}
+	
 	xmlListWalk (s->cases, process_case, s);
 	xmlListWalk (s->gets, process_get, s);
 	s->environment = xmlCharStrdup (opts.environment);
+	if (xmlListSize (s->post_steps) > 0) {
+		log_msg (LOG_INFO, "Executing post steps");
+		dummy.passed = 1;
+		dummy.dummy = 1;
+		xmlListWalk (s->post_steps, step_execute, &dummy);
+		if (dummy.passed == 0)
+			log_msg (LOG_ERROR, 
+				 "Post steps failed for %s.", s->gen.name);
+	}
 	
-	write_pre_set_tag (s);
 	write_post_set_tag (s);
  skip:
 	td_set_delete (s);
