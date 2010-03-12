@@ -663,6 +663,12 @@ void init_exec_data(exec_data* data) {
 	init_stream_data(&data->failure_info, 0);
 }
 
+void clean_exec_data(exec_data* data) {
+	clean_stream_data(&data->stdout_data);
+	clean_stream_data(&data->stderr_data);
+	clean_stream_data(&data->failure_info);
+}
+
 /** Initialize stream_data structure
  * @param data Pointer to data
  * @param allocate Number of bytes to allocate for string buffer

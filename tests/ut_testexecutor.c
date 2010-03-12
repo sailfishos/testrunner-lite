@@ -199,6 +199,29 @@ START_TEST (test_executor_without_output_redirection)
 	fail_unless (edata.stderr_data.length == 0);
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST (test_executor_exec_data_handling)
+	exec_data edata;
+	init_exec_data(&edata);
+	fail_if (execute("echo testing", &edata));
+	fail_unless (edata.result == 0);
+	fail_unless (edata.stdout_data.length == strlen("testing\n"));
+	fail_unless (strcmp((char*)edata.stdout_data.buffer, "testing\n") == 0);
+
+	clean_exec_data(&edata);
+	fail_unless (edata.stdout_data.buffer == NULL);
+	fail_unless (edata.stderr_data.buffer == NULL);
+
+	init_exec_data(&edata);
+	fail_if (execute("cat unexisting_foobar_file", &edata));
+	fail_if (edata.result == 0);
+	fail_if (edata.stderr_data.length == 0);
+	fail_unless (strlen((char*)edata.stderr_data.buffer) > 0);
+
+	clean_exec_data(&edata);
+	fail_unless (edata.stdout_data.buffer == NULL);
+	fail_unless (edata.stderr_data.buffer == NULL);
+END_TEST
+/* ------------------------------------------------------------------------- */
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -243,13 +266,15 @@ Suite *make_testexecutor_suite (void)
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor piped command.");
-    tcase_set_timeout (tc, 5);
     tcase_add_test (tc, test_executor_piped_command);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor without output redirection.");
-    tcase_set_timeout (tc, 5);
     tcase_add_test (tc, test_executor_without_output_redirection);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor execution data handling.");
+    tcase_add_test (tc, test_executor_exec_data_handling);
     suite_add_tcase (s, tc);
 
     return s;
