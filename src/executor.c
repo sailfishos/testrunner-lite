@@ -507,6 +507,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 	pid_t pgroup = 0;
 	int terminated = 0;
 	int killed = 0;
+	int ready = 0;
 
 	/* Use non blocking mode such that read will not block */
 	fcntl(stdout_fd, F_SETFL, O_NONBLOCK);
@@ -514,14 +515,11 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 	set_timer(data->soft_timeout);
 
-	while (1) {
+	while (!ready) {
+		ready = execution_terminated(data);
 	    
 		/* read output streams. does sleeping in poll */
 		process_output_streams(stdout_fd, stderr_fd, data);
-
-		if (execution_terminated(data)) {
-			break;
-		}
 
 		if (timer_value && !terminated) {
 			/* try to terminate */
