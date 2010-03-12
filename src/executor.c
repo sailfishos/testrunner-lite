@@ -78,7 +78,9 @@ static struct sigaction default_alarm_action;
 static void parse_command_args(const char* command, char* argv[], int max_args);
 static void free_args(char* argv[]);
 #endif
-static int my_popen(int* stdout_fd, int* stderr_fd, const char *command);
+static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, 
+				   const char *command);
+static pid_t fork_process(const char *command);
 static void* stream_data_realloc(stream_data* data, int size);
 static void stream_data_free(stream_data* data);
 static void stream_data_append(stream_data* data, char* src);
@@ -160,7 +162,7 @@ static int exec_wrapper(const char *command)
 	return ret;
 }
 
-/** Execute a command and get file descriptors to its output streams
+/** Create new process with new session ID and redirect its output
  * @param stdout_fd Pointer to a file descriptor used to read stdout of
  *        executed command
  * @param stderr_fd Pointer to a file descriptor used to read stderr of 
@@ -168,10 +170,10 @@ static int exec_wrapper(const char *command)
  * @param command Command to execute
  * @return PID of process on success, -1 in error
  */
-static int my_popen(int* stdout_fd, int* stderr_fd, const char *command) {
+static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *command) {
 	int out_pipe[2];
 	int err_pipe[2];
-	int pid;
+	pid_t pid;
 
 	if (pipe(out_pipe) < 0)
 		goto error_out;
@@ -187,7 +189,6 @@ static int my_popen(int* stdout_fd, int* stderr_fd, const char *command) {
 		close(err_pipe[1]);
 		*stdout_fd = out_pipe[0];
 		*stderr_fd = err_pipe[0];
-		return pid;
 	} else if (pid == 0) { /* child */
 		/* Create new session id.
 		 * Process group ID and session ID
@@ -231,6 +232,31 @@ error_err:
 	close(out_pipe[1]);
 error_out:
 	return -1;
+}
+
+/** Create new process with new session ID
+ * @param command Command to execute
+ * @return PID of process on success, -1 in error
+ */
+static pid_t fork_process(const char *command) {
+	pid_t pid = fork();
+
+	if (pid > 0) {		/* parent */
+		log_msg(LOG_DEBUG, "Forked new process %d", pid);
+	} else if (pid == 0) {	/* child */
+		/* Create new session id.
+		 * Process group ID and session ID
+		 * are set to PID (they were PPID) */
+		setsid();
+		
+		exec_wrapper(command);
+		/* execution should never reach this point */
+		exit(1);
+	} else {
+		log_msg(LOG_ERROR, "Fork failed: %s", strerror(errno));
+	}
+
+	return pid;
 }
 
 /** Allocate memory for stream_data
@@ -291,11 +317,6 @@ static void stream_data_append(stream_data* data, char* src) {
 static int read_and_append(int fd, stream_data* data) {
 	const int read_size = 255;	/* number of bytes to read */
 	int ret = 0;
-
-	if (data->buffer == NULL) {
-		log_msg(LOG_ERROR, "Stream data buffer is NULL");
-		return -2;
-	}
 
 	do {
 		/*
@@ -420,7 +441,7 @@ static int execution_terminated(exec_data* data) {
 		
 		break;
 	case 0:
-		/* unterminated child(s) exists */
+		/* WNOHANG was specified and unterminated child(s) exists */
 		break;
 	default:
 		if (pid == data->pid) {
@@ -459,7 +480,6 @@ static int execution_terminated(exec_data* data) {
 static void process_output_streams(int stdout_fd, int stderr_fd, 
 				   exec_data* data) 
 {
-	const int poll_timeout = 100;	/* ms */
 	struct pollfd fds[2];
 	int i = 0;
 
@@ -468,7 +488,7 @@ static void process_output_streams(int stdout_fd, int stderr_fd,
 	fds[1].fd = stderr_fd;
 	fds[1].events = POLLIN;
 
-	switch(poll(fds, 2, poll_timeout)) {
+	switch(poll(fds, 2, POLL_TIMEOUT_MS)) {
 	case 0:
 		/* poll timeout */
 		break;
@@ -509,17 +529,23 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 	int killed = 0;
 	int ready = 0;
 
-	/* Use non blocking mode such that read will not block */
-	fcntl(stdout_fd, F_SETFL, O_NONBLOCK);
-	fcntl(stderr_fd, F_SETFL, O_NONBLOCK);
+	if (data->redirect_output == REDIRECT_OUTPUT) {
+		/* Use non blocking mode such that read will not block */
+		fcntl(stdout_fd, F_SETFL, O_NONBLOCK);
+		fcntl(stderr_fd, F_SETFL, O_NONBLOCK);
+	}
 
 	set_timer(data->soft_timeout);
 
 	while (!ready) {
 		ready = execution_terminated(data);
-	    
-		/* read output streams. does sleeping in poll */
-		process_output_streams(stdout_fd, stderr_fd, data);
+
+		if (data->redirect_output == REDIRECT_OUTPUT) {
+			/* read output streams. sleeps in poll */
+			process_output_streams(stdout_fd, stderr_fd, data);
+		} else {
+			usleep(POLL_TIMEOUT_US);
+		}
 
 		if (timer_value && !terminated) {
 			/* try to terminate */
@@ -545,8 +571,11 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 	}
 
 	reset_timer();
-	close(stdout_fd);
-	close(stderr_fd);
+
+	if (data->redirect_output == REDIRECT_OUTPUT) {
+		close(stdout_fd);
+		close(stderr_fd);
+	}
 }
 
 /* ------------------------------------------------------------------------- */
@@ -600,7 +629,14 @@ int execute(const char* command, exec_data* data) {
 	int stderr_fd = -1;
 
 	data->start_time = time(NULL);
-	data->pid = my_popen(&stdout_fd, &stderr_fd, command);
+
+	if (data->redirect_output == REDIRECT_OUTPUT) {
+		data->pid = fork_process_redirect(&stdout_fd, 
+						  &stderr_fd, 
+						  command);
+	} else {
+		data->pid = fork_process(command);
+	}
 
 	if (data->pid > 0) {
 		log_msg(LOG_DEBUG, "Communicating with process %d", data->pid);
@@ -618,6 +654,10 @@ int execute(const char* command, exec_data* data) {
  * @param data Pointer to data
  */
 void init_exec_data(exec_data* data) {
+	/* Initialize with default values */
+	data->redirect_output = REDIRECT_OUTPUT;
+	data->soft_timeout = 90;
+	data->hard_timeout = 95;
 	init_stream_data(&data->stdout_data, 1024);
 	init_stream_data(&data->stderr_data, 1024);
 	init_stream_data(&data->failure_info, 0);

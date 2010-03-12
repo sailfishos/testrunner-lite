@@ -157,7 +157,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		return 1;
 	
 	init_exec_data(&edata);
-	
+
 	edata.soft_timeout = c->gen.timeout;
 	edata.hard_timeout = edata.soft_timeout + 5;
 
@@ -256,6 +256,7 @@ LOCAL int process_get (const void *data, const void *user)
 	** Compose command 
 	*/
 	memset (&edata, 0x0, sizeof (exec_data));
+	init_exec_data(&edata);
 	edata.soft_timeout = set->gen.timeout ? set->gen.timeout : 90;
 	edata.hard_timeout = edata.soft_timeout + 5;
 
