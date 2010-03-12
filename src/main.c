@@ -193,12 +193,15 @@ LOCAL int step_execute (const void *data, const void *user)
 		** Post and pre steps fail only if the expected result is 
 		*  specified
 		*/
-		if (c->dummy && step->has_expected_result &&
-		    (step->return_code != step->expected_result)) {
-			log_msg (LOG_INFO, "STEP: %s return %d expected %d\n",
-				 step->step, step->return_code, 
-				 step->expected_result);
-			fail = 1;
+		if (c->dummy) {
+			if (step->has_expected_result &&
+			    (step->return_code != step->expected_result)) {
+				log_msg (LOG_INFO, 
+					 "STEP: %s return %d expected %d\n",
+					 step->step, step->return_code, 
+					 step->expected_result);
+				fail = 1;
+			}
 		} else if (step->return_code != step->expected_result) {
 			log_msg (LOG_INFO, "STEP: %s return %d expected %d\n",
 				 step->step, step->return_code, 
