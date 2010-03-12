@@ -56,7 +56,7 @@
 /* LOCAL CONSTANTS AND MACROS */
 
 /* Match these to log.h log_message_types */
-const char *stream_names[] = {"ERROR", "INFO", "DEBUG", "UNKNOWN" };
+const char *stream_names[] = {"ERROR", "INFO", "DEBUG", "WARNING", "UNKNOWN" };
 
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
@@ -92,7 +92,8 @@ static int verbosity_level = 0;
 void log_msg (int type, char *format, ...) {
 	
 	/* Check if message should be printed */
-	if (type > verbosity_level) {
+	if (verbosity_level == LOG_LEVEL_SILENT || 
+        (type == LOG_DEBUG && verbosity_level != LOG_LEVEL_DEBUG)) {
 		/* Do nothing */
 		return;
 	} 
@@ -133,12 +134,12 @@ void log_msg (int type, char *format, ...) {
  * @param level Verbosity level
  */
 void log_set_verbosity_level (int level) {
-	if (level >= 0 && level < LOG_TYPES_COUNT) {
+	if (level >= 0 && level < LOG_LEVELS_COUNT) {
 		verbosity_level = level;
 	} else {
 		log_msg (LOG_ERROR, 
 			"Incorrect verbosity level %d, values [0..%d]\n", 
-			level, LOG_TYPES_COUNT - 1);
+			level, LOG_LEVELS_COUNT - 1);
 	}
 }
 

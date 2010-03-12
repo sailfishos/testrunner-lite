@@ -115,8 +115,11 @@ LOCAL void usage()
 		"Default: xml\n");
 	printf ("  -e ENVIRONMENT, --environment=ENVIRONMENT\n\t\t"
 		"Target test environment. Default: hardware\n");
-	printf ("  -v, --verbose\tEnable verbosity mode to show "
-		"debug messages.\n");
+	printf ("  -v, -vv, --verbose[={INFO|DEBUG}]\n\t\t"
+        "Enable verbosity mode; -v and --verbose=INFO are equivalent\n\t\t"
+        "outputting INFO, ERROR and WARNING messages.\n\t\t"
+        "Similarly -vv and --verbose=DEBUG are equivalent outputting\n\t\t"
+        "also debug messages. Default behaviour is silent mode.\n");
 	printf ("  -a, --automatic\tEnable only automatic tests "
 		"to be executed.\n");
 	printf ("  -m, --manual\tEnable only manual tests to be executed.\n");
@@ -400,7 +403,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"output", required_argument, NULL, 'o'},
 			{"format", required_argument, NULL, 'r'},
 			{"environment", required_argument, NULL, 'e'},
-			{"verbose", no_argument, &v_flag, 1},
+			{"verbose", optional_argument, NULL, 'v'},
 			{"automatic", no_argument, &a_flag, 1},
 			{"manual", no_argument, &m_flag, 1},
 			{"filter", required_argument, NULL, 'l'},
@@ -423,7 +426,7 @@ int main (int argc, char *argv[], char *envp[])
 	while (1) {
 		option_idx = 0;
      
-		opt_char = getopt_long (argc, argv, ":hvaAsmcf:o:e:l:r:",
+		opt_char = getopt_long (argc, argv, ":haAsmcf:o:e:l:r:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -434,7 +437,18 @@ int main (int argc, char *argv[], char *envp[])
 			h_flag = 1;
 			break;
 		case 'v':
-			v_flag = 1;
+            if (v_flag != 0)
+                break;
+            
+            if (optarg) {
+                if (!strcmp (optarg, "INFO"))
+                    v_flag = LOG_LEVEL_INFO;
+                if (!strcmp (optarg, "DEBUG") || !strcmp (optarg, "v"))
+                    v_flag = LOG_LEVEL_DEBUG;
+            }
+            else {
+                v_flag = LOG_LEVEL_INFO;
+            }
 			break;
 		case 'a':
 			a_flag = 1;
@@ -498,7 +512,7 @@ int main (int argc, char *argv[], char *envp[])
 
 		}
 	}
-	
+
 	/*
 	 * Do some post-validation for the options
 	 */
@@ -528,16 +542,12 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	}
 	
-	/*
-	** FIXME
-	*/
-	if (v_flag)
-	    log_set_verbosity_level (LOG_DEBUG);
-	else
-	    log_set_verbosity_level (LOG_INFO);
-	    
-		
-        /*
+    /*
+     * Set logging level.
+     */
+	log_set_verbosity_level (v_flag);
+    
+    /*
 	 * Validate the input xml
 	 */
 	retval = parse_test_definition (&opts);

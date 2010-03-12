@@ -23,6 +23,7 @@
 
 #include "testrunnerlitetestscommon.h"
 #include "executor.h"
+#include "log.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -147,6 +148,82 @@ START_TEST (test_utf8)
 
 END_TEST
 
+START_TEST (test_logging)
+
+    char *stdout_tmp = "/tmp/testrunner-lite-stdout.log";
+    char cmd[1024];
+    int ret;
+    FILE *fp;
+    
+    /* Set verbosity to INFO. */
+    log_set_verbosity_level (LOG_LEVEL_INFO);
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* Log INFO, WARNING and ERROR messages. */
+    log_msg (LOG_INFO, "INFO message: %s\n", "This works.");
+    log_msg (LOG_WARNING, "WARNING message: %s\n", "This works.");
+    log_msg (LOG_ERROR, "ERROR message: %s\n", "This works.");
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+
+    // And verify messages. */
+    sprintf (cmd, "grep \"[INFO]* INFO message: This works.\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    sprintf (cmd, "grep \"[WARNING]* WARNING message: This works.\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    sprintf (cmd, "grep \"[ERROR]* ERROR message: This works.\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Try to log DEBUG message with INFO verbosity (should not succeed.)*/
+    log_msg (LOG_DEBUG, "DEBUG message: %s\n", "This should not work.");
+    freopen ("/dev/tty", "w", stdout);
+    
+    sprintf (cmd, "grep \"[DEBUG]* DEBUG message: This should not work.\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret == 0, cmd);
+    
+    /* Set verbosity to DEBUG. */
+    log_set_verbosity_level (LOG_LEVEL_DEBUG);
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* Log INFO, WARNING and ERROR messages. */
+    log_msg (LOG_INFO, "INFO message: %s\n", "This works.");
+    log_msg (LOG_WARNING, "WARNING message: %s\n", "This works.");
+    log_msg (LOG_ERROR, "ERROR message: %s\n", "This works.");
+    log_msg (LOG_DEBUG, "DEBUG message: %s\n", "This works.");
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+
+    // And verify messages. */
+    sprintf (cmd, "grep \"[INFO]* INFO message: This works.\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    sprintf (cmd, "grep \"[WARNING]* WARNING message: This works.\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    sprintf (cmd, "grep \"[ERROR]* ERROR message: This works.\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    sprintf (cmd, "grep \"[DEBUG]* DEBUG message: This works.\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    
+END_TEST
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -172,6 +249,9 @@ Suite *make_features_suite (void)
     tcase_add_test (tc, test_utf8);
     suite_add_tcase (s, tc);
     
+    tc = tcase_create ("Test logging.");
+    tcase_add_test (tc, test_logging);
+    suite_add_tcase (s, tc);
 
     return s;
 }

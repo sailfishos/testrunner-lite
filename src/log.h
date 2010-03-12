@@ -43,11 +43,19 @@
 
 /* ------------------------------------------------------------------------- */
 /* STRUCTURES */
+enum log_levels {
+    LOG_LEVEL_SILENT = 0,
+    LOG_LEVEL_INFO,
+    LOG_LEVEL_DEBUG,
+    LOG_LEVELS_COUNT, /* number of entries in enum */
+};
+
 enum log_message_types {
   LOG_ERROR = 0,
   LOG_INFO,
   LOG_DEBUG,
-  LOG_TYPES_COUNT // number of entries in enum
+  LOG_WARNING,
+  LOG_TYPES_COUNT /* number of entries in enum */
 };
 
 
