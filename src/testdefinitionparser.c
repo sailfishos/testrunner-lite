@@ -152,7 +152,7 @@ LOCAL td_step *td_parse_step()
 		step->expected_result = strtoul((char *)
 						xmlTextReaderConstValue(reader),
 						NULL, 10);
-
+		step->has_expected_result = 1;
 	}
 
 	do {

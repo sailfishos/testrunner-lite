@@ -34,6 +34,8 @@
 #define SHELLCMD       "/bin/sh"
 #define SHELLCMD_ARG1  "-c"
 #define FAILURE_INFO_TIMEOUT "timeout"
+#define POLL_TIMEOUT_MS   100
+#define POLL_TIMEOUT_US   (1000*POLL_TIMEOUT_MS)
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
@@ -46,8 +48,14 @@ struct _stream_data {
 
 typedef struct _stream_data stream_data;
 
+enum _stream_output_redirection {
+	DONT_REDIRECT_OUTPUT = 0,
+	REDIRECT_OUTPUT
+};
+
 struct _exec_data {
 	/* input parameters */
+	int redirect_output;
 	unsigned soft_timeout;
 	unsigned hard_timeout;
 	/* output parameters */
@@ -75,6 +83,7 @@ typedef struct _exec_data exec_data;
 
 int execute(const char* command, exec_data* data);
 void init_exec_data(exec_data* data);
+void clean_exec_data(exec_data* data);
 void init_stream_data(stream_data* data, int allocate);
 void clean_stream_data(stream_data* data);
 

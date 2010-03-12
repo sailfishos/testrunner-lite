@@ -132,6 +132,10 @@ START_TEST (test_executor_long_input_streams)
 	edata.hard_timeout = 3;
 	fail_if (execute("/usr/share/testrunner-lite-tests/long_output.sh", &edata));
 	fail_unless (edata.result == 0);
+	fail_if (edata.stdout_data.buffer == NULL);
+	fail_if (edata.stderr_data.buffer == NULL);
+	fail_unless (edata.stdout_data.length == 4380);
+	fail_unless (edata.stderr_data.length == 2190);
 	fail_unless (strlen ((char *)edata.stdout_data.buffer) == 4380);
 	fail_unless (strlen ((char *)edata.stderr_data.buffer) == 2190);
 END_TEST
@@ -145,8 +149,8 @@ START_TEST (test_executor_terminating_process)
 	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM);
-	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
-	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
+	fail_if (edata.stdout_data.buffer == NULL);
+	fail_if (edata.stderr_data.buffer == NULL);
 	fail_unless (strcmp((char*)edata.stdout_data.buffer, "stdouttest") == 0);
 	fail_unless (strcmp((char*)edata.stderr_data.buffer, "stderrtest") == 0);
 	fail_if(edata.failure_info.buffer == NULL);
@@ -162,12 +166,60 @@ START_TEST (test_executor_killing_process)
 	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM || edata.result == SIGKILL);
-	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
-	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
+	fail_if (edata.stdout_data.buffer == NULL);
+	fail_if (edata.stderr_data.buffer == NULL);
 	fail_unless (strcmp((char*)edata.stdout_data.buffer, "stdouttest") == 0);
 	fail_unless (strcmp((char*)edata.stderr_data.buffer, "stderrtest") == 0);
 	fail_if(edata.failure_info.buffer == NULL);
 	fail_unless (strcmp((char*)edata.failure_info.buffer, FAILURE_INFO_TIMEOUT) == 0);
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_piped_command)
+	exec_data edata;
+	init_exec_data(&edata);
+	edata.soft_timeout = 1;
+	edata.hard_timeout = 2;
+	fail_if (execute("echo h world | sed -e 's/h/hello/g' | grep hello", 
+			 &edata));
+	fail_unless (edata.result == 0);
+	fail_if (edata.stdout_data.buffer == NULL);
+	fail_unless (edata.stdout_data.length == strlen("hello world\n"));
+	fail_unless (strcmp((char*)edata.stdout_data.buffer, "hello world\n")==0);
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_without_output_redirection)
+	exec_data edata;
+	init_exec_data(&edata);
+	edata.soft_timeout = 1;
+	edata.hard_timeout = 2;
+	edata.redirect_output = DONT_REDIRECT_OUTPUT;
+	fail_if (execute("echo testing", &edata));
+	fail_unless (edata.result == 0);
+	fail_unless (edata.stdout_data.length == 0);
+	fail_unless (edata.stderr_data.length == 0);
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_exec_data_handling)
+	exec_data edata;
+	init_exec_data(&edata);
+	fail_if (execute("echo testing", &edata));
+	fail_unless (edata.result == 0);
+	fail_unless (edata.stdout_data.length == strlen("testing\n"));
+	fail_unless (strcmp((char*)edata.stdout_data.buffer, "testing\n") == 0);
+
+	clean_exec_data(&edata);
+	fail_unless (edata.stdout_data.buffer == NULL);
+	fail_unless (edata.stderr_data.buffer == NULL);
+
+	init_exec_data(&edata);
+	fail_if (execute("cat unexisting_foobar_file", &edata));
+	fail_if (edata.result == 0);
+	fail_if (edata.stderr_data.length == 0);
+	fail_unless (strlen((char*)edata.stderr_data.buffer) > 0);
+
+	clean_exec_data(&edata);
+	fail_unless (edata.stdout_data.buffer == NULL);
+	fail_unless (edata.stderr_data.buffer == NULL);
 END_TEST
 /* ------------------------------------------------------------------------- */
 
@@ -211,6 +263,18 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test executor killing process.");
     tcase_set_timeout (tc, 5);
     tcase_add_test (tc, test_executor_killing_process);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor piped command.");
+    tcase_add_test (tc, test_executor_piped_command);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor without output redirection.");
+    tcase_add_test (tc, test_executor_without_output_redirection);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor execution data handling.");
+    tcase_add_test (tc, test_executor_exec_data_handling);
     suite_add_tcase (s, tc);
 
     return s;

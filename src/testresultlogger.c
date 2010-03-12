@@ -77,8 +77,6 @@ LOCAL int xml_write_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_post_set_tag (td_set *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_end_element ();
-/* ------------------------------------------------------------------------- */
 LOCAL int txt_write_pre_suite_tag (td_suite *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_post_suite_tag ();
@@ -321,21 +319,8 @@ LOCAL int xml_write_post_set_tag (td_set *set)
 	
 	xmlListWalk (set->cases, xml_write_case, NULL);
 	
-	return xml_end_element();
- }
-/* ------------------------------------------------------------------------- */
-/** Write end element tag
- * @return 0 on success, 1 on error.
- */
-LOCAL int xml_end_element ()
-{
-	
-	if (xmlTextWriterFullEndElement (writer) < 0)
-		goto err_out;
 	return 0;
-err_out:
-	return 1;
-}
+ }
 /* ------------------------------------------------------------------------- */
 /************************* text output ***************************************/
 /* ------------------------------------------------------------------------- */
@@ -643,7 +628,21 @@ int write_post_set_tag (td_set *set)
 	return out_cbs.write_post_set_tag (set);
 }
 /* ------------------------------------------------------------------------- */
+/** Write end element tag
+ * @return 0 on success, 1 on error.
+ */
+int xml_end_element ()
+{
+	
+	if (xmlTextWriterFullEndElement (writer) < 0)
+		goto err_out;
+	return 0;
+err_out:
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
 /** Close the result logger */
+
 void close_result_logger (void)
 {
 	if (writer) {
