@@ -28,6 +28,7 @@
 #include "testrunnerlite.h"
 #include "testdefinitiondatatypes.h"
 #include "testdefinitionparser.h"
+#include "log.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -507,18 +508,18 @@ int parse_test_definition (testrunner_lite_options *opts)
 	 */
 	ctxt = xmlNewParserCtxt();
 	if (ctxt == NULL) {
-		fprintf (stderr, "%s: Failed to allocate parser context\n",
+		log_msg (LOG_ERROR, "%s: Failed to allocate parser context\n",
 			 PROGNAME);
 		goto out;
 	}
 	
 	doc = xmlCtxtReadFile(ctxt, opts->input_filename, NULL, 0);
 	if (doc == NULL) {
-		fprintf(stderr, "%s: Failed to parse %s\n", PROGNAME,
+		log_msg (LOG_ERROR, "%s: Failed to parse %s\n", PROGNAME,
 			opts->input_filename);
 		goto out;
 	} else if (!ctxt->valid) {
-		fprintf(stderr, "%s: Failed to validate %s\n", PROGNAME, 
+		log_msg (LOG_ERROR, "%s: Failed to validate %s\n", PROGNAME, 
 			opts->input_filename);
 		xmlFreeDoc(doc);
 		doc = NULL;
@@ -540,21 +541,21 @@ int parse_test_definition (testrunner_lite_options *opts)
 						 "testdefinition-syntax.xsd");
 	    
 	if (schema_ctxt == NULL) {
-		fprintf (stderr, "%s: Failed to allocate schema context\n",
+		log_msg (LOG_ERROR, "%s: Failed to allocate schema context\n",
 			 PROGNAME);
 		goto out;
 	}
 
 	sch = xmlSchemaParse(schema_ctxt);
 	if (sch == NULL) {
-		fprintf (stderr, "%s: Failed to parse schema\n",
+		log_msg (LOG_ERROR, "%s: Failed to parse schema\n",
 			 PROGNAME);
 		goto out;
 	}
 
 	valid_ctxt = xmlSchemaNewValidCtxt(sch);
 	if (valid_ctxt == NULL) {
-		fprintf (stderr, "%s: Failed to create schema validation "
+		log_msg (LOG_ERROR, "%s: Failed to create schema validation "
 			 "context\n", PROGNAME);
 		goto out;
 		
@@ -583,7 +584,7 @@ int td_reader_init (testrunner_lite_options *opts)
 
 	reader =  xmlNewTextReaderFilename(opts->input_filename);
 	if (!reader) {
-		fprintf(stderr, "%s: failed to create xml reader for %s\n", 
+		log_msg (LOG_ERROR, "%s: failed to create xml reader for %s\n", 
 			PROGNAME, opts->input_filename);
 		
 	}
@@ -600,20 +601,20 @@ int td_reader_init (testrunner_lite_options *opts)
 			("/usr/share/test-definition/"
 			 "testdefinition-syntax.xsd");
 	if (schema_context == NULL) {
-		fprintf (stderr, "%s: Failed to allocate schema context\n",
+        log_msg (LOG_ERROR, "%s: Failed to allocate schema context\n",
 			 PROGNAME);
 		goto err_out;
 	}
 
 	schema = xmlSchemaParse(schema_context);
 	if (schema == NULL) {
-		fprintf (stderr, "%s: Failed to parse schema\n",
+		log_msg (LOG_ERROR, "%s: Failed to parse schema\n",
 			 PROGNAME);
 		goto err_out;
 	}
 
 	if (xmlTextReaderSetSchema (reader, schema)) {
-		fprintf (stderr, "%s: Failed to set schema for xml reader\n",
+		log_msg (LOG_ERROR, "%s: Failed to set schema for xml reader\n",
 			 PROGNAME);
 		goto err_out;
 	}

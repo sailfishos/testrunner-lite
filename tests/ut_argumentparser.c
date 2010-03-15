@@ -177,6 +177,105 @@ START_TEST (test_semantic_and_validate_only_flags)
 
 END_TEST
 
+START_TEST (test_verbosity_flags)
+
+    /* Test parsing verbosity arguments. */
+    int ret;
+    char cmd[1024];
+    char *stdout_tmp = "/tmp/testrunner-lite-stdout.log";
+    FILE *fp;
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* Test -v flag. */
+    sprintf (cmd, "%s -A -f %s -v", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+    
+    sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 1\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* Test -vv flag. */
+    sprintf (cmd, "%s -A -f %s -vv", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+    
+    sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 2\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* Test --verbose=INFO flag. */
+    sprintf (cmd, "%s -A -f %s --verbose=INFO", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+    
+    sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 1\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* Test --verbose=DEBUG flag. */
+    sprintf (cmd, "%s -A -f %s --verbose=DEBUG", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+    
+    sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 2\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* Test without -v or --verbose= flag. */
+    sprintf (cmd, "%s -A -f %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+    
+    sprintf (cmd, "grep \"[INFO]* Verbosity level set to:*\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret == 0, cmd);
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* Test with invalid --verbose= flag. */
+    sprintf (cmd, "%s -A -f %s --verbose=FOO", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+    
+    sprintf (cmd, "grep \"[INFO]* Verbosity level set to:*\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret == 0, cmd);
+    
+END_TEST
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -188,7 +287,6 @@ Suite *make_argumentparser_suite (void)
 
     /* Create test cases and add to suite. */
     TCase *tc;
-
 
     tc = tcase_create ("Test parsing cmd line arguments.");
     tcase_set_timeout(tc, 600);
@@ -204,6 +302,9 @@ Suite *make_argumentparser_suite (void)
     tcase_add_test (tc, test_semantic_and_validate_only_flags);
     suite_add_tcase (s, tc);
 
+    tc = tcase_create ("Test verbosity flags.");
+    tcase_add_test (tc, test_verbosity_flags);
+    suite_add_tcase (s, tc);
     
     return s;
 }

@@ -11,7 +11,8 @@ testrunner-lite \- test executor tool for CITA
 is a tool for executing test commands. It is designed to be a lightweight 
 wrapper for various test harnesses. The tool is driven by input XML file containing the test definitions (suite, set, case, step). Tests are executed as
 instructed in the input XML file and the output is written to result XML 
-or text file. 
+or text file.
+.SH OPTIONS
 .TP
 \fB\-h\fR,  \fB\-\-help\fR
 Display short help and exit
@@ -22,8 +23,11 @@ Input file with test definitions in XML (required)
 \fB\-o\fR,  \fB\-\-output\fR FILE
 Output file format; FORMAT can be xml or text (Default xml)
 .TP
-\fB\-v\fR,  \fB\-\-verbose\fR
-Enable verbosity mode to show debug messages
+\fB\-v, -vv\fR,  \fB\-\-verbose[={INFO|DEBUG}]\fR
+Enable verbosity mode; -v and --verbose=INFO are equivalent
+outputting INFO, ERROR and WARNING messages. Similarly -vv 
+and --verbose=DEBUG are equivalent, outputting also debug 
+messages. Default behaviour is silent mode.
 .TP
 \fB\-a\fR,  \fB\-\-automatic\fR 
 Enable only automatic tests to be executed

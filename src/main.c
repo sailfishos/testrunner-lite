@@ -118,7 +118,7 @@ LOCAL void usage()
 	printf ("  -v, -vv, --verbose[={INFO|DEBUG}]\n\t\t"
         "Enable verbosity mode; -v and --verbose=INFO are equivalent\n\t\t"
         "outputting INFO, ERROR and WARNING messages.\n\t\t"
-        "Similarly -vv and --verbose=DEBUG are equivalent outputting\n\t\t"
+        "Similarly -vv and --verbose=DEBUG are equivalent, outputting\n\t\t"
         "also debug messages. Default behaviour is silent mode.\n");
 	printf ("  -a, --automatic\tEnable only automatic tests "
 		"to be executed.\n");

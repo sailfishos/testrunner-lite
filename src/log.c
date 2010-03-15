@@ -134,8 +134,9 @@ void log_msg (int type, char *format, ...) {
  * @param level Verbosity level
  */
 void log_set_verbosity_level (int level) {
-	if (level >= 0 && level < LOG_LEVELS_COUNT) {
+	if (level > 0 && level < LOG_LEVELS_COUNT) {
 		verbosity_level = level;
+        log_msg (LOG_INFO, "Verbosity level set to: %d\n", level);
 	} else {
 		log_msg (LOG_ERROR, 
 			"Incorrect verbosity level %d, values [0..%d]\n", 

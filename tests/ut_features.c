@@ -222,6 +222,21 @@ START_TEST (test_logging)
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
+    /* Set verbosity to SILENT. */
+    log_set_verbosity_level (LOG_LEVEL_SILENT);
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    log_msg (LOG_INFO, "INFO message: %s\n", "Silent mode.");
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+    
+    sprintf (cmd, "grep \"[INFO]* INFO message: Silent mode.\" %s", stdout_tmp); 
+    
+    ret = system (cmd);
+    fail_if (ret == 0, cmd);
     
 END_TEST
 /* ------------------------------------------------------------------------- */
