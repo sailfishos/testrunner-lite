@@ -102,6 +102,18 @@ LOCAL int list_string_compare(const void * data0,
 	return xmlStrcmp ((xmlChar *)data0, (xmlChar *)data1);
 }
 /* ------------------------------------------------------------------------- */
+/** Comparison function for list without ordering
+ *  @param data0 string to compare - not used
+ *  @param data1 string to compare - not used
+ *  @return 0 always
+ */
+LOCAL int list_dummy_compare(const void * data0, 
+			      const void * data1)
+{
+	
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
 /** Deallocator for general attributes 
  *  @param gen general attributes 
  */
@@ -154,9 +166,9 @@ td_set *td_set_create ()
 		return NULL;
 	}
 	memset (set, 0x0, sizeof (td_set));
-	set->pre_steps = xmlListCreate (td_step_delete, NULL);
-	set->post_steps = xmlListCreate (td_step_delete, NULL);
-	set->cases = xmlListCreate (td_case_delete, NULL);
+	set->pre_steps = xmlListCreate (td_step_delete, list_dummy_compare);
+	set->post_steps = xmlListCreate (td_step_delete, list_dummy_compare);
+	set->cases = xmlListCreate (td_case_delete, list_dummy_compare);
 	set->environments = xmlListCreate (list_string_delete, 
 					   list_string_compare);
 	set->gets = xmlListCreate (list_string_delete, NULL);
@@ -210,7 +222,7 @@ td_case *td_case_create()
 		return NULL;
 	}
 	memset (td_c, 0x0, sizeof (td_case));
-	td_c->steps = xmlListCreate (td_step_delete, NULL);
+	td_c->steps = xmlListCreate (td_step_delete, list_dummy_compare);
 
 	return td_c;
 }

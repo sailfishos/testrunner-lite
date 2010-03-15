@@ -234,7 +234,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 			step = td_parse_step();
 			if (!step)
 				goto ERROUT;
-			if (xmlListInsert (list, step)) {
+			if (xmlListAppend (list, step)) {
 				log_msg (LOG_ERROR, "%s: list insert failed\n",
 					 PROGNAME);
 				goto ERROUT;
@@ -294,7 +294,7 @@ LOCAL int td_parse_case(td_set *s)
 		    step = td_parse_step();
 		    if (!step)
 			    goto ERROUT;
-		    if (xmlListInsert (c->steps, step)) {
+		    if (xmlListAppend (c->steps, step)) {
 			    log_msg (LOG_ERROR, "%s: list insert failed\n",
 				     PROGNAME);
 			    goto ERROUT;
@@ -305,7 +305,7 @@ LOCAL int td_parse_case(td_set *s)
 		    XML_READER_TYPE_END_ELEMENT &&
 		    !xmlStrcmp (name, BAD_CAST "case")));
 	
-	xmlListInsert (s->cases, c);
+	xmlListAppend (s->cases, c);
 	
 	return 0;
 ERROUT:
@@ -351,7 +351,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 			value = xmlTextReaderReadString (reader);
 			if (!xmlStrcmp (value, BAD_CAST "true")) {
 				env = xmlStrdup(name);
-				if (xmlListInsert (list, env)) {
+				if (xmlListAppend (list, env)) {
 					log_msg (LOG_ERROR, 
 						 "%s:%s list insert failed\n",
 						 PROGNAME, __FUNCTION__);
@@ -392,7 +392,7 @@ LOCAL int td_parse_gets(xmlListPtr list)
 		/* add to list get files */
 		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
 			value = xmlTextReaderReadString (reader);
-			if (xmlListInsert (list, value)) {
+			if (xmlListAppend (list, value)) {
 				log_msg (LOG_ERROR, 
 					 "%s:%s list insert failed\n",
 					 PROGNAME, __FUNCTION__);
@@ -486,7 +486,6 @@ LOCAL int td_parse_set ()
 	} while (!(xmlTextReaderNodeType(reader) == 
 		   XML_READER_TYPE_END_ELEMENT &&
 		   !xmlStrcmp (name, BAD_CAST "set")));
-	
 	cbs->test_set(s);
 
 	return 0;
