@@ -329,10 +329,11 @@ LOCAL void process_set (td_set *s)
 
 	log_msg (LOG_INFO, "Test set: %s", s->gen.name);
 
+	s->environment = xmlCharStrdup (opts.environment);
+	write_pre_set_tag (s);
 	/*
 	** Check that the set is supposed to be executed in the current env
 	*/
-	write_pre_set_tag (s);
 	if (xmlListSize(s->environments) > 0) {
 	        if (!xmlListSearch (s->environments, opts.environment)) {
 			goto skip;
@@ -354,7 +355,6 @@ LOCAL void process_set (td_set *s)
 	
 	xmlListWalk (s->cases, process_case, s);
 	xmlListWalk (s->gets, process_get, s);
-	s->environment = xmlCharStrdup (opts.environment);
 	if (xmlListSize (s->post_steps) > 0) {
 		log_msg (LOG_INFO, "Executing post steps");
 		dummy.passed = 1;
