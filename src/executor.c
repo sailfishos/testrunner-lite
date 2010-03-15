@@ -202,7 +202,7 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		/* redirect stdout to the pipe */
 		close(1);
 		if (dup(out_pipe[1]) < 0) {
-			fprintf (stderr, "%s dup() failed %s\n",
+			log_msg (LOG_ERROR, "%s dup() failed %s\n",
 				 __FUNCTION__, strerror(errno));
 		}
 		
@@ -210,7 +210,7 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		close(2);
 
 		if (dup(err_pipe[1]) < 0) {
-			fprintf (stderr, "%s dup() failed %s\n",
+			log_msg (LOG_ERROR, "%s dup() failed %s\n",
 				 __FUNCTION__, strerror(errno));
 		}
 		

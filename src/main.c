@@ -274,13 +274,16 @@ LOCAL int process_get (const void *data, const void *user)
 				     strlen (opts.output_folder) + 2);
 	sprintf ((char *)command, "cp %s %s", (char *)fname, 
 		 opts.output_folder);
+    
+    log_msg (LOG_DEBUG, "%s: %s: Executing command: %s", PROGNAME, __FUNCTION__,
+             (char*)command);
 	/*
 	** Execute it
 	*/
 	execute((char*)command, &edata);
 
 	if (edata.result) {
-		fprintf (stderr, "%s: %s failed: %s\n", PROGNAME, command,
+		log_msg (LOG_ERROR, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
@@ -387,7 +390,7 @@ LOCAL int create_output_folder ()
 	} else {
 		pwd = getenv ("PWD");
 		if (!pwd) {
-			fprintf (stderr, "%s: getenv() failed %s\n",
+			log_msg (LOG_ERROR, "%s: getenv() failed %s\n",
 				 PROGNAME, strerror (errno));
 			return 1;
 		}
@@ -402,7 +405,7 @@ LOCAL int create_output_folder ()
 	sprintf (cmd, "mkdir -p %s", opts.output_folder);
 
 	if  (system (cmd)) {
-		fprintf (stderr, "%s failed to create ouput "
+		log_msg (LOG_ERROR, "%s failed to create output "
 			 "directory %s\n",
 			 PROGNAME, opts.output_folder);
 		free (cmd);

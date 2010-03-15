@@ -250,7 +250,6 @@ Suite *make_features_suite (void)
     /* Create test cases and add to suite. */
     TCase *tc;
 
-
     tc = tcase_create ("Test stripping of ctrl chars.");
     tcase_set_timeout(tc, 600);
     tcase_add_test (tc, test_ctrl_char_strip);
@@ -263,7 +262,7 @@ Suite *make_features_suite (void)
     tc = tcase_create ("Test UTF-8 Support.");
     tcase_add_test (tc, test_utf8);
     suite_add_tcase (s, tc);
-    
+  
     tc = tcase_create ("Test logging.");
     tcase_add_test (tc, test_logging);
     suite_add_tcase (s, tc);

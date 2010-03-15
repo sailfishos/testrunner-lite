@@ -90,7 +90,7 @@ LOCAL unsigned char *get_sysinfo (const char *key)
 	execute (cmd, &edata);
 	
 	if (edata.result) {
-		fprintf (stderr, "%s:%s():%d:%s\n", PROGNAME, __FUNCTION__,
+		log_msg (LOG_ERROR, "%s:%s():%d:%s\n", PROGNAME, __FUNCTION__,
 			 edata.result, (char *)edata.stderr_data.buffer ?
 			 (char *)edata.stderr_data.buffer : 
 			 "no info available");

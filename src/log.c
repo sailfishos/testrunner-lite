@@ -91,6 +91,12 @@ static int verbosity_level = 0;
  */
 void log_msg (int type, char *format, ...) {
 	
+    const char *stream_name;
+    char timestamp[10];
+    struct tm *tm;
+    time_t current_time;
+    va_list args;
+    
 	/* Check if message should be printed */
 	if (verbosity_level == LOG_LEVEL_SILENT || 
         (type == LOG_DEBUG && verbosity_level != LOG_LEVEL_DEBUG)) {
@@ -98,10 +104,9 @@ void log_msg (int type, char *format, ...) {
 		return;
 	} 
 
-	/* In testrunner.py all debug is going to stdout, also errors */
-
-	/* Log name */
-	const char *stream_name;
+	/* All messages go to stdout, also errors */
+    
+    /* Log name. */
 	if (type >= 0 && type < LOG_TYPES_COUNT) {
 		stream_name = stream_names[type];
 	} else {
@@ -109,10 +114,7 @@ void log_msg (int type, char *format, ...) {
 		stream_name = stream_names[LOG_TYPES_COUNT];
 	}
 
-	/* Current timestamp */
-	char timestamp[10];
-	struct tm *tm;
-	time_t current_time;
+	/* Current timestamp */	
 	time (&current_time);
 	tm = localtime (&current_time);
 	strftime (timestamp, sizeof (timestamp), "%H:%M:%S", tm);
@@ -120,7 +122,6 @@ void log_msg (int type, char *format, ...) {
 	fprintf (stdout, "[%s] %s ", stream_name, timestamp);
 
 	/* Print given arguments */
-	va_list args;
 	va_start (args, format);
 	vfprintf (stdout, format, args);
 	va_end (args);
@@ -134,6 +135,9 @@ void log_msg (int type, char *format, ...) {
  * @param level Verbosity level
  */
 void log_set_verbosity_level (int level) {
+    
+    verbosity_level = 0;
+    
 	if (level > 0 && level < LOG_LEVELS_COUNT) {
 		verbosity_level = level;
         log_msg (LOG_INFO, "Verbosity level set to: %d\n", level);

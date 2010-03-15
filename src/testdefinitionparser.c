@@ -159,14 +159,14 @@ LOCAL td_step *td_parse_step()
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			fprintf (stderr, "%s:%s: ReaderRead() fail\n",
+			log_msg (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
 				 PROGNAME, __FUNCTION__);
 			
 			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
-			fprintf (stderr, "%s: ReaderName() fail\n",
+			log_msg (LOG_ERROR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
@@ -197,6 +197,8 @@ LOCAL td_step *td_parse_step()
 	
 	return step;
  ERROUT:
+    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
+             PROGNAME, __FUNCTION__);
 	free (step);
 	
 	return NULL;
@@ -216,13 +218,13 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			fprintf (stderr, "%s: ReaderRead() fail\n",
+			log_msg (LOG_ERROR, "%s: ReaderRead() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
-			fprintf (stderr, "%s: ReaderName() fail\n",
+			log_msg (LOG_ERROR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
@@ -233,7 +235,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 			if (!step)
 				goto ERROUT;
 			if (xmlListInsert (list, step)) {
-				fprintf (stderr, "%s: list insert failed\n",
+				log_msg (LOG_ERROR, "%s: list insert failed\n",
 					 PROGNAME);
 				goto ERROUT;
 			}
@@ -244,6 +246,8 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 	
 	return 0;
  ERROUT:
+    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
+             PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -273,14 +277,14 @@ LOCAL int td_parse_case(td_set *s)
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			fprintf (stderr, "%s: ReaderRead() fail\n",
+			log_msg (LOG_ERROR, "%s: ReaderRead() fail\n",
 				 PROGNAME);
 			
 			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
-			fprintf (stderr, "%s: ReaderName() fail\n",
+			log_msg (LOG_ERROR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
@@ -291,7 +295,7 @@ LOCAL int td_parse_case(td_set *s)
 		    if (!step)
 			    goto ERROUT;
 		    if (xmlListInsert (c->steps, step)) {
-			    fprintf (stderr, "%s: list insert failed\n",
+			    log_msg (LOG_ERROR, "%s: list insert failed\n",
 				     PROGNAME);
 			    goto ERROUT;
 		    }
@@ -305,6 +309,8 @@ LOCAL int td_parse_case(td_set *s)
 	
 	return 0;
 ERROUT:
+    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
+             PROGNAME, __FUNCTION__);
 	xmlListDelete (c->steps);
 	if (c->gen.name) free (c->gen.name);
 	if (c->gen.description) free (c->gen.description);
@@ -326,7 +332,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			fprintf (stderr, "%s:%s: ReaderRead() fail\n",
+			log_msg (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
 				 PROGNAME, __FUNCTION__);
 			
 			goto ERROUT;
@@ -335,8 +341,8 @@ LOCAL int td_parse_environments(xmlListPtr list)
 		if (xmlTextReaderNodeType(reader) ==  XML_READER_TYPE_ELEMENT) {
 			name = xmlTextReaderConstName(reader);
 			if (!name) {
-				fprintf (stderr, "%s: ReaderName() fail\n",
-					 PROGNAME);
+				log_msg (LOG_ERROR, "%s:%s: ReaderName() fail\n",
+					 PROGNAME, __FUNCTION__);
 				goto ERROUT;
 			}
 		}
@@ -346,7 +352,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 			if (!xmlStrcmp (value, BAD_CAST "true")) {
 				env = xmlStrdup(name);
 				if (xmlListInsert (list, env)) {
-					fprintf (stderr, 
+					log_msg (LOG_ERROR, 
 						 "%s:%s list insert failed\n",
 						 PROGNAME, __FUNCTION__);
 					goto ERROUT;
@@ -361,6 +367,8 @@ LOCAL int td_parse_environments(xmlListPtr list)
 	
 	return 0;
  ERROUT:
+    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
+             PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -376,7 +384,7 @@ LOCAL int td_parse_gets(xmlListPtr list)
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			fprintf (stderr, "%s:%s: ReaderRead() fail\n",
+			log_msg (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
 				 PROGNAME, __FUNCTION__);
 			
 			goto ERROUT;
@@ -385,7 +393,7 @@ LOCAL int td_parse_gets(xmlListPtr list)
 		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
 			value = xmlTextReaderReadString (reader);
 			if (xmlListInsert (list, value)) {
-				fprintf (stderr, 
+				log_msg (LOG_ERROR, 
 					 "%s:%s list insert failed\n",
 					 PROGNAME, __FUNCTION__);
 				goto ERROUT;
@@ -399,6 +407,8 @@ LOCAL int td_parse_gets(xmlListPtr list)
 	
 	return 0;
  ERROUT:
+    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
+             PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -449,14 +459,14 @@ LOCAL int td_parse_set ()
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			fprintf (stderr, "%s:%s: ReaderRead() fail\n",
+			log_msg (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
 				 PROGNAME, __FUNCTION__);
 
 			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
-			fprintf (stderr, "%s: ReaderName() fail\n",
+			log_msg (LOG_ERROR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
@@ -481,8 +491,8 @@ LOCAL int td_parse_set ()
 
 	return 0;
  ERROUT:
-	fprintf (stderr, "%s: exiting with error\n",
-		 __FUNCTION__);
+	log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
+             PROGNAME, __FUNCTION__);
 	
 	return 1;
 }
@@ -622,6 +632,8 @@ int td_reader_init (testrunner_lite_options *opts)
 	
 	return 0;
  err_out:
+    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
+             PROGNAME, __FUNCTION__);
 	td_reader_close ();
 	return 1;
 		

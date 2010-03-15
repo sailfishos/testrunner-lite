@@ -27,6 +27,7 @@
 
 #include "testrunnerlite.h"
 #include "testdefinitiondatatypes.h"
+#include "log.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -121,7 +122,7 @@ td_suite *td_suite_create()
 {
 	td_suite *s = (td_suite *)malloc (sizeof (td_suite));
 	if (s == NULL) {
-		fprintf (stderr, "%s: FATAL : OOM", PROGNAME);
+		log_msg (LOG_ERROR, "%s: FATAL : OOM", PROGNAME);
 		return NULL;
 	}
 
@@ -149,7 +150,7 @@ td_set *td_set_create ()
 {
 	td_set *set = (td_set *)malloc (sizeof (td_set));
 	if (set == NULL) {
-		fprintf (stderr, "%s: FATAL : OOM", PROGNAME);
+		log_msg (LOG_ERROR, "%s: FATAL : OOM", PROGNAME);
 		return NULL;
 	}
 	memset (set, 0x0, sizeof (td_set));
@@ -189,7 +190,7 @@ td_step *td_step_create()
 
 	step = (td_step *) malloc (sizeof (td_step));
 	if (step == NULL) {
-		fprintf (stderr, "%s: FATAL : OOM", PROGNAME);
+		log_msg (LOG_ERROR, "%s: FATAL : OOM", PROGNAME);
 		return NULL;
 	}
 	memset (step, 0x0, sizeof (td_step));
@@ -205,7 +206,7 @@ td_case *td_case_create()
 
 	td_c = (td_case *) malloc (sizeof (td_case));
 	if (td_c == NULL) {
-		fprintf (stderr, "%s: FATAL : OOM", PROGNAME);
+		log_msg (LOG_ERROR, "%s: FATAL : OOM", PROGNAME);
 		return NULL;
 	}
 	memset (td_c, 0x0, sizeof (td_case));
