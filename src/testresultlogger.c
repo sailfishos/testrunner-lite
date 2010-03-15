@@ -476,6 +476,7 @@ LOCAL int txt_write_post_set_tag (td_set *set)
 /* ------------------------------------------------------------------------- */
 /** Initialize result logger according to user options.
  *  @param opts commandline options 
+ *  @param hwinfo hardware information
  *  @return 0 on success
  */
 int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)

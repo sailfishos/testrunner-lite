@@ -311,7 +311,7 @@ static void stream_data_append(stream_data* data, char* src) {
 /** Read data from file descriptor and append to stream_data. Reallocates 
  * memory if necessary
  * @param fd File descriptor to read
- * @param stream_data Pointer to stream_data structure
+ * @param data Pointer to stream_data structure
  * @return Value returned by read
  */
 static int read_and_append(int fd, stream_data* data) {
@@ -579,7 +579,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 }
 
 /* ------------------------------------------------------------------------- */
-/** Replace control characters with <space> 
+/** Replace control characters with space 
  * @param data stream data to mangle
  */
 static void strip_ctrl_chars (stream_data* data)

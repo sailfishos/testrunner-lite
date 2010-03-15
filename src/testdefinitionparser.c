@@ -372,7 +372,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
-/** Parse <get> element, add filenames to list
+/** Parse get-element, add filenames to list
  *  @param list used for saving "get" filenames
  *  @return 0 on success, 1 on error
  */
