@@ -164,13 +164,11 @@ LOCAL int step_execute (const void *data, const void *user)
 	if (c->dummy) {
 		/* Pre or post step */
 		edata.redirect_output = DONT_REDIRECT_OUTPUT;
-		edata.soft_timeout = COMMON_SOFT_TIMEOUT;
-		edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	} else {
 		edata.redirect_output = REDIRECT_OUTPUT;
-		edata.soft_timeout = c->gen.timeout;
-		edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	}
+	edata.soft_timeout = c->gen.timeout;
+	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
 	if (step->step) {
 		execute((char*)step->step, &edata);
@@ -346,6 +344,7 @@ LOCAL void process_set (td_set *s)
 		memset (&dummy, 0x0, sizeof (td_case));
 		dummy.passed = 1;
 		dummy.dummy = 1;
+		dummy.gen.timeout = 0; /* No timeout for pre steps */
 		log_msg (LOG_INFO, "Executing pre steps");
 		xmlListWalk (s->pre_steps, step_execute, &dummy);
 		if (dummy.passed == 0) {
@@ -361,6 +360,8 @@ LOCAL void process_set (td_set *s)
 		log_msg (LOG_INFO, "Executing post steps");
 		dummy.passed = 1;
 		dummy.dummy = 1;
+		/* Default timeout for post steps */
+		dummy.gen.timeout = COMMON_SOFT_TIMEOUT;
 		xmlListWalk (s->post_steps, step_execute, &dummy);
 		if (dummy.passed == 0)
 			log_msg (LOG_ERROR, 
