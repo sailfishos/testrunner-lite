@@ -96,10 +96,12 @@ LOCAL unsigned char *get_sysinfo (const char *key)
 			 "no info available");
 		free (edata.stderr_data.buffer);
 		free (edata.stdout_data.buffer);
+		free (cmd);
 		return NULL;
 	}
 	p = strchr  ((char *)edata.stdout_data.buffer, '\n');
 	if (p) *p ='\0';
+	free (cmd);
 	
 	return edata.stdout_data.buffer;
 }
