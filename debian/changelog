@@ -1,3 +1,11 @@
+testrunner-lite (1.0.0) unstable; urgency=low
+
+  * Implemented MTT-208 - Tech debt (man pages).
+  * Implemented MTT-215 - Finalize testrunner-lite.
+  * Implemented MTT-219 - Run existing test packages with testrunner-lite.
+
+ -- Lahtinen Sami <ext-sami.t.lahtinen@nokia.com>  Tue, 16 Mar 2010 14:25:13 +0200
+
 testrunner-lite (0.1.0) unstable; urgency=low
 
   * Implemented MTT-159.
