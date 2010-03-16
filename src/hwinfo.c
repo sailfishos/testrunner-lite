@@ -82,7 +82,7 @@ LOCAL unsigned char *get_sysinfo (const char *key)
 	init_exec_data (&edata);
 	
 	edata.soft_timeout = 5;
-	edata.hard_timeout = edata.soft_timeout + 5;
+	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
 	cmd = (char *)malloc (strlen ("sysinfo-tool --get ") + 
 			      strlen (key) + 1);

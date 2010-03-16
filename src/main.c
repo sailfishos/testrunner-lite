@@ -164,11 +164,13 @@ LOCAL int step_execute (const void *data, const void *user)
 	if (c->dummy) {
 		/* Pre or post step */
 		edata.redirect_output = DONT_REDIRECT_OUTPUT;
+		edata.soft_timeout = COMMON_SOFT_TIMEOUT;
+		edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	} else {
 		edata.redirect_output = REDIRECT_OUTPUT;
+		edata.soft_timeout = c->gen.timeout;
+		edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	}
-	edata.soft_timeout = c->gen.timeout;
-	edata.hard_timeout = edata.soft_timeout + 5;
 
 	if (step->step) {
 		execute((char*)step->step, &edata);
@@ -239,7 +241,7 @@ LOCAL int process_case (const void *data, const void *user)
 		(set->gen.timeout ? 
 		 set->gen.timeout : current_suite->gen.timeout);
 	if (c->gen.timeout == 0)
-		c->gen.timeout = 90; /* the default one */
+		c->gen.timeout = COMMON_SOFT_TIMEOUT; /* the default one */
 	 
 	xmlListWalk (c->steps, step_execute, data);
 	log_msg (LOG_INFO, "Finished test case Result: %s", c->passed ?
@@ -267,8 +269,8 @@ LOCAL int process_get (const void *data, const void *user)
 	*/
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data(&edata);
-	edata.soft_timeout = set->gen.timeout ? set->gen.timeout : 90;
-	edata.hard_timeout = edata.soft_timeout + 5;
+	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
+	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
 	command = (xmlChar *)malloc (strlen ("cp ") + strlen ((char *)fname) +
 				     strlen (opts.output_folder) + 2);

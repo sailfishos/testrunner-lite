@@ -36,6 +36,8 @@
 #define FAILURE_INFO_TIMEOUT "timeout"
 #define POLL_TIMEOUT_MS   100
 #define POLL_TIMEOUT_US   (1000*POLL_TIMEOUT_MS)
+#define COMMON_SOFT_TIMEOUT    90
+#define COMMON_HARD_TIMEOUT    5
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
@@ -56,8 +58,8 @@ enum _stream_output_redirection {
 struct _exec_data {
 	/* input parameters */
 	int redirect_output;
-	unsigned soft_timeout;
-	unsigned hard_timeout;
+	unsigned soft_timeout;	/* in seconds, 0 = no timeout */
+	unsigned hard_timeout;	/* after soft_timeout, 0 = no timeout */
 	/* output parameters */
 	pid_t pid;
 	stream_data stdout_data;

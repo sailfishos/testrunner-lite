@@ -385,6 +385,8 @@ static int set_timer(long secs) {
 		goto errtimer;
 	}
 
+	log_msg(LOG_DEBUG, "Set timeout timer to %lu seconds", secs);
+
 	return 0;
 
  errtimer:
@@ -414,6 +416,8 @@ static void reset_timer() {
 	}
 
 	timer_value = 0;
+
+	log_msg(LOG_DEBUG, "Reset timeout timer");
 }
 
 /** Do unblocking wait for state change of process(es)
@@ -529,6 +533,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 	int killed = 0;
 	int ready = 0;
 
+	log_msg(LOG_DEBUG, "Communicating with process %d", data->pid);
+
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		/* Use non blocking mode such that read will not block */
 		fcntl(stdout_fd, F_SETFL, O_NONBLOCK);
@@ -557,7 +563,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			}
 			terminated = 1;
 			reset_timer();
-			set_timer(data->hard_timeout - data->soft_timeout);
+			set_timer(data->hard_timeout);
 		} else if (timer_value && !killed) {
 			/* try to kill */
 			pgroup = getpgid(data->pid);
@@ -639,7 +645,6 @@ int execute(const char* command, exec_data* data) {
 	}
 
 	if (data->pid > 0) {
-		log_msg(LOG_DEBUG, "Communicating with process %d", data->pid);
 		communicate(stdout_fd, stderr_fd, data);
 	}
 
@@ -656,8 +661,8 @@ int execute(const char* command, exec_data* data) {
 void init_exec_data(exec_data* data) {
 	/* Initialize with default values */
 	data->redirect_output = REDIRECT_OUTPUT;
-	data->soft_timeout = 90;
-	data->hard_timeout = 95;
+	data->soft_timeout = COMMON_SOFT_TIMEOUT;
+	data->hard_timeout = COMMON_HARD_TIMEOUT;
 	init_stream_data(&data->stdout_data, 1024);
 	init_stream_data(&data->stderr_data, 1024);
 	init_stream_data(&data->failure_info, 0);

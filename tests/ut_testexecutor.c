@@ -82,7 +82,7 @@ START_TEST (test_executor_null_command)
 	
 	init_exec_data(&edata);
 	edata.soft_timeout = 10;
-	edata.hard_timeout = edata.soft_timeout + 5;
+	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	fail_if (execute(NULL, &edata));
 
 END_TEST
@@ -129,7 +129,7 @@ START_TEST (test_executor_long_input_streams)
 	
 	init_exec_data(&edata);
 	edata.soft_timeout = 2;
-	edata.hard_timeout = 3;
+	edata.hard_timeout = 1;
 	fail_if (execute("/usr/share/testrunner-lite-tests/long_output.sh", &edata));
 	fail_unless (edata.result == 0);
 	fail_if (edata.stdout_data.buffer == NULL);
@@ -145,7 +145,7 @@ START_TEST (test_executor_terminating_process)
 	
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
-	edata.hard_timeout = 2;
+	edata.hard_timeout = 1;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM);
@@ -162,7 +162,7 @@ START_TEST (test_executor_killing_process)
 	
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
-	edata.hard_timeout = 2;
+	edata.hard_timeout = 1;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM || edata.result == SIGKILL);
@@ -178,7 +178,7 @@ START_TEST (test_executor_piped_command)
 	exec_data edata;
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
-	edata.hard_timeout = 2;
+	edata.hard_timeout = 1;
 	fail_if (execute("echo h world | sed -e 's/h/hello/g' | grep hello", 
 			 &edata));
 	fail_unless (edata.result == 0);
@@ -191,7 +191,7 @@ START_TEST (test_executor_without_output_redirection)
 	exec_data edata;
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
-	edata.hard_timeout = 2;
+	edata.hard_timeout = 1;
 	edata.redirect_output = DONT_REDIRECT_OUTPUT;
 	fail_if (execute("echo testing", &edata));
 	fail_unless (edata.result == 0);
