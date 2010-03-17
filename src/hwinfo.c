@@ -120,7 +120,7 @@ int read_hwinfo (hw_info *hi)
 	
 	hi->product = get_sysinfo("component/product");
 	hi->hw_build = get_sysinfo("component/hw-build");
-	if (hi->product || !hi->hw_build) {
+	if (!hi->product || !hi->hw_build) {
 		fprintf (stderr, "%s: Failed to read basic HW "
 			 "information from sysinfo.\n", PROGNAME);
 		return 1;
