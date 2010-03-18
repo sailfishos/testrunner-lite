@@ -61,7 +61,7 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 static volatile sig_atomic_t timer_value = 0;
-static struct sigaction default_alarm_action;
+static struct sigaction default_alarm_action = { .sa_handler = NULL };
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -377,7 +377,7 @@ static int set_timer(long secs) {
 	 * default_alarm_action */
 	if (sigaction(SIGALRM, &act, &default_alarm_action) < 0) {
 		perror("sigaction");
-		return -1;
+		goto erraction;
 	}
 
 	if (setitimer(ITIMER_REAL, &timer, NULL) < 0) {
@@ -393,6 +393,7 @@ static int set_timer(long secs) {
 	if (sigaction(SIGALRM, &default_alarm_action, NULL) < 0) {
 		perror("sigaction");
 	}
+ erraction:
 	return -1;
 }
 
@@ -411,7 +412,8 @@ static void reset_timer() {
 	}
 
 	/* restore original action for signal SIGALRM */
-	if (sigaction(SIGALRM, &default_alarm_action, NULL) < 0) {
+	if (default_alarm_action.sa_handler != NULL && 
+	    sigaction(SIGALRM, &default_alarm_action, NULL) < 0) {
 		perror("sigaction");
 	}
 
@@ -436,16 +438,16 @@ static int execution_terminated(exec_data* data) {
 	switch (pid) {
 	case -1:
 		if (errno == ECHILD) {
-			/* no more childs */
-			log_msg(LOG_DEBUG, "waitpid() reported no more childs");
+			/* no more children */
+			log_msg(LOG_DEBUG, "waitpid reported no more children");
 			ret = 1;
 		} else {
-			log_msg(LOG_ERROR, "waitpid(): %s", strerror (errno));
+			log_msg(LOG_ERROR, "waitpid: %s", strerror (errno));
 		}
 		
 		break;
 	case 0:
-		/* WNOHANG was specified and unterminated child(s) exists */
+		/* WNOHANG was specified and unterminated child exists */
 		break;
 	default:
 		if (pid == data->pid) {
@@ -556,7 +558,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		if (timer_value && !terminated) {
 			/* try to terminate */
 			pgroup = getpgid(data->pid);
-			log_msg(LOG_DEBUG, "Terminating process %d", data->pid);
+			log_msg(LOG_DEBUG, "Timeout, terminating process %d", 
+				data->pid);
 			
 			if (killpg(pgroup, SIGTERM) < 0) {
 				perror("killpg");
@@ -567,7 +570,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		} else if (timer_value && !killed) {
 			/* try to kill */
 			pgroup = getpgid(data->pid);
-			log_msg(LOG_DEBUG, "Killing process %d", data->pid);
+			log_msg(LOG_DEBUG, "Timeout, killing process %d", 
+				data->pid);
 
 			if (killpg(pgroup, SIGKILL) < 0) {
 				perror("killpg");
@@ -635,6 +639,10 @@ int execute(const char* command, exec_data* data) {
 	int stderr_fd = -1;
 
 	data->start_time = time(NULL);
+
+	if (command != NULL) {
+	  log_msg(LOG_DEBUG, "Executing command \'%s\'", command);
+	}
 
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		data->pid = fork_process_redirect(&stdout_fd, 
