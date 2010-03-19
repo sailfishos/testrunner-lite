@@ -1,3 +1,10 @@
+testrunner-lite (1.0.1) unstable; urgency=low
+
+  * Fixed erroneous 'Failed to read basic HW information from sysinfo' message
+  * Changes in debug messages
+
+ -- Lahtinen Sami <ext-sami.t.lahtinen@nokia.com>  Fri, 19 Mar 2010 10:10:53 +0200
+
 testrunner-lite (1.0.0) unstable; urgency=low
 
   * Implemented MTT-208 - Tech debt (man pages).
