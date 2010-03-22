@@ -260,7 +260,6 @@ LOCAL int process_get (const void *data, const void *user)
 {
 
 	xmlChar *fname = (xmlChar *)data;
-	td_set *set = (td_set *)user;
 	xmlChar *command;
 	exec_data edata;
 
