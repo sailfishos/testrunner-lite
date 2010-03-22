@@ -71,7 +71,8 @@ LOCAL int verbosity_level = 0;
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
 LOCAL char *create_msg(const char *fmt, ...);
-
+/* ------------------------------------------------------------------------- */
+LOCAL char *vcreate_msg (const char *fmt, va_list ap);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -122,9 +123,10 @@ LOCAL char *create_msg (const char *fmt, ...)
 
 	   return NULL;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Allocate buffer and print to message to it 
  *  @param fmt format as in printf
+ *  @param ap argument list
  *  @return buffer with message or NULL in case of too big message
  */
 LOCAL char *vcreate_msg (const char *fmt, va_list ap)
