@@ -23,6 +23,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include <curl/curl.h>
 #include "testrunnerlite.h"
 #include "log.h"
@@ -176,7 +177,9 @@ LOCAL char *vcreate_msg (const char *fmt, va_list ap)
  * @param type Log type defined in log_message_types enum
  * @param format Message format
  */
-void log_msg (int type, char *format, ...) {
+void log_msg(int type, const char *file, const char *function,
+	     int lineno, char *format, ...) 
+{
 	
 	const char *stream_name;
 	char timestamp[10];
@@ -193,8 +196,7 @@ void log_msg (int type, char *format, ...) {
 		/* Do nothing */
 		return;
 	} 
-
-
+	
 	/* All messages go to stdout, also errors */
     
 	/* Log name. */
@@ -211,6 +213,8 @@ void log_msg (int type, char *format, ...) {
 	strftime (timestamp, sizeof (timestamp), "%H:%M:%S", tm);
 	
 	fprintf (stdout, "[%s] %s ", stream_name, timestamp);
+	if (type == LOG_DEBUG)
+		fprintf (stdout, "%s %s() %d ", file, function, lineno);
 
 	/* Print given arguments */
 	va_start(args, format);
@@ -231,10 +235,10 @@ void log_msg (int type, char *format, ...) {
 	post_msg = create_msg ("levelno=%d&"
 			       "name=testrunner-lite&"
 			       "levelname=%s&" 
-			       "module=testrunner-lite&"
-			       "filename=None&"
+			       "module=%s&"
+			       "filename=%s&"
 			       "pathname=None&"
-			       "lineno=None&"
+			       "lineno=%d&"
 			       "msg=%s&"
 			       "exc_info=None&"
 			       "exc_text=None&"
@@ -247,6 +251,9 @@ void log_msg (int type, char *format, ...) {
 			       "msecs=%d.%d&"
 			       ,to_python_level[verbosity_level],
 			       stream_name,
+			       function,
+			       file,
+			       lineno,
 			       msg,
 			       created.tv_sec,
 			       created.tv_usec,
@@ -284,10 +291,10 @@ void log_init (testrunner_lite_options *opts) {
     
 	if (opts->log_level > 0 && opts->log_level < LOG_LEVELS_COUNT) {
 		verbosity_level = opts->log_level;
-		log_msg (LOG_INFO, "Verbosity level set to: %d\n", 
+		LOG_MSG (LOG_INFO, "Verbosity level set to: %d\n", 
 			 opts->log_level);
 	} else {
-		log_msg (LOG_ERROR, 
+		LOG_MSG (LOG_ERROR, 
 			 "Incorrect verbosity level %d, values [0..%d]\n", 
 			 opts->log_level, LOG_LEVELS_COUNT - 1);
 	}

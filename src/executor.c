@@ -183,7 +183,7 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 
 	pid = fork();
 	if (pid > 0) { /* parent */
-		log_msg(LOG_DEBUG, "Forked new process %d", pid);
+		LOG_MSG(LOG_DEBUG, "Forked new process %d", pid);
 		/* close the write end of the pipes */
 		close(out_pipe[1]);
 		close(err_pipe[1]);
@@ -202,7 +202,7 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		/* redirect stdout to the pipe */
 		close(1);
 		if (dup(out_pipe[1]) < 0) {
-			log_msg (LOG_ERROR, "%s dup() failed %s\n",
+			LOG_MSG (LOG_ERROR, "%s dup() failed %s\n",
 				 __FUNCTION__, strerror(errno));
 		}
 		
@@ -210,7 +210,7 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		close(2);
 
 		if (dup(err_pipe[1]) < 0) {
-			log_msg (LOG_ERROR, "%s dup() failed %s\n",
+			LOG_MSG (LOG_ERROR, "%s dup() failed %s\n",
 				 __FUNCTION__, strerror(errno));
 		}
 		
@@ -218,7 +218,7 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		/* execution should never reach this point */
 		exit(1);
 	} else {
-		log_msg(LOG_ERROR, "Fork failed: %s", strerror(errno));
+		LOG_MSG(LOG_ERROR, "Fork failed: %s", strerror(errno));
 		goto error_fork;
 	}
 
@@ -242,7 +242,7 @@ static pid_t fork_process(const char *command) {
 	pid_t pid = fork();
 
 	if (pid > 0) {		/* parent */
-		log_msg(LOG_DEBUG, "Forked new process %d", pid);
+		LOG_MSG(LOG_DEBUG, "Forked new process %d", pid);
 	} else if (pid == 0) {	/* child */
 		/* Create new session id.
 		 * Process group ID and session ID
@@ -253,7 +253,7 @@ static pid_t fork_process(const char *command) {
 		/* execution should never reach this point */
 		exit(1);
 	} else {
-		log_msg(LOG_ERROR, "Fork failed: %s", strerror(errno));
+		LOG_MSG(LOG_ERROR, "Fork failed: %s", strerror(errno));
 	}
 
 	return pid;
@@ -277,7 +277,7 @@ static void* stream_data_realloc(stream_data* data, int size) {
 		data->size = size;
 		free(oldptr);
 	} else {
-		log_msg(LOG_ERROR, "Stream data memory allocation failed");
+		LOG_MSG(LOG_ERROR, "Stream data memory allocation failed");
 	}
 
 	return (void*)newptr;
@@ -385,7 +385,7 @@ static int set_timer(long secs) {
 		goto errtimer;
 	}
 
-	log_msg(LOG_DEBUG, "Set timeout timer to %lu seconds", secs);
+	LOG_MSG(LOG_DEBUG, "Set timeout timer to %lu seconds", secs);
 
 	return 0;
 
@@ -419,7 +419,7 @@ static void reset_timer() {
 
 	timer_value = 0;
 
-	log_msg(LOG_DEBUG, "Reset timeout timer");
+	LOG_MSG(LOG_DEBUG, "Reset timeout timer");
 }
 
 /** Do unblocking wait for state change of process(es)
@@ -439,10 +439,10 @@ static int execution_terminated(exec_data* data) {
 	case -1:
 		if (errno == ECHILD) {
 			/* no more children */
-			log_msg(LOG_DEBUG, "waitpid reported no more children");
+			LOG_MSG(LOG_DEBUG, "waitpid reported no more children");
 			ret = 1;
 		} else {
-			log_msg(LOG_ERROR, "waitpid: %s", strerror (errno));
+			LOG_MSG(LOG_ERROR, "waitpid: %s", strerror (errno));
 		}
 		
 		break;
@@ -454,7 +454,7 @@ static int execution_terminated(exec_data* data) {
 			if (WIFEXITED(status)) {
 				/* child exited normally */
 				data->result = WEXITSTATUS(status);
-				log_msg(LOG_DEBUG, 
+				LOG_MSG(LOG_DEBUG, 
 					"Process %d exited with status %d", 
 					pid, WEXITSTATUS(status));
 			} else if (WIFSIGNALED(status)) {
@@ -462,12 +462,12 @@ static int execution_terminated(exec_data* data) {
 				data->result = WTERMSIG(status);
 				stream_data_append(&data->failure_info, 
 						   FAILURE_INFO_TIMEOUT);
-				log_msg(LOG_DEBUG, 
+				LOG_MSG(LOG_DEBUG, 
 					"Process %d was terminated by signal %d",
 					pid, WTERMSIG(status));
 			} else {
 				data->result = -1;
-				log_msg(LOG_ERROR, 
+				LOG_MSG(LOG_ERROR, 
 					"Unexpected return status %d from process %d",
 					status, pid);
 			}
@@ -505,13 +505,13 @@ static void process_output_streams(int stdout_fd, int stderr_fd,
 		for(i = 0; i < 2; i++) {
 			if (fds[i].revents & POLLIN) {
 				if (fds[i].fd == stdout_fd) {
-					log_msg(LOG_DEBUG, 
+					LOG_MSG(LOG_DEBUG, 
 						"Reading stdout of process %d",
 						data->pid);
 					read_and_append(stdout_fd, 
 							&data->stdout_data);
 				} else if (fds[i].fd == stderr_fd) {
-					log_msg(LOG_DEBUG, 
+					LOG_MSG(LOG_DEBUG, 
 						"Reading stderr of process %d",
 						data->pid);
 					read_and_append(stderr_fd,
@@ -535,7 +535,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 	int killed = 0;
 	int ready = 0;
 
-	log_msg(LOG_DEBUG, "Communicating with process %d", data->pid);
+	LOG_MSG(LOG_DEBUG, "Communicating with process %d", data->pid);
 
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		/* Use non blocking mode such that read will not block */
@@ -558,7 +558,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		if (timer_value && !terminated) {
 			/* try to terminate */
 			pgroup = getpgid(data->pid);
-			log_msg(LOG_DEBUG, "Timeout, terminating process %d", 
+			LOG_MSG(LOG_DEBUG, "Timeout, terminating process %d", 
 				data->pid);
 			
 			if (killpg(pgroup, SIGTERM) < 0) {
@@ -570,7 +570,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		} else if (timer_value && !killed) {
 			/* try to kill */
 			pgroup = getpgid(data->pid);
-			log_msg(LOG_DEBUG, "Timeout, killing process %d", 
+			LOG_MSG(LOG_DEBUG, "Timeout, killing process %d", 
 				data->pid);
 
 			if (killpg(pgroup, SIGKILL) < 0) {
@@ -641,7 +641,7 @@ int execute(const char* command, exec_data* data) {
 	data->start_time = time(NULL);
 
 	if (command != NULL) {
-	  log_msg(LOG_DEBUG, "Executing command \'%s\'", command);
+	  LOG_MSG(LOG_DEBUG, "Executing command \'%s\'", command);
 	}
 
 	if (data->redirect_output == REDIRECT_OUTPUT) {

@@ -90,7 +90,7 @@ LOCAL unsigned char *get_sysinfo (const char *key)
 	execute (cmd, &edata);
 	
 	if (edata.result) {
-		log_msg (LOG_ERROR, "%s:%s():%d:%s\n", PROGNAME, __FUNCTION__,
+		LOG_MSG (LOG_ERROR, "%s:%s():%d:%s\n", PROGNAME, __FUNCTION__,
 			 edata.result, (char *)edata.stderr_data.buffer ?
 			 (char *)edata.stderr_data.buffer : 
 			 "no info available");
@@ -125,7 +125,7 @@ int read_hwinfo (hw_info *hi)
 			 "information from sysinfo.\n", PROGNAME);
 		return 1;
 	} else {
-		log_msg (LOG_INFO, "Hardware: Product: %s HWbuild: %s",
+		LOG_MSG (LOG_INFO, "Hardware: Product: %s HWbuild: %s",
 			 hi->product, hi->hw_build);
 	}
 	
@@ -138,7 +138,7 @@ int read_hwinfo (hw_info *hi)
 	if (!hi->nolo)
 		return 0;
 	
-	log_msg(LOG_INFO, "Hardware: Nolo: %s"
+	LOG_MSG(LOG_INFO, "Hardware: Nolo: %s"
 		" Boot_mode: %s"
 		" Production_sn: %s" 
 		" Product_code: %s"

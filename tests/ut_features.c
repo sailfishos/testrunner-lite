@@ -166,9 +166,9 @@ START_TEST (test_logging)
     fp = freopen (stdout_tmp, "w", stdout);
     
     /* Log INFO, WARNING and ERROR messages. */
-    log_msg (LOG_INFO, "INFO message: %s\n", "This works.");
-    log_msg (LOG_WARNING, "WARNING message: %s\n", "This works.");
-    log_msg (LOG_ERROR, "ERROR message: %s\n", "This works.");
+    LOG_MSG (LOG_INFO, "INFO message: %s\n", "This works.");
+    LOG_MSG (LOG_WARNING, "WARNING message: %s\n", "This works.");
+    LOG_MSG (LOG_ERROR, "ERROR message: %s\n", "This works.");
     
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
@@ -187,7 +187,7 @@ START_TEST (test_logging)
     fail_if (ret != 0, cmd);
     
     /* Try to log DEBUG message with INFO verbosity (should not succeed.)*/
-    log_msg (LOG_DEBUG, "DEBUG message: %s\n", "This should not work.");
+    LOG_MSG (LOG_DEBUG, "DEBUG message: %s\n", "This should not work.");
     freopen ("/dev/tty", "w", stdout);
     
     sprintf (cmd, "grep \"[DEBUG]* DEBUG message: This should not work.\" %s", stdout_tmp); 
@@ -202,10 +202,10 @@ START_TEST (test_logging)
     fp = freopen (stdout_tmp, "w", stdout);
     
     /* Log INFO, WARNING and ERROR messages. */
-    log_msg (LOG_INFO, "INFO message: %s\n", "This works.");
-    log_msg (LOG_WARNING, "WARNING message: %s\n", "This works.");
-    log_msg (LOG_ERROR, "ERROR message: %s\n", "This works.");
-    log_msg (LOG_DEBUG, "DEBUG message: %s\n", "This works.");
+    LOG_MSG (LOG_INFO, "INFO message: %s\n", "This works.");
+    LOG_MSG (LOG_WARNING, "WARNING message: %s\n", "This works.");
+    LOG_MSG (LOG_ERROR, "ERROR message: %s\n", "This works.");
+    LOG_MSG (LOG_DEBUG, "DEBUG message: %s\n", "This works.");
     
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
@@ -234,7 +234,7 @@ START_TEST (test_logging)
     /* Forward stdout temporarily to a file. */
     fp = freopen (stdout_tmp, "w", stdout);
     
-    log_msg (LOG_INFO, "INFO message: %s\n", "Silent mode.");
+    LOG_MSG (LOG_INFO, "INFO message: %s\n", "Silent mode.");
     
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);

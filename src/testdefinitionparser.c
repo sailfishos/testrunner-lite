@@ -159,14 +159,14 @@ LOCAL td_step *td_parse_step()
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			log_msg (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
+			LOG_MSG (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
 				 PROGNAME, __FUNCTION__);
 			
 			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
-			log_msg (LOG_ERROR, "%s: ReaderName() fail\n",
+			LOG_MSG (LOG_ERROR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
@@ -197,8 +197,8 @@ LOCAL td_step *td_parse_step()
 	
 	return step;
  ERROUT:
-    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
-             PROGNAME, __FUNCTION__);
+	LOG_MSG (LOG_ERROR, "%s:%s: Exiting with error\n", 
+		 PROGNAME, __FUNCTION__);
 	free (step);
 	
 	return NULL;
@@ -218,13 +218,13 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			log_msg (LOG_ERROR, "%s: ReaderRead() fail\n",
+			LOG_MSG (LOG_ERROR, "%s: ReaderRead() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
-			log_msg (LOG_ERROR, "%s: ReaderName() fail\n",
+			LOG_MSG (LOG_ERROR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
@@ -235,7 +235,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 			if (!step)
 				goto ERROUT;
 			if (xmlListAppend (list, step)) {
-				log_msg (LOG_ERROR, "%s: list insert failed\n",
+				LOG_MSG (LOG_ERROR, "%s: list insert failed\n",
 					 PROGNAME);
 				goto ERROUT;
 			}
@@ -246,8 +246,8 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 	
 	return 0;
  ERROUT:
-    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
-             PROGNAME, __FUNCTION__);
+	LOG_MSG (LOG_ERROR, "%s:%s: Exiting with error\n", 
+		 PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -277,14 +277,14 @@ LOCAL int td_parse_case(td_set *s)
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			log_msg (LOG_ERROR, "%s: ReaderRead() fail\n",
+			LOG_MSG (LOG_ERROR, "%s: ReaderRead() fail\n",
 				 PROGNAME);
 			
 			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
-			log_msg (LOG_ERROR, "%s: ReaderName() fail\n",
+			LOG_MSG (LOG_ERROR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
@@ -295,7 +295,7 @@ LOCAL int td_parse_case(td_set *s)
 		    if (!step)
 			    goto ERROUT;
 		    if (xmlListAppend (c->steps, step)) {
-			    log_msg (LOG_ERROR, "%s: list insert failed\n",
+			    LOG_MSG (LOG_ERROR, "%s: list insert failed\n",
 				     PROGNAME);
 			    goto ERROUT;
 		    }
@@ -309,8 +309,8 @@ LOCAL int td_parse_case(td_set *s)
 	
 	return 0;
 ERROUT:
-    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
-             PROGNAME, __FUNCTION__);
+	LOG_MSG (LOG_ERROR, "%s:%s: Exiting with error\n", 
+		 PROGNAME, __FUNCTION__);
 	xmlListDelete (c->steps);
 	if (c->gen.name) free (c->gen.name);
 	if (c->gen.description) free (c->gen.description);
@@ -332,7 +332,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			log_msg (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
+			LOG_MSG (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
 				 PROGNAME, __FUNCTION__);
 			
 			goto ERROUT;
@@ -341,7 +341,8 @@ LOCAL int td_parse_environments(xmlListPtr list)
 		if (xmlTextReaderNodeType(reader) ==  XML_READER_TYPE_ELEMENT) {
 			name = xmlTextReaderConstName(reader);
 			if (!name) {
-				log_msg (LOG_ERROR, "%s:%s: ReaderName() fail\n",
+				LOG_MSG (LOG_ERROR, "%s:%s: ReaderName() "
+					 "fail\n",
 					 PROGNAME, __FUNCTION__);
 				goto ERROUT;
 			}
@@ -352,7 +353,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 			if (!xmlStrcmp (value, BAD_CAST "true")) {
 				env = xmlStrdup(name);
 				if (xmlListAppend (list, env)) {
-					log_msg (LOG_ERROR, 
+					LOG_MSG (LOG_ERROR, 
 						 "%s:%s list insert failed\n",
 						 PROGNAME, __FUNCTION__);
 					goto ERROUT;
@@ -367,8 +368,8 @@ LOCAL int td_parse_environments(xmlListPtr list)
 	
 	return 0;
  ERROUT:
-    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
-             PROGNAME, __FUNCTION__);
+	LOG_MSG (LOG_ERROR, "%s:%s: Exiting with error\n", 
+		 PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -384,7 +385,7 @@ LOCAL int td_parse_gets(xmlListPtr list)
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			log_msg (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
+			LOG_MSG (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
 				 PROGNAME, __FUNCTION__);
 			
 			goto ERROUT;
@@ -393,7 +394,7 @@ LOCAL int td_parse_gets(xmlListPtr list)
 		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
 			value = xmlTextReaderReadString (reader);
 			if (xmlListAppend (list, value)) {
-				log_msg (LOG_ERROR, 
+				LOG_MSG (LOG_ERROR, 
 					 "%s:%s list insert failed\n",
 					 PROGNAME, __FUNCTION__);
 				goto ERROUT;
@@ -407,8 +408,8 @@ LOCAL int td_parse_gets(xmlListPtr list)
 	
 	return 0;
  ERROUT:
-    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
-             PROGNAME, __FUNCTION__);
+	LOG_MSG (LOG_ERROR, "%s:%s: Exiting with error\n", 
+		 PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -459,14 +460,14 @@ LOCAL int td_parse_set ()
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
-			log_msg (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
+			LOG_MSG (LOG_ERROR, "%s:%s: ReaderRead() fail\n",
 				 PROGNAME, __FUNCTION__);
 
 			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
-			log_msg (LOG_ERROR, "%s: ReaderName() fail\n",
+			LOG_MSG (LOG_ERROR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
@@ -490,8 +491,8 @@ LOCAL int td_parse_set ()
 
 	return 0;
  ERROUT:
-	log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
-             PROGNAME, __FUNCTION__);
+	LOG_MSG (LOG_ERROR, "%s:%s: Exiting with error\n", 
+		 PROGNAME, __FUNCTION__);
 	
 	return 1;
 }
@@ -517,18 +518,18 @@ int parse_test_definition (testrunner_lite_options *opts)
 	 */
 	ctxt = xmlNewParserCtxt();
 	if (ctxt == NULL) {
-		log_msg (LOG_ERROR, "%s: Failed to allocate parser context\n",
+		LOG_MSG (LOG_ERROR, "%s: Failed to allocate parser context\n",
 			 PROGNAME);
 		goto out;
 	}
 	
 	doc = xmlCtxtReadFile(ctxt, opts->input_filename, NULL, 0);
 	if (doc == NULL) {
-		log_msg (LOG_ERROR, "%s: Failed to parse %s\n", PROGNAME,
+		LOG_MSG (LOG_ERROR, "%s: Failed to parse %s\n", PROGNAME,
 			opts->input_filename);
 		goto out;
 	} else if (!ctxt->valid) {
-		log_msg (LOG_ERROR, "%s: Failed to validate %s\n", PROGNAME, 
+		LOG_MSG (LOG_ERROR, "%s: Failed to validate %s\n", PROGNAME, 
 			opts->input_filename);
 		xmlFreeDoc(doc);
 		doc = NULL;
@@ -550,21 +551,21 @@ int parse_test_definition (testrunner_lite_options *opts)
 						 "testdefinition-syntax.xsd");
 	    
 	if (schema_ctxt == NULL) {
-		log_msg (LOG_ERROR, "%s: Failed to allocate schema context\n",
+		LOG_MSG (LOG_ERROR, "%s: Failed to allocate schema context\n",
 			 PROGNAME);
 		goto out;
 	}
 
 	sch = xmlSchemaParse(schema_ctxt);
 	if (sch == NULL) {
-		log_msg (LOG_ERROR, "%s: Failed to parse schema\n",
+		LOG_MSG (LOG_ERROR, "%s: Failed to parse schema\n",
 			 PROGNAME);
 		goto out;
 	}
 
 	valid_ctxt = xmlSchemaNewValidCtxt(sch);
 	if (valid_ctxt == NULL) {
-		log_msg (LOG_ERROR, "%s: Failed to create schema validation "
+		LOG_MSG (LOG_ERROR, "%s: Failed to create schema validation "
 			 "context\n", PROGNAME);
 		goto out;
 		
@@ -593,8 +594,8 @@ int td_reader_init (testrunner_lite_options *opts)
 
 	reader =  xmlNewTextReaderFilename(opts->input_filename);
 	if (!reader) {
-		log_msg (LOG_ERROR, "%s: failed to create xml reader for %s\n", 
-			PROGNAME, opts->input_filename);
+		LOG_MSG (LOG_ERROR, "%s: failed to create xml reader for %s\n", 
+			 PROGNAME, opts->input_filename);
 		
 	}
 
@@ -610,20 +611,20 @@ int td_reader_init (testrunner_lite_options *opts)
 			("/usr/share/test-definition/"
 			 "testdefinition-syntax.xsd");
 	if (schema_context == NULL) {
-        log_msg (LOG_ERROR, "%s: Failed to allocate schema context\n",
+		LOG_MSG (LOG_ERROR, "%s: Failed to allocate schema context\n",
 			 PROGNAME);
 		goto err_out;
 	}
 
 	schema = xmlSchemaParse(schema_context);
 	if (schema == NULL) {
-		log_msg (LOG_ERROR, "%s: Failed to parse schema\n",
+		LOG_MSG (LOG_ERROR, "%s: Failed to parse schema\n",
 			 PROGNAME);
 		goto err_out;
 	}
 
 	if (xmlTextReaderSetSchema (reader, schema)) {
-		log_msg (LOG_ERROR, "%s: Failed to set schema for xml reader\n",
+		LOG_MSG (LOG_ERROR, "%s: Failed to set schema for xml reader\n",
 			 PROGNAME);
 		goto err_out;
 	}
@@ -631,7 +632,7 @@ int td_reader_init (testrunner_lite_options *opts)
 	
 	return 0;
  err_out:
-    log_msg (LOG_ERROR, "%s:%s: Exiting with error\n", 
+	LOG_MSG (LOG_ERROR, "%s:%s: Exiting with error\n", 
              PROGNAME, __FUNCTION__);
 	td_reader_close ();
 	return 1;

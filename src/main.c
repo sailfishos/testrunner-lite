@@ -187,7 +187,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		}
 		if (edata.failure_info.buffer) {
 			step->failure_info = edata.failure_info.buffer;
-			log_msg (LOG_INFO, "FAILURE INFO %s",
+			LOG_MSG (LOG_INFO, "FAILURE INFO %s",
 				 step->failure_info);
 		}
 
@@ -201,14 +201,14 @@ LOCAL int step_execute (const void *data, const void *user)
 		if (c->dummy) {
 			if (step->has_expected_result &&
 			    (step->return_code != step->expected_result)) {
-				log_msg (LOG_INFO, 
+				LOG_MSG (LOG_INFO, 
 					 "STEP: %s return %d expected %d\n",
 					 step->step, step->return_code, 
 					 step->expected_result);
 				fail = 1;
 			}
 		} else if (step->return_code != step->expected_result) {
-			log_msg (LOG_INFO, "STEP: %s return %d expected %d\n",
+			LOG_MSG (LOG_INFO, "STEP: %s return %d expected %d\n",
 				 step->step, step->return_code, 
 				 step->expected_result);
 			fail = 1;
@@ -232,7 +232,7 @@ LOCAL int process_case (const void *data, const void *user)
 	td_case *c = (td_case *)data;
 	td_set *set = (td_set *)user;
 	
-	log_msg (LOG_INFO, "Starting test case %s", c->gen.name);
+	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
 	
 
@@ -244,7 +244,7 @@ LOCAL int process_case (const void *data, const void *user)
 		c->gen.timeout = COMMON_SOFT_TIMEOUT; /* the default one */
 	 
 	xmlListWalk (c->steps, step_execute, data);
-	log_msg (LOG_INFO, "Finished test case Result: %s", c->passed ?
+	LOG_MSG (LOG_INFO, "Finished test case Result: %s", c->passed ?
 		 "PASS" : "FAIL");
 	passcount += c->passed;
 	
@@ -276,15 +276,15 @@ LOCAL int process_get (const void *data, const void *user)
 	sprintf ((char *)command, "cp %s %s", (char *)fname, 
 		 opts.output_folder);
     
-    log_msg (LOG_DEBUG, "%s: %s: Executing command: %s", PROGNAME, __FUNCTION__,
-             (char*)command);
+	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
+		 (char*)command);
 	/*
 	** Execute it
 	*/
 	execute((char*)command, &edata);
 
 	if (edata.result) {
-		log_msg (LOG_ERROR, "%s: %s failed: %s\n", PROGNAME, command,
+		LOG_MSG (LOG_ERROR, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
@@ -305,7 +305,7 @@ LOCAL int process_get (const void *data, const void *user)
  */
 LOCAL void process_suite (td_suite *s)
 {
-	log_msg (LOG_INFO, "Test suite: %s", s->gen.name);
+	LOG_MSG (LOG_INFO, "Test suite: %s", s->gen.name);
 
 	write_pre_suite_tag (s);
 	current_suite = s;
@@ -328,7 +328,7 @@ LOCAL void process_set (td_set *s)
 {
 	td_case dummy;
 
-	log_msg (LOG_INFO, "Test set: %s", s->gen.name);
+	LOG_MSG (LOG_INFO, "Test set: %s", s->gen.name);
 
 	s->environment = xmlCharStrdup (opts.environment);
 	write_pre_set_tag (s);
@@ -346,10 +346,10 @@ LOCAL void process_set (td_set *s)
 		dummy.passed = 1;
 		dummy.dummy = 1;
 		dummy.gen.timeout = 0; /* No timeout for pre steps */
-		log_msg (LOG_INFO, "Executing pre steps");
+		LOG_MSG (LOG_INFO, "Executing pre steps");
 		xmlListWalk (s->pre_steps, step_execute, &dummy);
 		if (dummy.passed == 0) {
-			log_msg (LOG_ERROR, "Pre steps failed. "
+			LOG_MSG (LOG_ERROR, "Pre steps failed. "
 				 "Test set %s aborted.", s->gen.name); 
 			goto skip;
 		}
@@ -358,14 +358,14 @@ LOCAL void process_set (td_set *s)
 	xmlListWalk (s->cases, process_case, s);
 	xmlListWalk (s->gets, process_get, s);
 	if (xmlListSize (s->post_steps) > 0) {
-		log_msg (LOG_INFO, "Executing post steps");
+		LOG_MSG (LOG_INFO, "Executing post steps");
 		dummy.passed = 1;
 		dummy.dummy = 1;
 		/* Default timeout for post steps */
 		dummy.gen.timeout = COMMON_SOFT_TIMEOUT;
 		xmlListWalk (s->post_steps, step_execute, &dummy);
 		if (dummy.passed == 0)
-			log_msg (LOG_ERROR, 
+			LOG_MSG (LOG_ERROR, 
 				 "Post steps failed for %s.", s->gen.name);
 	}
 	
@@ -394,7 +394,7 @@ LOCAL int create_output_folder ()
 	} else {
 		pwd = getenv ("PWD");
 		if (!pwd) {
-			log_msg (LOG_ERROR, "%s: getenv() failed %s\n",
+			LOG_MSG (LOG_ERROR, "%s: getenv() failed %s\n",
 				 PROGNAME, strerror (errno));
 			return 1;
 		}
@@ -409,7 +409,7 @@ LOCAL int create_output_folder ()
 	sprintf (cmd, "mkdir -p %s", opts.output_folder);
 
 	if  (system (cmd)) {
-		log_msg (LOG_ERROR, "%s failed to create output "
+		LOG_MSG (LOG_ERROR, "%s failed to create output "
 			 "directory %s\n",
 			 PROGNAME, opts.output_folder);
 		free (cmd);
@@ -698,17 +698,17 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	** Call td_next_node untill error occurs or the end of data is reached
 	*/
-	log_msg (LOG_INFO, "Starting to run tests...");
+	LOG_MSG (LOG_INFO, "Starting to run tests...");
 
 	while (td_next_node() == 0);
-	log_msg (LOG_INFO, "Finished running tests.");
+	LOG_MSG (LOG_INFO, "Finished running tests.");
 	
 	td_reader_close();
 	close_result_logger();
-	log_msg (LOG_INFO, "Executed %d cases. Passed %d Failed %d",
+	LOG_MSG (LOG_INFO, "Executed %d cases. Passed %d Failed %d",
 		 casecount, passcount, casecount - passcount);
-	log_msg (LOG_INFO, "Results were written to: %s", opts.output_filename);
-	log_msg (LOG_INFO, "Finished!");
+	LOG_MSG (LOG_INFO, "Results were written to: %s", opts.output_filename);
+	LOG_MSG (LOG_INFO, "Finished!");
 	log_close();
 OUT:
 	if (opts.input_filename) free (opts.input_filename);

@@ -26,12 +26,15 @@
 #include "testrunnerlite.h"
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
-/* None */
+#define LOG_MSG_MAX_SIZE 2048
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-#define LOG_MSG_MAX_SIZE 2048
-
+#define LOG_MSG(__level__,__format__, __args__ ...)\
+	do{								\
+		log_msg (__level__, __FILE__, __FUNCTION__, __LINE__,	\
+			 __format__, ##__args__);			\
+	} while (0)
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
@@ -63,7 +66,8 @@ enum log_message_types {
 /* FUNCTION PROTOTYPES */
 
 /* ------------------------------------------------------------------------- */
-void log_msg(int type, char *format, ...);
+void log_msg(int type, const char *file, const char *function,
+	     int lineno, char *format, ...);
 /* ------------------------------------------------------------------------- */
 void log_init(testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
