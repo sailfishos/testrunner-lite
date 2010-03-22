@@ -44,6 +44,8 @@ typedef struct {
 	char *output_filename; /**< the result file */
 	char *output_folder;   /**< folder for storing results */
         char *environment;     /**< execution environment */
+	char *remote_logger;     /**< Remote logger IP address or hostname */
+	long  remote_logger_port; /** Remote logger port number */
 	int   disable_schema;  /**< flag for disabling DTD validation */
 	int   semantic_schema; /**< flag for enabling sricter DTD */
         result_output   output_type;   /**< result output type selector */

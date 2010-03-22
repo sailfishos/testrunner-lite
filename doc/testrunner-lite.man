@@ -29,6 +29,10 @@ outputting INFO, ERROR and WARNING messages. Similarly -vv
 and --verbose=DEBUG are equivalent, outputting also debug 
 messages. Default behaviour is silent mode.
 .TP
+\fB\-L\fR,  \fB\-\-logger\fR=HOST[:PORT]
+Remote HTTP logger. Log messages are sent to given host in HTTP POST message.
+HOST may be an IP address or hostname. Port number is optional.
+.TP
 \fB\-a\fR,  \fB\-\-automatic\fR 
 Enable only automatic tests to be executed
 .TP

@@ -120,6 +120,8 @@ LOCAL void usage()
         "outputting INFO, ERROR and WARNING messages.\n\t\t"
         "Similarly -vv and --verbose=DEBUG are equivalent, outputting\n\t\t"
         "also debug messages. Default behaviour is silent mode.\n");
+	printf("  -L, --logger=HOST[:PORT]\n\t\t"
+	       "Remote HTTP logger for log messages.\n");
 	printf ("  -a, --automatic\tEnable only automatic tests "
 		"to be executed.\n");
 	printf ("  -m, --manual\tEnable only manual tests to be executed.\n");
@@ -420,6 +422,47 @@ LOCAL int create_output_folder ()
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Parse remote logger option argument of format aaa.bbb.ccc.ddd[:port] or 
+ *  hostname[:port]
+ * @param host Host logger option argument
+ * @param opts Options struct containing fields to store host and port
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_remote_logger(char *host, testrunner_lite_options *opts) {
+	char* str = NULL;
+	char* endptr = NULL;
+
+	str = strchr(host, ':');
+	if (str) {
+		str = strtok(host, ":");
+		if (!str) {
+			fprintf(stderr, "Invalid remote logger\n");
+			return 1;
+		}
+		opts->remote_logger = malloc(strlen(str) + 1);
+		strcpy(opts->remote_logger, str);
+
+		str = strtok(NULL, ":");
+		if (!str) {
+			fprintf(stderr, "Invalid remote logger\n");
+			return 1;
+		}
+		opts->remote_logger_port = strtol(str, &endptr, 10);
+		if (*endptr != '\0' || 
+		    opts->remote_logger_port <= 0 ||
+		    opts->remote_logger_port > 65535) {
+			fprintf(stderr, "Invalid remote logger port \'%s\'\n", 
+				str);
+			return 1;
+		}
+	} else {
+		opts->remote_logger = malloc(strlen(host) + 1);
+		strcpy(opts->remote_logger, host);
+	}
+
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** main() for testrunnerlite - handle command line switches and call parser
@@ -447,10 +490,11 @@ int main (int argc, char *argv[], char *envp[])
 			{"automatic", no_argument, &a_flag, 1},
 			{"manual", no_argument, &m_flag, 1},
 			{"filter", required_argument, NULL, 'l'},
+			{"logger", required_argument, NULL, 'L'},
 			{"ci", no_argument, &opts.disable_schema},
 			{"semantic", no_argument, &opts.semantic_schema},
-			{"validate-only", no_argument, &A_flag}
-
+			{"validate-only", no_argument, &A_flag},
+			{0, 0, 0, 0}
 		};
 
 
@@ -466,7 +510,7 @@ int main (int argc, char *argv[], char *envp[])
 	while (1) {
 		option_idx = 0;
      
-		opt_char = getopt_long (argc, argv, ":haAsmcf:o:e:l:r:v::",
+		opt_char = getopt_long (argc, argv, ":haAsmcf:o:e:l:r:L:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -536,6 +580,12 @@ int main (int argc, char *argv[], char *envp[])
 			break;
 		case 'A':
 			A_flag = 1;
+			break;
+		case 'L':
+			if (parse_remote_logger(optarg, &opts) != 0) {
+				retval = EXIT_FAILURE;
+				goto OUT;
+			}
 			break;
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
@@ -664,6 +714,7 @@ OUT:
 	if (opts.output_filename) free (opts.output_filename);
 	if (opts.output_folder) free (opts.output_folder);
 	if (opts.environment) free (opts.environment);
+	if (opts.remote_logger) free (opts.remote_logger);
 	
 	return retval;
 }	

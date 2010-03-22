@@ -277,6 +277,37 @@ START_TEST (test_verbosity_flags)
     
 END_TEST
 
+START_TEST (test_remote_logger_flag)
+    int ret;
+    char cmd[128];
+    char *out_file = "/tmp/out.xml";
+
+    /* Test -L without argument */
+    sprintf (cmd, "%s -f %s -o %s -L", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test -L with missing port value */
+    sprintf (cmd, "%s -f %s -o %s -L 192.168.2.15:", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test -L with invalid port value */
+    sprintf (cmd, "%s -f %s -o %s -L host:80A", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test -L with invalid port value */
+    sprintf (cmd, "%s -f %s -o %s -L host:70000", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+END_TEST
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -304,6 +335,10 @@ Suite *make_argumentparser_suite (void)
 
     tc = tcase_create ("Test verbosity flags.");
     tcase_add_test (tc, test_verbosity_flags);
+    suite_add_tcase (s, tc);
+    
+    tc = tcase_create ("Test remote logger flag.");
+    tcase_add_test (tc, test_remote_logger_flag);
     suite_add_tcase (s, tc);
     
     return s;
