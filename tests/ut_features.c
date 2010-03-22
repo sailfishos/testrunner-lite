@@ -23,6 +23,7 @@
 
 #include "testrunnerlitetestscommon.h"
 #include "executor.h"
+#include "hwinfo.h"
 #include "log.h"
 
 /* ------------------------------------------------------------------------- */
@@ -244,6 +245,20 @@ START_TEST (test_logging)
     fail_if (ret == 0, cmd);
     
 END_TEST
+
+START_TEST (test_hwinfo)
+     
+     hw_info hi;
+
+     memset (&hi, 0x0, sizeof (hw_info));
+     fail_if (read_hwinfo(&hi));
+	      
+     print_hwinfo (&hi);
+
+     clean_hwinfo (&hi);
+    
+END_TEST
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -270,6 +285,10 @@ Suite *make_features_suite (void)
   
     tc = tcase_create ("Test logging.");
     tcase_add_test (tc, test_logging);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test hw info.");
+    tcase_add_test (tc, test_hwinfo);
     suite_add_tcase (s, tc);
 
     return s;
