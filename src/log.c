@@ -181,7 +181,7 @@ void log_msg (int type, char *format, ...) {
 	const char *stream_name;
 	char timestamp[10];
 	char *msg, *post_msg;
-	int res;
+	CURLcode res;
 	struct tm *tm;
 	time_t current_time;
 	struct timeval now, diff;
@@ -263,7 +263,12 @@ void log_msg (int type, char *format, ...) {
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_msg);
 	
 	res = curl_easy_perform(curl);
-	
+	if (res != CURLE_OK) {
+		fprintf (stdout, "[%s] [ERROR] http logging failed: %s\n ", 
+			 timestamp, curl_easy_strerror(res));
+
+		log_close();
+	}
 	free (msg);
 	free (post_msg);
 	return;
@@ -296,6 +301,17 @@ void log_init (testrunner_lite_options *opts) {
 					 CURLOPT_PORT, 
 					 opts->remote_logger_port);
 			
+	}
+}
+
+/* ------------------------------------------------------------------------- */
+/** Closes the log, flush stdout and cleanup curl if it's in use
+ */
+void log_close () {
+	fflush (stdout);
+	if (curl) {
+		curl_easy_cleanup(curl);
+		curl = NULL;
 	}
 }
 

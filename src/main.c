@@ -709,7 +709,7 @@ int main (int argc, char *argv[], char *envp[])
 		 casecount, passcount, casecount - passcount);
 	log_msg (LOG_INFO, "Results were written to: %s", opts.output_filename);
 	log_msg (LOG_INFO, "Finished!");
-	
+	log_close();
 OUT:
 	if (opts.input_filename) free (opts.input_filename);
 	if (opts.output_filename) free (opts.output_filename);
