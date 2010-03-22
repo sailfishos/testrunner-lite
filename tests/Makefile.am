@@ -24,7 +24,7 @@ AM_CFLAGS = -I. \
             -fprofile-arcs \
             -ftest-coverage
 
-testrunnerlitetests_LDFLAGS = -lxml2
+testrunnerlitetests_LDFLAGS = -lxml2 -lcurl
 
 testrunnerlitetests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/testdefinitiondatatypes.o \

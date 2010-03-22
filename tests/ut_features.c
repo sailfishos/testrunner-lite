@@ -154,9 +154,12 @@ START_TEST (test_logging)
     char cmd[1024];
     int ret;
     FILE *fp;
-    
+    testrunner_lite_options opts;
+    memset (&opts, 0x0, sizeof (testrunner_lite_options)); 
+
     /* Set verbosity to INFO. */
-    log_set_verbosity_level (LOG_LEVEL_INFO);
+    opts.log_level = LOG_LEVEL_INFO;
+    log_init (&opts);
     
     /* Forward stdout temporarily to a file. */
     fp = freopen (stdout_tmp, "w", stdout);
@@ -191,7 +194,8 @@ START_TEST (test_logging)
     fail_if (ret == 0, cmd);
     
     /* Set verbosity to DEBUG. */
-    log_set_verbosity_level (LOG_LEVEL_DEBUG);
+    opts.log_level = LOG_LEVEL_DEBUG;
+    log_init (&opts);
     
     /* Forward stdout temporarily to a file. */
     fp = freopen (stdout_tmp, "w", stdout);
@@ -223,7 +227,8 @@ START_TEST (test_logging)
     fail_if (ret != 0, cmd);
     
     /* Set verbosity to SILENT. */
-    log_set_verbosity_level (LOG_LEVEL_SILENT);
+    opts.log_level = LOG_LEVEL_SILENT;
+    log_init (&opts);
     
     /* Forward stdout temporarily to a file. */
     fp = freopen (stdout_tmp, "w", stdout);

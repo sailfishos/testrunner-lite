@@ -49,7 +49,7 @@ extern char* optarg;
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-/* None */
+struct timeval created;
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -473,7 +473,7 @@ LOCAL int parse_remote_logger(char *host, testrunner_lite_options *opts) {
  */
 int main (int argc, char *argv[], char *envp[])
 {
-	int h_flag = 0, v_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0;
+	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0;
 	int opt_char, option_idx;
 	FILE *ifile = NULL;
 	int retval = EXIT_SUCCESS;
@@ -503,10 +503,11 @@ int main (int argc, char *argv[], char *envp[])
 	memset (&opts, 0x0, sizeof(testrunner_lite_options));
         memset (&cbs, 0x0, sizeof(td_parser_callbacks));
         memset (&hwinfo, 0x0, sizeof(hwinfo));
-
+	
 	opts.output_type = OUTPUT_TYPE_XML;
 	opts.run_automatic = opts.run_manual = 1;
-	
+	gettimeofday (&created, NULL);
+
 	while (1) {
 		option_idx = 0;
      
@@ -521,18 +522,19 @@ int main (int argc, char *argv[], char *envp[])
 			h_flag = 1;
 			break;
 		case 'v':
-            if (v_flag != 0)
-                break;
+			if (opts.log_level != 0)
+				break;
             
-            if (optarg) {
-                if (!strcmp (optarg, "INFO"))
-                    v_flag = LOG_LEVEL_INFO;
-                if (!strcmp (optarg, "DEBUG") || !strcmp (optarg, "v"))
-                    v_flag = LOG_LEVEL_DEBUG;
-            }
-            else {
-                v_flag = LOG_LEVEL_INFO;
-            }
+			if (optarg) {
+				if (!strcmp (optarg, "INFO"))
+					opts.log_level = LOG_LEVEL_INFO;
+				if (!strcmp (optarg, "DEBUG") 
+				    || !strcmp (optarg, "v"))
+					opts.log_level = LOG_LEVEL_DEBUG;
+			}
+			else {
+				opts.log_level = LOG_LEVEL_INFO;
+			}
 			break;
 		case 'a':
 			a_flag = 1;
@@ -632,12 +634,12 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	}
 	
-    /*
-     * Set logging level.
-     */
-	log_set_verbosity_level (v_flag);
-    
-    /*
+	/*
+	 * Set logging level.
+	 */
+	log_init (&opts);
+	
+	/*
 	 * Validate the input xml
 	 */
 	retval = parse_test_definition (&opts);

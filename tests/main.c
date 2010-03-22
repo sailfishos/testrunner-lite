@@ -18,6 +18,7 @@
 /* INCLUDE FILES */
 #include <check.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "testrunnerlitetestscommon.h"
 
@@ -35,7 +36,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-/* None */
+struct timeval created;
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -79,7 +80,7 @@ int main (void)
     int number_failed;
     Suite *s = suite_create ("master");
     SRunner *sr = srunner_create (s);
-
+    gettimeofday (&created, NULL);
     srunner_add_suite (sr, make_testdefinitionparser_suite ());
     srunner_add_suite (sr, make_argumentparser_suite ());
     srunner_add_suite (sr, make_testresultlogger_suite ());

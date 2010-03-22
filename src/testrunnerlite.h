@@ -51,7 +51,7 @@ typedef struct {
         result_output   output_type;   /**< result output type selector */
 	int   run_automatic;   /**< flag for automatic tests */  
 	int   run_manual;      /**< flag for manual tests */
-	int   verbose;         /**< print debug is set */
+	int   log_level;       /**< logging level */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

@@ -23,14 +23,14 @@
 #include <sys/time.h>
 #include <time.h>
 #include <stdio.h>
-
+#include "testrunnerlite.h"
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
 /* None */
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-/* none */
+#define LOG_MSG_MAX_SIZE 2048
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
@@ -65,7 +65,7 @@ enum log_message_types {
 /* ------------------------------------------------------------------------- */
 void log_msg(int type, char *format, ...);
 /* ------------------------------------------------------------------------- */
-void log_set_verbosity_level(int level);
+void log_init(testrunner_lite_options *opts);
 
 #endif                          /* LOG_H */
 /* End of file */
