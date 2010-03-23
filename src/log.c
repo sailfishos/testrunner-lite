@@ -175,6 +175,9 @@ LOCAL char *vcreate_msg (const char *fmt, va_list ap)
  *  Usage is the same as in regular printf(), except the first parameter
  *  Example: log_msg (LOG_ERR, "Error message %s\n", "Failure");
  * @param type Log type defined in log_message_types enum
+ * @param file Source file name the log entry corresponds to
+ * @param function Function emitting the log
+ * @param lineno Line number
  * @param format Message format
  */
 void log_msg(int type, const char *file, const char *function,
@@ -183,13 +186,14 @@ void log_msg(int type, const char *file, const char *function,
 	
 	const char *stream_name;
 	char timestamp[10];
-	char *msg, *post_msg;
+	char *msg, *post_msg, *module, *p;
 	CURLcode res;
 	struct tm *tm;
 	time_t current_time;
 	struct timeval now, diff;
 	va_list args;
 	unsigned int to_python_level[] = {40,20,10,30,0};
+
 	/* Check if message should be printed */
 	if (verbosity_level == LOG_LEVEL_SILENT || 
 	    (type == LOG_DEBUG && verbosity_level != LOG_LEVEL_DEBUG)) {
@@ -230,14 +234,27 @@ void log_msg(int type, const char *file, const char *function,
 	if (!curl)
 		return;
 
+	/* 
+	 * Calculate the elapsed time since this program started
+	 */
 	gettimeofday (&now, NULL);
 	timersub (&now, &created, &diff);
+	/*
+	** module is the source file name w/o the .c
+	*/
+	module = (char *)malloc (strlen (file) + 1);
+	strcpy (module, file);
+	if (p = strchr (module, '.'))
+	    *p = '\0';
+	/*
+	** Compose http POST
+	*/
 	post_msg = create_msg ("levelno=%d&"
 			       "name=testrunner-lite&"
 			       "levelname=%s&" 
 			       "module=%s&"
 			       "filename=%s&"
-			       "pathname=None&"
+			       "pathname=testrunner-lite/src&"
 			       "lineno=%d&"
 			       "msg=%s&"
 			       "exc_info=None&"
@@ -251,7 +268,7 @@ void log_msg(int type, const char *file, const char *function,
 			       "msecs=%d.%d&"
 			       ,to_python_level[verbosity_level],
 			       stream_name,
-			       function,
+			       module,
 			       file,
 			       lineno,
 			       msg,
@@ -271,13 +288,15 @@ void log_msg(int type, const char *file, const char *function,
 	
 	res = curl_easy_perform(curl);
 	if (res != CURLE_OK) {
-		fprintf (stdout, "[%s] [ERROR] http logging failed: %s\n ", 
+		fprintf (stdout, "[ERROR] %s http logging failed: %s\n ", 
 			 timestamp, curl_easy_strerror(res));
 
 		log_close();
 	}
 	free (msg);
 	free (post_msg);
+	free (module);
+	
 	return;
 }
 
