@@ -245,7 +245,7 @@ void log_msg(int type, const char *file, const char *function,
 	*/
 	module = (char *)malloc (strlen (file) + 1);
 	strcpy (module, file);
-	if (p = strchr (module, '.'))
+	if ((p = strchr (module, '.')))
 	    *p = '\0';
 	/*
 	** Compose http POST
