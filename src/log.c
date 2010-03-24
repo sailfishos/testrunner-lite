@@ -231,9 +231,10 @@ void log_msg(int type, const char *file, const char *function,
 	
 	fprintf (stdout, "%s\n", msg);
 	
-	if (!curl)
+	if (!curl) {
+		free (msg);
 		return;
-
+	}
 	/* 
 	 * Calculate the elapsed time since this program started
 	 */
