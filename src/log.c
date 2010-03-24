@@ -255,6 +255,7 @@ void log_msg(int type, const char *file, const char *function,
 			       "module=%s&"
 			       "filename=%s&"
 			       "pathname=testrunner-lite/src&"
+			       "funcName=%s&"
 			       "lineno=%d&"
 			       "msg=%s&"
 			       "exc_info=None&"
@@ -270,6 +271,7 @@ void log_msg(int type, const char *file, const char *function,
 			       stream_name,
 			       module,
 			       file,
+			       function,
 			       lineno,
 			       msg,
 			       created.tv_sec,
