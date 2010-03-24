@@ -20,6 +20,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/types.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #include "testrunnerlitetestscommon.h"
 #include "executor.h"
@@ -246,6 +251,95 @@ START_TEST (test_logging)
     
 END_TEST
 
+START_TEST (test_remote_logging)
+{
+    struct sockaddr_in serv_addr, cli_addr;
+    testrunner_lite_options opts;
+    char buffer[1024];
+    char error[128];
+    const char sample_message[] = "Remote logger test data";
+    const char reply_message[] = "Message saved";
+    const char logger[] = "127.0.0.1";
+    int serverfd = 0, clientfd = 0, portno = 0, clilen = 0;
+    pid_t pid = 0;
+    int reuseaddr_option = 1;
+
+    fail_if((pid = fork()) < 0);
+
+    if (pid == 0) {
+	/* child process to generate a log message */
+	memset (&opts, 0, sizeof(testrunner_lite_options));
+	opts.log_level = LOG_LEVEL_INFO;
+	opts.remote_logger = malloc(strlen(logger)+1);
+	strcpy(opts.remote_logger, logger);
+
+	/* wait for parent's server socket to be opened */
+	usleep(200000);
+
+	log_init(&opts);
+	LOG_MSG(LOG_INFO, "%s", sample_message);
+	log_close();
+
+	free(opts.remote_logger);
+	exit(0);
+    }
+
+    memset(buffer, 0, sizeof(buffer));
+    memset(error, 0, sizeof(error));
+    serverfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (serverfd > 0) {
+	memset(&serv_addr, 0, sizeof(serv_addr));
+	portno = 80;
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(portno);
+
+	/* Try to avoid "Address already in use" error from bind
+	 * in case there is socket in state TIME_WAIT */
+	setsockopt(serverfd, SOL_SOCKET, SO_REUSEADDR, 
+		   &reuseaddr_option, sizeof(reuseaddr_option));
+
+	if (bind(serverfd, (struct sockaddr *)&serv_addr,
+		 sizeof(serv_addr)) == 0) {
+	    listen(serverfd, 5);
+	    clilen = sizeof(cli_addr);
+	    clientfd = accept(serverfd, (struct sockaddr *) &cli_addr, 
+			       &clilen);
+	    if (clientfd > 0) {
+		if (read(clientfd, buffer, sizeof(buffer) - 1) < 0) {
+		    strcpy(error, strerror(errno));
+		}
+
+		/* create a dummy reply, the same as from CITA */
+		write(clientfd, reply_message, strlen(reply_message));
+		close(clientfd);
+	    } else {
+		strcpy(error, strerror(errno));
+	    }
+	} else {
+	    strcpy(error, strerror(errno));
+	}
+
+    } else {
+	strcpy(error, strerror(errno));
+    }
+
+    /* wait child terminates */
+    wait(NULL);
+
+    if (serverfd > 0) {
+	close(serverfd);
+    }
+
+    fail_if(strlen(error) > 0, error);
+
+    /* Check that buffer contains at least something we expected */
+    fail_if(strstr(buffer, "HTTP") == NULL);
+    fail_if(strstr(buffer, sample_message) == NULL);
+}
+END_TEST
+
 START_TEST (test_hwinfo)
      
      hw_info hi;
@@ -285,6 +379,10 @@ Suite *make_features_suite (void)
   
     tc = tcase_create ("Test logging.");
     tcase_add_test (tc, test_logging);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test remote logging.");
+    tcase_add_test (tc, test_remote_logging);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test hw info.");
