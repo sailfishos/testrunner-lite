@@ -251,18 +251,68 @@ START_TEST (test_logging)
     
 END_TEST
 
+/*
+ *
+ *
+ */
+static void run_server_socket(int portno, char* buffer, int length, char* error) {
+    struct sockaddr_in serv_addr, cli_addr;
+    const char reply_message[] = "Message saved";
+    int serverfd = 0, clientfd = 0;
+    socklen_t clilen = 0;
+    int reuseaddr_option = 1;
+
+    serverfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (serverfd > 0) {
+	memset(&serv_addr, 0, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(portno);
+
+	/* Try to avoid "Address already in use" error from bind
+	 * in case there is socket in state TIME_WAIT */
+	setsockopt(serverfd, SOL_SOCKET, SO_REUSEADDR, 
+		   &reuseaddr_option, sizeof(reuseaddr_option));
+
+	if (bind(serverfd, (struct sockaddr *)&serv_addr,
+		 sizeof(serv_addr)) == 0) {
+	    listen(serverfd, 5);
+	    clilen = sizeof(cli_addr);
+	    clientfd = accept(serverfd, (struct sockaddr *) &cli_addr, 
+			       &clilen);
+	    if (clientfd > 0) {
+		if (read(clientfd, buffer, length) < 0) {
+		    strcpy(error, strerror(errno));
+		}
+
+		/* create a dummy reply, the same as from CITA */
+		write(clientfd, reply_message, strlen(reply_message));
+		close(clientfd);
+	    } else {
+		strcpy(error, strerror(errno));
+	    }
+	} else {
+	    strcpy(error, strerror(errno));
+	}
+
+    } else {
+	strcpy(error, strerror(errno));
+    }
+
+    if (serverfd > 0) {
+	close(serverfd);
+    }
+}
+
 START_TEST (test_remote_logging)
 {
-    struct sockaddr_in serv_addr, cli_addr;
     testrunner_lite_options opts;
     char buffer[1024];
     char error[128];
     const char sample_message[] = "Remote logger test data";
-    const char reply_message[] = "Message saved";
     const char logger[] = "127.0.0.1";
-    int serverfd = 0, clientfd = 0, portno = 0, clilen = 0;
     pid_t pid = 0;
-    int reuseaddr_option = 1;
 
     fail_if((pid = fork()) < 0);
 
@@ -286,57 +336,62 @@ START_TEST (test_remote_logging)
 
     memset(buffer, 0, sizeof(buffer));
     memset(error, 0, sizeof(error));
-    serverfd = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (serverfd > 0) {
-	memset(&serv_addr, 0, sizeof(serv_addr));
-	portno = 80;
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(portno);
-
-	/* Try to avoid "Address already in use" error from bind
-	 * in case there is socket in state TIME_WAIT */
-	setsockopt(serverfd, SOL_SOCKET, SO_REUSEADDR, 
-		   &reuseaddr_option, sizeof(reuseaddr_option));
-
-	if (bind(serverfd, (struct sockaddr *)&serv_addr,
-		 sizeof(serv_addr)) == 0) {
-	    listen(serverfd, 5);
-	    clilen = sizeof(cli_addr);
-	    clientfd = accept(serverfd, (struct sockaddr *) &cli_addr, 
-			       &clilen);
-	    if (clientfd > 0) {
-		if (read(clientfd, buffer, sizeof(buffer) - 1) < 0) {
-		    strcpy(error, strerror(errno));
-		}
-
-		/* create a dummy reply, the same as from CITA */
-		write(clientfd, reply_message, strlen(reply_message));
-		close(clientfd);
-	    } else {
-		strcpy(error, strerror(errno));
-	    }
-	} else {
-	    strcpy(error, strerror(errno));
-	}
-
-    } else {
-	strcpy(error, strerror(errno));
-    }
+    run_server_socket(80, buffer, sizeof(buffer) - 1, error);
 
     /* wait child terminates */
     wait(NULL);
-
-    if (serverfd > 0) {
-	close(serverfd);
-    }
 
     fail_if(strlen(error) > 0, error);
 
     /* Check that buffer contains at least something we expected */
     fail_if(strstr(buffer, "HTTP") == NULL);
     fail_if(strstr(buffer, sample_message) == NULL);
+}
+END_TEST
+
+START_TEST (test_remote_logging_command)
+{
+    char buffer[1024];
+    char error[128];
+    char logger_option[128];
+    int portno = 5678;
+    pid_t pid = 0;
+
+    fail_if((pid = fork()) < 0);
+
+    if (pid == 0) {
+	/* child process to run testrunner-lite with --logger option */
+
+	/* wait for parent's server socket to be opened */
+	usleep(200000);
+
+	sprintf(logger_option, "--logger=127.0.0.1:%d", portno);
+
+	execl(TESTRUNNERLITE_BIN,
+	      TESTRUNNERLITE_BIN,
+	      "-f", TESTDATA_SIMPLE_XML_1,
+	      "-o", "/tmp/loggertestout.xml",
+	      "-v",
+	      logger_option,
+	      (char*)NULL);
+	/* should never reach this point */
+	exit(1);
+    }
+
+    memset(buffer, 0, sizeof(buffer));
+    memset(error, 0, sizeof(error));
+
+    run_server_socket(portno, buffer, sizeof(buffer) - 1, error);
+
+    /* wait child terminates */
+    wait(NULL);
+
+    fail_if(strlen(error) > 0, error);
+
+    /* Check that buffer contains at least something we expected */
+    fail_if(strstr(buffer, "HTTP") == NULL);
+    fail_if(strstr(buffer, "INFO") == NULL);
 }
 END_TEST
 
@@ -383,6 +438,10 @@ Suite *make_features_suite (void)
 
     tc = tcase_create ("Test remote logging.");
     tcase_add_test (tc, test_remote_logging);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test remote logging command.");
+    tcase_add_test (tc, test_remote_logging_command);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test hw info.");
