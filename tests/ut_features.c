@@ -268,9 +268,11 @@ START_TEST (test_logging)
     
 END_TEST
 
-/*
- *
- *
+/* Opens tcp server socket, listens for a connection, reads, and writes simple ack
+ * @param portno TCP port number of socket
+ * @param buffer Buffer to store data from client socket
+ * @param length Max length of data to read in buffer
+ * @param error Buffer to store error description in case of an error occurs
  */
 static void run_server_socket(int portno, char* buffer, int length, char* error) {
     struct sockaddr_in serv_addr, cli_addr;
