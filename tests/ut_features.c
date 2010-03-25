@@ -385,7 +385,7 @@ START_TEST (test_remote_logging_command)
 	/* wait for parent's server socket to be opened */
 	usleep(200000);
 
-	sprintf(logger_option, "--logger=127.0.0.1:%d", portno);
+	sprintf(logger_option, "--logger=http://127.0.0.1:%d", portno);
 
 	execl(TESTRUNNERLITE_BIN,
 	      TESTRUNNERLITE_BIN,

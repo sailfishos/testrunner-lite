@@ -120,8 +120,9 @@ LOCAL void usage()
         "outputting INFO, ERROR and WARNING messages.\n\t\t"
         "Similarly -vv and --verbose=DEBUG are equivalent, outputting\n\t\t"
         "also debug messages. Default behaviour is silent mode.\n");
-	printf("  -L, --logger=HOST[:PORT]\n\t\t"
-	       "Remote HTTP logger for log messages.\n");
+	printf("  -L, --logger=URL\n\t\t"
+	       "Remote HTTP logger for log messages.\n\t\t"
+	       "URL format is [http://]hostname[:port][/path/].\n");
 	printf ("  -a, --automatic\tEnable only automatic tests "
 		"to be executed.\n");
 	printf ("  -m, --manual\tEnable only manual tests to be executed.\n");
@@ -421,45 +422,20 @@ LOCAL int create_output_folder ()
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
-/** Parse remote logger option argument of format aaa.bbb.ccc.ddd[:port] or 
- *  hostname[:port]
- * @param host Host logger option argument
- * @param opts Options struct containing fields to store host and port
+/** Parse remote logger option argument. Currently nothing to parse.
+ * @param url Remote logger URL option argument
+ * @param opts Options struct containing field(s) to store url
  * @return 0 in success, 1 on failure
  */
-LOCAL int parse_remote_logger(char *host, testrunner_lite_options *opts) {
-	char* str = NULL;
-	char* endptr = NULL;
-
-	str = strchr(host, ':');
-	if (str) {
-		str = strtok(host, ":");
-		if (!str) {
-			fprintf(stderr, "Invalid remote logger\n");
-			return 1;
-		}
-		opts->remote_logger = malloc(strlen(str) + 1);
-		strcpy(opts->remote_logger, str);
-
-		str = strtok(NULL, ":");
-		if (!str) {
-			fprintf(stderr, "Invalid remote logger\n");
-			return 1;
-		}
-		opts->remote_logger_port = strtol(str, &endptr, 10);
-		if (*endptr != '\0' || 
-		    opts->remote_logger_port <= 0 ||
-		    opts->remote_logger_port > 65535) {
-			fprintf(stderr, "Invalid remote logger port \'%s\'\n", 
-				str);
-			return 1;
-		}
+LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) {
+	if (url) {
+		opts->remote_logger = malloc(strlen(url) + 1);
+		strcpy(opts->remote_logger, url);
+		return 0;
 	} else {
-		opts->remote_logger = malloc(strlen(host) + 1);
-		strcpy(opts->remote_logger, host);
+		return 1;
 	}
 
-	return 0;
 }
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */

@@ -29,9 +29,8 @@ outputting INFO, ERROR and WARNING messages. Similarly -vv
 and --verbose=DEBUG are equivalent, outputting also debug 
 messages. Default behaviour is silent mode.
 .TP
-\fB\-L\fR,  \fB\-\-logger\fR=HOST[:PORT]
-Remote HTTP logger. Log messages are sent to given host in HTTP POST message.
-HOST may be an IP address or hostname. Port number is optional.
+\fB\-L\fR,  \fB\-\-logger\fR=URL
+Remote HTTP logger. Log messages are sent to given URL in HTTP POST message. URL format is [http://]hostname[:PORT][/path/].
 .TP
 \fB\-a\fR,  \fB\-\-automatic\fR 
 Enable only automatic tests to be executed
@@ -51,6 +50,7 @@ Disable validation of test definition against schema
 .TP
 \fB\-s\fR,  \fB\-\-semantic\fR 
 Enable validation of test definition against stricter (semantics) schema
+.TP
 \fB\-A\fR,  \fB\-\-validate\-only\fR 
 Do only input xml validation, do not execute tests
 
