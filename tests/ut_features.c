@@ -158,10 +158,14 @@ START_TEST (test_logging)
 
     char *stdout_tmp = "/tmp/testrunner-lite-stdout.log";
     char cmd[1024];
+    char message[LOG_MSG_MAX_SIZE + 1];
     int ret;
     FILE *fp;
     testrunner_lite_options opts;
     memset (&opts, 0x0, sizeof (testrunner_lite_options)); 
+    memset (message, 'a', LOG_MSG_MAX_SIZE);
+    message [LOG_MSG_MAX_SIZE - 1] = '\0';
+    message [LOG_MSG_MAX_SIZE - 2] = 'b';
 
     /* Set verbosity to INFO. */
     opts.log_level = LOG_LEVEL_INFO;
@@ -174,6 +178,9 @@ START_TEST (test_logging)
     LOG_MSG (LOG_INFO, "INFO message: %s\n", "This works.");
     LOG_MSG (LOG_WARNING, "WARNING message: %s\n", "This works.");
     LOG_MSG (LOG_ERROR, "ERROR message: %s\n", "This works.");
+    LOG_MSG (LOG_INFO, message);
+    memset (message, 'b', LOG_MSG_MAX_SIZE + 1);
+    message [LOG_MSG_MAX_SIZE] = '\0';
     
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
@@ -183,7 +190,8 @@ START_TEST (test_logging)
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[WARNING]* WARNING message: This works.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep \"[WARNING]* WARNING message: This works.\" %s", 
+	     stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -191,6 +199,15 @@ START_TEST (test_logging)
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
+    sprintf (cmd, "grep aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
+    sprintf (cmd, "grep bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+
     /* Try to log DEBUG message with INFO verbosity (should not succeed.)*/
     LOG_MSG (LOG_DEBUG, "DEBUG message: %s\n", "This should not work.");
     freopen ("/dev/tty", "w", stdout);

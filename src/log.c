@@ -231,9 +231,10 @@ void log_msg(int type, const char *file, const char *function,
 	
 	fprintf (stdout, "%s\n", msg);
 	
-	if (!curl)
+	if (!curl) {
+		free (msg);
 		return;
-
+	}
 	/* 
 	 * Calculate the elapsed time since this program started
 	 */
@@ -244,7 +245,7 @@ void log_msg(int type, const char *file, const char *function,
 	*/
 	module = (char *)malloc (strlen (file) + 1);
 	strcpy (module, file);
-	if (p = strchr (module, '.'))
+	if ((p = strchr (module, '.')))
 	    *p = '\0';
 	/*
 	** Compose http POST
