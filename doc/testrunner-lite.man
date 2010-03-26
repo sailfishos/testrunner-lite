@@ -30,7 +30,8 @@ and --verbose=DEBUG are equivalent, outputting also debug
 messages. Default behaviour is silent mode.
 .TP
 \fB\-L\fR,  \fB\-\-logger\fR=URL
-Remote HTTP logger. Log messages are sent to given URL in HTTP POST message. URL format is [http://]hostname[:PORT][/path/].
+Remote HTTP logger. Log messages are sent to given URL in a HTTP POST message.
+URL format is [http://]host[:port][/path/], where host may be a hostname or an IPv4 address.
 .TP
 \fB\-a\fR,  \fB\-\-automatic\fR 
 Enable only automatic tests to be executed

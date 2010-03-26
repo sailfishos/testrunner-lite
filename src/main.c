@@ -121,8 +121,9 @@ LOCAL void usage()
         "Similarly -vv and --verbose=DEBUG are equivalent, outputting\n\t\t"
         "also debug messages. Default behaviour is silent mode.\n");
 	printf("  -L, --logger=URL\n\t\t"
-	       "Remote HTTP logger for log messages.\n\t\t"
-	       "URL format is [http://]hostname[:port][/path/].\n");
+	       "Remote HTTP logger for log messages. URL format is\n\t\t"
+	       "[http://]host[:port][/path/], where host may be a hostname\n\t\t"
+	       "or an IPv4 address.\n");
 	printf ("  -a, --automatic\tEnable only automatic tests "
 		"to be executed.\n");
 	printf ("  -m, --manual\tEnable only manual tests to be executed.\n");
