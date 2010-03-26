@@ -410,7 +410,7 @@ START_TEST (test_remote_logging_command)
 
     /* Check that buffer contains at least something we expected */
     fail_if(strstr(buffer, "HTTP") == NULL);
-    fail_if(strstr(buffer, "INFO") == NULL);
+    fail_if(strstr(buffer, "levelname") == NULL);
 }
 END_TEST
 
