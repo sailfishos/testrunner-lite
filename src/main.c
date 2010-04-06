@@ -139,7 +139,11 @@ LOCAL void usage()
 	printf ("  -s, --semantic\n\t\tEnable validation of test "
 		"definition against stricter (semantics) schema.\n");
 	printf ("  -A, --validate-only\n\t\tDo only input xml validation, do not execute tests.\n");
-
+    printf ("  -t ADDRESS, --target=ADDRESS\n\t\t"
+        "Enable host-based testing. If given, commands are executed from\n\t\t"
+        "test control PC (host) side. ADDRESS is the ipv4 adress of the\n\t\t"
+        "system under test.\n");
+    
 	return;
 }
 /* ------------------------------------------------------------------------- */
@@ -438,6 +442,23 @@ LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) {
 	}
 
 }
+
+/* ------------------------------------------------------------------------- */
+/** Parse target address option argument.
+ * @param address SUT address.
+ * @param opts Options struct containing field(s) to store url
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) {
+    if (address) {
+        opts->target_address = malloc(strlen(address) + 1);
+        strcpy(opts->target_address, address);
+        return 0;
+    } else {
+        return 1;
+    }
+
+}
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -470,6 +491,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"ci", no_argument, &opts.disable_schema},
 			{"semantic", no_argument, &opts.semantic_schema},
 			{"validate-only", no_argument, &A_flag},
+            {"target", required_argument, NULL, 't'},
 			{0, 0, 0, 0}
 		};
 
@@ -487,7 +509,7 @@ int main (int argc, char *argv[], char *envp[])
 	while (1) {
 		option_idx = 0;
      
-		opt_char = getopt_long (argc, argv, ":haAsmcf:o:e:l:r:L:v::",
+		opt_char = getopt_long (argc, argv, ":haAsmcf:o:e:l:r:L:t:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -565,6 +587,12 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			break;
+        case 't':
+            if (parse_target_address(optarg, &opts) != 0) {
+                retval = EXIT_FAILURE;
+                goto OUT;
+            }
+            break;    
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
 				 PROGNAME);

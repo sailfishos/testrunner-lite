@@ -43,15 +43,16 @@ typedef struct {
 	char *input_filename;  /**< the input xml file */
 	char *output_filename; /**< the result file */
 	char *output_folder;   /**< folder for storing results */
-        char *environment;     /**< execution environment */
+    char *environment;     /**< execution environment */
 	char *remote_logger;     /**< Remote logger URL */
 	long  remote_logger_port; /** Remote logger port number */
 	int   disable_schema;  /**< flag for disabling DTD validation */
 	int   semantic_schema; /**< flag for enabling sricter DTD */
-        result_output   output_type;   /**< result output type selector */
+    result_output   output_type;   /**< result output type selector */
 	int   run_automatic;   /**< flag for automatic tests */  
 	int   run_manual;      /**< flag for manual tests */
 	int   log_level;       /**< logging level */
+    char *target_address;   /**< SUT address. */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
