@@ -116,13 +116,16 @@ LOCAL void usage()
 	printf ("  -e ENVIRONMENT, --environment=ENVIRONMENT\n\t\t"
 		"Target test environment. Default: hardware\n");
 	printf ("  -v, -vv, --verbose[={INFO|DEBUG}]\n\t\t"
-        "Enable verbosity mode; -v and --verbose=INFO are equivalent\n\t\t"
-        "outputting INFO, ERROR and WARNING messages.\n\t\t"
-        "Similarly -vv and --verbose=DEBUG are equivalent, outputting\n\t\t"
-        "also debug messages. Default behaviour is silent mode.\n");
+		"Enable verbosity mode; -v and --verbose=INFO "
+		"are equivalent\n\t\t"
+		"outputting INFO, ERROR and WARNING messages.\n\t\t"
+		"Similarly -vv and --verbose=DEBUG "
+		"are equivalent, outputting\n\t\t"
+		"also debug messages. Default behaviour is silent mode.\n");
 	printf("  -L, --logger=URL\n\t\t"
 	       "Remote HTTP logger for log messages. URL format is\n\t\t"
-	       "[http://]host[:port][/path/], where host may be a hostname\n\t\t"
+	       "[http://]host[:port][/path/], "
+	       "where host may be a hostname\n\t\t"
 	       "or an IPv4 address.\n");
 	printf ("  -a, --automatic\tEnable only automatic tests "
 		"to be executed.\n");
@@ -138,11 +141,14 @@ LOCAL void usage()
 		"definition against schema.\n");
 	printf ("  -s, --semantic\n\t\tEnable validation of test "
 		"definition against stricter (semantics) schema.\n");
-	printf ("  -A, --validate-only\n\t\tDo only input xml validation, do not execute tests.\n");
-    printf ("  -t ADDRESS, --target=ADDRESS\n\t\t"
-        "Enable host-based testing. If given, commands are executed from\n\t\t"
-        "test control PC (host) side. ADDRESS is the ipv4 adress of the\n\t\t"
-        "system under test.\n");
+	printf ("  -A, --validate-only\n\t\tDo only input xml validation, "
+		"do not execute tests.\n");
+	printf ("  -t ADDRESS, --target=ADDRESS\n\t\t"
+		"Enable host-based testing. "
+		"If given, commands are executed from\n\t\t"
+		"test control PC (host) side. "
+		"ADDRESS is the ipv4 adress of the\n\t\t"
+		"system under test.\n");
     
 	return;
 }
@@ -491,7 +497,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"ci", no_argument, &opts.disable_schema},
 			{"semantic", no_argument, &opts.semantic_schema},
 			{"validate-only", no_argument, &A_flag},
-            {"target", required_argument, NULL, 't'},
+			{"target", required_argument, NULL, 't'},
 			{0, 0, 0, 0}
 		};
 
@@ -724,6 +730,7 @@ OUT:
 	if (opts.output_folder) free (opts.output_folder);
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
+	if (opts.target_address) free (opts.target_address);
 	
 	return retval;
 }	
