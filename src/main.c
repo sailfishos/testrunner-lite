@@ -587,12 +587,12 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			break;
-        case 't':
-            if (parse_target_address(optarg, &opts) != 0) {
-                retval = EXIT_FAILURE;
-                goto OUT;
-            }
-            break;    
+		case 't':
+			if (parse_target_address(optarg, &opts) != 0) {
+				retval = EXIT_FAILURE;
+				goto OUT;
+			}
+			break;    
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
 				 PROGNAME);
@@ -642,7 +642,10 @@ int main (int argc, char *argv[], char *envp[])
 	 * Set logging level.
 	 */
 	log_init (&opts);
-	
+	/*
+	 * Set remote execution options.
+	 */
+	executor_init (&opts);
 	/*
 	 * Validate the input xml
 	 */

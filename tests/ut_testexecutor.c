@@ -21,11 +21,11 @@
 #include <string.h>
 #include <signal.h>
 
-#include "executor.h"
 #include "testdefinitionparser.h"
 #include "testdefinitiondatatypes.h"
 #include "testrunnerlite.h"
 #include "testrunnerlitetestscommon.h"
+#include "executor.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */

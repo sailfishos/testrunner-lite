@@ -88,6 +88,7 @@ void init_exec_data(exec_data* data);
 void clean_exec_data(exec_data* data);
 void init_stream_data(stream_data* data, int allocate);
 void clean_stream_data(stream_data* data);
+void executor_init (testrunner_lite_options *opts);
 
 /* ------------------------------------------------------------------------- */
 #endif                          /* EXECUTOR_H */
