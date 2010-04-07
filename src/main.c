@@ -173,6 +173,10 @@ LOCAL int step_execute (const void *data, const void *user)
 	if (!c->gen.manual && !opts.run_automatic)
 		return 1;
 	
+	if (c->gen.manual) {
+		fail = execute_manual (step);
+		goto out;
+	}
 	init_exec_data(&edata);
 
 	if (c->dummy) {
@@ -226,6 +230,7 @@ LOCAL int step_execute (const void *data, const void *user)
 			fail = 1;
 		}
 	}
+ out:
 	if (fail)
 		c->passed = 0;
 	
@@ -254,8 +259,16 @@ LOCAL int process_case (const void *data, const void *user)
 		 set->gen.timeout : current_suite->gen.timeout);
 	if (c->gen.timeout == 0)
 		c->gen.timeout = COMMON_SOFT_TIMEOUT; /* the default one */
-	 
+	
+	if (c->gen.manual && opts.run_manual)
+		pre_manual (c);
+
 	xmlListWalk (c->steps, step_execute, data);
+
+	if (c->gen.manual && opts.run_manual)
+		post_manual (c);
+
+
 	LOG_MSG (LOG_INFO, "Finished test case Result: %s", c->passed ?
 		 "PASS" : "FAIL");
 	passcount += c->passed;

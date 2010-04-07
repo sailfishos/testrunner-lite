@@ -19,10 +19,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include "testrunnerlite.h"
-#include "executor.h"
-#include "remote_executor.h"
-#include "log.h"
+#include <time.h>
+#include "manual_executor.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -46,7 +44,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-#define SSHCMD      "/usr/bin/ssh"
+/* None */
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 /* None */
@@ -60,6 +58,9 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
+LOCAL xmlChar *get_comments ();
+/* ------------------------------------------------------------------------- */
+LOCAL int check_user_input(char *buff, int *result);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -67,57 +68,117 @@
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+/** Check that user input is valid.
+ * @param buff user input
+ * @param result [OUT] pass result for caller 0 for pass 1 for fail
+ * @return 0 for valid input 1 for invalid
+ */
+LOCAL int check_user_input(char *buff, int *result)
+{
+	char *p;
 
+	*result = 1;
+	p = strchr (buff, '\n');
+	if (p)
+		*p = '\0';
+
+	if (strlen (buff) == 0)
+		return 1;
+
+	if (strlen (buff) == 1) {
+		if (buff[0] == 'p' || buff[0] == 'P') {
+			*result = 0;
+			return 0;
+		}
+		if (buff[0] == 'f' || buff[0] == 'F') {
+			*result = 1;
+			return 0;
+		}
+	}
+
+	if (strlen (buff) != 4)
+		return 1;
+	
+	if (!strcasecmp (buff, "pass")) {
+		*result = 0;
+		return 0;
+	}
+		
+	if (!strcasecmp (buff, "fail")) {
+		*result = 1;
+		return 0;
+	}
+
+}
+/* ------------------------------------------------------------------------- */
+/** Prompt user for comments
+ * @return the comments in buffer or NULL in case of failure
+ */
+LOCAL xmlChar *get_comments ()
+{
+	char buff [4096], *p;
+	buff [0] = '\0';
+	xmlChar *ret = NULL;
+	printf ("Please enter additional comments (ENTER to finish): ");
+	p = fgets (buff, 4096, stdin);
+	if (p)  {
+		p = strchr (buff, '\n');
+		if (p)
+			*p = '\0';
+		ret = xmlCharStrdup (buff);
+	}
+	return ret;
+}
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-/** Executes a command using ssh 
- * @param command Command to execute
- * @return Does not return in success, error code from exec in case of error
+/** Print information before manual test case execution
+ *  @param c test case data
  */
-int ssh_execute (const char *hostname, const char *command)
+void pre_manual (td_case *c)
 {
-	int ret;
+	printf ("\nDescription of test case:\n%s\n",
+		(char *)((char *)c->gen.description ? 
+			 (char *)c->gen.description : " "));
 
-	ret = execl(SSHCMD, SSHCMD, hostname, 
-		    "echo \$\$ > /tmp/testrunner.pid;", command, (char*)NULL);
+}
+/* ------------------------------------------------------------------------- */
+/** Execute manual test step
+ * @param step test step data
+ * @return 0 if step is passed 
+ */
+int execute_manual (td_step *step)
+{
+	char buff [256], *p;
+	int ret = 0;
 
-	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
-
+	step->start = time (NULL);
+	printf ("--- Execute test step ---\n");
+	printf ("Description:");
+	if (step->step)
+		printf ("%s\n", step->step);
+	
+	buff [0] = '\0';
+	printf ("Please enter the result ([P/p]ass or [F/f]ail): ");
+	p = fgets (buff, 256, stdin);
+	while (check_user_input(buff, &ret)) {
+		printf ("Invalid input.\n");
+		p = fgets (buff, 256, stdin);
+	}
+	step->end = time (NULL);
+	
 	return ret;
 }
 /* ------------------------------------------------------------------------- */
-/** Tries to kill program started by ssh
- *  
+/** Do manual test case post processing.
+ *  @param c test case data
  */
-int ssh_softkill (const char *hostname)
+void post_manual (td_case *c)
 {
-	int ret;
+	printf ("--- Test steps executed, case is %s ---\n",
+		c->passed ? "PASSED" : "FAILED");
 
-
-	ret = execl(SSHCMD, SSHCMD, hostname, 
-		    "cat /tmp/testrunner.pid | xargs pkill -P ", (char*)NULL);
-
-	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
-
-	return ret;
-}
-/* ------------------------------------------------------------------------- */
-/** Tries to kill -9 program started by ssh
- *  
- */
-int ssh_raidkill (const char *hostname)
-{
-	int ret;
-
-
-	ret = execl(SSHCMD, SSHCMD, hostname, 
-		    "cat /tmp/testrunner.pid | xargs pkill -9 -P ", 
-		    (char*)NULL);
-
-	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
-
-	return ret;
+	c->comment = get_comments();
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

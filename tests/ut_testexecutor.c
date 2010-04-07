@@ -344,7 +344,6 @@ Suite *make_testexecutor_suite (void)
 
     /* Create test cases and add to suite. */
     TCase *tc;
-    int ret;
 
     tc = tcase_create ("Test executor with null command.");
     tcase_add_test (tc, test_executor_null_command);
