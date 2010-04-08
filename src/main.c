@@ -32,6 +32,7 @@
 #include "testdefinitionparser.h"
 #include "testresultlogger.h"
 #include "executor.h"
+#include "manual_executor.h"
 #include "hwinfo.h"
 #include "log.h"
 

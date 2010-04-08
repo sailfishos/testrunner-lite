@@ -109,6 +109,7 @@ LOCAL int check_user_input(char *buff, int *result)
 		return 0;
 	}
 
+	return 1;
 }
 /* ------------------------------------------------------------------------- */
 /** Prompt user for comments

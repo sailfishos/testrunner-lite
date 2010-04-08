@@ -47,9 +47,7 @@
 /* ------------------------------------------------------------------------- */
 int ssh_execute (const char *hostname, const char *command);
 /* ------------------------------------------------------------------------- */
-int ssh_softkill (const char *hostname);
-/* ------------------------------------------------------------------------- */
-int ssh_raidkill (const char *hostname);
+int ssh_kill (const char *hostname);
 /* ------------------------------------------------------------------------- */
 #endif                          /* REMOTE_EXECUTOR_H */
 /* End of file */
