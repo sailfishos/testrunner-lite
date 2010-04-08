@@ -566,7 +566,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, terminating process %d", 
 				data->pid);
 			if (remote_host)
-				ssh_softkill (remote_host);
+				ssh_kill (remote_host);
 			else if (killpg(pgroup, SIGTERM) < 0) {
 				perror("killpg");
 			}
@@ -580,7 +580,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 				data->pid);
 
 			if (remote_host)
-				ssh_raidkill (remote_host);
+				ssh_kill (remote_host);
 			else if (killpg(pgroup, SIGKILL) < 0) {
 				perror("killpg");
 			}

@@ -47,6 +47,7 @@
 /* ------------------------------------------------------------------------- */
 /* MACROS */
 #define SSHCMD      "/usr/bin/ssh"
+#define SSHCMDARGS  "-o StrictHostKeyChecking=no"
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 /* None */
@@ -79,8 +80,8 @@ int ssh_execute (const char *hostname, const char *command)
 {
 	int ret;
 
-	ret = execl(SSHCMD, SSHCMD, hostname, 
-		    "echo \$\$ > /tmp/testrunner.pid;", command, (char*)NULL);
+	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
+		    "echo $$ > /tmp/testrunner.pid;", command, (char*)NULL);
 
 	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
 
@@ -90,36 +91,25 @@ int ssh_execute (const char *hostname, const char *command)
 /** Tries to kill program started by ssh
  *  
  */
-int ssh_softkill (const char *hostname)
+int ssh_kill (const char *hostname)
 {
 	int ret;
-
+	pid_t pid;
+	
+	pid = fork();
+	if (pid > 0) 
+	    return 0;
+	if (pid < 0)
+	    return 1;
+	
 
 	ret = execl(SSHCMD, SSHCMD, hostname, 
-		    "cat /tmp/testrunner.pid | xargs pkill -P ", (char*)NULL);
+		    "cat /tmp/testrunner.pid | xargs pkill -9 -P", (char*)NULL);
 
 	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
 
 	return ret;
 }
-/* ------------------------------------------------------------------------- */
-/** Tries to kill -9 program started by ssh
- *  
- */
-int ssh_raidkill (const char *hostname)
-{
-	int ret;
-
-
-	ret = execl(SSHCMD, SSHCMD, hostname, 
-		    "cat /tmp/testrunner.pid | xargs pkill -9 -P ", 
-		    (char*)NULL);
-
-	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
-
-	return ret;
-}
-
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */
 
