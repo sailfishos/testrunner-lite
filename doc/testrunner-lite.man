@@ -55,7 +55,7 @@ Enable validation of test definition against stricter (semantics) schema
 \fB\-A\fR,  \fB\-\-validate\-only\fR 
 Do only input xml validation, do not execute tests
 .TP
-\fB\-t\fR \fIADDRESS\fR, \fB\-\-target\fR\=\fIADDRESS\fR
+\fB\-t\fR [\fIUSER\fR@]\fIADDRESS\fR, \fB\-\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR
 Enable host-based testing. If given, commands are executed from
 test control PC (host) side. ADDRESS is the ipv4 adress of the
 system under test.

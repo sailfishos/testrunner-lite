@@ -144,7 +144,7 @@ LOCAL void usage()
 		"definition against stricter (semantics) schema.\n");
 	printf ("  -A, --validate-only\n\t\tDo only input xml validation, "
 		"do not execute tests.\n");
-	printf ("  -t ADDRESS, --target=ADDRESS\n\t\t"
+	printf ("  -t [USER@]ADDRESS, --target=[USER@]ADDRESS\n\t\t"
 		"Enable host-based testing. "
 		"If given, commands are executed from\n\t\t"
 		"test control PC (host) side. "

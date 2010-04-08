@@ -47,7 +47,8 @@
 /* ------------------------------------------------------------------------- */
 /* MACROS */
 #define SSHCMD      "/usr/bin/ssh"
-#define SSHCMDARGS  "-o StrictHostKeyChecking=no"
+#define SSHCMDARGS  "-o StrictHostKeyChecking=no",\
+                    "-o PasswordAuthentication=no"
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 /* None */
