@@ -108,7 +108,7 @@ LOCAL int check_user_input(char *buff, int *result)
 		*result = 1;
 		return 0;
 	}
-
+    return 0;
 }
 /* ------------------------------------------------------------------------- */
 /** Prompt user for comments
@@ -154,7 +154,7 @@ int execute_manual (td_step *step)
 
 	step->start = time (NULL);
 	printf ("--- Execute test step ---\n");
-	printf ("Description:");
+	printf ("Description: ");
 	if (step->step)
 		printf ("%s\n", step->step);
 	
