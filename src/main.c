@@ -116,13 +116,16 @@ LOCAL void usage()
 	printf ("  -e ENVIRONMENT, --environment=ENVIRONMENT\n\t\t"
 		"Target test environment. Default: hardware\n");
 	printf ("  -v, -vv, --verbose[={INFO|DEBUG}]\n\t\t"
-        "Enable verbosity mode; -v and --verbose=INFO are equivalent\n\t\t"
-        "outputting INFO, ERROR and WARNING messages.\n\t\t"
-        "Similarly -vv and --verbose=DEBUG are equivalent, outputting\n\t\t"
-        "also debug messages. Default behaviour is silent mode.\n");
+		"Enable verbosity mode; -v and --verbose=INFO "
+		"are equivalent\n\t\t"
+		"outputting INFO, ERROR and WARNING messages.\n\t\t"
+		"Similarly -vv and --verbose=DEBUG "
+		"are equivalent, outputting\n\t\t"
+		"also debug messages. Default behaviour is silent mode.\n");
 	printf("  -L, --logger=URL\n\t\t"
 	       "Remote HTTP logger for log messages. URL format is\n\t\t"
-	       "[http://]host[:port][/path/], where host may be a hostname\n\t\t"
+	       "[http://]host[:port][/path/], "
+	       "where host may be a hostname\n\t\t"
 	       "or an IPv4 address.\n");
 	printf ("  -a, --automatic\tEnable only automatic tests "
 		"to be executed.\n");
@@ -138,8 +141,15 @@ LOCAL void usage()
 		"definition against schema.\n");
 	printf ("  -s, --semantic\n\t\tEnable validation of test "
 		"definition against stricter (semantics) schema.\n");
-	printf ("  -A, --validate-only\n\t\tDo only input xml validation, do not execute tests.\n");
-
+	printf ("  -A, --validate-only\n\t\tDo only input xml validation, "
+		"do not execute tests.\n");
+	printf ("  -t ADDRESS, --target=ADDRESS\n\t\t"
+		"Enable host-based testing. "
+		"If given, commands are executed from\n\t\t"
+		"test control PC (host) side. "
+		"ADDRESS is the ipv4 adress of the\n\t\t"
+		"system under test.\n");
+    
 	return;
 }
 /* ------------------------------------------------------------------------- */
@@ -163,6 +173,10 @@ LOCAL int step_execute (const void *data, const void *user)
 	if (!c->gen.manual && !opts.run_automatic)
 		return 1;
 	
+	if (c->gen.manual) {
+		fail = execute_manual (step);
+		goto out;
+	}
 	init_exec_data(&edata);
 
 	if (c->dummy) {
@@ -216,6 +230,7 @@ LOCAL int step_execute (const void *data, const void *user)
 			fail = 1;
 		}
 	}
+ out:
 	if (fail)
 		c->passed = 0;
 	
@@ -244,8 +259,16 @@ LOCAL int process_case (const void *data, const void *user)
 		 set->gen.timeout : current_suite->gen.timeout);
 	if (c->gen.timeout == 0)
 		c->gen.timeout = COMMON_SOFT_TIMEOUT; /* the default one */
-	 
+	
+	if (c->gen.manual && opts.run_manual)
+		pre_manual (c);
+
 	xmlListWalk (c->steps, step_execute, data);
+
+	if (c->gen.manual && opts.run_manual)
+		post_manual (c);
+
+
 	LOG_MSG (LOG_INFO, "Finished test case Result: %s", c->passed ?
 		 "PASS" : "FAIL");
 	passcount += c->passed;
@@ -438,6 +461,23 @@ LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) {
 	}
 
 }
+
+/* ------------------------------------------------------------------------- */
+/** Parse target address option argument.
+ * @param address SUT address.
+ * @param opts Options struct containing field(s) to store url
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) {
+    if (address) {
+        opts->target_address = malloc(strlen(address) + 1);
+        strcpy(opts->target_address, address);
+        return 0;
+    } else {
+        return 1;
+    }
+
+}
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -470,6 +510,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"ci", no_argument, &opts.disable_schema},
 			{"semantic", no_argument, &opts.semantic_schema},
 			{"validate-only", no_argument, &A_flag},
+			{"target", required_argument, NULL, 't'},
 			{0, 0, 0, 0}
 		};
 
@@ -487,7 +528,7 @@ int main (int argc, char *argv[], char *envp[])
 	while (1) {
 		option_idx = 0;
      
-		opt_char = getopt_long (argc, argv, ":haAsmcf:o:e:l:r:L:v::",
+		opt_char = getopt_long (argc, argv, ":haAsmcf:o:e:l:r:L:t:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -565,6 +606,12 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			break;
+		case 't':
+			if (parse_target_address(optarg, &opts) != 0) {
+				retval = EXIT_FAILURE;
+				goto OUT;
+			}
+			break;    
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
 				 PROGNAME);
@@ -614,7 +661,10 @@ int main (int argc, char *argv[], char *envp[])
 	 * Set logging level.
 	 */
 	log_init (&opts);
-	
+	/*
+	 * Set remote execution options.
+	 */
+	executor_init (&opts);
 	/*
 	 * Validate the input xml
 	 */
@@ -693,6 +743,7 @@ OUT:
 	if (opts.output_folder) free (opts.output_folder);
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
+	if (opts.target_address) free (opts.target_address);
 	
 	return retval;
 }	

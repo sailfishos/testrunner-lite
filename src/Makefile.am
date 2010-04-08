@@ -5,6 +5,8 @@ testrunner_lite_SOURCES = main.c \
 	                  testdefinitiondatatypes.c \
 			  testresultlogger.c \
 	                  executor.c \
+			  remote_executor.c \
+			  manual_executor.c \
 			  hwinfo.c \
 			  log.c
 
@@ -17,5 +19,7 @@ noinst_HEADERS = testrunnerlite.h \
 	         testdefinitiondatatypes.h \
 		 testresultlogger.h \
 	         executor.h \
+		 remote_executor.h \
+		 manual_executor.h \
 		 hwinfo.h \
 		 log.h

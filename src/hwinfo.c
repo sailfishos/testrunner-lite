@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <string.h>
 #include <libxml/xmlwriter.h>
+#include "testrunnerlite.h"
 #include "executor.h"
 #include "hwinfo.h"
 #include "log.h"

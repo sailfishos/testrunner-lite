@@ -30,7 +30,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <stdio.h>
-
+#include "remote_executor.h"
 #include "executor.h"
 #include "log.h"
 
@@ -62,6 +62,7 @@
 /* LOCAL GLOBAL VARIABLES */
 static volatile sig_atomic_t timer_value = 0;
 static struct sigaction default_alarm_action = { .sa_handler = NULL };
+static char *remote_host = NULL;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -156,8 +157,12 @@ static int exec_wrapper(const char *command)
 {
 	int ret = 0;
 
-	/* on success, execvp does not return */
-	ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARG1, command, (char*)NULL);
+	if (remote_host)
+		ret = ssh_execute (remote_host, command);
+	else
+		/* on success, execvp does not return */
+		ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARG1, 
+			    command, (char*)NULL);
 
 	return ret;
 }
@@ -560,8 +565,9 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			pgroup = getpgid(data->pid);
 			LOG_MSG(LOG_DEBUG, "Timeout, terminating process %d", 
 				data->pid);
-			
-			if (killpg(pgroup, SIGTERM) < 0) {
+			if (remote_host)
+				ssh_softkill (remote_host);
+			else if (killpg(pgroup, SIGTERM) < 0) {
 				perror("killpg");
 			}
 			terminated = 1;
@@ -573,7 +579,9 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, killing process %d", 
 				data->pid);
 
-			if (killpg(pgroup, SIGKILL) < 0) {
+			if (remote_host)
+				ssh_raidkill (remote_host);
+			else if (killpg(pgroup, SIGKILL) < 0) {
 				perror("killpg");
 			}
 			killed = 1;
@@ -704,6 +712,15 @@ void init_stream_data(stream_data* data, int allocate) {
  */
 void clean_stream_data(stream_data* data) {
 	stream_data_free(data);
+}
+
+/** Sets the verbosity level
+ * @param opts testrunner lite options
+ */
+void executor_init (testrunner_lite_options *opts)
+{
+	
+	remote_host = opts->target_address;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

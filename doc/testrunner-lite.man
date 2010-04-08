@@ -17,19 +17,19 @@ or text file.
 \fB\-h\fR,  \fB\-\-help\fR
 Display short help and exit
 .TP
-\fB\-f\fR,  \fB\-\-file\fR FILE
+\fB\-f\fR \fIFILE\fR,  \fB\-\-file\fR \fIFILE\fR
 Input file with test definitions in XML (required)
 .TP
-\fB\-o\fR,  \fB\-\-output\fR FILE
+\fB\-o\fR \fIFILE\fR,  \fB\-\-output\fR \fIFILE\fR
 Output file format; FORMAT can be xml or text (Default xml)
 .TP
-\fB\-v, -vv\fR,  \fB\-\-verbose[={INFO|DEBUG}]\fR
+\fB\-v, -vv\fR,  \fB\-\-verbose\fR[\fB=\fR{\fIINFO\fR|\fIDEBUG\fR}]
 Enable verbosity mode; -v and --verbose=INFO are equivalent
 outputting INFO, ERROR and WARNING messages. Similarly -vv 
 and --verbose=DEBUG are equivalent, outputting also debug 
 messages. Default behaviour is silent mode.
 .TP
-\fB\-L\fR,  \fB\-\-logger\fR=URL
+\fB\-L\fR \fIURL\fR,  \fB\-\-logger\fR=\fIURL\fR
 Remote HTTP logger. Log messages are sent to given URL in a HTTP POST message.
 URL format is [http://]host[:port][/path/], where host may be a hostname or an IPv4 address.
 .TP
@@ -39,7 +39,7 @@ Enable only automatic tests to be executed
 \fB\-m\fR,  \fB\-\-manual\fR 
 Enable only manual tests to be executed
 .TP
-\fB\-l\fR,  \fB\-\-filter\fR FILTER
+\fB\-l\fR \fIFILTER\fR,  \fB\-\-filter\fR=\fIFILTER\fR
 Filtering option to select tests (not) to be executed.
 E.g. '-testcase=bad_test -type=unknown' first disables
 test case named as bad_test; Next, all tests with type
@@ -54,6 +54,11 @@ Enable validation of test definition against stricter (semantics) schema
 .TP
 \fB\-A\fR,  \fB\-\-validate\-only\fR 
 Do only input xml validation, do not execute tests
+.TP
+\fB\-t\fR \fIADDRESS\fR, \fB\-\-target\fR\=\fIADDRESS\fR
+Enable host-based testing. If given, commands are executed from
+test control PC (host) side. ADDRESS is the ipv4 adress of the
+system under test.
 
 .SH FILES
 .I /usr/share/test-definition/testdefinition-syntax.xsd 

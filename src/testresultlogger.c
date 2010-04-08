@@ -298,6 +298,13 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 c->gen.level) < 0)
 			goto err_out;
 
+	if (c->gen.manual && c->comment)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "comment", 
+						 c->comment) < 0)
+			goto err_out;
+
+
 	xmlListWalk (c->steps, xml_write_step, NULL);
 
 	xml_end_element ();
@@ -401,9 +408,14 @@ LOCAL int txt_write_case (const void *data, const void *user)
         fprintf (ofile, "      insignificant : %s\n", c->gen.insignificant ?
 		 "true" : "false");
 	
+	
+	if (c->gen.manual && c->comment)
+		fprintf (ofile, "      comment       : %s\n", c->comment);
+		
 	fflush (ofile);
-
+	
 	xmlListWalk (c->steps, txt_write_step, NULL);
+
 
 	return 1;
 }

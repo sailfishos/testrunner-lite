@@ -248,7 +248,7 @@ void td_case_delete(xmlLinkPtr lk)
 {
 	td_case *td_c = xmlLinkGetData (lk);
 	xmlListDelete (td_c->steps);
-	
+	free (td_c->comment);
 	gen_attribs_delete(&td_c->gen);
 	free (td_c);
 }

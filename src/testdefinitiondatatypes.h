@@ -89,6 +89,7 @@ typedef struct {
 	td_gen_attribs gen;     /**< General attributes */
 	xmlChar   *subfeature;  /**< Sub feature attribute */
 	xmlListPtr steps;       /**< Steps in this test case */
+	xmlChar   *comment;     /**< Manual test case comment */
 	/* Executor fills */
 	int        passed;      /**< Flag stating whether this case is passed */
 	int        dummy;       /**< Case is dummy - used with pre post steps */
