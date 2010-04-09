@@ -110,13 +110,11 @@ int ssh_execute (const char *hostname, const char *command)
 	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
 		    pre_cmd, command, (char*)NULL);
 
-	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
-
 	return ret;
 }
 /* ------------------------------------------------------------------------- */
 /** Tries to kill program started by ssh
- *  
+ *  @param hostname SUT address 
  */
 int ssh_kill (const char *hostname)
 {
@@ -136,8 +134,6 @@ int ssh_kill (const char *hostname)
 	
 	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
 		    cmd, (char*)NULL);
-
-	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
 
 	return ret;
 }
@@ -169,7 +165,6 @@ void ssh_executor_close (const char *hostname)
 	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
 		    cmd, (char*)NULL);
 
-	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
 
 	return;
 }
