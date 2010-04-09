@@ -208,16 +208,14 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		/* redirect stdout to the pipe */
 		close(1);
 		if (dup(out_pipe[1]) < 0) {
-			LOG_MSG (LOG_ERROR, "%s dup() failed %s\n",
-				 __FUNCTION__, strerror(errno));
+			perror("dup(out_pipe[1]");
 		}
 		
 		/* redirect stderr to the pipe */
 		close(2);
 
 		if (dup(err_pipe[1]) < 0) {
-			LOG_MSG (LOG_ERROR, "%s dup() failed %s\n",
-				 __FUNCTION__, strerror(errno));
+			perror("dup(err_pipe[1])");
 		}
 		
 		exec_wrapper(command);
