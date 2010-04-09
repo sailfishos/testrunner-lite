@@ -455,27 +455,31 @@ static int execution_terminated(exec_data* data) {
 		/* WNOHANG was specified and unterminated child exists */
 		break;
 	default:
-		if (pid == data->pid) {
-			if (WIFEXITED(status)) {
-				/* child exited normally */
-				data->result = WEXITSTATUS(status);
-				LOG_MSG(LOG_DEBUG, 
-					"Process %d exited with status %d", 
-					pid, WEXITSTATUS(status));
-			} else if (WIFSIGNALED(status)) {
-				/* child terminated by a signal */
-				data->result = WTERMSIG(status);
-				stream_data_append(&data->failure_info, 
-						   FAILURE_INFO_TIMEOUT);
-				LOG_MSG(LOG_DEBUG, 
-					"Process %d was terminated by signal %d",
-					pid, WTERMSIG(status));
-			} else {
-				data->result = -1;
-				LOG_MSG(LOG_ERROR, 
-					"Unexpected return status %d from process %d",
-					status, pid);
-			}
+		/* we are only interested on return value of process
+		   data->pid not its children's */
+		if (pid != data->pid) {
+			break;
+		}
+
+		if (WIFEXITED(status)) {
+			/* child exited normally */
+			data->result = WEXITSTATUS(status);
+			LOG_MSG(LOG_DEBUG,
+				"Process %d exited with status %d",
+				pid, WEXITSTATUS(status));
+		} else if (WIFSIGNALED(status)) {
+			/* child terminated by a signal */
+			data->result = WTERMSIG(status);
+			stream_data_append(&data->failure_info,
+					   FAILURE_INFO_TIMEOUT);
+			LOG_MSG(LOG_DEBUG,
+				"Process %d was terminated by signal %d",
+				pid, WTERMSIG(status));
+		} else {
+			data->result = -1;
+			LOG_MSG(LOG_ERROR,
+				"Unexpected return status %d from process %d",
+				status, pid);
 		}
 		break;
 	}
@@ -588,6 +592,12 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		}
 	}
 
+	/* ensure that test process' children which have not terminated by
+	   SIGTERM are terminated now. */
+	if (pgroup > 0 && pgroup != getpgid(0)) {
+		killpg(pgroup, SIGKILL);
+	}
+
 	reset_timer();
 
 	if (data->redirect_output == REDIRECT_OUTPUT) {
@@ -680,6 +690,7 @@ void init_exec_data(exec_data* data) {
 	data->redirect_output = REDIRECT_OUTPUT;
 	data->soft_timeout = COMMON_SOFT_TIMEOUT;
 	data->hard_timeout = COMMON_HARD_TIMEOUT;
+	data->pid = 0;
 	init_stream_data(&data->stdout_data, 1024);
 	init_stream_data(&data->stderr_data, 1024);
 	init_stream_data(&data->failure_info, 0);
