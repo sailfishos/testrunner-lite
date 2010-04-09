@@ -82,14 +82,13 @@ typedef struct _exec_data exec_data;
 
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
-
+void executor_init (testrunner_lite_options *opts);
 int execute(const char* command, exec_data* data);
 void init_exec_data(exec_data* data);
 void clean_exec_data(exec_data* data);
 void init_stream_data(stream_data* data, int allocate);
 void clean_stream_data(stream_data* data);
-void executor_init (testrunner_lite_options *opts);
-
+void executor_close ();
 /* ------------------------------------------------------------------------- */
 #endif                          /* EXECUTOR_H */
 /* End of file */

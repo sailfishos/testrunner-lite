@@ -588,8 +588,6 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		}
 	}
 
-	reset_timer();
-
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		close(stdout_fd);
 		close(stderr_fd);
@@ -714,13 +712,25 @@ void clean_stream_data(stream_data* data) {
 	stream_data_free(data);
 }
 
-/** Sets the verbosity level
+/** Sets the remote host for executor 
  * @param opts testrunner lite options
  */
 void executor_init (testrunner_lite_options *opts)
 {
 	
 	remote_host = opts->target_address;
+	if (remote_host)
+		ssh_executor_init();
+}
+
+/** Clean up for executor
+ * @param opts testrunner lite options
+ */
+void executor_close ()
+{
+	
+	if (remote_host)
+		ssh_executor_close(remote_host);
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
