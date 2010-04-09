@@ -77,6 +77,39 @@ char  *suite_description;
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+static int set_env_for_remote_tests() 
+{
+	int ret;
+
+	ret = system ("stat ~/.ssh/myrsakey.pub");
+	if (ret) { 
+		ret = system ("ssh-keygen -N \"\" -f ~/.ssh/myrsakey");
+		if (ret)
+			goto err_out;
+	}
+	ret = system ("grep -f ~/.ssh/myrsakey.pub "
+		      "~/.ssh/authorized_keys");
+	if (ret) {
+		ret = system ("cat ~/.ssh/myrsakey.pub "
+			      ">> ~/.ssh/authorized_keys");
+		if (ret)
+			goto err_out;
+	}
+	    
+	ret = system ("grep myrsakey.pub ~/.ssh/config");
+	if (ret) {
+		ret = system ("echo \"IdentityFile=%d/.ssh/myrsakey\" >> "
+			      "~/.ssh/config");
+		if (ret)
+			goto err_out;
+	}
+
+	return 0;
+ err_out:
+	fprintf (stderr, "failed to set env for remote testsing\n");
+	return 1;
+ }	
+
 START_TEST (test_executor_null_command)
 	exec_data edata;
 
@@ -241,12 +274,6 @@ START_TEST (test_executor_remote_command)
 	init_exec_data (&edata);
 	
 
-	ret = system ("grep -f ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys");
-	if (ret)
-		ret = system ("cat ~/.ssh/id_rsa.pub "
-			      ">> ~/.ssh/authorized_keys");
-	fail_if (ret, "failed to patch authorized_keys");
-
 	fail_if (execute("echo testing", &edata));
 	fail_unless (edata.result == 0);
 	fail_unless (edata.stdout_data.length == strlen("testing\n"));
@@ -292,7 +319,7 @@ START_TEST (test_executor_remote_terminating_process)
 	edata.hard_timeout = 3;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
-	fail_unless (edata.result == 137);
+	fail_unless (edata.result == 143);
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
 	fail_unless (strcmp((char*)edata.stdout_data.buffer, 
@@ -317,7 +344,7 @@ START_TEST (test_executor_remote_killing_process)
 	edata.hard_timeout = 3;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
-	fail_unless (edata.result == 137);
+	fail_unless (edata.result == 143);
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
 	fail_unless (strcmp((char*)edata.stdout_data.buffer, 
@@ -338,7 +365,6 @@ Suite *make_testexecutor_suite (void)
 
     /* Create test cases and add to suite. */
     TCase *tc;
-    int ret;
 
     tc = tcase_create ("Test executor with null command.");
     tcase_add_test (tc, test_executor_null_command);
@@ -383,12 +409,10 @@ Suite *make_testexecutor_suite (void)
     tcase_add_test (tc, test_executor_exec_data_handling);
     suite_add_tcase (s, tc);
 
-    ret = system ("stat ~/id_rsa.pub");
-    if (ret) {
-	    fprintf (stderr, "public key not found - omitting remote tests\n");
+    if (set_env_for_remote_tests()) {
+	    fprintf (stderr, "skipping remote tests\n");
 	    return s;
     }
-
     tc = tcase_create ("Test executor remote command.");
     tcase_add_test (tc, test_executor_remote_command);
     suite_add_tcase (s, tc);
