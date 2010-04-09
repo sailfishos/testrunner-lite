@@ -21,6 +21,7 @@
 #include <check.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "testdefinitionparser.h"
 #include "testdefinitiondatatypes.h"
@@ -294,19 +295,6 @@ START_TEST (test_executor_remote_command)
 	fail_unless (edata.stderr_data.buffer == NULL);
 END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_executor_remote_non_ex_host)
-	exec_data edata;
-	testrunner_lite_options opts;
-
-	opts.target_address = "ww.example.com";
-	executor_init (&opts);
-	init_exec_data (&edata);
-	
-	fail_if (execute("echo testing", &edata));
-	fail_if (edata.result == 0);
-
-END_TEST
-/* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_terminating_process)
 	exec_data edata;
 	testrunner_lite_options opts;
@@ -315,20 +303,22 @@ START_TEST (test_executor_remote_terminating_process)
 	executor_init (&opts);
 	
 	init_exec_data(&edata);
-	edata.soft_timeout = 3;
-	edata.hard_timeout = 3;
+	edata.soft_timeout = 2;
+	edata.hard_timeout = 1;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
-	fail_unless (edata.result == 143);
+	fail_unless (edata.result == 143); /* 128 + SIGKILL */
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
 	fail_unless (strcmp((char*)edata.stdout_data.buffer, 
 			    "stdouttest") == 0);
 	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
 			     "stderrtest", strlen ("stderrtest")) == 0);
+	/* sleep for a while such that remote killing has done its job */
+	usleep(300000);
 	/* check that killing was succesfull */
 	fail_if (execute("pidof terminating", &edata));
-	fail_unless (edata.result == 1, edata.result);
+	fail_unless (edata.result == 1);
 
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -340,19 +330,21 @@ START_TEST (test_executor_remote_killing_process)
 	executor_init (&opts);
 
 	init_exec_data(&edata);
-	edata.soft_timeout = 3;
-	edata.hard_timeout = 3;
+	edata.soft_timeout = 2;
+	edata.hard_timeout = 1;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
-	fail_unless (edata.result == 143);
+	fail_unless (edata.result == 143); /* 128 + SIGKILL */
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
 	fail_unless (strcmp((char*)edata.stdout_data.buffer, 
 			    "stdouttest") == 0);
 	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
 			     "stderrtest", strlen("stderrtest")) == 0);
+	/* sleep for a while such that remote killing has done its job */
+	usleep(300000);
 	fail_if (execute("pidof unterminating", &edata));
-	fail_unless (edata.result == 1, edata.result); 
+	fail_unless (edata.result == 1);
 
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -415,10 +407,6 @@ Suite *make_testexecutor_suite (void)
     }
     tc = tcase_create ("Test executor remote command.");
     tcase_add_test (tc, test_executor_remote_command);
-    suite_add_tcase (s, tc);
-
-    tc = tcase_create ("Test executor remote non-existent host.");
-    tcase_add_test (tc, test_executor_remote_non_ex_host);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote terminating process.");
