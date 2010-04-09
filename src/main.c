@@ -731,6 +731,7 @@ int main (int argc, char *argv[], char *envp[])
 	while (td_next_node() == 0);
 	LOG_MSG (LOG_INFO, "Finished running tests.");
 	
+	executor_close();
 	td_reader_close();
 	close_result_logger();
 	LOG_MSG (LOG_INFO, "Executed %d cases. Passed %d Failed %d",
