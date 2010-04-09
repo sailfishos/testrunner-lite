@@ -323,9 +323,8 @@ START_TEST (test_executor_remote_killing_process)
 			    "stdouttest") == 0);
 	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
 			     "stderrtest", strlen("stderrtest")) == 0);
-	/* FIXME: Fails for some reason 
 	fail_if (execute("pidof unterminating", &edata));
-	fail_unless (edata.result == 1, edata.result); */
+	fail_unless (edata.result == 1, edata.result); 
 
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -338,6 +337,7 @@ Suite *make_testexecutor_suite (void)
 
     /* Create test cases and add to suite. */
     TCase *tc;
+    int ret;
 
     tc = tcase_create ("Test executor with null command.");
     tcase_add_test (tc, test_executor_null_command);
@@ -381,6 +381,12 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test executor execution data handling.");
     tcase_add_test (tc, test_executor_exec_data_handling);
     suite_add_tcase (s, tc);
+
+    ret = system ("stat ~/id_rsa.pub");
+    if (ret) {
+	    fprintf (stderr, "public key not found - omitting remote tests\n");
+	    return s;
+    }
 
     tc = tcase_create ("Test executor remote command.");
     tcase_add_test (tc, test_executor_remote_command);

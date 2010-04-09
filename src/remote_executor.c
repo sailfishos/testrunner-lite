@@ -134,7 +134,7 @@ int ssh_kill (const char *hostname)
 	sprintf (cmd, "cat /tmp/testrunner-%s.pid | xargs pkill -9 -P", 
 		 unique_id);
 	
-	ret = execl(SSHCMD, SSHCMD, hostname, 
+	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
 		    cmd, (char*)NULL);
 
 	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
@@ -166,7 +166,7 @@ void ssh_executor_close (const char *hostname)
 	/*
 	** Child: clean up target
 	*/
-	ret = execl(SSHCMD, SSHCMD, hostname, 
+	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
 		    cmd, (char*)NULL);
 
 	LOG_MSG(LOG_ERROR, "execl() failed %s", strerror (errno));
