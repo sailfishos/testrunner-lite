@@ -82,6 +82,7 @@ static void free_args(char* argv[]);
 static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, 
 				   const char *command);
 static pid_t fork_process(const char *command);
+static void kill_pgroup(int pgroup, int sig);
 static void* stream_data_realloc(stream_data* data, int size);
 static void stream_data_free(stream_data* data);
 static void stream_data_append(stream_data* data, char* src);
@@ -262,6 +263,27 @@ static pid_t fork_process(const char *command) {
 	}
 
 	return pid;
+}
+
+/** Send signal to process group of a test process
+ * @param pgroup Process group ID for signal
+ * @param sig Signal number
+ */
+static void kill_pgroup(int pgroup, int sig) {
+	if (pgroup <= 1) {
+		LOG_MSG(LOG_ERROR, "Invalid pgid %d", pgroup);
+		return;
+	}
+
+	/* pgroup must be different than the pgid of testrunner-lite */
+	if (pgroup == getpgid(0)) {
+		LOG_MSG(LOG_ERROR, "Pgid equals the pgid of testrunner-lite");
+		return;
+	}
+
+	if (killpg(pgroup, sig) < 0) {
+		LOG_MSG(LOG_ERROR, "killpg failed: %s", strerror(errno));
+	}
 }
 
 /** Allocate memory for stream_data
@@ -566,36 +588,37 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 		if (timer_value && !terminated) {
 			/* try to terminate */
-			pgroup = getpgid(data->pid);
 			LOG_MSG(LOG_DEBUG, "Timeout, terminating process %d", 
 				data->pid);
-			if (remote_host)
+
+			if (remote_host) {
 				ssh_kill (remote_host);
-			else if (killpg(pgroup, SIGTERM) < 0) {
-				perror("killpg");
 			}
+
+			pgroup = getpgid(data->pid);
+			kill_pgroup(pgroup, SIGTERM);
 			terminated = 1;
 			reset_timer();
 			set_timer(data->hard_timeout);
 		} else if (timer_value && !killed) {
 			/* try to kill */
-			pgroup = getpgid(data->pid);
 			LOG_MSG(LOG_DEBUG, "Timeout, killing process %d", 
 				data->pid);
 
-			if (remote_host)
+			if (remote_host) {
 				ssh_kill (remote_host);
-			else if (killpg(pgroup, SIGKILL) < 0) {
-				perror("killpg");
 			}
+
+			pgroup = getpgid(data->pid);
+			kill_pgroup(pgroup, SIGKILL);
 			killed = 1;
 		}
 	}
 
 	/* ensure that test process' children which have not terminated by
 	   SIGTERM are terminated now. */
-	if (pgroup > 0 && pgroup != getpgid(0)) {
-		killpg(pgroup, SIGKILL);
+	if (pgroup > 0) {
+		kill_pgroup(pgroup, SIGKILL);
 	}
 
 	reset_timer();
