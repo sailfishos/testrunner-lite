@@ -17,6 +17,7 @@
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
 #include <stdlib.h>
+#include <stdio.h>
 #include <check.h>
 #include <string.h>
 #include <signal.h>
