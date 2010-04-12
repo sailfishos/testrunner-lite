@@ -1,3 +1,4 @@
+
 /* * This file is part of testrunner-lite *
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
@@ -758,7 +759,6 @@ void executor_init (testrunner_lite_options *opts)
 }
 
 /** Clean up for executor
- * @param opts testrunner lite options
  */
 void executor_close ()
 {

@@ -97,6 +97,7 @@ void ssh_executor_init ()
 }
 /* ------------------------------------------------------------------------- */
 /** Executes a command using ssh 
+ * @param hostname SUT address 
  * @param command Command to execute
  * @return Does not return in success, error code from exec in case of error
  */
