@@ -1,3 +1,10 @@
+testrunner-lite (1.2.0) unstable; urgency=low
+
+  * Implemented MTT-226 - host based execution.
+  * Implemented manual execution of test steps.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Mon, 12 Apr 2010 11:07:00 +0300
+
 testrunner-lite (1.1.0) unstable; urgency=low
 
   * Implemented MTT-225 - HTTP logging feature
