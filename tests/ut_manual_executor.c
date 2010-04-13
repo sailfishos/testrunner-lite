@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <check.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "testrunnerlitetestscommon.h"
 #include "testdefinitiondatatypes.h"
@@ -51,7 +52,6 @@
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-char *user_input;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -73,12 +73,6 @@ char *user_input;
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-char *fgets (char *str, int num, FILE *stream)
-{ 
-    str[0] = user_input;
-    return str;
-}
-/* ------------------------------------------------------------------------- */
 START_TEST (test_execute_manual_step_passed)
 
     td_case *t_case = NULL;
@@ -87,9 +81,15 @@ START_TEST (test_execute_manual_step_passed)
     int ret;
     char cmd[1024];
     char *stdout_tmp = "/tmp/testrunner-lite-manual-exec-stdout.log";
+    int pipefd[2];
     
     /* Forward stdout temporarily to a file. */
     fp = freopen (stdout_tmp, "w", stdout);
+
+    /* redirect stdin from a pipe */
+    pipe(pipefd);
+    close(0);
+    dup(pipefd[0]);
     
     t_case = td_case_create();
     t_case->gen.description = (xmlChar*)"This is manual test case.";
@@ -111,7 +111,7 @@ START_TEST (test_execute_manual_step_passed)
     t_step->step = (xmlChar*)"This is manual test step.";
     
     /* Make test case pass. */
-    user_input = 'P';
+    write(pipefd[1], "P\n", 2);
     execute_manual (t_step);
     
     /* Back to terminal. */
@@ -124,7 +124,7 @@ START_TEST (test_execute_manual_step_passed)
     t_case->passed = 1;
     fp = freopen (stdout_tmp, "w", stdout);
     
-    user_input = '\n';
+    write(pipefd[1], "\n", 1);
     post_manual (t_case);
     
     /* Back to terminal. */
@@ -133,6 +133,9 @@ START_TEST (test_execute_manual_step_passed)
     sprintf (cmd, "grep \"PASSED.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
+
+    close(pipefd[0]);
+    close(pipefd[1]);
     
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -144,10 +147,16 @@ START_TEST (test_execute_manual_step_failed)
     int ret;
     char cmd[1024];
     char *stdout_tmp = "/tmp/testrunner-lite-manual-exec-stdout.log";
+    int pipefd[2];
     
     /* Forward stdout temporarily to a file. */
     fp = freopen (stdout_tmp, "w", stdout);
     
+    /* redirect stdin from a pipe */
+    pipe(pipefd);
+    close(0);
+    dup(pipefd[0]);
+
     t_case = td_case_create();
     t_case->gen.description = (xmlChar*)"This is manual test case.";
 
@@ -168,7 +177,7 @@ START_TEST (test_execute_manual_step_failed)
     t_step->step = (xmlChar*)"This is manual test step.";
     
     /* Make test case fail. */
-    user_input = 'F';
+    write(pipefd[1], "F\n", 2);
     execute_manual (t_step);
     
     /* Back to terminal. */
@@ -181,7 +190,7 @@ START_TEST (test_execute_manual_step_failed)
     t_case->passed = 0;
     fp = freopen (stdout_tmp, "w", stdout);
     
-    user_input = '\n';
+    write(pipefd[1], "\n", 1);
     post_manual (t_case);
     
     /* Back to terminal. */
@@ -190,6 +199,9 @@ START_TEST (test_execute_manual_step_failed)
     sprintf (cmd, "grep \"FAILED.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
+
+    close(pipefd[0]);
+    close(pipefd[1]);
     
 END_TEST
 
