@@ -337,8 +337,8 @@ START_TEST (test_executor_remote_killing_process)
 	fail_unless (edata.result == 143); /* 128 + SIGKILL */
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
-	fail_unless (strcmp((char*)edata.stdout_data.buffer, 
-			    "stdouttest") == 0);
+	fail_unless (strncmp((char*)edata.stdout_data.buffer, 
+			     "stdouttest", strlen("stderrtest")) == 0);
 	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
 			     "stderrtest", strlen("stderrtest")) == 0);
 	/* sleep for a while such that remote killing has done its job */
