@@ -245,6 +245,9 @@ LOCAL int xml_write_case (const void *data, const void *user)
 {
 	td_case *c = (td_case *)data;
 
+	if (c->filtered)
+		return 1;
+
 	if (xmlTextWriterStartElement (writer, BAD_CAST "case") < 0)
 		goto err_out;
 
@@ -328,7 +331,7 @@ LOCAL int xml_write_post_set_tag (td_set *set)
 	xmlListWalk (set->cases, xml_write_case, NULL);
 	
 	return 0;
- }
+}
 /* ------------------------------------------------------------------------- */
 /************************* text output ***************************************/
 /* ------------------------------------------------------------------------- */
@@ -386,6 +389,9 @@ LOCAL int txt_write_case (const void *data, const void *user)
 {
 	td_case *c = (td_case *)data;
 	
+	if (c->filtered)
+		return 1;
+
 	fprintf (ofile, "----------------------------------"
 		 "----------------------------------\n");
         fprintf (ofile, "    Test case name  : %s\n", c->gen.name);

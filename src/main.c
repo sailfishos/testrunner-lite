@@ -168,12 +168,6 @@ LOCAL int step_execute (const void *data, const void *user)
 
 	memset (&edata, 0x0, sizeof (exec_data));
 
-	if (c->gen.manual && !opts.run_manual) 
-		return 1;
-	 
-	if (!c->gen.manual && !opts.run_automatic)
-		return 1;
-	
 	if (c->gen.manual) {
 		fail = execute_manual (step);
 		goto out;
@@ -250,9 +244,21 @@ LOCAL int process_case (const void *data, const void *user)
 	td_case *c = (td_case *)data;
 	td_set *set = (td_set *)user;
 	
+	if (c->gen.manual && !opts.run_manual) {
+		LOG_MSG(LOG_DEBUG, "Skipping manual case %s",
+			c->gen.name);
+		c->filtered = 1;
+		return 1;
+	}
+	if (!c->gen.manual && !opts.run_automatic) {
+		LOG_MSG(LOG_DEBUG, "Skipping automatic case %s",
+			c->gen.name);
+		c->filtered = 1;
+		return 1;
+	}
+
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
-	
 
 	c->passed = 1;
 	c->gen.timeout = c->gen.timeout ? c->gen.timeout : 
@@ -385,6 +391,7 @@ LOCAL void process_set (td_set *s)
 	xmlListWalk (s->gets, process_get, s);
 	if (xmlListSize (s->post_steps) > 0) {
 		LOG_MSG (LOG_INFO, "Executing post steps");
+		memset (&dummy, 0x0, sizeof (td_case));
 		dummy.passed = 1;
 		dummy.dummy = 1;
 		/* Default timeout for post steps */

@@ -93,6 +93,7 @@ typedef struct {
 	/* Executor fills */
 	int        passed;      /**< Flag stating whether this case is passed */
 	int        dummy;       /**< Case is dummy - used with pre post steps */
+	int        filtered;    /**< Case is filtered */
 } td_case;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
