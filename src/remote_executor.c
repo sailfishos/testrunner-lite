@@ -129,7 +129,6 @@ int ssh_kill (const char *hostname)
 	if (pid < 0)
 	    return 1;
 	
-
 	sprintf (cmd, "cat /tmp/testrunner-%s.pid | xargs pkill -9 -P", 
 		 unique_id);
 	

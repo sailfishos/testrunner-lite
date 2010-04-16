@@ -132,12 +132,14 @@ LOCAL void usage()
 		"to be executed.\n");
 	printf ("  -m, --manual\tEnable only manual tests to be executed.\n");
 	
+#if 0 /* do not advertise features we do not have yet .. */
 	printf ("  -l FILTER, --filter=FILTER\n\t\t"
 		"Filtering option to select tests (not) to be executed.\n\t\t"
 		"E.g. '-testcase=bad_test -type=unknown' first disables\n\t\t"
 		"test case named as bad_test. Next, all tests with type\n\t\t"
 		"unknown are disabled. The remaining tests will be\n\t\t"
 		"executed.\n");
+#endif 
 	printf ("  -c, --ci\tDisable validation of test "
 		"definition against schema.\n");
 	printf ("  -s, --semantic\n\t\tEnable validation of test "
@@ -274,7 +276,6 @@ LOCAL int process_case (const void *data, const void *user)
 
 	if (c->gen.manual && opts.run_manual)
 		post_manual (c);
-
 
 	LOG_MSG (LOG_INFO, "Finished test case Result: %s", c->passed ?
 		 "PASS" : "FAIL");
