@@ -97,7 +97,7 @@ static int set_env_for_remote_tests()
 			goto err_out;
 	}
 	    
-	ret = system ("grep myrsakey.pub ~/.ssh/config");
+	ret = system ("grep myrsakey ~/.ssh/config");
 	if (ret) {
 		ret = system ("echo \"IdentityFile=%d/.ssh/myrsakey\" >> "
 			      "~/.ssh/config");
