@@ -315,7 +315,7 @@ START_TEST (test_executor_remote_terminating_process)
 	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
 			     "stderrtest", strlen ("stderrtest")) == 0);
 	/* sleep for a while such that remote killing has done its job */
-	usleep(300000);
+	sleep(2);
 	/* check that killing was succesfull */
 	fail_if (execute("pidof terminating", &edata));
 	fail_unless (edata.result == 1);
@@ -342,7 +342,7 @@ START_TEST (test_executor_remote_killing_process)
 	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
 			     "stderrtest", strlen("stderrtest")) == 0);
 	/* sleep for a while such that remote killing has done its job */
-	usleep(300000);
+	sleep(2);
 	fail_if (execute("pidof unterminating", &edata));
 	fail_unless (edata.result == 1);
 
@@ -410,12 +410,12 @@ Suite *make_testexecutor_suite (void)
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote terminating process.");
-    tcase_set_timeout (tc, 5);
+    tcase_set_timeout (tc, 10);
     tcase_add_test (tc, test_executor_remote_terminating_process);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote killing process.");
-    tcase_set_timeout (tc, 5);
+    tcase_set_timeout (tc, 10);
     tcase_add_test (tc, test_executor_remote_killing_process);
     suite_add_tcase (s, tc);
 
