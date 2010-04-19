@@ -727,7 +727,7 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 	if (ofile) fclose (ofile);
 	if (fname) free (fname);
 
-	memset (data->buffer, "a", data->length - 1);
+	memset (data->buffer, 'a', data->length - 1);
 	return;
 } 
 

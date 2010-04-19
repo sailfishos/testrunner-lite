@@ -34,7 +34,7 @@
 #define TESTDATA_GET_XML_1    "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-get.xml"
 #define TESTDATA_UTF8_XML_1    "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-utf8.xml"
 #define TESTDATA_ENTITY_SUBSTITUTION    "/usr/share/testrunner-lite-tests/testdata/entity_substitution.xml"
-
+#define TESTDATA_NON_UTF8_XML_1 "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-non-utf8.xml"
 #define TESTRUNNERLITE_BIN  "/usr/bin/testrunner-lite"
 
 /* ------------------------------------------------------------------------- */
