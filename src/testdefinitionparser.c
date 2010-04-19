@@ -513,7 +513,7 @@ int parse_test_definition (testrunner_lite_options *opts)
 	xmlSchemaValidCtxtPtr valid_ctxt = NULL;
 	xmlSchemaParserCtxtPtr schema_ctxt = NULL;
 	    
-    xmlSubstituteEntitiesDefault(1);
+        xmlSubstituteEntitiesDefault(1);
 
 	/*
 	 * 1) Create basic parser context and validate it.
