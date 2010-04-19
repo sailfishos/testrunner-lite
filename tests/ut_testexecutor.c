@@ -495,7 +495,7 @@ Suite *make_testexecutor_suite (void)
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test get feature with remote host.");
-    tcase_set_timeout (tc, 10);
+    tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_remote_get);
     suite_add_tcase (s, tc);
 
