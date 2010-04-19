@@ -280,7 +280,7 @@ static void kill_pgroup(int pgroup, int sig) {
 		return;
 	}
 
-	if (killpg(pgroup, sig) < 0) {
+	if (killpg(pgroup, sig) < 0 && errno != ESRCH) {
 		LOG_MSG(LOG_ERROR, "killpg failed: %s", strerror(errno));
 	}
 }
@@ -590,12 +590,13 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, terminating process %d", 
 				data->pid);
 
-			if (remote_host) {
-				ssh_kill (remote_host);
-			}
-
 			pgroup = getpgid(data->pid);
 			kill_pgroup(pgroup, SIGTERM);
+
+			if (remote_host) {
+				ssh_kill (remote_host, data->pid);
+			}
+
 			terminated = 1;
 			reset_timer();
 			set_timer(data->hard_timeout);
@@ -604,12 +605,13 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, killing process %d", 
 				data->pid);
 
-			if (remote_host) {
-				ssh_kill (remote_host);
-			}
-
 			pgroup = getpgid(data->pid);
 			kill_pgroup(pgroup, SIGKILL);
+
+			if (remote_host) {
+				ssh_kill (remote_host, data->pid);
+			}
+
 			killed = 1;
 		}
 	}
@@ -622,6 +624,10 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 	reset_timer();
 
+	if (remote_host && !terminated && !killed) {
+		/* ssh_kill does cleaning if timeout occured */
+		ssh_clean(remote_host, data->pid);
+	}
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		close(stdout_fd);
 		close(stderr_fd);

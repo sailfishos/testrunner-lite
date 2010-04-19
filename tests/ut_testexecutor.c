@@ -293,6 +293,10 @@ START_TEST (test_executor_remote_command)
 	clean_exec_data(&edata);
 	fail_unless (edata.stdout_data.buffer == NULL);
 	fail_unless (edata.stderr_data.buffer == NULL);
+
+	/* Give time for either ssh_clean or ssh_kill called by execute.
+	   They have forked new ssh process to do cleanup */
+	sleep(1);
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_terminating_process)
@@ -320,6 +324,9 @@ START_TEST (test_executor_remote_terminating_process)
 	fail_if (execute("pidof terminating", &edata));
 	fail_unless (edata.result == 1);
 
+	/* Give time for either ssh_clean or ssh_kill called by execute.
+	   They have forked new ssh process to do cleanup */
+	sleep(1);
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_killing_process)
@@ -346,6 +353,9 @@ START_TEST (test_executor_remote_killing_process)
 	fail_if (execute("pidof unterminating", &edata));
 	fail_unless (edata.result == 1);
 
+	/* Give time for either ssh_clean or ssh_kill called by execute.
+	   They have forked new ssh process to do cleanup */
+	sleep(1);
 END_TEST
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
