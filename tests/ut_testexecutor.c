@@ -268,7 +268,6 @@ END_TEST
 START_TEST (test_executor_remote_command)
 	exec_data edata;
 	testrunner_lite_options opts;
-	int ret;
 
 	opts.target_address = "localhost";
 	executor_init (&opts);
