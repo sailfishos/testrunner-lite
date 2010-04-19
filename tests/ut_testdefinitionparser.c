@@ -245,6 +245,20 @@ START_TEST (test_reader_set)
     fail_unless (xmlListSize(set->gets) == 0);
 
 END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_entity_substitution)
+
+    /* Test parsing valid test definition xml with ENTITY references. */
+    testrunner_lite_options test_opts;
+
+    memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
+    test_opts.input_filename = malloc (strlen(TESTDATA_ENTITY_SUBSTITUTION)+1);
+    strcpy (test_opts.input_filename, TESTDATA_ENTITY_SUBSTITUTION); 
+
+    fail_if (parse_test_definition(&test_opts) != 0, 
+        "Parsing test definition failed!");
+
+END_TEST
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -289,7 +303,10 @@ Suite *make_testdefinitionparser_suite (void)
     tcase_add_test (tc, test_reader_set);
     suite_add_tcase (s, tc);
 
-
+    tc = tcase_create ("Test parsing test definition with entities.");
+    tcase_add_test (tc, test_entity_substitution);
+    suite_add_tcase (s, tc);
+    
     return s;
 }
 

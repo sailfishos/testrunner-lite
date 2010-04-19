@@ -31,6 +31,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <stdio.h>
+#include <libxml/xmlstring.h>
+
 #include "remote_executor.h"
 #include "executor.h"
 #include "log.h"
@@ -63,8 +65,7 @@
 /* LOCAL GLOBAL VARIABLES */
 static volatile sig_atomic_t timer_value = 0;
 static struct sigaction default_alarm_action = { .sa_handler = NULL };
-static char *remote_host = NULL;
-
+static testrunner_lite_options *options;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -96,6 +97,7 @@ static void process_output_streams(int stdout_fd, int stderr_fd,
 				   exec_data* data);
 static void communicate(int stdout_fd, int stderr_fd, exec_data* data);
 static void strip_ctrl_chars (stream_data* data);
+static void utf8_check (stream_data* data, const char *id, pid_t pid);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -159,8 +161,8 @@ static int exec_wrapper(const char *command)
 {
 	int ret = 0;
 
-	if (remote_host)
-		ret = ssh_execute (remote_host, command);
+	if (options->target_address)
+		ret = ssh_execute (options->target_address, command);
 	else
 		/* on success, execvp does not return */
 		ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARG1, 
@@ -593,8 +595,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			pgroup = getpgid(data->pid);
 			kill_pgroup(pgroup, SIGTERM);
 
-			if (remote_host) {
-				ssh_kill (remote_host, data->pid);
+			if (options->target_address) {
+				ssh_kill (options->target_address, data->pid);
 			}
 
 			terminated = 1;
@@ -608,8 +610,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			pgroup = getpgid(data->pid);
 			kill_pgroup(pgroup, SIGKILL);
 
-			if (remote_host) {
-				ssh_kill (remote_host, data->pid);
+			if (options->target_address) {
+				ssh_kill (options->target_address, data->pid);
 			}
 
 			killed = 1;
@@ -624,9 +626,9 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 	reset_timer();
 
-	if (remote_host && !terminated && !killed) {
+	if (options->target_address && !terminated && !killed) {
 		/* ssh_kill does cleaning if timeout occured */
-		ssh_clean(remote_host, data->pid);
+		ssh_clean(options->target_address, data->pid);
 	}
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		close(stdout_fd);
@@ -649,8 +651,7 @@ static void strip_ctrl_chars (stream_data* data)
 			    0x0C,
 			    0x0E,0x0F,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,
 			    0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F, 
-			    0x7F,
-			    '\0'};
+			    0x7F, '\0'};
 
 	
 	do {
@@ -671,6 +672,69 @@ static void strip_ctrl_chars (stream_data* data)
 	} while (p != endp);
 	
 }
+
+/* ------------------------------------------------------------------------- */
+/** If the data contains non utf-8 write the data to file instead of result xml
+ * @param data stream data to mangle
+ * @param id identifier (stdout/stderr)
+ * @param pid pid of test step
+ */
+static void utf8_check (stream_data* data, const char *id, pid_t pid)
+{
+	char *fname = NULL;
+	FILE *ofile = NULL;
+	size_t written = 0;
+	
+	if (xmlCheckUTF8 (data->buffer)) {
+		return;
+	}
+	
+	fname = (char *)malloc (strlen (options->output_folder) + 
+				strlen ("id") + 10 + 1 + 1);
+	if (!fname) {
+			LOG_MSG(LOG_ERROR, "OOM");
+			goto error;
+	}
+	sprintf (fname, "%s/%s.%d", options->output_folder, 
+		 id, pid);
+	
+	ofile = fopen (fname, "w+");
+	if (!ofile)  {
+		LOG_MSG (LOG_ERROR, "%s:%s:failed to open file %s %s\n",
+			 PROGNAME, __FUNCTION__, fname,
+			 strerror(errno));
+		goto error;
+	}
+	written = fwrite (data->buffer, 1, data->length, ofile);
+	if (written != data->length) {
+		LOG_MSG(LOG_WARNING, "failed to write full stdout to"
+			"%s\n", fname,  strerror(errno));
+	}
+	data->buffer = (unsigned char *)realloc (data->buffer, 
+						 strlen("non utf-8 output "
+							"detected - see file ")
+						 + strlen (fname) + 1);
+	if (!data->buffer) {
+		LOG_MSG(LOG_ERROR, "OOM");
+		goto error;
+	}
+
+	sprintf ((char *)data->buffer, 
+		 "non utf-8 output detected - see file %s.%d", id, pid);
+	
+	LOG_MSG (LOG_DEBUG, "non utf-8 ouput from test step -  wrote to "
+		 "%s instead of results xml", fname);
+	
+	fclose (ofile);
+	free (fname);
+	return;
+ error:
+	if (ofile) fclose (ofile);
+	if (fname) free (fname);
+
+	memset (data->buffer, 'a', data->length - 1);
+	return;
+} 
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -706,6 +770,11 @@ int execute(const char* command, exec_data* data) {
 	data->end_time = time(NULL);
 	if (data->stdout_data.length) strip_ctrl_chars (&data->stdout_data);
 	if (data->stderr_data.length) strip_ctrl_chars (&data->stderr_data);
+	if (data->stdout_data.length) utf8_check (&data->stdout_data, "stdout",
+						  data->pid);
+	if (data->stderr_data.length) utf8_check (&data->stderr_data, "stderr",
+						  data->pid);
+
 	
 	return 0;
 }
@@ -759,8 +828,8 @@ void clean_stream_data(stream_data* data) {
 void executor_init (testrunner_lite_options *opts)
 {
 	
-	remote_host = opts->target_address;
-	if (remote_host)
+	options = opts;
+	if (options->target_address)
 		ssh_executor_init();
 }
 
@@ -769,8 +838,8 @@ void executor_init (testrunner_lite_options *opts)
 void executor_close ()
 {
 	
-	if (remote_host)
-		ssh_executor_close(remote_host);
+	if (options->target_address)
+		ssh_executor_close(options->target_address);
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

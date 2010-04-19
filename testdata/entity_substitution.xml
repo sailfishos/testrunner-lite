@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE testdefinition [
+ <!ENTITY process "echo">
+]>
+<testdefinition version='1.0'>
+  <suite domain='test_domain' type='Functional' name='echo-tests' timeout='1200' level='Component'>
+    <set description='echo-tests:unit-tests' name='unit-tests'>
+      <case description='echo-tests-tests:unit-tests:foo' timeout='60' name='foo'>
+        <step>&process; foo foo foo</step>
+      </case>
+    </set>
+  </suite>
+</testdefinition>

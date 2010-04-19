@@ -214,7 +214,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 	const xmlChar *name;
 	td_step *step = NULL;
 	int ret;
-	
+
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
@@ -512,7 +512,9 @@ int parse_test_definition (testrunner_lite_options *opts)
 	xmlSchemaPtr sch = NULL;
 	xmlSchemaValidCtxtPtr valid_ctxt = NULL;
 	xmlSchemaParserCtxtPtr schema_ctxt = NULL;
-	
+	    
+        xmlSubstituteEntitiesDefault(1);
+
 	/*
 	 * 1) Create basic parser context and validate it.
 	 */
@@ -523,7 +525,7 @@ int parse_test_definition (testrunner_lite_options *opts)
 		goto out;
 	}
 	
-	doc = xmlCtxtReadFile(ctxt, opts->input_filename, NULL, 0);
+	doc = xmlCtxtReadFile(ctxt, opts->input_filename, NULL, XML_PARSE_NOENT);
 	if (doc == NULL) {
 		LOG_MSG (LOG_ERROR, "%s: Failed to parse %s\n", PROGNAME,
 			opts->input_filename);
