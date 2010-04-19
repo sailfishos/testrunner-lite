@@ -65,7 +65,6 @@
 /* LOCAL GLOBAL VARIABLES */
 static volatile sig_atomic_t timer_value = 0;
 static struct sigaction default_alarm_action = { .sa_handler = NULL };
-static char *remote_host = NULL;
 static testrunner_lite_options *options;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -162,8 +161,8 @@ static int exec_wrapper(const char *command)
 {
 	int ret = 0;
 
-	if (remote_host)
-		ret = ssh_execute (remote_host, command);
+	if (options->target_address)
+		ret = ssh_execute (options->target_address, command);
 	else
 		/* on success, execvp does not return */
 		ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARG1, 
@@ -593,8 +592,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, terminating process %d", 
 				data->pid);
 
-			if (remote_host) {
-				ssh_kill (remote_host);
+			if (options->target_address) {
+				ssh_kill (options->target_address);
 			}
 
 			pgroup = getpgid(data->pid);
@@ -607,8 +606,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, killing process %d", 
 				data->pid);
 
-			if (remote_host) {
-				ssh_kill (remote_host);
+			if (options->target_address) {
+				ssh_kill (options->target_address);
 			}
 
 			pgroup = getpgid(data->pid);
@@ -823,9 +822,8 @@ void clean_stream_data(stream_data* data) {
 void executor_init (testrunner_lite_options *opts)
 {
 	
-	remote_host = opts->target_address;
 	options = opts;
-	if (remote_host)
+	if (options->target_address)
 		ssh_executor_init();
 }
 
@@ -834,8 +832,8 @@ void executor_init (testrunner_lite_options *opts)
 void executor_close ()
 {
 	
-	if (remote_host)
-		ssh_executor_close(remote_host);
+	if (options->target_address)
+		ssh_executor_close(options->target_address);
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

@@ -88,6 +88,8 @@ LOCAL void process_set(td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+LOCAL int process_get (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 LOCAL int step_execute (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int create_output_folder ();
@@ -295,20 +297,33 @@ LOCAL int process_get (const void *data, const void *user)
 	xmlChar *fname = (xmlChar *)data;
 	xmlChar *command;
 	exec_data edata;
+	char    *remote = opts.target_address;
 
-	/*
-	** Compose command 
-	*/
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data(&edata);
 	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
-	command = (xmlChar *)malloc (strlen ("cp ") + strlen ((char *)fname) +
-				     strlen (opts.output_folder) + 2);
-	sprintf ((char *)command, "cp %s %s", (char *)fname, 
-		 opts.output_folder);
-    
+	/*
+	** Compose command 
+	*/
+	if (remote) {
+		opts.target_address = NULL; /* execute locally */
+		command = (xmlChar *)malloc (strlen ("scp ") + 
+					     strlen ((char *)fname) +
+					     strlen (opts.output_folder) +
+					     strlen (remote) + 4);
+		sprintf ((char *)command, "scp %s:%s %s", remote, 
+			 (char *)fname, 
+			 opts.output_folder);
+
+	} else {
+		command = (xmlChar *)malloc (strlen ("cp ") + 
+					     strlen ((char *)fname) +
+					     strlen (opts.output_folder) + 2);
+		sprintf ((char *)command, "cp %s %s", (char *)fname, 
+			 opts.output_folder);
+	}
 	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
 		 (char*)command);
 	/*
@@ -322,9 +337,7 @@ LOCAL int process_get (const void *data, const void *user)
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
 	}
-	/*
-	** Inspect results
-	*/
+	opts.target_address = remote;
 	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
 	if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
 	if (edata.failure_info.buffer) free (edata.failure_info.buffer);

@@ -346,6 +346,34 @@ START_TEST (test_executor_remote_killing_process)
 	fail_unless (edata.result == 1);
 
 END_TEST
+
+START_TEST (test_remote_get)
+
+    int ret;
+    char cmd[1024];
+
+    sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	     "-t localhost", 
+	     TESTRUNNERLITE_BIN, 
+	     TESTDATA_GET_XML_1);
+    ret = system (cmd);
+    fail_if (ret, cmd);
+
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+    fail_if (ret, cmd);
+    
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+    fail_if (ret, cmd);
+    printf ("%s: remote get /tmp/gettest.txt worked\n",
+	    __FUNCTION__); 
+    
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+    fail_if (ret, cmd);
+    printf ("%s: remote get /tmp/gettest2.txt worked\n",
+	    __FUNCTION__); 
+
+END_TEST
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -418,7 +446,12 @@ Suite *make_testexecutor_suite (void)
     tcase_add_test (tc, test_executor_remote_killing_process);
     suite_add_tcase (s, tc);
 
+    tc = tcase_create ("Test get feature with remote host.");
+    tcase_set_timeout (tc, 10);
+    tcase_add_test (tc, test_remote_get);
+    suite_add_tcase (s, tc);
 
+    
     return s;
 }
 
