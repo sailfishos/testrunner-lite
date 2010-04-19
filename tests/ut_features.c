@@ -94,6 +94,10 @@ START_TEST (test_ctrl_char_strip)
 			       ' ',' ',' ',' ',' ','b','a','r', '\0'};
 
     
+    testrunner_lite_options opts;
+
+    memset (&opts, 0x0, sizeof (opts));
+    executor_init (&opts);
 
     init_exec_data(&edata);
     edata.soft_timeout = 0;
@@ -436,6 +440,10 @@ END_TEST
 START_TEST (test_hwinfo)
      
      hw_info hi;
+     testrunner_lite_options opts;
+
+     memset (&opts, 0x0, sizeof (opts));
+     executor_init (&opts);
 
      memset (&hi, 0x0, sizeof (hw_info));
      fail_if (read_hwinfo(&hi));

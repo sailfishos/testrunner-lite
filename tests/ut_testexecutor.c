@@ -113,8 +113,11 @@ static int set_env_for_remote_tests()
 
 START_TEST (test_executor_null_command)
 	exec_data edata;
+	testrunner_lite_options opts;
 
-	
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
+
 	init_exec_data(&edata);
 	edata.soft_timeout = 10;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
@@ -124,8 +127,11 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_0_timeout)
 	exec_data edata;
+	testrunner_lite_options opts;
 
-	
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
+
 	init_exec_data(&edata);
 	edata.soft_timeout = 0;
 	edata.hard_timeout = 0;
@@ -135,7 +141,10 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_stdout)
 	exec_data edata;
+	testrunner_lite_options opts;
 
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
 	
 	init_exec_data(&edata);
 	edata.soft_timeout = 0;
@@ -148,7 +157,10 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_stderr)
 	exec_data edata;
+	testrunner_lite_options opts;
 
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
 	
 	init_exec_data(&edata);
 	edata.soft_timeout = 0;
@@ -161,6 +173,10 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_long_input_streams)
 	exec_data edata;
+	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
 	
 	init_exec_data(&edata);
 	edata.soft_timeout = 2;
@@ -178,6 +194,10 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_terminating_process)
 	exec_data edata;
+	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
 	
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
@@ -198,6 +218,10 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_killing_process)
 	exec_data edata;
+	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
 	
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
@@ -218,6 +242,11 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_piped_command)
 	exec_data edata;
+	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
+
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 1;
@@ -232,6 +261,11 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_without_output_redirection)
 	exec_data edata;
+	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
+
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 1;
@@ -244,6 +278,11 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_exec_data_handling)
 	exec_data edata;
+	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
+	executor_init (&opts);
+
 	init_exec_data(&edata);
 	fail_if (execute("echo testing", &edata));
 	fail_unless (edata.result == 0);
@@ -273,7 +312,6 @@ START_TEST (test_executor_remote_command)
 	executor_init (&opts);
 	init_exec_data (&edata);
 	
-
 	fail_if (execute("echo testing", &edata));
 	fail_unless (edata.result == 0);
 	fail_unless (edata.stdout_data.length == strlen("testing\n"));
@@ -359,29 +397,29 @@ END_TEST
 
 START_TEST (test_remote_get)
 
-    int ret;
-    char cmd[1024];
-
-    sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-	     "-t localhost", 
-	     TESTRUNNERLITE_BIN, 
-	     TESTDATA_GET_XML_1);
-    ret = system (cmd);
-    fail_if (ret, cmd);
-
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
-    fail_if (ret, cmd);
+     int ret;
+     char cmd[1024];
+     
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	      "-t localhost", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_GET_XML_1);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     fail_if (ret, cmd);
+     printf ("%s: remote get /tmp/gettest.txt worked\n",
+	     __FUNCTION__); 
     
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
-    fail_if (ret, cmd);
-    printf ("%s: remote get /tmp/gettest.txt worked\n",
-	    __FUNCTION__); 
-    
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
-    fail_if (ret, cmd);
-    printf ("%s: remote get /tmp/gettest2.txt worked\n",
-	    __FUNCTION__); 
-
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     fail_if (ret, cmd);
+     printf ("%s: remote get /tmp/gettest2.txt worked\n",
+	     __FUNCTION__); 
+     
 END_TEST
 
 /* ------------------------------------------------------------------------- */
