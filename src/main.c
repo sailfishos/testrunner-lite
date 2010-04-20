@@ -265,9 +265,6 @@ LOCAL int process_case (const void *data, const void *user)
 	casecount++;
 
 	c->passed = 1;
-	c->gen.timeout = c->gen.timeout ? c->gen.timeout : 
-		(set->gen.timeout ? 
-		 set->gen.timeout : current_suite->gen.timeout);
 	if (c->gen.timeout == 0)
 		c->gen.timeout = COMMON_SOFT_TIMEOUT; /* the default one */
 	

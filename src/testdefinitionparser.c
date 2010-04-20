@@ -59,6 +59,7 @@ LOCAL td_parser_callbacks *cbs;
 LOCAL xmlTextReaderPtr reader;
 LOCAL xmlSchemaParserCtxtPtr schema_context = NULL;
 LOCAL xmlSchemaPtr schema = NULL;
+LOCAL td_suite *current_suite;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -70,6 +71,8 @@ LOCAL xmlSchemaPtr schema = NULL;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
+/* ------------------------------------------------------------------------- */
+LOCAL int td_parse_gen_attribs (td_gen_attribs *,td_gen_attribs *);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_suite (void);
 /* ------------------------------------------------------------------------- */
@@ -91,14 +94,21 @@ LOCAL int td_parse_set ();
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-LOCAL int td_parse_gen_attribs (td_gen_attribs *attr)
+LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
+				td_gen_attribs *defaults)
 {
 	const xmlChar *name;
+
+	if (defaults) {
+		attr->timeout = defaults->timeout;
+		attr->manual  = defaults->manual;
+		attr->insignificant = defaults->insignificant;
+	}
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
 		name = xmlTextReaderConstName(reader);
 		if (!xmlStrcmp (name, BAD_CAST "name")) {
-			attr->name= xmlTextReaderValue(reader);
+			attr->name = xmlTextReaderValue(reader);
 			continue;
 		}
 		if (!xmlStrcmp (name, BAD_CAST "timeout")) {
@@ -266,7 +276,7 @@ LOCAL int td_parse_case(td_set *s)
 	if (!c)
 		goto ERROUT;
 
-	if (td_parse_gen_attribs (&c->gen))
+	if (td_parse_gen_attribs (&c->gen, &s->gen))
 		goto ERROUT;
 
 	if (xmlTextReaderMoveToAttribute (reader, 
@@ -426,7 +436,9 @@ LOCAL int td_parse_suite ()
 	s = td_suite_create();
 	if (!s) return 1;
 	
-	td_parse_gen_attribs (&s->gen);
+	current_suite = s;
+
+	td_parse_gen_attribs (&s->gen, NULL);
 	if (xmlTextReaderMoveToAttribute (reader, 
 					  BAD_CAST "domain") == 1) {
 		s->domain =  xmlTextReaderValue(reader);
@@ -449,7 +461,7 @@ LOCAL int td_parse_set ()
 		return 1;
 	s = td_set_create ();
 
-	if (td_parse_gen_attribs(&s->gen))
+	if (td_parse_gen_attribs(&s->gen, &current_suite->gen))
 		goto ERROUT;
 
 	if (xmlTextReaderMoveToAttribute (reader, 
