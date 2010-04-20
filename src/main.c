@@ -544,6 +544,9 @@ int main (int argc, char *argv[], char *envp[])
 	opts.run_automatic = opts.run_manual = 1;
 	gettimeofday (&created, NULL);
 
+	if (argc == 1)
+		h_flag = 1;
+
 	while (1) {
 		option_idx = 0;
      
