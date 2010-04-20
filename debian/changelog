@@ -1,3 +1,12 @@
+testrunner-lite (1.2.2) unstable; urgency=low
+
+  * Fixes: NB#164129 - testrunner-lite does not substitute entities in
+    tests.xml
+  * Fixes: NB#163384 - Testrunner dies if stdout contains invalid characters (Support ticket #147795)
+  * Fixes: NB#151632 - testrunner.py gives ERROR on 'level' atribute
+
+ -- Riku Halonen <riku.halonen@nokia.com>  Tue, 20 Apr 2010 10:29:05 +0300
+
 testrunner-lite (1.2.1) unstable; urgency=low
 
   * Fixed skipped tests showing in results file.
