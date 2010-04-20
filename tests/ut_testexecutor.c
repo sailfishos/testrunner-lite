@@ -207,10 +207,10 @@ START_TEST (test_executor_terminating_process)
 	fail_unless (edata.result == SIGTERM);
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
-	fail_unless (strcmp((char*)edata.stdout_data.buffer, 
-			    "stdouttest") == 0);
-	fail_unless (strcmp((char*)edata.stderr_data.buffer, 
-			    "stderrtest") == 0);
+	fail_unless (strncmp((char*)edata.stdout_data.buffer, 
+			    "stdouttest", strlen("stdouttest")) == 0);
+	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
+			    "stderrtest", strlen("stderrtest")) == 0);
 	fail_if(edata.failure_info.buffer == NULL);
 	fail_unless (strcmp((char*)edata.failure_info.buffer, 
 			    FAILURE_INFO_TIMEOUT) == 0);
@@ -231,10 +231,10 @@ START_TEST (test_executor_killing_process)
 	fail_unless (edata.result == SIGTERM || edata.result == SIGKILL);
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
-	fail_unless (strcmp((char*)edata.stdout_data.buffer, 
-			    "stdouttest") == 0);
-	fail_unless (strcmp((char*)edata.stderr_data.buffer, 
-			    "stderrtest") == 0);
+	fail_unless (strncmp((char*)edata.stdout_data.buffer, 
+			     "stdouttest", strlen("stdouttest")) == 0);
+	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
+			     "stderrtest", strlen("stderrtest")) == 0);
 	fail_if(edata.failure_info.buffer == NULL);
 	fail_unless (strcmp((char*)edata.failure_info.buffer, 
 			    FAILURE_INFO_TIMEOUT) == 0);
