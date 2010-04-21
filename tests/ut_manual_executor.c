@@ -205,6 +205,25 @@ START_TEST (test_execute_manual_step_failed)
     
 END_TEST
 
+START_TEST (test_execute_manual_set)
+     int ret;
+     FILE *f;
+
+     f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
+		 "testrunner-tests-manual-set.xml -o /tmp/res.xml", "w");
+     fail_if (f == NULL, "popen() failed");
+     ret = fwrite ("P\nP\n\n", 1, 5, f);
+     fail_if (ret != 5, "fwrite() returned : %d", ret);
+     fclose (f);
+     
+     ret = system ("grep PASS /tmp/res.xml");
+     fail_if (ret, "/tmp/res.xml does not contain PASS");
+
+     ret = system ("grep FAIL /tmp/res.xml");
+     fail_unless (ret, "/tmp/res.xml contains FAIL");
+
+END_TEST
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -222,6 +241,10 @@ Suite *make_manualtestexecutor_suite (void)
 
     tc = tcase_create ("Test executing failing manual step.");
     tcase_add_test (tc, test_execute_manual_step_failed);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executing manual set.");
+    tcase_add_test (tc, test_execute_manual_set);
     suite_add_tcase (s, tc);
 
     return s;

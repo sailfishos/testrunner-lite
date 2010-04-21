@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="manual_suite"  timeout="10" manual="false">  
+    <set name="manual_set" description="try utf-8 output"  manual="true" timeout="15">    
+      <case name="manual_case" description="case with couple manual steps" timeout="30">
+        <step>manual step 1</step>
+        <step>manual step 2</step>
+      </case>     
+    </set>
+ </suite>
+</testdefinition>
+
