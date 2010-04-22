@@ -89,6 +89,8 @@ int casecount = 0;
 /* ------------------------------------------------------------------------- */
 LOCAL void usage();
 /* ------------------------------------------------------------------------- */
+LOCAL void copyright();
+/* ------------------------------------------------------------------------- */
 LOCAL void process_suite(td_suite *);
 /* ------------------------------------------------------------------------- */
 LOCAL void process_set(td_set *);
@@ -164,6 +166,16 @@ LOCAL void usage()
     
 	return;
 }
+/* ------------------------------------------------------------------------- */
+/** Display license information.
+ */
+LOCAL void copyright () {
+        printf ("testrunner-lite, © Nokia 2010 All rights reserved,\n"
+                "licensed under the Gnu Lesser General Public License "
+		"version 2.1,\n"
+                "Contact: Ville Ilvonen <ville.p.ilvonen@nokia.com>\n");
+}
+
 /* ------------------------------------------------------------------------- */
 /** Process step data. execute one step from case.
  *  @param data step data
@@ -253,7 +265,6 @@ LOCAL int process_case (const void *data, const void *user)
 {
 
 	td_case *c = (td_case *)data;
-	td_set *set = (td_set *)user;
 	
 	if (c->gen.manual && !opts.run_manual) {
 		LOG_MSG(LOG_DEBUG, "Skipping manual case %s",
@@ -551,6 +562,7 @@ int main (int argc, char *argv[], char *envp[])
 	opts.run_automatic = opts.run_manual = 1;
 	gettimeofday (&created, NULL);
 
+	copyright();
 	if (argc == 1)
 		h_flag = 1;
 
