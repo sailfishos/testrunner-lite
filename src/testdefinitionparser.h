@@ -1,16 +1,23 @@
-/* * This file is part of testrunnerlite *
+/*
+ * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
- * All rights reserved.
  *
- * Contact: Sampo Saaristo <ext-sampo.1.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
  *
- * This software, including documentation, is protected by copyright
- * controlled by Nokia Corporation. All rights are reserved. Copying,
- * including reproducing, storing, adapting or translating, any or all of
- * this material requires the prior written consent of Nokia Corporation.
- * This material also contains confidential information which may not be
- * disclosed to others without the prior written consent of Nokia.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  */
 
