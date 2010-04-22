@@ -1,9 +1,9 @@
 .\" Process this file with
 .\" groff -man -Tascii min.1
 .\" 
-.TH TESTRUNNER-LITE 1 "March 2010" Linux "User Manuals"
+.TH TESTRUNNER-LITE 1 "April 2010" Linux "User Manuals"
 .SH NAME
-testrunner-lite \- test executor tool for CITA
+testrunner-lite \- generic test executor tool 
 .SH SYNOPSIS
 .B testrunner-lite [options]
 .SH DESCRIPTION
@@ -79,8 +79,7 @@ Filters do not work as of yet.
 Report bugs to test-tools-dev@projects.maemo.org
 
 .SH COPYRIGHT
-testrunner-lite, © Nokia 2010, All rights reserved
-Contact: Ville Ilvonen, test-tools-dev@projects.maemo.org
+testrunner-lite, © Nokia 2010, licensed under the GNU Lesser General Public License version 2.1, Contact: Ville Ilvonen, ville.p.ilvonen@nokia.com
 
 .SH "SEE ALSO"
 .BR test-definition (5)
