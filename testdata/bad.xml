@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <testdefinition version="0.1">
-  <suite name="incorrect-xml" domain="cita">
+  <suite name="incorrect-xml" domain="test">
     <set name="sampleset">
       <case name="samplecase">
         <step>cd</step>
