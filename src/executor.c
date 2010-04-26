@@ -188,8 +188,8 @@ static int exec_wrapper(const char *command)
 static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *command) {
 	int out_pipe[2];
 	int err_pipe[2];
-	pid_t pid;
-
+	pid_t pid, ppgid;
+	
 	if (pipe(out_pipe) < 0)
 		goto error_out;
 
@@ -204,6 +204,12 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		close(err_pipe[1]);
 		*stdout_fd = out_pipe[0];
 		*stderr_fd = err_pipe[0];
+		ppgid = getpgid (0);
+		if (ppgid == -1)
+			LOG_MSG (LOG_ERROR, "getpgid() failed %s",
+				 strerror (errno));
+		while (ppgid == getpgid(pid)) sched_yield();
+		
 	} else if (pid == 0) { /* child */
 		/* Create new session id.
 		 * Process group ID and session ID
@@ -751,7 +757,6 @@ int execute(const char* command, exec_data* data) {
 	if (data->pid > 0) {
 		/* relinquish the processor such that child process
 		   sets its new process group before reading it */
-		sched_yield();
 		data->pgid = getpgid(data->pid);
 		communicate(stdout_fd, stderr_fd, data);
 	}
