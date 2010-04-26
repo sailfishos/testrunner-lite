@@ -1,13 +1,13 @@
 Source: testrunner-lite
 Section: misc
 Priority: optional
-Maintainer: Sampo Saaristo <ext-sampo.1.saaristo@nokia.com>
+Maintainer: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
 Build-Depends: debhelper (>= 5), libtool, autoconf, libxml2-dev, doxygen, check, libcurl3-dev
 Standards-Version: 3.8.0
 
 Package: testrunner-lite
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libxml2, test-definition, libcurl3, openssh, sysinfod [armel], sysinfo-tool [armel]
+Depends: libxml2, test-definition, libcurl3, openssh, sysinfod [armel], sysinfo-tool [armel]
 Description: generic test executor tool
 
 Package: testrunner-lite-doc

@@ -88,6 +88,7 @@ typedef struct {
 	time_t   end;             /**< step execution end time */
 	xmlChar *stdout_;         /**< step stdout printouts */
 	xmlChar *stderr_;         /**< step stderr printouts */
+	pid_t    pgid;            /**< step process group id */
 } td_step;
 /* ------------------------------------------------------------------------- */
 /** Test case */
