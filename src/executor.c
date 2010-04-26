@@ -37,6 +37,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <stdio.h>
+#include <sched.h>
 #include <libxml/xmlstring.h>
 
 #include "remote_executor.h"
@@ -770,6 +771,11 @@ int execute(const char* command, exec_data* data) {
 	}
 
 	if (data->pid > 0) {
+		/* relinquish the processor such that child process
+		   sets its new process group before reading it */
+		sched_yield();
+		data->pgid = getpgid(data->pid);
+		printf("child %d %d\n", data->pid, data->pgid);
 		communicate(stdout_fd, stderr_fd, data);
 	}
 
@@ -794,6 +800,7 @@ void init_exec_data(exec_data* data) {
 	data->soft_timeout = COMMON_SOFT_TIMEOUT;
 	data->hard_timeout = COMMON_HARD_TIMEOUT;
 	data->pid = 0;
+	data->pgid = 0;
 	init_stream_data(&data->stdout_data, 1024);
 	init_stream_data(&data->stderr_data, 1024);
 	init_stream_data(&data->failure_info, 0);

@@ -69,6 +69,7 @@ struct _exec_data {
 	unsigned hard_timeout;	/* after soft_timeout, 0 = no timeout */
 	/* output parameters */
 	pid_t pid;
+	pid_t pgid;
 	stream_data stdout_data;
 	stream_data stderr_data;
 	stream_data failure_info;
