@@ -91,7 +91,6 @@ static void free_args(char* argv[]);
 static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, 
 				   const char *command);
 static pid_t fork_process(const char *command);
-static void kill_pgroup(int pgroup, int sig);
 static void* stream_data_realloc(stream_data* data, int size);
 static void stream_data_free(stream_data* data);
 static void stream_data_append(stream_data* data, char* src);
@@ -271,27 +270,6 @@ static pid_t fork_process(const char *command) {
 	}
 
 	return pid;
-}
-
-/** Send signal to process group of a test process
- * @param pgroup Process group ID for signal
- * @param sig Signal number
- */
-static void kill_pgroup(int pgroup, int sig) {
-	if (pgroup <= 1) {
-		LOG_MSG(LOG_ERROR, "Invalid pgid %d", pgroup);
-		return;
-	}
-
-	/* pgroup must be different than the pgid of testrunner-lite */
-	if (pgroup == getpgid(0)) {
-		LOG_MSG(LOG_ERROR, "Pgid equals the pgid of testrunner-lite");
-		return;
-	}
-
-	if (killpg(pgroup, sig) < 0 && errno != ESRCH) {
-		LOG_MSG(LOG_ERROR, "killpg failed: %s", strerror(errno));
-	}
 }
 
 /** Allocate memory for stream_data
@@ -832,6 +810,27 @@ void init_stream_data(stream_data* data, int allocate) {
  */
 void clean_stream_data(stream_data* data) {
 	stream_data_free(data);
+}
+
+/** Send signal to process group of a test process
+ * @param pgroup Process group ID for signal
+ * @param sig Signal number
+ */
+void kill_pgroup(int pgroup, int sig) {
+	if (pgroup <= 1) {
+		LOG_MSG(LOG_ERROR, "Invalid pgid %d", pgroup);
+		return;
+	}
+
+	/* pgroup must be different than the pgid of testrunner-lite */
+	if (pgroup == getpgid(0)) {
+		LOG_MSG(LOG_ERROR, "Pgid equals the pgid of testrunner-lite");
+		return;
+	}
+
+	if (killpg(pgroup, sig) < 0 && errno != ESRCH) {
+		LOG_MSG(LOG_ERROR, "killpg failed: %s", strerror(errno));
+	}
 }
 
 /** Sets the remote host for executor 

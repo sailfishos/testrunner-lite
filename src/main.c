@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <signal.h>
 
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
@@ -100,6 +101,8 @@ LOCAL int process_case (const void *, const void *);
 LOCAL int process_get (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_execute (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int create_output_folder ();
 /* ------------------------------------------------------------------------- */
@@ -208,7 +211,7 @@ LOCAL int step_execute (const void *data, const void *user)
 
 	if (step->step) {
 		execute((char*)step->step, &edata);
-
+		
 		if (step->stdout_) free (step->stdout_);
 		if (step->stderr_) free (step->stderr_);
 		if (step->failure_info) free (step->failure_info);
@@ -224,7 +227,8 @@ LOCAL int step_execute (const void *data, const void *user)
 			LOG_MSG (LOG_INFO, "FAILURE INFO %s",
 				 step->failure_info);
 		}
-
+		
+		step->pgid = edata.pgid; 
 		step->return_code = edata.result;
 		step->start = edata.start_time;
 		step->end = edata.end_time;
@@ -255,6 +259,39 @@ LOCAL int step_execute (const void *data, const void *user)
 
 	return !fail;
 }
+
+/* ------------------------------------------------------------------------- */
+/** Do step post processing. Mainly to ascertain that no dangling processes are
+ *  left behind.
+ *  @param data step data
+ *  @param user case data
+ *  @return 1 always
+ */
+LOCAL int step_post_process (const void *data, const void *user) 
+{
+	td_step *step = (td_step *)data;
+	td_case *c = (td_case *)user;
+
+	/* No post processing for manual steps ... */
+	if (c->gen.manual) 
+		goto out;
+	/* ... or filtered ones ... */
+	if (c->filtered)
+		goto out;
+
+	/* ... or ones that are not run ... */
+	if (!step->start)
+		goto out;
+
+	/* ... or ones that do not have process group ... */
+	if (!step->start)
+		goto out;
+
+	kill_pgroup(step->pgid, SIGKILL);
+ out:
+	return 1;
+}
+
 /* ------------------------------------------------------------------------- */
 /** Process case data. execute steps in case.
  *  @param data case data
@@ -290,6 +327,7 @@ LOCAL int process_case (const void *data, const void *user)
 		pre_manual (c);
 
 	xmlListWalk (c->steps, step_execute, data);
+	xmlListWalk (c->steps, step_post_process, data);
 
 	if (c->gen.manual && opts.run_manual)
 		post_manual (c);
@@ -433,6 +471,10 @@ LOCAL void process_set (td_set *s)
 	
 	write_post_set_tag (s);
  skip:
+	if (xmlListSize (s->pre_steps) > 0)
+		xmlListWalk (s->pre_steps, step_post_process, &dummy);
+	if (xmlListSize (s->post_steps) > 0)
+		xmlListWalk (s->post_steps, step_post_process, &dummy);
 	xml_end_element();
 	td_set_delete (s);
 	return;
