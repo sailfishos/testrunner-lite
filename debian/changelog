@@ -1,3 +1,9 @@
+testrunner-lite (1.2.4) unstable; urgency=low
+
+  * Implemented: SWP#MTT-256 - testrunner-lite open source preparations.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Mon, 26 Apr 2010 12:47:52 +0300
+
 testrunner-lite (1.2.3) unstable; urgency=low
 
   * Fixes: NB#164898 - testrunner-lite fails to run an XML for manual testing.
