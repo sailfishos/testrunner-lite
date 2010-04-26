@@ -775,7 +775,6 @@ int execute(const char* command, exec_data* data) {
 		   sets its new process group before reading it */
 		sched_yield();
 		data->pgid = getpgid(data->pid);
-		printf("child %d %d\n", data->pid, data->pgid);
 		communicate(stdout_fd, stderr_fd, data);
 	}
 
