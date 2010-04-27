@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="bg-test-suite">
+    <set name="bg-test-set" description="used in unit tests for background process cleanup">
+      <case name="bg-case" description="start unterminating process to background" timeout="5">
+	<step>/usr/lib/testrunner-lite-tests/unterminating stdout stderr <![CDATA[&]]></step>
+      </case>  
+    </set>
+  </suite>
+</testdefinition>   
