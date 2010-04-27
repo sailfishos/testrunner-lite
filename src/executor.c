@@ -188,7 +188,7 @@ static int exec_wrapper(const char *command)
 static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *command) {
 	int out_pipe[2];
 	int err_pipe[2];
-	pid_t pid, ppgid;
+	pid_t pid;
 	
 	if (pipe(out_pipe) < 0)
 		goto error_out;
@@ -204,18 +204,12 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		close(err_pipe[1]);
 		*stdout_fd = out_pipe[0];
 		*stderr_fd = err_pipe[0];
-		ppgid = getpgid (0);
-		if (ppgid == -1)
-			LOG_MSG (LOG_ERROR, "getpgid() failed %s",
-				 strerror (errno));
-		while (ppgid == getpgid(pid)) sched_yield();
 		
 	} else if (pid == 0) { /* child */
 		/* Create new session id.
 		 * Process group ID and session ID
 		 * are set to PID (they were PPID) */
 		setsid();
-
 		/* close the read end of the pipes */
 		close(out_pipe[0]);
 		close(err_pipe[0]);
@@ -739,6 +733,7 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 int execute(const char* command, exec_data* data) {
 	int stdout_fd = -1;
 	int stderr_fd = -1;
+	pid_t ppgid;
 
 	data->start_time = time(NULL);
 
@@ -755,8 +750,14 @@ int execute(const char* command, exec_data* data) {
 	}
 
 	if (data->pid > 0) {
-		/* relinquish the processor such that child process
-		   sets its new process group before reading it */
+		/* wait that child runs the setsid() */
+		ppgid = getpgid (0);
+		if (ppgid == -1)
+			LOG_MSG (LOG_ERROR, "getpgid() failed %s",
+				 strerror (errno));
+		else
+			while (ppgid == getpgid(data->pid)) sched_yield();
+
 		data->pgid = getpgid(data->pid);
 		communicate(stdout_fd, stderr_fd, data);
 	}
