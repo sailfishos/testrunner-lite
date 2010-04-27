@@ -738,7 +738,7 @@ int execute(const char* command, exec_data* data) {
 	data->start_time = time(NULL);
 
 	if (command != NULL) {
-	  LOG_MSG(LOG_DEBUG, "Executing command \'%s\'", command);
+		LOG_MSG(LOG_DEBUG, "Executing command \'%s\'", command);
 	}
 
 	if (data->redirect_output == REDIRECT_OUTPUT) {
@@ -759,6 +759,8 @@ int execute(const char* command, exec_data* data) {
 			while (ppgid == getpgid(data->pid)) sched_yield();
 
 		data->pgid = getpgid(data->pid);
+		LOG_MSG(LOG_DEBUG, "Process %d got process group %d",
+			data->pid, data->pgid);
 		communicate(stdout_fd, stderr_fd, data);
 	}
 
@@ -833,6 +835,9 @@ void kill_pgroup(int pgroup, int sig) {
 		LOG_MSG(LOG_ERROR, "Pgid equals the pgid of testrunner-lite");
 		return;
 	}
+
+	LOG_MSG(LOG_DEBUG, "Sending signal %d to process group %d",
+		sig, pgroup);
 
 	if (killpg(pgroup, sig) < 0 && errno != ESRCH) {
 		LOG_MSG(LOG_ERROR, "killpg failed: %s", strerror(errno));
