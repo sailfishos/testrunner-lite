@@ -1,6 +1,8 @@
 testrunner-lite (1.2.4) unstable; urgency=low
 
+  * Fixes: NB#164179 - Preventing "hanging" in SSH connections.
   * Implemented: SWP#MTT-256 - testrunner-lite open source preparations.
+  * Fixed dependencies for i386 use.
 
  -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Mon, 26 Apr 2010 12:47:52 +0300
 
