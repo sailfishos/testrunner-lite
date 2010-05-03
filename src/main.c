@@ -59,7 +59,9 @@ extern char* optarg;
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
 struct timeval created;
-
+testrunner_lite_options opts;
+char *global_failure = NULL;
+int bail_out = 0;
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
 /* None */
@@ -70,13 +72,10 @@ struct timeval created;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-td_suite *current_suite = NULL;
-testrunner_lite_options opts;
-hw_info hwinfo;
-int passcount = 0;
-int casecount = 0;
-
-
+LOCAL td_suite *current_suite = NULL;
+LOCAL hw_info hwinfo;
+LOCAL int passcount = 0;
+LOCAL int casecount = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -98,9 +97,13 @@ LOCAL void process_set(td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+LOCAL int case_result_na (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 LOCAL int process_get (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_execute (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int step_result_na (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
@@ -187,17 +190,26 @@ LOCAL void copyright () {
  */
 LOCAL int step_execute (const void *data, const void *user) 
 {
-	int fail = 0;
+	int res = CASE_PASS;
 	td_step *step = (td_step *)data;
 	td_case *c = (td_case *)user;
 	exec_data edata;
 
 	memset (&edata, 0x0, sizeof (exec_data));
 
-	if (c->gen.manual) {
-		fail = execute_manual (step);
+	if (bail_out) {
+		res = CASE_NA;
+		step->return_code = bail_out;
+		if (global_failure)
+			step->failure_info = xmlCharStrdup (global_failure);
 		goto out;
 	}
+
+	if (c->gen.manual) {
+		res = execute_manual (step);
+		goto out;
+	}
+
 	init_exec_data(&edata);
 
 	if (c->dummy) {
@@ -229,6 +241,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		}
 		
 		step->pgid = edata.pgid; 
+		step->has_result = 1;
 		step->return_code = edata.result;
 		step->start = edata.start_time;
 		step->end = edata.end_time;
@@ -243,21 +256,38 @@ LOCAL int step_execute (const void *data, const void *user)
 					 "STEP: %s return %d expected %d\n",
 					 step->step, step->return_code, 
 					 step->expected_result);
-				fail = 1;
+				res = CASE_FAIL;
 			}
 		} else if (step->return_code != step->expected_result) {
 			LOG_MSG (LOG_INFO, "STEP: %s return %d expected %d\n",
 				 step->step, step->return_code, 
 				 step->expected_result);
-			fail = 1;
+			res = CASE_FAIL;
 		}
 	}
  out:
-	if (fail)
-		c->passed = 0;
+	if (res != CASE_PASS)
+		c->case_res = res;
 	
 
-	return !fail;
+	return !res;
+}
+
+/* ------------------------------------------------------------------------- */
+/** Set N/A result for test step
+ *  @param data step data
+ *  @param user failure info string
+ *  @return 1 always
+ */
+LOCAL int step_result_na (const void *data, const void *user) 
+{
+	td_step *step = (td_step *)data;
+	char *failure_info = (char *)user;
+	
+	step->has_result = 0; /* causes the result to be interpreted as N/A */
+	step->failure_info = xmlCharStrdup (failure_info);
+
+	return 1;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -319,7 +349,7 @@ LOCAL int process_case (const void *data, const void *user)
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
 
-	c->passed = 1;
+	c->case_res = CASE_PASS;
 	if (c->gen.timeout == 0)
 		c->gen.timeout = COMMON_SOFT_TIMEOUT; /* the default one */
 	
@@ -332,12 +362,32 @@ LOCAL int process_case (const void *data, const void *user)
 	if (c->gen.manual && opts.run_manual)
 		post_manual (c);
 
-	LOG_MSG (LOG_INFO, "Finished test case Result: %s", c->passed ?
-		 "PASS" : "FAIL");
-	passcount += c->passed;
+	LOG_MSG (LOG_INFO, "Finished test case Result: %s", 
+		 case_result_str(c->case_res));
+	passcount += (c->case_res == CASE_PASS);
 	
 	return 1;
 }
+/* ------------------------------------------------------------------------- */
+/** Set case result to N/A
+ *  @param data case data
+ *  @param user failure info
+ *  @return 1 always
+ */
+LOCAL int case_result_na (const void *data, const void *user)
+{
+
+	td_case *c = (td_case *)data;
+	
+	LOG_MSG (LOG_DEBUG, "Setting N/A result for case %s", c->gen.name);
+
+	c->case_res = CASE_NA;
+
+	xmlListWalk (c->steps, step_result_na, user);
+	
+	return 1;
+}
+
 /* ------------------------------------------------------------------------- */
 /** Process get data. execute steps in case.
  *  @param data case data
@@ -442,14 +492,17 @@ LOCAL void process_set (td_set *s)
 
 	if (xmlListSize (s->pre_steps) > 0) {
 		memset (&dummy, 0x0, sizeof (td_case));
-		dummy.passed = 1;
+		dummy.case_res = CASE_PASS;
 		dummy.dummy = 1;
 		dummy.gen.timeout = 0; /* No timeout for pre steps */
 		LOG_MSG (LOG_INFO, "Executing pre steps");
 		xmlListWalk (s->pre_steps, step_execute, &dummy);
-		if (dummy.passed == 0) {
+		if (dummy.case_res != CASE_PASS) {
 			LOG_MSG (LOG_ERROR, "Pre steps failed. "
 				 "Test set %s aborted.", s->gen.name); 
+			xmlListWalk (s->cases, case_result_na, 
+				     global_failure ? global_failure :
+				     "pre_steps failed");
 			goto skip;
 		}
 	}
@@ -459,18 +512,19 @@ LOCAL void process_set (td_set *s)
 	if (xmlListSize (s->post_steps) > 0) {
 		LOG_MSG (LOG_INFO, "Executing post steps");
 		memset (&dummy, 0x0, sizeof (td_case));
-		dummy.passed = 1;
+		dummy.case_res = CASE_PASS;
 		dummy.dummy = 1;
 		/* Default timeout for post steps */
 		dummy.gen.timeout = COMMON_SOFT_TIMEOUT;
 		xmlListWalk (s->post_steps, step_execute, &dummy);
-		if (dummy.passed == 0)
+		if (dummy.case_res == CASE_FAIL)
 			LOG_MSG (LOG_ERROR, 
 				 "Post steps failed for %s.", s->gen.name);
 	}
+
+ skip:
 	
 	write_post_set_tag (s);
- skip:
 	if (xmlListSize (s->pre_steps) > 0)
 		xmlListWalk (s->pre_steps, step_post_process, &dummy);
 	if (xmlListSize (s->post_steps) > 0)
@@ -812,7 +866,6 @@ int main (int argc, char *argv[], char *envp[])
 
 	while (td_next_node() == 0);
 	LOG_MSG (LOG_INFO, "Finished running tests.");
-	
 	executor_close();
 	td_reader_close();
 	close_result_logger();
@@ -828,8 +881,9 @@ OUT:
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
-	
-	return retval;
+	if (bail_out) retval = bail_out;
+
+	return retval; 
 }	
 
 

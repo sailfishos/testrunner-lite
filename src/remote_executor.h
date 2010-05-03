@@ -58,6 +58,8 @@ int ssh_execute (const char *hostname, const char *command);
 /* ------------------------------------------------------------------------- */
 int ssh_kill (const char *hostname, pid_t id);
 /* ------------------------------------------------------------------------- */
+int ssh_check_conn (const char *hostname);
+/* ------------------------------------------------------------------------- */
 void ssh_clean (const char *hostname, pid_t id);
 /* ------------------------------------------------------------------------- */
 void ssh_executor_close (const char *hostname);

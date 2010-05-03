@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include "testdefinitiondatatypes.h"
 #include "manual_executor.h"
 
 /* ------------------------------------------------------------------------- */
@@ -94,11 +95,23 @@ LOCAL int check_user_input(char *buff, int *result)
 
 	if (strlen (buff) == 1) {
 		if (buff[0] == 'p' || buff[0] == 'P') {
-			*result = 0;
+			*result = CASE_PASS;
 			return 0;
 		}
 		if (buff[0] == 'f' || buff[0] == 'F') {
-			*result = 1;
+			*result = CASE_FAIL;
+			return 0;
+		}
+		if (buff[0] == 'n' || buff[0] == 'N') {
+			*result = CASE_NA;
+			return 0;
+		}
+
+	}
+
+	if (strlen (buff) == 3) {
+		if (!strcasecmp (buff, "n/a")) {
+			*result = CASE_NA;
 			return 0;
 		}
 	}
@@ -107,12 +120,12 @@ LOCAL int check_user_input(char *buff, int *result)
 		return 1;
 	
 	if (!strcasecmp (buff, "pass")) {
-		*result = 0;
+		*result = CASE_PASS;
 		return 0;
 	}
 		
 	if (!strcasecmp (buff, "fail")) {
-		*result = 1;
+		*result = CASE_FAIL;
 		return 0;
 	}
 
@@ -167,12 +180,15 @@ int execute_manual (td_step *step)
 		printf ("%s\n", step->step);
 	
 	buff [0] = '\0';
-	printf ("Please enter the result ([P/p]ass or [F/f]ail): ");
+	printf ("Please enter the result ([P/p]ass,[F/f]ail or [N/n]/a): ");
 	p = fgets (buff, 256, stdin);
 	while (check_user_input(buff, &ret)) {
 		printf ("Invalid input.\n");
 		p = fgets (buff, 256, stdin);
 	}
+	if (ret != CASE_NA)
+		step->has_result = 1;
+
 	step->end = time (NULL);
 	
 	return ret;
@@ -183,8 +199,8 @@ int execute_manual (td_step *step)
  */
 void post_manual (td_case *c)
 {
-	printf ("--- Test steps executed, case is %s ---\n",
-		c->passed ? "PASSED" : "FAILED");
+	printf ("--- Test steps executed, case is %sED ---\n",
+		case_result_str(c->case_res));
 
 	c->comment = get_comments();
 }

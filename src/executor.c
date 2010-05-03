@@ -50,7 +50,8 @@
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL GLOBAL VARIABLES */
-/* None */
+extern int bail_out;
+extern char *global_failure;
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL FUNCTION PROTOTYPES */
@@ -167,8 +168,9 @@ static int exec_wrapper(const char *command)
 {
 	int ret = 0;
 
-	if (options->target_address)
+	if (options->target_address) {
 		ret = ssh_execute (options->target_address, command);
+	}
 	else
 		/* on success, execvp does not return */
 		ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARG1, 
@@ -472,6 +474,23 @@ static int execution_terminated(exec_data* data) {
 		if (WIFEXITED(status)) {
 			/* child exited normally */
 			data->result = WEXITSTATUS(status);
+			if (options->target_address) {
+				if (data->result== 255 || (data->result > 64 && 
+							   data->result < 80)) {
+					/* suspicious return value - 
+					   do connection check */
+					if (ssh_check_conn (options->
+							    target_address)) {
+						bail_out = data->result;
+						global_failure = "connection "
+							"fail";
+						LOG_MSG(LOG_ERROR, 
+							"ssh connection "
+							"failure");
+
+					}
+				}
+			}
 			LOG_MSG(LOG_DEBUG,
 				"Process %d exited with status %d",
 				pid, WEXITSTATUS(status));
@@ -483,6 +502,17 @@ static int execution_terminated(exec_data* data) {
 			LOG_MSG(LOG_DEBUG,
 				"Process %d was terminated by signal %d",
 				pid, WTERMSIG(status));
+			/* check that ssh connections work in case of 
+			 * remote execution
+			 */
+			if (options->target_address && 
+			    ssh_check_conn (options->target_address)) {
+				LOG_MSG(LOG_ERROR, "ssh connection failure");
+					
+				bail_out = ret;
+				global_failure = "connection fail";
+			}
+
 		} else {
 			data->result = -1;
 			LOG_MSG(LOG_ERROR,
@@ -860,7 +890,7 @@ void executor_init (testrunner_lite_options *opts)
 void executor_close ()
 {
 	
-	if (options->target_address)
+	if (options->target_address && !bail_out)
 		ssh_executor_close(options->target_address);
 }
 
