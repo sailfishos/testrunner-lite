@@ -170,14 +170,21 @@ LOCAL int xml_write_step (const void *data, const void *user)
 					 step->step) < 0)
 		goto err_out;
 	
-	if (xmlTextWriterWriteAttribute (writer, 
-					 BAD_CAST "result", 
-					 step->expected_result == 
-					 step->return_code ? 
-					 BAD_CAST "PASS" :
-					 BAD_CAST "FAIL") < 0)
-		goto err_out;
+	if (step->has_result == 0) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "result", 
+						 BAD_CAST "N/A") < 0)
+			goto err_out;
 
+
+	} else if (xmlTextWriterWriteAttribute (writer, 
+						BAD_CAST "result", 
+						step->expected_result == 
+						step->return_code ? 
+						BAD_CAST "PASS" :
+						BAD_CAST "FAIL") < 0)
+		goto err_out;
+	
 	if (step->failure_info) {
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "failure_info", 
@@ -285,8 +292,8 @@ LOCAL int xml_write_case (const void *data, const void *user)
 
 	if (xmlTextWriterWriteAttribute (writer, 
 					 BAD_CAST "result", 
-					 c->passed ?
-					 BAD_CAST "PASS" : BAD_CAST "FAIL") < 0)
+					 BAD_CAST (case_result_str
+						   (c->case_res))) < 0)
 		
 		goto err_out;
 

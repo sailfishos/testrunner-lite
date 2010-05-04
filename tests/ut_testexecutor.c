@@ -353,7 +353,7 @@ START_TEST (test_bg_cleanup)
 	      TESTDATA_BG_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
-     
+     sleep (1);
      sprintf (cmd, "pidof unterminating");
      ret = system (cmd);
      fail_unless (ret, cmd);

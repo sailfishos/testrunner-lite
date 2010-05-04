@@ -123,6 +123,24 @@ int ssh_execute (const char *hostname, const char *command)
 
 	return ret;
 }
+
+/* ------------------------------------------------------------------------- */
+/** Tries to check if ssh connections are still working
+ * @param hostname SUT address 
+ * @return 0 or ssh error code
+ */
+int ssh_check_conn (const char *hostname)
+{
+	int ret;
+	char cmd[1024];
+	
+	sprintf (cmd, "%s %s %s echo", SSHCMD, SSHCMDARGS, hostname);
+	ret = system (cmd);
+
+	return ret;
+	
+}
+
 /* ------------------------------------------------------------------------- */
 /** Tries to kill program started by ssh and removes temporary file
  *  @param hostname SUT address 

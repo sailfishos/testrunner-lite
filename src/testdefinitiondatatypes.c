@@ -62,7 +62,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-/* None */
+LOCAL const char *case_res_str[] = {"FAIL", "PASS", "N/A"};
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -134,6 +134,16 @@ LOCAL void gen_attribs_delete (td_gen_attribs *gen)
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
+/** Returns string matching the case result value
+ *  @param  cr case result value
+ *  @return const string matching the value
+ */
+const char *case_result_str (case_result_t cr)
+{
+	if (cr > CASE_NA || cr < CASE_FAIL)
+		return "INVALID";
+	return case_res_str[cr];
+}
 /** Creates a td_suite data structure, initializes lists for pre_steps etc.
  *  @return pointer to td_set or NULL in case of OOM
  */

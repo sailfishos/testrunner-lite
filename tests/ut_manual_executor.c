@@ -128,7 +128,7 @@ START_TEST (test_execute_manual_step_passed)
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    t_case->passed = 1;
+    t_case->case_res = CASE_PASS;
     fp = freopen (stdout_tmp, "w", stdout);
     
     write(pipefd[1], "\n", 1);
@@ -194,7 +194,7 @@ START_TEST (test_execute_manual_step_failed)
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    t_case->passed = 0;
+    t_case->case_res = CASE_FAIL;
     fp = freopen (stdout_tmp, "w", stdout);
     
     write(pipefd[1], "\n", 1);

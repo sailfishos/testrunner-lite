@@ -81,6 +81,7 @@ typedef struct {
 				     (with possible CDATA)    */
 	int      has_expected_result; /**< is expected result specified */
 	int      expected_result; /**< expected result of step */
+	int      has_result;      /**< should we trust the return_code */
 	int      return_code;     /**< actual result of step */
 	/* Executor fills */
 	xmlChar *failure_info;    /**< optional failure info */
@@ -91,6 +92,13 @@ typedef struct {
 	pid_t    pgid;            /**< step process group id */
 } td_step;
 /* ------------------------------------------------------------------------- */
+/** Test case result */
+typedef enum {
+	CASE_FAIL = 0,
+	CASE_PASS,
+	CASE_NA
+} case_result_t;
+/* ------------------------------------------------------------------------- */
 /** Test case */
 typedef struct {
 	/* Parser fills */
@@ -99,7 +107,7 @@ typedef struct {
 	xmlListPtr steps;       /**< Steps in this test case */
 	xmlChar   *comment;     /**< Manual test case comment */
 	/* Executor fills */
-	int        passed;      /**< Flag stating whether this case is passed */
+	case_result_t  case_res; /**< r stating whether this case is passed */
 	int        dummy;       /**< Case is dummy - used with pre post steps */
 	int        filtered;    /**< Case is filtered */
 } td_case;
@@ -113,6 +121,8 @@ typedef struct {
 
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
+/* ------------------------------------------------------------------------- */
+const char *case_result_str (case_result_t);
 /* ------------------------------------------------------------------------- */
 td_suite *td_suite_create();
 /* ------------------------------------------------------------------------- */

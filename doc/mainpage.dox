@@ -1,0 +1,82 @@
+/*! \mainpage testrunner-lite Reference Documentation
+
+\section intro_sec Introduction
+
+testrunner-lite  is  a tool for executing test commands. 
+It is designed to be a lightweight wrapper for various test harnesses. The tool is driven by input XML file containing the test definitions (suite, set, case, step). Tests are executed as instructed in the input XML file and the  output
+is written to result XML or text file.
+
+\section opts Options
+
+\subsection opt_help  -h,  --help
+Display short help and exit
+
+\subsection opt_file -f FILE,  --file FILE
+Input file with test definitions in XML (required)
+
+\subsection opt_ofile -o FILE,  --output FILE
+Output file format; FORMAT can be xml or text (Default xml)
+
+\subsection opt_verbose -v, -vv,  --verbose[={INFO|DEBUG}]
+Enable  verbosity mode; -v and --verbose=INFO are equivalent outputting INFO, 
+ERROR and WARNING messages. Similarly -vv and --verbose=DEBUG are equivalent, 
+outputting also debug messages. Default behaviour is silent mode.
+
+\subsection log_opt -L URL,  --logger=URL
+Remote HTTP logger. Log messages are sent to given URL in a HTTP POST message. 
+URL format is [http://]host[:port][/path/], where host  may be a hostname or 
+an IPv4 address.
+
+\subsection opt_auto -a,  --automatic
+Enable only automatic tests to be executed
+
+\subsection opt_manual       -m,  --manual
+Enable only manual tests to be executed
+
+\subsection opt_ci -c,  --ci
+Disable validation of test definition against schema
+
+\subsection opt_semantic       -s,  --semantic
+Enable validation of test definition against stricter (semantics) schema
+
+\subsection opt_valonly -A,  --validate-only
+Do only input xml validation, do not execute tests
+
+\subsection opt_target  -t [USER@]ADDRESS, --target=[USER@]ADDRESS
+Enable host-based testing. If given, commands are executed from test control 
+PC (host) side. ADDRESS is the ipv4 adress of the system under test.
+
+\section install_sec Installation
+
+The tool can be compiled into debian packages with dpkg-buildpackage and installed with dpkg -i testrunner-lite_<version>_<architecture>.deb.
+
+\section main_mod Main Modules
+
+Following gives short introduction to main modules of testrunner-lite. To give
+better understanding of the program flow.
+
+\subsection main Main
+
+File \ref main.c contains basic commandline parsing and the high level logic of execution.
+
+\subsection test_def Test definition parser
+
+The test definition parsing is done in \ref testdefinitionparser.c. The data is saved to data structures defined in \ref testdefinitiondatatypes.h as the parsing progresses. File \ref testdefinitiondatatypes.c contains routines for intialization and cleanup of the test definition data types.
+
+\subsection execution Executor
+
+The executor module (\ref executor.c) takes care of test step execution. File 
+\ref remote_executor.c provides support for host based testing, where the test
+steps are executed in a remote host over ssh. Manual test steps are handled 
+in \ref manual_executor.c.
+
+\subsection log Logger
+
+The logger module \ref log.c provides routines for logging to stdout or to 
+remote location with http POST method.
+
+\subsection test_re Test result writer
+
+Test results are written to text or xml writer in \ref testresultlogger.c.
+*/
+
