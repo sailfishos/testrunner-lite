@@ -1,3 +1,9 @@
+testrunner-lite (1.2.5) unstable; urgency=low
+
+  * Fixes: NB#165821 - testrunner-lite fails to copy file if <file> tag contains newlines
+
+ -- Raimo Gratseff <ext-raimo.gratseff@nokia.com>  Tue, 04 May 2010 12:18:49 +0300
+ 
 testrunner-lite (1.2.4) unstable; urgency=low
 
   * Fixes: NB#164179 - Preventing "hanging" in SSH connections.

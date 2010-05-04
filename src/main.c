@@ -35,6 +35,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <signal.h>
+#include <ctype.h>
 
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
@@ -105,6 +106,8 @@ LOCAL int step_execute (const void *, const void *);
 LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int create_output_folder ();
+/* ------------------------------------------------------------------------- */
+LOCAL unsigned int trim_filename(char *, char *);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -344,11 +347,12 @@ LOCAL int process_case (const void *data, const void *user)
  *  @param user set data
  *  @return 1 always
  */
-LOCAL int process_get (const void *data, const void *user) 
+LOCAL int process_get (const void *data, const void *user)
 {
 
-	xmlChar *fname = (xmlChar *)data;
+	xmlChar *rawfname = (xmlChar *)data;
 	xmlChar *command;
+	char *fname;
 	exec_data edata;
 	char    *remote = opts.target_address;
 
@@ -357,24 +361,26 @@ LOCAL int process_get (const void *data, const void *user)
 	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
+	fname = malloc (strlen((char *)rawfname));
+	trim_filename(rawfname, fname);
+
 	/*
 	** Compose command 
 	*/
 	if (remote) {
 		opts.target_address = NULL; /* execute locally */
 		command = (xmlChar *)malloc (strlen ("scp ") + 
-					     strlen ((char *)fname) +
+					     strlen (fname) +
 					     strlen (opts.output_folder) +
 					     strlen (remote) + 4);
-		sprintf ((char *)command, "scp %s:%s %s", remote, 
-			 (char *)fname, 
+		sprintf ((char *)command, "scp %s:%s %s", remote, fname, 
 			 opts.output_folder);
 
 	} else {
 		command = (xmlChar *)malloc (strlen ("cp ") + 
-					     strlen ((char *)fname) +
+					     strlen (fname) +
 					     strlen (opts.output_folder) + 2);
-		sprintf ((char *)command, "cp %s %s", (char *)fname, 
+		sprintf ((char *)command, "cp %s %s", fname,
 			 opts.output_folder);
 	}
 	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
@@ -395,6 +401,7 @@ LOCAL int process_get (const void *data, const void *user)
 	if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
 	if (edata.failure_info.buffer) free (edata.failure_info.buffer);
 	free (command);
+	free (fname);
 
 	return 1;
 }
@@ -556,6 +563,69 @@ LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) {
         return 1;
     }
 
+}
+
+/* ------------------------------------------------------------------------- */
+/** Trim string of whitespace and control characters.
+ * Remove unwanted whitespace, linefeeds etc. (using isspace()) from the
+ * beginning and end of the string (until the first/last non-whitespace
+ * character) and control characters (using iscntrl()) from the middle.
+ * @param ins The input string. Must not be null.
+ * @param outs The output string. Must be at least as long as the input string
+ and not null.
+ * @return Length of the output string
+ */
+LOCAL unsigned int trim_filename(char *ins, char *outs)
+{
+	unsigned int ins_i = 0;
+	unsigned int ins_end = 0;
+	unsigned int outs_i = 0;
+
+	/* make sure input and output strings exist */
+	if (ins == 0 || outs == 0) {
+		return 0;
+	}
+
+	ins_end = strlen(ins);
+
+	/* test if the string is empty */
+	if (ins_end == 0) {
+		return 0;
+	}
+
+	/* find the first non-whitespace character */
+	while (1) {
+		if (ins_i >= ins_end)
+			break;
+		if (isspace(ins[ins_i]))
+			ins_i += 1;
+		else
+			break;
+	}
+
+	/* find the last non-whitespace character */
+	while (1) {
+		if (ins_end <= ins_i)
+			break;
+		if (isspace(ins[ins_end - 1]))
+			ins_end -= 1;
+		else
+			break;
+	}
+
+	/* Copy trimmed string to output */
+	while (ins_i < ins_end) {
+		/* check and skip control characters */
+		if (!iscntrl(ins[ins_i])) {
+			outs[outs_i] = ins[ins_i];
+			outs_i += 1;
+		}
+		ins_i += 1;
+	}
+	/* add null termination */
+	outs[outs_i] = 0;
+
+	return outs_i;
 }
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */

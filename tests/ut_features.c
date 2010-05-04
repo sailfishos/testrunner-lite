@@ -165,6 +165,21 @@ START_TEST (test_get)
     printf ("%s: get /tmp/gettest2.txt worked\n",
 	    __FUNCTION__); 
 
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest3.txt");
+    fail_if (ret, cmd);
+    printf ("%s: get /tmp/gettest3.txt worked\n",
+	    __FUNCTION__);
+
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest4.txt");
+    fail_if (ret, cmd);
+    printf ("%s: get /tmp/gettest4.txt worked\n",
+	    __FUNCTION__);
+
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/get\ test5.txt");
+    fail_if (ret, cmd);
+    printf ("%s: get /tmp/get\ test5.txt worked\n",
+	    __FUNCTION__);
+
 END_TEST
 
 START_TEST (test_utf8)
