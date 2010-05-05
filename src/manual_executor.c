@@ -199,9 +199,21 @@ int execute_manual (td_step *step)
  */
 void post_manual (td_case *c)
 {
-	printf ("--- Test steps executed, case is %sED ---\n",
-		case_result_str(c->case_res));
-
+	printf ("--- Test steps executed, case is ");
+	switch (c->case_res) {
+	case CASE_FAIL:
+		printf ("FAILED");
+		break;
+	case CASE_PASS:
+		printf ("PASSED");
+		break;
+	case CASE_NA:
+		printf ("N/A");
+		break;
+	default:
+		printf ("Unknown result code");
+	}
+	printf (" ---\n");
 	c->comment = get_comments();
 }
 
