@@ -212,6 +212,74 @@ START_TEST (test_execute_manual_step_failed)
     
 END_TEST
 
+/* ------------------------------------------------------------------------- */
+START_TEST (test_execute_manual_step_na)
+
+    td_case *t_case = NULL;
+    td_step *t_step = NULL;
+    FILE *fp;
+    int ret;
+    char cmd[1024];
+    char *stdout_tmp = "/tmp/testrunner-lite-manual-exec-stdout.log";
+    int pipefd[2];
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* redirect stdin from a pipe */
+    pipe(pipefd);
+    close(0);
+    dup(pipefd[0]);
+
+    t_case = td_case_create();
+    t_case->gen.description = (xmlChar*)"This is manual test case.";
+
+    /* Execute print information. */
+    pre_manual (t_case);
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+    sprintf (cmd, "grep \"This is manual test case.\" %s", stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    /* Forward stdout temporarily to a file. */
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    /* Execute manual step. */
+    t_step = td_step_create();
+    t_step->step = (xmlChar*)"This is manual test step.";
+    
+    /* Make test case fail. */
+    write(pipefd[1], "N\n", 2);
+    execute_manual (t_step);
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+
+    sprintf (cmd, "grep \"This is manual test step.\" %s", stdout_tmp);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    t_case->case_res = CASE_NA;
+    fp = freopen (stdout_tmp, "w", stdout);
+    
+    write(pipefd[1], "\n", 1);
+    post_manual (t_case);
+    
+    /* Back to terminal. */
+    freopen ("/dev/tty", "w", stdout);
+
+    sprintf (cmd, "grep \"N/A.\" %s", stdout_tmp);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
+    close(pipefd[0]);
+    close(pipefd[1]);
+    
+END_TEST
+/* ------------------------------------------------------------------------- */
+
 START_TEST (test_execute_manual_set)
      int ret;
      FILE *f;
@@ -249,6 +317,11 @@ Suite *make_manualtestexecutor_suite (void)
     tc = tcase_create ("Test executing failing manual step.");
     tcase_add_test (tc, test_execute_manual_step_failed);
     suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executing n/a manual step.");
+    tcase_add_test (tc, test_execute_manual_step_na);
+    suite_add_tcase (s, tc);
+
 
     tc = tcase_create ("Test executing manual set.");
     tcase_add_test (tc, test_execute_manual_set);
