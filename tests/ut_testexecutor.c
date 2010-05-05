@@ -359,6 +359,22 @@ START_TEST (test_bg_cleanup)
      fail_unless (ret, cmd);
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST (test_pre_step_failure_handling)
+
+     int ret;
+     char cmd[1024];
+     
+     sprintf (cmd, "%s -v -f %s -o /tmp/testrunnerlitetestdir2/res.xml ", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_PRE_STEP_FAIL_XML);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     sleep (1);
+     sprintf (cmd, "grep \"pre_steps failed\" /tmp/testrunnerlitetestdir2/res.xml ");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+END_TEST
+/* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_terminating_process)
 	exec_data edata;
 	testrunner_lite_options opts;
@@ -502,6 +518,11 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test executor background process cleanup.");
     tcase_add_test (tc, test_bg_cleanup);
     suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor failing pre_step handling.");
+    tcase_add_test (tc, test_pre_step_failure_handling);
+    suite_add_tcase (s, tc);
+
 
     if (set_env_for_remote_tests()) {
 	    fprintf (stderr, "skipping remote tests\n");
