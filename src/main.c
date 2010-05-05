@@ -411,8 +411,8 @@ LOCAL int process_get (const void *data, const void *user)
 	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
-	fname = malloc (strlen((char *)rawfname));
-	trim_filename(rawfname, fname);
+	fname = malloc (strlen((char *)rawfname) + 1);
+	trim_filename((char *)rawfname, fname);
 
 	/*
 	** Compose command 
