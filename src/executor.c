@@ -160,7 +160,7 @@ static void free_args(char* argv[]) {
 	}
 }
 #endif
-/** Executes a command using /bin/sh -c
+/** Executes a command on local or remote host
  * @param command Command to execute
  * @return Does not return in success, error code from exec in case of error
  */
@@ -173,7 +173,7 @@ static int exec_wrapper(const char *command)
 	}
 	else
 		/* on success, execvp does not return */
-		ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARG1, 
+	  ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARGS,
 			    command, (char*)NULL);
 
 	return ret;
