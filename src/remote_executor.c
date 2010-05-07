@@ -60,6 +60,8 @@
 #define SSHCMD      "/usr/bin/ssh"
 #define SSHCMDARGS  "-o StrictHostKeyChecking=no",\
                     "-o PasswordAuthentication=no"
+#define SSHCMDARGS_STR  "-o StrictHostKeyChecking=no " \
+                        "-o PasswordAuthentication=no"
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 LOCAL char *unique_id = NULL;
@@ -114,12 +116,13 @@ void ssh_executor_init ()
 int ssh_execute (const char *hostname, const char *command)
 {
 	int ret;
-	char pre_cmd [PID_FILE_MAX_LEN + 80];
+	char cmd [PID_FILE_MAX_LEN + 1024];
 	
-	sprintf (pre_cmd, "echo $$ > " PID_FILE_FMT ";", unique_id, getpid());
-	
+	sprintf (cmd, "echo $$ > " PID_FILE_FMT "; %s %s \'%s\'",
+		 unique_id, getpid(), SHELLCMD, SHELLCMD_ARGS_STR, command);
+
 	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-		    pre_cmd, command, (char*)NULL);
+		    cmd, (char*)NULL);
 
 	return ret;
 }
@@ -134,7 +137,7 @@ int ssh_check_conn (const char *hostname)
 	int ret;
 	char cmd[1024];
 	
-	sprintf (cmd, "%s %s %s %s echo", SSHCMD, SSHCMDARGS, hostname);
+	sprintf (cmd, "%s %s %s echo", SSHCMD, SSHCMDARGS_STR, hostname);
 	ret = system (cmd);
 	return ret;
 }
