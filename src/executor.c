@@ -475,8 +475,10 @@ static int execution_terminated(exec_data* data) {
 			/* child exited normally */
 			data->result = WEXITSTATUS(status);
 			if (options->target_address) {
-				if (data->result== 255 || (data->result > 64 && 
-							   data->result < 80)) {
+				if (data->result== 255 || 
+				    (data->result > 64 && data->result < 80) ||
+				    (data->result > 128 && data->result < 144))
+				{
 					/* suspicious return value - 
 					   do connection check */
 					if (ssh_check_conn (options->
@@ -487,7 +489,7 @@ static int execution_terminated(exec_data* data) {
 						LOG_MSG(LOG_ERROR, 
 							"ssh connection "
 							"failure");
-
+						
 					}
 				}
 			}
@@ -507,7 +509,8 @@ static int execution_terminated(exec_data* data) {
 			 */
 			if (options->target_address && 
 			    (ret = ssh_check_conn (options->target_address))) {
-				LOG_MSG(LOG_ERROR, "ssh connection failure");
+				LOG_MSG(LOG_ERROR, "ssh connection failure "
+					"(%d)", ret);
 					
 				bail_out = ret;
 				global_failure = "connection fail";

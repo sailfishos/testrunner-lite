@@ -200,7 +200,8 @@ LOCAL int step_execute (const void *data, const void *user)
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	if (bail_out) {
-		res = CASE_NA;
+		res = CASE_FAIL;
+		step->has_result = 1; /* FIXME: temporary solution */
 		step->return_code = bail_out;
 		if (global_failure)
 			step->failure_info = xmlCharStrdup (global_failure);
@@ -285,8 +286,9 @@ LOCAL int step_result_na (const void *data, const void *user)
 {
 	td_step *step = (td_step *)data;
 	char *failure_info = (char *)user;
-	
-	step->has_result = 0; /* causes the result to be interpreted as N/A */
+	/* FIXME: temporary solution */
+	step->has_result = 1;
+	step->return_code = step->expected_result + 255; 
 	step->failure_info = xmlCharStrdup (failure_info);
 
 	return 1;
@@ -950,7 +952,7 @@ OUT:
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
-	if (bail_out) retval = 255;
+	if (bail_out) retval = 2;
 
 	return retval; 
 }	

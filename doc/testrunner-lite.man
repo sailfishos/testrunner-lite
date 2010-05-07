@@ -68,7 +68,7 @@ Successful program execution.
 .B 1
 General error (invalid xml input, missing mandatory argument...).
 .TP
-.B 255
+.B 2
 Connection failure during host based testing.
 
 

@@ -135,9 +135,7 @@ int ssh_check_conn (const char *hostname)
 	char cmd[1024];
 	
 	sprintf (cmd, "%s %s %s %s echo", SSHCMD, SSHCMDARGS, hostname);
-	printf ("%s:%s", __FUNCTION__,cmd);
 	ret = system (cmd);
-	printf ("%s:%d\n", __FUNCTION__, ret);
 	return ret;
 }
 
