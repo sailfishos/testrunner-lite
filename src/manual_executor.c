@@ -78,7 +78,7 @@ LOCAL int check_user_input(char *buff, int *result);
 /* ------------------------------------------------------------------------- */
 /** Check that user input is valid.
  * @param buff user input
- * @param result [OUT] pass result for caller 0 for pass 1 for fail
+ * @param result [OUT] pass result for caller
  * @return 0 for valid input 1 for invalid
  */
 LOCAL int check_user_input(char *buff, int *result)

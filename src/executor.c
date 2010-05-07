@@ -506,7 +506,7 @@ static int execution_terminated(exec_data* data) {
 			 * remote execution
 			 */
 			if (options->target_address && 
-			    ssh_check_conn (options->target_address)) {
+			    (ret = ssh_check_conn (options->target_address))) {
 				LOG_MSG(LOG_ERROR, "ssh connection failure");
 					
 				bail_out = ret;
@@ -610,7 +610,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			pgroup = getpgid(data->pid);
 			kill_pgroup(pgroup, SIGTERM);
 
-			if (options->target_address) {
+			if (options->target_address && !bail_out) {
 				ssh_kill (options->target_address, data->pid);
 			}
 
@@ -625,7 +625,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			pgroup = getpgid(data->pid);
 			kill_pgroup(pgroup, SIGKILL);
 
-			if (options->target_address) {
+			if (options->target_address && !bail_out) {
 				ssh_kill (options->target_address, data->pid);
 			}
 
@@ -641,7 +641,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 	reset_timer();
 
-	if (options->target_address && !terminated && !killed) {
+	if (options->target_address && !terminated && !killed && !bail_out) {
 		/* ssh_kill does cleaning if timeout occured */
 		ssh_clean(options->target_address, data->pid);
 	}

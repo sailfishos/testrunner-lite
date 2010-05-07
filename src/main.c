@@ -199,7 +199,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	exec_data edata;
 
 	memset (&edata, 0x0, sizeof (exec_data));
-
+	printf ("step: %s : BAILOUT %d\n", step->step, bail_out);
 	if (bail_out) {
 		res = CASE_NA;
 		step->return_code = bail_out;
@@ -951,7 +951,7 @@ OUT:
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
-	if (bail_out) retval = bail_out;
+	if (bail_out) retval = 255;
 
 	return retval; 
 }	
