@@ -199,7 +199,6 @@ LOCAL int step_execute (const void *data, const void *user)
 	exec_data edata;
 
 	memset (&edata, 0x0, sizeof (exec_data));
-	printf ("step: %s : BAILOUT %d\n", step->step, bail_out);
 	if (bail_out) {
 		res = CASE_NA;
 		step->return_code = bail_out;

@@ -34,6 +34,7 @@
 #include "testdefinitiondatatypes.h"
 #include "testrunnerlite.h"
 #include "testrunnerlitetestscommon.h"
+#include "remote_executor.h"
 #include "executor.h"
 
 /* ------------------------------------------------------------------------- */
@@ -433,7 +434,12 @@ START_TEST (test_executor_remote_killing_process)
 	   They have forked new ssh process to do cleanup */
 	sleep(1);
 END_TEST
-
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_ssh_conn_check)
+	int ret = ssh_check_conn ("localhost");
+	fail_if (ret, "ret=%d", ret);
+END_TEST
+/* ------------------------------------------------------------------------- */
 START_TEST (test_remote_get)
 
      int ret;
@@ -546,7 +552,12 @@ Suite *make_testexecutor_suite (void)
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_remote_get);
     suite_add_tcase (s, tc);
-
+    
+    tc = tcase_create ("Test ssh connection check routine.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_executor_ssh_conn_check);
+    suite_add_tcase (s, tc);
+    
     
     return s;
 }
