@@ -1,5 +1,5 @@
 .\" Process this file with
-.\" groff -man -Tascii min.1
+.\" groff -man -Tascii testrunner-lite.man
 .\" 
 .TH TESTRUNNER-LITE 1 "April 2010" Linux "User Manuals"
 .SH NAME
@@ -59,6 +59,18 @@ Do only input xml validation, do not execute tests
 Enable host-based testing. If given, commands are executed from
 test control PC (host) side. ADDRESS is the ipv4 adress of the
 system under test.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Successful program execution.
+.TP
+.B 1
+General error (invalid xml input, missing mandatory argument...).
+.TP
+.B 255
+Connection failure during host based testing.
+
 
 .SH FILES
 .I /usr/share/test-definition/testdefinition-syntax.xsd 
