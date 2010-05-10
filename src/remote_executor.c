@@ -117,9 +117,9 @@ int ssh_execute (const char *hostname, const char *command)
 {
 	int ret;
 	char cmd [PID_FILE_MAX_LEN + 1024];
-	
-	sprintf (cmd, "echo $$ > " PID_FILE_FMT "; %s %s \'%s\'",
-		 unique_id, getpid(), SHELLCMD, SHELLCMD_ARGS_STR, command);
+
+	sprintf (cmd, "%s %s \'echo $$ > " PID_FILE_FMT "; %s\'",
+		 SHELLCMD, SHELLCMD_ARGS_STR, unique_id, getpid(), command);
 
 	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
 		    cmd, (char*)NULL);
