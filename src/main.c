@@ -273,7 +273,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		c->case_res = res;
 	
 
-	return !res;
+	return (res == CASE_PASS);
 }
 
 /* ------------------------------------------------------------------------- */
