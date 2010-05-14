@@ -423,8 +423,8 @@ LOCAL int process_get (const void *data, const void *user)
 		command = (xmlChar *)malloc (strlen ("scp ") + 
 					     strlen (fname) +
 					     strlen (opts.output_folder) +
-					     strlen (remote) + 4);
-		sprintf ((char *)command, "scp %s:%s %s", remote, fname, 
+					     strlen (remote) + 10);
+		sprintf ((char *)command, "scp %s:\'%s\' %s", remote, fname,
 			 opts.output_folder);
 
 	} else {
