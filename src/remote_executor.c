@@ -148,7 +148,7 @@ int ssh_kill (const char *hostname, pid_t id)
 {
 	int ret;
 	pid_t pid;
-	char cmd [PID_FILE_MAX_LEN * 2 + 80];
+	char cmd [PID_FILE_MAX_LEN * 3 + 80];
 	char file [PID_FILE_MAX_LEN];
 	
 	pid = fork();
@@ -158,7 +158,8 @@ int ssh_kill (const char *hostname, pid_t id)
 	    return 1;
 	
 	sprintf(file, PID_FILE_FMT, unique_id, id);
-	sprintf (cmd, "cat %1$s | xargs pkill -9 -P; rm -f %1$s", file);
+	sprintf (cmd, "[ -f %1$s ] && pkill -9 -P $(cat %1$s); rm -f %1$s", 
+		 file);
 	
 	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
 		    cmd, (char*)NULL);
