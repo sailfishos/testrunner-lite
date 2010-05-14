@@ -453,18 +453,28 @@ START_TEST (test_remote_get)
      fail_if (ret, cmd);
      
      sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     ret = system (cmd);
      fail_if (ret, cmd);
      
      sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     ret = system (cmd);
      fail_if (ret, cmd);
-     printf ("%s: remote get /tmp/gettest.txt worked\n",
-	     __FUNCTION__); 
     
      sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     ret = system (cmd);
      fail_if (ret, cmd);
-     printf ("%s: remote get /tmp/gettest2.txt worked\n",
-	     __FUNCTION__); 
      
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
 END_TEST
 
 /* ------------------------------------------------------------------------- */
@@ -549,7 +559,7 @@ Suite *make_testexecutor_suite (void)
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test get feature with remote host.");
-    tcase_set_timeout (tc, 20);
+    tcase_set_timeout (tc, 25);
     tcase_add_test (tc, test_remote_get);
     suite_add_tcase (s, tc);
     

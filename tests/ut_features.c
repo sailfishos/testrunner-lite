@@ -151,34 +151,28 @@ START_TEST (test_get)
     fail_if (ret, cmd);
 
     sprintf (cmd, "stat /tmp/testrunnerlitetestdir/");
+    ret = system (cmd);
     fail_if (ret, cmd);
-    printf ("%s: Output folder created successfully\n",
-	    __FUNCTION__); 
     
     sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest.txt");
+    ret = system (cmd);
     fail_if (ret, cmd);
-    printf ("%s: get /tmp/gettest.txt worked\n",
-	    __FUNCTION__); 
     
     sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest2.txt");
+    ret = system (cmd);
     fail_if (ret, cmd);
-    printf ("%s: get /tmp/gettest2.txt worked\n",
-	    __FUNCTION__); 
 
     sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest3.txt");
+    ret = system (cmd);
     fail_if (ret, cmd);
-    printf ("%s: get /tmp/gettest3.txt worked\n",
-	    __FUNCTION__);
 
     sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest4.txt");
+    ret = system (cmd);
     fail_if (ret, cmd);
-    printf ("%s: get /tmp/gettest4.txt worked\n",
-	    __FUNCTION__);
 
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/get\ test5.txt");
+    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/get\\ test5.txt");
+    ret = system (cmd);
     fail_if (ret, cmd);
-    printf ("%s: get /tmp/get\ test5.txt worked\n",
-	    __FUNCTION__);
 
 END_TEST
 
