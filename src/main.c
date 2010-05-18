@@ -40,6 +40,7 @@
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
 #include "testresultlogger.h"
+#include "testfilters.h"
 #include "executor.h"
 #include "manual_executor.h"
 #include "hwinfo.h"
@@ -152,7 +153,7 @@ LOCAL void usage()
 		"to be executed.\n");
 	printf ("  -m, --manual\tEnable only manual tests to be executed.\n");
 	
-#if 0 /* do not advertise features we do not have yet .. */
+#if 1 /* do not advertise features we do not have yet .. */
 	printf ("  -l FILTER, --filter=FILTER\n\t\t"
 		"Filtering option to select tests (not) to be executed.\n\t\t"
 		"E.g. '-testcase=bad_test -type=unknown' first disables\n\t\t"
@@ -760,6 +761,10 @@ int main (int argc, char *argv[], char *envp[])
 			else {
 				opts.log_level = LOG_LEVEL_INFO;
 			}
+			/*
+			 * Set logging level.
+			 */
+			log_init (&opts);
 			break;
 		case 'a':
 			a_flag = 1;
@@ -810,6 +815,12 @@ int main (int argc, char *argv[], char *envp[])
 			break;
 		case 'L':
 			if (parse_remote_logger(optarg, &opts) != 0) {
+				retval = EXIT_FAILURE;
+				goto OUT;
+			}
+			break;
+		case 'l':
+			if (parse_filter_string (optarg) != 0) {
 				retval = EXIT_FAILURE;
 				goto OUT;
 			}
@@ -865,10 +876,6 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	}
 	
-	/*
-	 * Set logging level.
-	 */
-	log_init (&opts);
 	/*
 	 * Set remote execution options.
 	 */
