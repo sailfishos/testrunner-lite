@@ -76,6 +76,8 @@ LOCAL void filter_delete (xmlLinkPtr lk);
 /* ------------------------------------------------------------------------- */
 LOCAL int filter_list_compare (const void * data0, const void * data1);
 /* ------------------------------------------------------------------------- */
+LOCAL int validate_and_add_filter (char *key, char *values);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -107,6 +109,114 @@ LOCAL int filter_list_compare (const void * data0,
 	
 	return 0;
 }
+/* ------------------------------------------------------------------------- */
+/** Check that filter type seems correct and adds to correc list
+ *  @param filter filter
+ *  @return 0 on success, 1 on failure
+ */
+LOCAL int filter_add (test_filter *filter)
+{
+	/* TODO add all filter types to correct list */
+	if (!strcasecmp ((char *)filter->key, "environment")) {
+		;
+	}
+	else if (!strcasecmp ((char *)filter->key, "manual")) {
+		return xmlListAppend (case_filter_list, filter);
+	}	
+	else if (!strcasecmp ((char *)filter->key, "domain")) {
+		;
+	}
+	else if (!strcasecmp ((char *)filter->key, "feature")) {
+		;
+	}
+	else if (!strcasecmp ((char *)filter->key, "requirement")) {
+		return xmlListAppend (case_filter_list, filter);
+	}
+	else if (!strcasecmp ((char *)filter->key, "type")) {
+		;
+	}
+	else if (!strcasecmp ((char *)filter->key, "insignificant")) {
+		;
+	}
+	else if (!strcasecmp ((char *)filter->key, "level")) {
+		;
+	}
+	else if (!strcasecmp ((char *)filter->key, "subfeature")) {
+		;
+	}
+	else if (!strcasecmp ((char *)filter->key, "testsuite")) {
+		return xmlListAppend (suite_filter_list, filter);
+	}
+	else if (!strcasecmp ((char *)filter->key,  "testset")) {
+		return xmlListAppend (set_filter_list, filter);
+	}
+	else if (!strcasecmp ((char *)filter->key, "testcase")) {
+		return xmlListAppend (case_filter_list, filter);
+	} else {
+		LOG_MSG (LOG_ERROR, "Unknow filter type %s",
+			 filter->key);
+		free (filter->key);
+		free (filter->value);
+		free (filter);
+		return 1;
+	}
+
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Validate filter semantics, parse value list and add filter to correct list
+ *  @param key filter key
+ *  @param values list of values
+ *  @return 0 on success, 1 on failure
+ */
+LOCAL int validate_and_add_filter (char *key, char *values)
+{
+	int exclude = 0, retval = 0;
+	xmlChar *k = NULL, *val;
+	char *p;
+	test_filter *filter = NULL;
+
+	/* handle possible +/- in beginning of key */
+	if (*key == '-') {
+		exclude = 1;
+		k = xmlCharStrdup (key + 1);
+	} else if (*key == '+')
+		k = xmlCharStrdup (key + 1);
+	else
+		k = xmlCharStrdup (key);
+
+	/* Go through value list */
+	p = strtok (values, ",");
+	do {
+		/* Clean possible "-signs */
+		if (p[0] == '"') {
+			if (strlen (p) < 3) {
+				LOG_MSG (LOG_ERROR, "empty value");
+				retval = 1;
+				goto out;
+			}
+			if (p[strlen(p)-1] != '"') {
+				LOG_MSG (LOG_ERROR, "Mismatched \" %s", p);
+				retval = 1;
+				goto out;
+			}
+			val = xmlCharStrndup(&p[1], strlen(p)-2);
+		} else
+			val = xmlCharStrdup (p);
+		filter = (test_filter *)malloc (sizeof (test_filter));
+		filter->exclude = exclude;
+		filter->key = xmlStrdup(k);
+		filter->value = val;
+		LOG_MSG (LOG_INFO, "new filter: key=%s, value=%s, exculde=%d",
+			 filter->key, filter->value, filter->exclude);
+		/* Finally try to add filter to correct list */
+		if ((retval = filter_add (filter)))
+			goto out;
+	} while ((p = strtok (NULL, ",")));
+ out:
+	free (k);
+	return retval;
+}
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -126,8 +236,8 @@ void init_filters()
  */
 int parse_filter_string (char *filters)
 {
-	int in_quotes = 0, done = 0;
-	char *p, *f, *key, *value, c;
+	int in_quotes = 0, done = 0, retval = 0;
+	char *p, *f, *key = NULL, *value = NULL, c;
 
 	/* Make a local copy of filter string */
 	LOG_MSG (LOG_INFO, "string to parse %s", filters);
@@ -176,9 +286,9 @@ int parse_filter_string (char *filters)
 		LOG_MSG (LOG_INFO, "FILTER key=%s,value=%s\n",
 			 key, value);
 	}
-	
+	retval = validate_and_add_filter (key, value);
 	free (f);
-	return 0;
+	return retval;
  err_out:
 	if (f) free (f);
 	return 1;

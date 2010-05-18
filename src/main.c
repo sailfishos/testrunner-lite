@@ -820,6 +820,7 @@ int main (int argc, char *argv[], char *envp[])
 			}
 			break;
 		case 'l':
+			init_filters();
 			if (parse_filter_string (optarg) != 0) {
 				retval = EXIT_FAILURE;
 				goto OUT;

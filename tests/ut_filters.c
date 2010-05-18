@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>
+ * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -80,18 +80,44 @@
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+void
+setup (void)
+{
+	init_filters();
+}
+/* ------------------------------------------------------------------------- */
+void
+teardown (void)
+{
+	cleanup_filters();
+}
+/* ------------------------------------------------------------------------- */
 START_TEST (test_filter_parsing_simple)
-	fail_if (parse_filter_string ("case=testi"));
-	fail_if (parse_filter_string ("-case=testi"));
-	fail_if (parse_filter_string ("case=\"testi 1\""));
+	fail_if (parse_filter_string ("testcase=testi"));
+	fail_if (parse_filter_string ("-testcase=testi"));
+	fail_if (parse_filter_string ("testcase=\"testi 1\""));
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_filter_parsing_complex)
-	fail_if (parse_filter_string ("-requirement=1001,\"Some req\",2001,other_req +case=testi"));
+	fail_if (parse_filter_string ("-requirement=1001,\"Some req\","
+				      "2001,other_req +testcase=testi"));
 
 END_TEST
 /* ------------------------------------------------------------------------- */
-
+START_TEST (test_filter_parsing_inv_white_space)
+     fail_unless (parse_filter_string (" "));
+     fail_unless (parse_filter_string ("level= "));
+     fail_unless (parse_filter_string ("-requirement=1001,\"Some req\","
+				      "2001,other_req +testcase=testi "));
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_filter_invalid_type)
+	fail_unless (parse_filter_string ("foo=testi"));
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_filter_missing_quote)
+	fail_unless (parse_filter_string ("testcase=\"testi"));
+END_TEST
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -103,15 +129,31 @@ Suite *make_testfilter_suite (void)
     /* Create test cases and add to suite. */
     TCase *tc;
 
+
     tc = tcase_create ("Test filter parsing simple.");
     tcase_add_test (tc, test_filter_parsing_simple);
+    tcase_add_unchecked_fixture (tc, setup, teardown);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test filter parsing complex.");
+    tcase_add_unchecked_fixture (tc, setup, teardown);
     tcase_add_test (tc, test_filter_parsing_complex);
     suite_add_tcase (s, tc);
 
-    
+    tc = tcase_create ("Test filter parsing invalid white space.");
+    tcase_add_unchecked_fixture (tc, setup, teardown);
+    tcase_add_test (tc, test_filter_parsing_inv_white_space);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test filter invalid type.");
+    tcase_add_unchecked_fixture (tc, setup, teardown);
+    tcase_add_test (tc, test_filter_invalid_type);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test filter missing \".");
+    tcase_add_unchecked_fixture (tc, setup, teardown);
+    tcase_add_test (tc, test_filter_missing_quote);
+    suite_add_tcase (s, tc);
     
     return s;
 }
