@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Riku Halonen <riku.halonen@nokia.com>
+ * Contact: Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,11 +23,15 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
-#include <check.h>
 #include <stdlib.h>
-#include <sys/time.h>
+#include <stdio.h>
+#include <check.h>
+#include <string.h>
+#include <signal.h>
+#include <unistd.h>
 
-#include "testrunnerlitetestscommon.h"
+#include "testrunnerlite.h"
+#include "testfilters.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -43,9 +47,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-struct timeval created;
-char *global_failure = NULL;
-int bail_out = 0;
+/* None */
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -57,7 +59,6 @@ int bail_out = 0;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-/* None */
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -79,30 +80,40 @@ int bail_out = 0;
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/* None */
+START_TEST (test_filter_parsing_simple)
+	fail_if (parse_filter_string ("case=testi"));
+	fail_if (parse_filter_string ("-case=testi"));
+	fail_if (parse_filter_string ("case=\"testi 1\""));
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_filter_parsing_complex)
+	fail_if (parse_filter_string ("-requirement=1001,\"Some req\",2001,other_req +case=testi"));
+
+END_TEST
+/* ------------------------------------------------------------------------- */
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-int main (void)
+Suite *make_testfilter_suite (void)
 {
-    int number_failed;
-    Suite *s = suite_create ("master");
-    SRunner *sr = srunner_create (s);
-    gettimeofday (&created, NULL);
-    srunner_add_suite (sr, make_testdefinitionparser_suite ());
-    srunner_add_suite (sr, make_argumentparser_suite ());
-    srunner_add_suite (sr, make_testresultlogger_suite ());
-    srunner_add_suite (sr, make_testexecutor_suite ());
-    srunner_add_suite (sr, make_features_suite ());
-    srunner_add_suite (sr, make_manualtestexecutor_suite ());
-    srunner_add_suite (sr, make_testfilter_suite ());
-    
-    srunner_run_all (sr, CK_VERBOSE);
-    number_failed = srunner_ntests_failed (sr);
-    srunner_free (sr);
-    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+    /* Create suite. */
+    Suite *s = suite_create ("testfilters");
 
+    /* Create test cases and add to suite. */
+    TCase *tc;
+
+    tc = tcase_create ("Test filter parsing simple.");
+    tcase_add_test (tc, test_filter_parsing_simple);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test filter parsing complex.");
+    tcase_add_test (tc, test_filter_parsing_complex);
+    suite_add_tcase (s, tc);
+
+    
+    
+    return s;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

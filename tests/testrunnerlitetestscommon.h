@@ -67,6 +67,7 @@ Suite *make_testresultlogger_suite(void);
 Suite *make_testexecutor_suite(void);
 Suite *make_features_suite(void);
 Suite *make_manualtestexecutor_suite(void);
+Suite *make_testfilter_suite(void);
 /* ------------------------------------------------------------------------- */
 #endif                          /* TESTRUNNERLITE_SUITES */
 /* End of file */
