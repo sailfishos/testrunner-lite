@@ -58,9 +58,9 @@
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-LOCAL 	xmlListPtr suite_filter_list;
-LOCAL 	xmlListPtr set_filter_list;
-LOCAL 	xmlListPtr case_filter_list;
+LOCAL 	xmlListPtr suite_filter_list = NULL;
+LOCAL 	xmlListPtr set_filter_list = NULL;
+LOCAL 	xmlListPtr case_filter_list = NULL;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -89,6 +89,10 @@ LOCAL int manual_filter (test_filter *filter, const void *data);
 LOCAL int test_case_filter (test_filter *filter, const void *data);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_set_filter (test_filter *filter, const void *data);
+/* ------------------------------------------------------------------------- */
+LOCAL int feature_filter (test_filter *filter, const void *data);
+/* ------------------------------------------------------------------------- */
+LOCAL int type_filter (test_filter *filter, const void *data);
 /* ------------------------------------------------------------------------- */
 LOCAL int requirement_filter (test_filter *filter, const void *data);
 /* ------------------------------------------------------------------------- */
@@ -164,14 +168,16 @@ LOCAL int filter_add (test_filter *filter)
 		;
 	}
 	else if (!strcasecmp ((char *)filter->key, "feature")) {
-		;
+		filter->filter = feature_filter;
+		return xmlListAppend (set_filter_list, filter);
 	}
 	else if (!strcasecmp ((char *)filter->key, "requirement")) {
 		filter->filter = requirement_filter;
 		return xmlListAppend (case_filter_list, filter);
 	}
 	else if (!strcasecmp ((char *)filter->key, "type")) {
-		;
+		filter->filter = type_filter;
+		return xmlListAppend (case_filter_list, filter);
 	}
 	else if (!strcasecmp ((char *)filter->key, "insignificant")) {
 		;
@@ -341,7 +347,7 @@ LOCAL int test_case_filter (test_filter *filter, const void *data)
 /** Filter based on test set name
  *  @param data test case data
  *  @param filter filter used 
- *  @return 0 on when data passes the filter, != 0 if the data is to be filtered
+ *  @return 0 on when data passes the filter, 1 if the data is to be filtered
  */
 LOCAL int test_set_filter (test_filter *filter, const void *data)
 {
@@ -354,6 +360,56 @@ LOCAL int test_set_filter (test_filter *filter, const void *data)
 	s->filtered = filter->exclude ? found : !found;
 
 	return s->filtered;
+}
+/* ------------------------------------------------------------------------- */
+/** Filter based on feature
+ *  @param data test set data
+ *  @param filter filter used 
+ *  @return 0 on when data passes the filter, 1 if the data is to be filtered
+ */
+LOCAL int feature_filter (test_filter *filter, const void *data)
+{
+	int found = 0;
+	td_set *s = (td_set *)data;
+	xmlListPtr fea_list;
+	xmlLinkPtr lk;
+	xmlChar *fea, *feas;
+	
+	if (!s->feature)
+		goto skip;
+	feas = xmlStrdup (s->feature);
+	fea_list = string2valuelist ((char *)feas);
+	while (xmlListSize (fea_list) > 0) {
+		lk = xmlListFront (fea_list);
+		fea = xmlLinkGetData (lk);
+		if (xmlListSearch (filter->value_list, fea))
+			found = 1;
+		xmlListPopFront (fea_list);
+	}
+	free (feas);
+	xmlListDelete (fea_list);
+ skip:
+	s->filtered = filter->exclude ? found : !found;
+
+	return s->filtered;
+}
+/* ------------------------------------------------------------------------- */
+/** Filter based on type
+ *  @param data test case data
+ *  @param filter filter used 
+ *  @return 0 on when data passes the filter, 1 if the data is to be filtered
+ */
+LOCAL int type_filter (test_filter *filter, const void *data)
+{
+	int found = 0;
+	td_case *c = (td_case *)data;
+	
+	if (c->gen.type && xmlListSearch (filter->value_list, c->gen.type))
+		found = 1;
+
+	c->filtered = filter->exclude ? found : !found;
+
+	return c->filtered;
 }
 /* ------------------------------------------------------------------------- */
 /** Filter based on requirements
@@ -496,9 +552,9 @@ int filter_case (td_case *c)
  */
 void cleanup_filters ()
 {
-	xmlListDelete (suite_filter_list);
-	xmlListDelete (set_filter_list);
-	xmlListDelete (case_filter_list);
+	if (suite_filter_list) xmlListDelete (suite_filter_list);
+	if (set_filter_list) xmlListDelete (set_filter_list);
+	if (case_filter_list) xmlListDelete (case_filter_list);
 }
 /* ------------------------------------------------------------------------- */
 

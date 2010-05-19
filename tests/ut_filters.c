@@ -145,18 +145,18 @@ START_TEST (test_requirement_filter)
      filt.key = BAD_CAST "requirement";
      c.gen.requirement = BAD_CAST "1001,\"some req\",2000";
 
-     fail_unless (requirement_filter (&filt, (void *)&c), "fail 1");
+     fail_unless (requirement_filter (&filt, (void *)&c));
 
      filt.exclude = 1;
-     fail_if (requirement_filter (&filt, (void *)&c), "fail 2");
+     fail_if (requirement_filter (&filt, (void *)&c));
 
 
      xmlListAppend (filt.value_list, BAD_CAST "2000");
      filt.exclude = 0;
-     fail_if (requirement_filter (&filt, (void *)&c), "fail 3");
+     fail_if (requirement_filter (&filt, (void *)&c));
 
      filt.exclude = 1;
-     fail_unless (requirement_filter (&filt, (void *)&c), "fail 4");
+     fail_unless (requirement_filter (&filt, (void *)&c));
      
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -176,6 +176,48 @@ START_TEST (test_test_set_filter)
      fail_unless (test_set_filter (&filt, (void *)&s));
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST (test_type_filter)
+     td_case c;
+     test_filter filt;
+     filt.value_list = xmlListCreate (filter_value_delete, 
+				      filter_value_list_compare);
+     xmlListAppend (filt.value_list, BAD_CAST "unit");
+
+     filt.exclude = 0;
+     filt.key = BAD_CAST "type";
+     c.gen.type = BAD_CAST "unit";
+
+     fail_if (type_filter (&filt, (void *)&c));
+     filt.exclude = 1;
+     fail_unless (type_filter (&filt, (void *)&c));
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_feature_filter)
+     td_set s;
+     test_filter filt;
+     filt.value_list = xmlListCreate (filter_value_delete, 
+				      filter_value_list_compare);
+     xmlListAppend (filt.value_list, BAD_CAST "ui");
+
+     filt.exclude = 0;
+     filt.key = BAD_CAST "feature";
+     s.feature = BAD_CAST "some_fea,voice call,3g data";
+
+     fail_unless (feature_filter (&filt, (void *)&s));
+
+     filt.exclude = 1;
+     fail_if (feature_filter (&filt, (void *)&s));
+
+
+     xmlListAppend (filt.value_list, BAD_CAST "voice call");
+     filt.exclude = 0;
+     fail_if (feature_filter (&filt, (void *)&s));
+
+     filt.exclude = 1;
+     fail_unless (feature_filter (&filt, (void *)&s));
+     
+END_TEST
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 Suite *make_testfilter_suite (void)
@@ -185,7 +227,6 @@ Suite *make_testfilter_suite (void)
 
     /* Create test cases and add to suite. */
     TCase *tc;
-
 
     tc = tcase_create ("Test filter parsing simple.");
     tcase_add_test (tc, test_filter_parsing_simple);
@@ -222,6 +263,14 @@ Suite *make_testfilter_suite (void)
 
     tc = tcase_create ("Test set filter");
     tcase_add_test (tc, test_test_set_filter);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test feature filter");
+    tcase_add_test (tc, test_feature_filter);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test type filter");
+    tcase_add_test (tc, test_type_filter);
     suite_add_tcase (s, tc);
 
     

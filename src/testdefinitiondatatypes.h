@@ -46,6 +46,7 @@ typedef struct {
 	xmlChar *name;          /**< Name (for suite, set, case ...) */
         xmlChar *description;   /**< Description */
         xmlChar *requirement;   /**< Requirement attribute */
+	xmlChar *type;          /**< Type attribute */
 	unsigned long timeout;  /**< Timeout (defaults to 90) */
 	xmlChar *level;         /**< Level (Component, Feature, System) */
 	int      manual;        /**< Manual flag (default false) */

@@ -963,6 +963,7 @@ int main (int argc, char *argv[], char *envp[])
 		 casecount, passcount, casecount - passcount);
 	LOG_MSG (LOG_INFO, "Results were written to: %s", opts.output_filename);
 	LOG_MSG (LOG_INFO, "Finished!");
+	cleanup_filters();
 	log_close();
 OUT:
 	if (opts.input_filename) free (opts.input_filename);

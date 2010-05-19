@@ -114,6 +114,8 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			attr->requirement = xmlStrdup(defaults->requirement);
 		if (defaults->level)
 			attr->level = xmlStrdup(defaults->level);
+		if (defaults->type)
+			attr->type = xmlStrdup(defaults->type);
 	}
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
@@ -137,7 +139,11 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			attr->requirement =  xmlTextReaderValue(reader);
 			continue;
 		}
-		
+		if (!xmlStrcmp (name, BAD_CAST "type")) {
+			if (attr->type) free (attr->type);
+			attr->type =  xmlTextReaderValue(reader);
+			continue;
+		}
 		if (!xmlStrcmp (name, BAD_CAST "level")) {
 			if (attr->level) free (attr->level);
 			attr->level =  xmlTextReaderValue(reader);
