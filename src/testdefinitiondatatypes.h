@@ -56,7 +56,7 @@ typedef struct {
 typedef struct {
 	td_gen_attribs gen;   /**< General attributes */
 	xmlChar    *domain;   /**< Domain */
-
+	int        filtered;  /**< Suite is filtered */
 } td_suite;
 /* ------------------------------------------------------------------------- */
 /** Test set. */
@@ -68,7 +68,7 @@ typedef struct {
 	xmlListPtr cases;        /**< Test cases in this set */
 	xmlListPtr environments; /**< Environments (hardware, scratchbox) */
 	xmlListPtr gets;         /**< Get commands */
-	
+	int        filtered;     /**< Set is filtered */
 	/* Executor fills */
 	xmlChar    *environment; /**< Current environment */
 	

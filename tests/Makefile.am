@@ -31,7 +31,6 @@ testrunnerlitetests_LDFLAGS = -lxml2 -lcurl
 testrunnerlitetests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/testdefinitiondatatypes.o \
 			    $(top_builddir)/src/testresultlogger.o \
-			    $(top_builddir)/src/testfilters.o \
 			    $(top_builddir)/src/remote_executor.o \
 			    $(top_builddir)/src/manual_executor.o \
 			    $(top_builddir)/src/executor.o \

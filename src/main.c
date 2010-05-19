@@ -350,6 +350,11 @@ LOCAL int process_case (const void *data, const void *user)
 		c->filtered = 1;
 		return 1;
 	}
+	if (filter_case (c)) {
+		LOG_MSG (LOG_INFO, "Test case %s is filtered", c->gen.name);
+		return 1;
+	}
+
 
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
