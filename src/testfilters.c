@@ -74,10 +74,21 @@ LOCAL 	xmlListPtr case_filter_list;
 /* ------------------------------------------------------------------------- */
 LOCAL void filter_delete (xmlLinkPtr lk);
 /* ------------------------------------------------------------------------- */
+LOCAL void filter_value_delete (xmlLinkPtr lk);
+/* ------------------------------------------------------------------------- */
 LOCAL int filter_list_compare (const void * data0, const void * data1);
 /* ------------------------------------------------------------------------- */
 LOCAL int validate_and_add_filter (char *key, char *values);
 /* ------------------------------------------------------------------------- */
+LOCAL int filter_exec (const void *data, const void *user) ;
+/* ------------------------------------------------------------------------- */
+LOCAL int filter_value_print (const void *data, const void *user) ;
+/* ------------------------------------------------------------------------- */
+LOCAL int manual_filter (test_filter *filter, const void *data);
+/* ------------------------------------------------------------------------- */
+LOCAL int test_case_filter (test_filter *filter, const void *data);
+/* ------------------------------------------------------------------------- */
+
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -92,10 +103,17 @@ LOCAL void filter_delete (xmlLinkPtr lk)
 	test_filter *filter = xmlLinkGetData (lk);
 	if (filter->key)
 		free (filter->key);
-	if (filter->value)
-		free (filter->value);
+	xmlListDelete (filter->value_list);
 
 	free (filter);
+}
+/** Deallocator for test_filters value list called by xmlListDelete
+ *  @param lk list iterator
+ */
+LOCAL void filter_value_delete (xmlLinkPtr lk)
+{
+	xmlChar *val = xmlLinkGetData (lk);
+	free (val);
 }
 /* ------------------------------------------------------------------------- */
 /** Comparison function for list without ordering
@@ -110,6 +128,18 @@ LOCAL int filter_list_compare (const void * data0,
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Comparison function for value list
+ *  @param data0 string to compare 
+ *  @param data1 string to compare 
+ *  @return 0 always
+ */
+LOCAL int filter_value_list_compare (const void * data0, 
+				     const void * data1)
+{
+	
+	return xmlStrcmp (BAD_CAST data0, BAD_CAST data1);
+}
+/* ------------------------------------------------------------------------- */
 /** Check that filter type seems correct and adds to correc list
  *  @param filter filter
  *  @return 0 on success, 1 on failure
@@ -121,6 +151,7 @@ LOCAL int filter_add (test_filter *filter)
 		;
 	}
 	else if (!strcasecmp ((char *)filter->key, "manual")) {
+		filter->filter = manual_filter;
 		return xmlListAppend (case_filter_list, filter);
 	}	
 	else if (!strcasecmp ((char *)filter->key, "domain")) {
@@ -151,12 +182,13 @@ LOCAL int filter_add (test_filter *filter)
 		return xmlListAppend (set_filter_list, filter);
 	}
 	else if (!strcasecmp ((char *)filter->key, "testcase")) {
+		filter->filter = test_case_filter;
 		return xmlListAppend (case_filter_list, filter);
 	} else {
 		LOG_MSG (LOG_ERROR, "Unknow filter type %s",
 			 filter->key);
 		free (filter->key);
-		free (filter->value);
+		xmlListDelete (filter->value_list);
 		free (filter);
 		return 1;
 	}
@@ -185,6 +217,12 @@ LOCAL int validate_and_add_filter (char *key, char *values)
 	else
 		k = xmlCharStrdup (key);
 
+	filter = (test_filter *)malloc (sizeof (test_filter));
+	filter->exclude = exclude;
+	filter->key = k;
+	filter->value_list = xmlListCreate (filter_value_delete, 
+					    filter_value_list_compare);
+
 	/* Go through value list */
 	p = strtok (values, ",");
 	do {
@@ -203,19 +241,73 @@ LOCAL int validate_and_add_filter (char *key, char *values)
 			val = xmlCharStrndup(&p[1], strlen(p)-2);
 		} else
 			val = xmlCharStrdup (p);
-		filter = (test_filter *)malloc (sizeof (test_filter));
-		filter->exclude = exclude;
-		filter->key = xmlStrdup(k);
-		filter->value = val;
-		LOG_MSG (LOG_INFO, "new filter: key=%s, value=%s, exculde=%d",
-			 filter->key, filter->value, filter->exclude);
-		/* Finally try to add filter to correct list */
-		if ((retval = filter_add (filter)))
-			goto out;
+		xmlListAppend (filter->value_list, val);
 	} while ((p = strtok (NULL, ",")));
+
+	LOG_MSG (LOG_DEBUG, "FILTER: key=%s exclude=%d",
+		 filter->key, filter->exclude);
+	LOG_MSG (LOG_DEBUG, "values:");
+	xmlListWalk (filter->value_list, filter_value_print, NULL);
+	
+	retval = filter_add (filter);
  out:
-	free (k);
 	return retval;
+}
+/* ------------------------------------------------------------------------- */
+/** Execute filters in the list
+ *  @param data test filter
+ *  @param user test suite, test set or test case
+ *  @return 0 if data is to be filtered
+ */
+LOCAL int filter_exec (const void *data, const void *user) 
+{
+	test_filter *filter = (test_filter *)data;
+
+	return !(filter->filter(filter, user));
+}
+/* ------------------------------------------------------------------------- */
+/** Execute filters in the list
+ *  @param data test filter value
+ *  @param user not used
+ *  @return 1 always
+ */
+LOCAL int filter_value_print (const void *data, const void *user) 
+{
+	xmlChar *val = BAD_CAST data;
+
+	LOG_MSG (LOG_DEBUG, "%s", val);
+
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
+/** Filter based on manual flag
+ *  @param data test case data
+ *  @param filter filter used 
+ *  @return 0 on when data passes the filter, 1 if the data is to be filtered
+ */
+LOCAL int manual_filter (test_filter *filter, const void *data)
+{
+	//td_case *c = (td_case *)data;
+	/* FIXME: implement */
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Filter based on test case name
+ *  @param data test case data
+ *  @param filter filter used 
+ *  @return 0 on when data passes the filter, != 0 if the data is to be filtered
+ */
+LOCAL int test_case_filter (test_filter *filter, const void *data)
+{
+	int found = 0;
+	td_case *c = (td_case *)data;
+	
+	if (xmlListSearch (filter->value_list, c->gen.name))
+		found = 1;
+
+	c->filtered = filter->exclude ? found : !found;
+
+	return c->filtered;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -240,7 +332,7 @@ int parse_filter_string (char *filters)
 	char *p, *f, *key = NULL, *value = NULL, c;
 
 	/* Make a local copy of filter string */
-	LOG_MSG (LOG_INFO, "string to parse %s", filters);
+	LOG_MSG (LOG_DEBUG, "string to parse %s", filters);
 	f = (char *)malloc (strlen(filters) + 1);
 	strcpy (f, filters);
 	p = f;
@@ -252,7 +344,7 @@ int parse_filter_string (char *filters)
 			*p = '\0';
 			p++;
 		} else {
-			LOG_MSG (LOG_INFO, "failed to parse filter string - "
+			LOG_MSG (LOG_ERROR, "failed to parse filter string - "
 				 "missing '='\n");
 			goto err_out;
 		}
@@ -283,8 +375,6 @@ int parse_filter_string (char *filters)
 				 "mismatched \"");
 			goto err_out;
 		}
-		LOG_MSG (LOG_INFO, "FILTER key=%s,value=%s\n",
-			 key, value);
 	}
 	retval = validate_and_add_filter (key, value);
 	free (f);
@@ -296,29 +386,32 @@ int parse_filter_string (char *filters)
 /* ------------------------------------------------------------------------- */
 /** Do filtering on suite level
  *  @param s suite to be checked against filters
- *  @return 1 if the suite is filtered, 0 if not.
+ *  @return != 0 if the suite is filtered, 0 if not.
  */
 int filter_suite (td_suite *s)
 {
-	return 0;
+	xmlListWalk (set_filter_list, filter_exec, s);
+	return s->filtered;
 }
 /* ------------------------------------------------------------------------- */
 /** Do filtering on set
  *  @param s set to be checked against filters
- *  @return 1 if the set is filtered, 0 if not.
+ *  @return != 0 if the set is filtered, 0 if not.
  */
 int filter_set (td_set *s)
 {
-	return 0;
+	xmlListWalk (set_filter_list, filter_exec, s);
+	return s->filtered;
 }
 /* ------------------------------------------------------------------------- */
 /** Do filtering on case
  *  @param c case to be checked against filters
- *  @return 1 if the case is filtered, 0 if not.
+ *  @return != 0 if the case is filtered, 0 if not.
  */
 int filter_case (td_case *c)
 {
-	return 0;
+	xmlListWalk (case_filter_list, filter_exec, c);
+	return c->filtered;
 }
 /* ------------------------------------------------------------------------- */
 /** Free the memory allocated for filters

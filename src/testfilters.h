@@ -27,6 +27,7 @@
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
 #include <libxml/xmlstring.h>
+#include <libxml/list.h>
 #include "testrunnerlite.h"
 #include "testdefinitiondatatypes.h"
 /* ------------------------------------------------------------------------- */
@@ -40,10 +41,13 @@
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
-typedef struct {
+/** Test filter */
+typedef struct test_filter_ {
 	int         exclude; /**< set if the filter is negated with - */ 
-	xmlChar    *key;     /**< filter key */
-	xmlChar    *value;    /**< filter value */
+	xmlChar    *key;  /**< filter key */
+	xmlListPtr  value_list; /**< filter value list */
+        int       (*filter) (struct test_filter_ *, const void *); /**< filter 
+								    function */
 } test_filter;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
