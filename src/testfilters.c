@@ -88,6 +88,10 @@ LOCAL int manual_filter (test_filter *filter, const void *data);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_case_filter (test_filter *filter, const void *data);
 /* ------------------------------------------------------------------------- */
+LOCAL int requirement_filter (test_filter *filter, const void *data);
+/* ------------------------------------------------------------------------- */
+LOCAL xmlListPtr string2valuelist (char *str);
+/* ------------------------------------------------------------------------- */
 
 /* FORWARD DECLARATIONS */
 /* None */
@@ -161,6 +165,7 @@ LOCAL int filter_add (test_filter *filter)
 		;
 	}
 	else if (!strcasecmp ((char *)filter->key, "requirement")) {
+		filter->filter = requirement_filter;
 		return xmlListAppend (case_filter_list, filter);
 	}
 	else if (!strcasecmp ((char *)filter->key, "type")) {
@@ -196,6 +201,46 @@ LOCAL int filter_add (test_filter *filter)
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Create list of values in a string of form 'value,"val ue",value'
+ *  @param str string containing the values separeted by ','
+ *  @return list on success, NULL on failure
+ */
+LOCAL xmlListPtr string2valuelist (char *str)
+{
+	char *p;
+	xmlChar *val;
+	xmlListPtr list = xmlListCreate (filter_value_delete, 
+					 filter_value_list_compare);
+	if (!list) {
+		LOG_MSG (LOG_ERROR, "OOM");
+		return NULL;
+	}
+	
+	/* Go through value list */
+	p = strtok (str, ",");
+	do {
+		/* Clean possible "-signs */
+		if (p[0] == '"') {
+			if (strlen (p) < 3) {
+				LOG_MSG (LOG_ERROR, "empty value");
+				goto err_out;
+			}
+			if (p[strlen(p)-1] != '"') {
+				LOG_MSG (LOG_ERROR, "Mismatched \" %s", p);
+				goto err_out;
+			}
+			val = xmlCharStrndup(&p[1], strlen(p)-2);
+		} else
+			val = xmlCharStrdup (p);
+		xmlListAppend (list, val);
+	} while ((p = strtok (NULL, ",")));
+	
+	return list;
+ err_out:
+	if (list) xmlListDelete (list);
+	return NULL;
+}
+/* ------------------------------------------------------------------------- */
 /** Validate filter semantics, parse value list and add filter to correct list
  *  @param key filter key
  *  @param values list of values
@@ -204,8 +249,7 @@ LOCAL int filter_add (test_filter *filter)
 LOCAL int validate_and_add_filter (char *key, char *values)
 {
 	int exclude = 0, retval = 0;
-	xmlChar *k = NULL, *val;
-	char *p;
+	xmlChar *k = NULL;
 	test_filter *filter = NULL;
 
 	/* handle possible +/- in beginning of key */
@@ -220,30 +264,11 @@ LOCAL int validate_and_add_filter (char *key, char *values)
 	filter = (test_filter *)malloc (sizeof (test_filter));
 	filter->exclude = exclude;
 	filter->key = k;
-	filter->value_list = xmlListCreate (filter_value_delete, 
-					    filter_value_list_compare);
-
-	/* Go through value list */
-	p = strtok (values, ",");
-	do {
-		/* Clean possible "-signs */
-		if (p[0] == '"') {
-			if (strlen (p) < 3) {
-				LOG_MSG (LOG_ERROR, "empty value");
-				retval = 1;
-				goto out;
-			}
-			if (p[strlen(p)-1] != '"') {
-				LOG_MSG (LOG_ERROR, "Mismatched \" %s", p);
-				retval = 1;
-				goto out;
-			}
-			val = xmlCharStrndup(&p[1], strlen(p)-2);
-		} else
-			val = xmlCharStrdup (p);
-		xmlListAppend (filter->value_list, val);
-	} while ((p = strtok (NULL, ",")));
-
+	filter->value_list = string2valuelist (values);
+	if (!filter->value_list) {
+		retval = 1;
+		goto out;
+	}
 	LOG_MSG (LOG_DEBUG, "FILTER: key=%s exclude=%d",
 		 filter->key, filter->exclude);
 	LOG_MSG (LOG_DEBUG, "values:");
@@ -305,6 +330,38 @@ LOCAL int test_case_filter (test_filter *filter, const void *data)
 	if (xmlListSearch (filter->value_list, c->gen.name))
 		found = 1;
 
+	c->filtered = filter->exclude ? found : !found;
+
+	return c->filtered;
+}
+/* ------------------------------------------------------------------------- */
+/** Filter based on requirements
+ *  @param data test case data
+ *  @param filter filter used 
+ *  @return 0 on when data passes the filter, 1 if the data is to be filtered
+ */
+LOCAL int requirement_filter (test_filter *filter, const void *data)
+{
+	int found = 0;
+	td_case *c = (td_case *)data;
+	xmlListPtr req_list;
+	xmlLinkPtr lk;
+	xmlChar *req, *reqs;
+	
+	if (!c->gen.requirement)
+		goto skip;
+	reqs = xmlStrdup (c->gen.requirement);
+	req_list = string2valuelist (reqs);
+	while (xmlListSize (req_list) > 0) {
+		lk = xmlListFront (req_list);
+		req = xmlLinkGetData (lk);
+		if (xmlListSearch (filter->value_list, req))
+			found = 1;
+		xmlListPopFront (req_list);
+	}
+	free (reqs);
+	xmlListDelete (req_list);
+ skip:
 	c->filtered = filter->exclude ? found : !found;
 
 	return c->filtered;

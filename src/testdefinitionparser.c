@@ -110,6 +110,10 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 		attr->timeout = defaults->timeout;
 		attr->manual  = defaults->manual;
 		attr->insignificant = defaults->insignificant;
+		if (defaults->requirement)
+			attr->requirement = xmlStrdup(defaults->requirement);
+		if (defaults->level)
+			attr->level = xmlStrdup(defaults->level);
 	}
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
@@ -119,8 +123,7 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			continue;
 		}
 		if (!xmlStrcmp (name, BAD_CAST "timeout")) {
-			attr->timeout = strtoul(
-						(char *)
+			attr->timeout = strtoul((char *)
 						xmlTextReaderConstValue(reader),
 						NULL, 10);
 			continue;
@@ -130,11 +133,13 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			continue;
 		}
 		if (!xmlStrcmp (name, BAD_CAST "requirement")) {
+			if (attr->requirement) free (attr->requirement);
 			attr->requirement =  xmlTextReaderValue(reader);
 			continue;
 		}
 		
 		if (!xmlStrcmp (name, BAD_CAST "level")) {
+			if (attr->level) free (attr->level);
 			attr->level =  xmlTextReaderValue(reader);
 			continue;
 		}

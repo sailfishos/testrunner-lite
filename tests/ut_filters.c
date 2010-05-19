@@ -134,6 +134,32 @@ START_TEST (test_test_case_filter)
      fail_unless (test_case_filter (&filt, (void *)&c));
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST (test_requirement_filter)
+     td_case c;
+     test_filter filt;
+     filt.value_list = xmlListCreate (filter_value_delete, 
+				      filter_value_list_compare);
+     xmlListAppend (filt.value_list, BAD_CAST "1000");
+
+     filt.exclude = 0;
+     filt.key = BAD_CAST "requirement";
+     c.gen.requirement = BAD_CAST "1001,\"some req\",2000";
+
+     fail_unless (requirement_filter (&filt, (void *)&c), "fail 1");
+
+     filt.exclude = 1;
+     fail_if (requirement_filter (&filt, (void *)&c), "fail 2");
+
+
+     xmlListAppend (filt.value_list, BAD_CAST "2000");
+     filt.exclude = 0;
+     fail_if (requirement_filter (&filt, (void *)&c), "fail 3");
+
+     filt.exclude = 1;
+     fail_unless (requirement_filter (&filt, (void *)&c), "fail 4");
+     
+END_TEST
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 Suite *make_testfilter_suite (void)
@@ -172,6 +198,10 @@ Suite *make_testfilter_suite (void)
 
     tc = tcase_create ("Test case filter");
     tcase_add_test (tc, test_test_case_filter);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Requirement filter");
+    tcase_add_test (tc, test_requirement_filter);
     suite_add_tcase (s, tc);
     
     return s;

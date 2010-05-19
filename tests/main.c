@@ -86,23 +86,22 @@ int bail_out = 0;
 /* ------------------------------------------------------------------------- */
 int main (void)
 {
-    int number_failed;
-    Suite *s = suite_create ("master");
-    SRunner *sr = srunner_create (s);
-    gettimeofday (&created, NULL);
-    srunner_add_suite (sr, make_testdefinitionparser_suite ());
-    srunner_add_suite (sr, make_argumentparser_suite ());
-    srunner_add_suite (sr, make_testresultlogger_suite ());
-    srunner_add_suite (sr, make_testexecutor_suite ());
-    srunner_add_suite (sr, make_features_suite ());
-    srunner_add_suite (sr, make_manualtestexecutor_suite ());
-    srunner_add_suite (sr, make_testfilter_suite ());
-    
-    srunner_run_all (sr, CK_VERBOSE);
-    number_failed = srunner_ntests_failed (sr);
-    srunner_free (sr);
-    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+	int number_failed;
+	Suite *s = suite_create ("master");
+	SRunner *sr = srunner_create (s);
+	gettimeofday (&created, NULL);
+	srunner_add_suite (sr, make_testdefinitionparser_suite ());
+	srunner_add_suite (sr, make_argumentparser_suite ());
+	srunner_add_suite (sr, make_testresultlogger_suite ());
+	srunner_add_suite (sr, make_testexecutor_suite ());
+	srunner_add_suite (sr, make_features_suite ());
+	srunner_add_suite (sr, make_manualtestexecutor_suite ());
+	srunner_add_suite (sr, make_testfilter_suite ());
+	srunner_run_all (sr, CK_VERBOSE);
+	number_failed = srunner_ntests_failed (sr);
+	srunner_free (sr);
 
+	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
