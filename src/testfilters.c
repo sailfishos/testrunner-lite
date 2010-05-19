@@ -88,6 +88,8 @@ LOCAL int manual_filter (test_filter *filter, const void *data);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_case_filter (test_filter *filter, const void *data);
 /* ------------------------------------------------------------------------- */
+LOCAL int test_set_filter (test_filter *filter, const void *data);
+/* ------------------------------------------------------------------------- */
 LOCAL int requirement_filter (test_filter *filter, const void *data);
 /* ------------------------------------------------------------------------- */
 LOCAL xmlListPtr string2valuelist (char *str);
@@ -184,6 +186,7 @@ LOCAL int filter_add (test_filter *filter)
 		return xmlListAppend (suite_filter_list, filter);
 	}
 	else if (!strcasecmp ((char *)filter->key,  "testset")) {
+		filter->filter = test_set_filter;
 		return xmlListAppend (set_filter_list, filter);
 	}
 	else if (!strcasecmp ((char *)filter->key, "testcase")) {
@@ -335,6 +338,24 @@ LOCAL int test_case_filter (test_filter *filter, const void *data)
 	return c->filtered;
 }
 /* ------------------------------------------------------------------------- */
+/** Filter based on test set name
+ *  @param data test case data
+ *  @param filter filter used 
+ *  @return 0 on when data passes the filter, != 0 if the data is to be filtered
+ */
+LOCAL int test_set_filter (test_filter *filter, const void *data)
+{
+	int found = 0;
+	td_set *s = (td_set *)data;
+	
+	if (xmlListSearch (filter->value_list, s->gen.name))
+		found = 1;
+
+	s->filtered = filter->exclude ? found : !found;
+
+	return s->filtered;
+}
+/* ------------------------------------------------------------------------- */
 /** Filter based on requirements
  *  @param data test case data
  *  @param filter filter used 
@@ -351,7 +372,7 @@ LOCAL int requirement_filter (test_filter *filter, const void *data)
 	if (!c->gen.requirement)
 		goto skip;
 	reqs = xmlStrdup (c->gen.requirement);
-	req_list = string2valuelist (reqs);
+	req_list = string2valuelist ((char *)reqs);
 	while (xmlListSize (req_list) > 0) {
 		lk = xmlListFront (req_list);
 		req = xmlLinkGetData (lk);

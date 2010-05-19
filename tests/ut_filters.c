@@ -160,6 +160,22 @@ START_TEST (test_requirement_filter)
      
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST (test_test_set_filter)
+     td_set s;
+     test_filter filt;
+     filt.value_list = xmlListCreate (filter_value_delete, 
+				      filter_value_list_compare);
+     xmlListAppend (filt.value_list, BAD_CAST "setname");
+
+     filt.exclude = 0;
+     filt.key = BAD_CAST "testset";
+     s.gen.name = BAD_CAST "setname";
+
+     fail_if (test_set_filter (&filt, (void *)&s));
+     filt.exclude = 1;
+     fail_unless (test_set_filter (&filt, (void *)&s));
+END_TEST
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 Suite *make_testfilter_suite (void)
@@ -203,6 +219,11 @@ Suite *make_testfilter_suite (void)
     tc = tcase_create ("Requirement filter");
     tcase_add_test (tc, test_requirement_filter);
     suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test set filter");
+    tcase_add_test (tc, test_test_set_filter);
+    suite_add_tcase (s, tc);
+
     
     return s;
 }

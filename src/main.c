@@ -491,9 +491,15 @@ LOCAL void process_set (td_set *s)
 {
 	td_case dummy;
 
+	
+	s->environment = xmlCharStrdup (opts.environment);
+	if (filter_set (s)) {
+		LOG_MSG (LOG_INFO, "Test set %s is filtered", s->gen.name);
+		return;
+	}
+
 	LOG_MSG (LOG_INFO, "Test set: %s", s->gen.name);
 
-	s->environment = xmlCharStrdup (opts.environment);
 	write_pre_set_tag (s);
 	/*
 	** Check that the set is supposed to be executed in the current env
