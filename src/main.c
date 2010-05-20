@@ -43,6 +43,7 @@
 #include "testfilters.h"
 #include "executor.h"
 #include "manual_executor.h"
+#include "utils.h"
 #include "hwinfo.h"
 #include "log.h"
 
@@ -110,8 +111,6 @@ LOCAL int step_result_na (const void *, const void *);
 LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int create_output_folder ();
-/* ------------------------------------------------------------------------- */
-LOCAL unsigned int trim_filename(char *, char *);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -350,6 +349,11 @@ LOCAL int process_case (const void *data, const void *user)
 		c->filtered = 1;
 		return 1;
 	}
+	if (filter_case (c)) {
+		LOG_MSG (LOG_INFO, "Test case %s is filtered", c->gen.name);
+		return 1;
+	}
+
 
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
@@ -414,7 +418,7 @@ LOCAL int process_get (const void *data, const void *user)
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
 	fname = malloc (strlen((char *)rawfname) + 1);
-	trim_filename((char *)rawfname, fname);
+	trim_string ((char *)rawfname, fname);
 
 	/*
 	** Compose command 
@@ -486,9 +490,15 @@ LOCAL void process_set (td_set *s)
 {
 	td_case dummy;
 
+	
+	s->environment = xmlCharStrdup (opts.environment);
+	if (filter_set (s)) {
+		LOG_MSG (LOG_INFO, "Test set %s is filtered", s->gen.name);
+		return;
+	}
+
 	LOG_MSG (LOG_INFO, "Test set: %s", s->gen.name);
 
-	s->environment = xmlCharStrdup (opts.environment);
 	write_pre_set_tag (s);
 	/*
 	** Check that the set is supposed to be executed in the current env
@@ -621,68 +631,6 @@ LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) {
 
 }
 
-/* ------------------------------------------------------------------------- */
-/** Trim string of whitespace and control characters.
- * Remove unwanted whitespace, linefeeds etc. (using isspace()) from the
- * beginning and end of the string (until the first/last non-whitespace
- * character) and control characters (using iscntrl()) from the middle.
- * @param ins The input string. Must not be null.
- * @param outs The output string. Must be at least as long as the input string
- and not null.
- * @return Length of the output string
- */
-LOCAL unsigned int trim_filename(char *ins, char *outs)
-{
-	unsigned int ins_i = 0;
-	unsigned int ins_end = 0;
-	unsigned int outs_i = 0;
-
-	/* make sure input and output strings exist */
-	if (ins == 0 || outs == 0) {
-		return 0;
-	}
-
-	ins_end = strlen(ins);
-
-	/* test if the string is empty */
-	if (ins_end == 0) {
-		return 0;
-	}
-
-	/* find the first non-whitespace character */
-	while (1) {
-		if (ins_i >= ins_end)
-			break;
-		if (isspace(ins[ins_i]))
-			ins_i += 1;
-		else
-			break;
-	}
-
-	/* find the last non-whitespace character */
-	while (1) {
-		if (ins_end <= ins_i)
-			break;
-		if (isspace(ins[ins_end - 1]))
-			ins_end -= 1;
-		else
-			break;
-	}
-
-	/* Copy trimmed string to output */
-	while (ins_i < ins_end) {
-		/* check and skip control characters */
-		if (!iscntrl(ins[ins_i])) {
-			outs[outs_i] = ins[ins_i];
-			outs_i += 1;
-		}
-		ins_i += 1;
-	}
-	/* add null termination */
-	outs[outs_i] = 0;
-
-	return outs_i;
-}
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -952,6 +900,7 @@ int main (int argc, char *argv[], char *envp[])
 		 casecount, passcount, casecount - passcount);
 	LOG_MSG (LOG_INFO, "Results were written to: %s", opts.output_filename);
 	LOG_MSG (LOG_INFO, "Finished!");
+	cleanup_filters();
 	log_close();
 OUT:
 	if (opts.input_filename) free (opts.input_filename);

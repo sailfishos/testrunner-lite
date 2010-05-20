@@ -130,6 +130,7 @@ LOCAL void gen_attribs_delete (td_gen_attribs *gen)
 	free (gen->description);
 	free (gen->requirement);
 	free (gen->level);
+	free (gen->type);
 }
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */

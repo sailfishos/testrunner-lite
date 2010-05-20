@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Riku Halonen <riku.halonen@nokia.com>
+ * Contact: Raimo Gratseff <ext-raimo.gratseff@nokia.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,11 +23,10 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
-#include <check.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
-
-#include "testrunnerlitetestscommon.h"
+#include <errno.h>
+#include <string.h>
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -43,9 +42,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-struct timeval created;
-char *global_failure = NULL;
-int bail_out = 0;
+/* None */
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -61,18 +58,20 @@ int bail_out = 0;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
+
+/* Match these to log.h log_message_types */
 /* None */
 
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
 
+
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
 /* None */
 
-/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -83,30 +82,73 @@ int bail_out = 0;
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
-/* ------------------------------------------------------------------------- */
-int main (void)
+/* ------------------------------------------------------------------------- */ 
+/** Trim string of whitespace and control characters.
+ * Remove unwanted whitespace, linefeeds etc. (using isspace()) from the
+ * beginning and end of the string (until the first/last non-whitespace
+ * character) and control characters (using iscntrl()) from the middle.
+ * @param ins The input string. Must not be null.
+ * @param outs The output string. Must be at least as long as the input string
+ *        and not null.
+ * @return Length of the output string
+ */
+unsigned int trim_string (char *ins, char *outs)
 {
-    int number_failed;
-    Suite *s = suite_create ("master");
-    SRunner *sr = srunner_create (s);
-    gettimeofday (&created, NULL);
-    srunner_add_suite (sr, make_testdefinitionparser_suite ());
-    srunner_add_suite (sr, make_argumentparser_suite ());
-    srunner_add_suite (sr, make_testresultlogger_suite ());
-    srunner_add_suite (sr, make_testexecutor_suite ());
-    srunner_add_suite (sr, make_features_suite ());
-    srunner_add_suite (sr, make_manualtestexecutor_suite ());
-    srunner_add_suite (sr, make_testfilter_suite ());
-    
-    srunner_run_all (sr, CK_VERBOSE);
-    number_failed = srunner_ntests_failed (sr);
-    srunner_free (sr);
-    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+	unsigned int ins_i = 0;
+	unsigned int ins_end = 0;
+	unsigned int outs_i = 0;
 
+	/* make sure input and output strings exist */
+	if (ins == 0 || outs == 0) {
+		return 0;
+	}
+
+	ins_end = strlen(ins);
+
+	/* test if the string is empty */
+	if (ins_end == 0) {
+		return 0;
+	}
+
+	/* find the first non-whitespace character */
+	while (1) {
+		if (ins_i >= ins_end)
+			break;
+		if (isspace(ins[ins_i]))
+			ins_i += 1;
+		else
+			break;
+	}
+
+	/* find the last non-whitespace character */
+	while (1) {
+		if (ins_end <= ins_i)
+			break;
+		if (isspace(ins[ins_end - 1]))
+			ins_end -= 1;
+		else
+			break;
+	}
+
+	/* Copy trimmed string to output */
+	while (ins_i < ins_end) {
+		/* check and skip control characters */
+		if (!iscntrl(ins[ins_i])) {
+			outs[outs_i] = ins[ins_i];
+			outs_i += 1;
+		}
+		ins_i += 1;
+	}
+	/* add null termination */
+	outs[outs_i] = 0;
+
+	return outs_i;
 }
+
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */
 
 /* ------------------------------------------------------------------------- */
 /* End of file */
+

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Raimo Gratseff <ext-raimo.gratseff@nokia.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -21,16 +21,14 @@
  *
  */
 
-#ifndef TESTFILTERS_H
-#define TESTFILTERS_H
+#ifndef UTILS_H
+#define UTILS_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
-#include <libxml/xmlstring.h>
-#include <libxml/list.h>
-#include "testrunnerlite.h"
-#include "testdefinitiondatatypes.h"
 /* ------------------------------------------------------------------------- */
+/* None */
+
 /* CONSTANTS */
 /* None */
 
@@ -41,14 +39,8 @@
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
-/** Test filter */
-typedef struct test_filter_ {
-	int         exclude; /**< set if the filter is negated with - */ 
-	xmlChar    *key;  /**< filter key */
-	xmlListPtr  value_list; /**< filter value list */
-        int       (*filter) (struct test_filter_ *, const void *); /**< filter 
-								    function */
-} test_filter;
+/* None */
+
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -60,18 +52,9 @@ typedef struct test_filter_ {
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-void init_filters();
-/* ------------------------------------------------------------------------- */
-int parse_filter_string (char *);
-/* ------------------------------------------------------------------------- */
-int filter_suite (td_suite *);
-/* ------------------------------------------------------------------------- */
-int filter_set (td_set *);
-/* ------------------------------------------------------------------------- */
-int filter_case (td_case *);
-/* ------------------------------------------------------------------------- */
-void cleanup_filters();
+unsigned int trim_string (char *ins, char *outs);
 /* ------------------------------------------------------------------------- */
 
-#endif                          /* TESTFILTER_H */
+#endif                          /* UTILS_H */
 /* End of file */
+

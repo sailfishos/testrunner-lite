@@ -9,6 +9,7 @@ testrunner_lite_SOURCES = main.c \
 			  remote_executor.c \
 			  manual_executor.c \
 			  hwinfo.c \
+			  utils.c \
 			  log.c
 
 testrunner_lite_LDFLAGS = -lxml2 -lcurl
@@ -24,4 +25,5 @@ noinst_HEADERS = testrunnerlite.h \
 		 remote_executor.h \
 		 manual_executor.h \
 		 hwinfo.h \
+		 utils.h \
 		 log.h

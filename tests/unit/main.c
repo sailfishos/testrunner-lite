@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Riku Halonen <riku.halonen@nokia.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,15 +23,11 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
-#include <stdlib.h>
-#include <stdio.h>
 #include <check.h>
-#include <string.h>
-#include <signal.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <sys/time.h>
 
-#include "testrunnerlite.h"
-#include "testfilters.h"
+#include "testrunnerlitetestscommon.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -47,7 +43,9 @@
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-/* None */
+struct timeval created;
+char *global_failure = NULL;
+int bail_out = 0;
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -59,6 +57,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
+/* None */
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -80,82 +79,29 @@
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-void
-setup (void)
-{
-	init_filters();
-}
-/* ------------------------------------------------------------------------- */
-void
-teardown (void)
-{
-	cleanup_filters();
-}
-/* ------------------------------------------------------------------------- */
-START_TEST (test_filter_parsing_simple)
-	fail_if (parse_filter_string ("testcase=testi"));
-	fail_if (parse_filter_string ("-testcase=testi"));
-	fail_if (parse_filter_string ("testcase=\"testi 1\""));
-END_TEST
-/* ------------------------------------------------------------------------- */
-START_TEST (test_filter_parsing_complex)
-	fail_if (parse_filter_string ("-requirement=1001,\"Some req\","
-				      "2001,other_req +testcase=testi"));
+/* None */
 
-END_TEST
-/* ------------------------------------------------------------------------- */
-START_TEST (test_filter_parsing_inv_white_space)
-     fail_unless (parse_filter_string (" "));
-     fail_unless (parse_filter_string ("level= "));
-     fail_unless (parse_filter_string ("-requirement=1001,\"Some req\","
-				      "2001,other_req +testcase=testi "));
-END_TEST
-/* ------------------------------------------------------------------------- */
-START_TEST (test_filter_invalid_type)
-	fail_unless (parse_filter_string ("foo=testi"));
-END_TEST
-/* ------------------------------------------------------------------------- */
-START_TEST (test_filter_missing_quote)
-	fail_unless (parse_filter_string ("testcase=\"testi"));
-END_TEST
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-Suite *make_testfilter_suite (void)
+int main (void)
 {
-    /* Create suite. */
-    Suite *s = suite_create ("testfilters");
+	int number_failed;
+	Suite *s = suite_create ("master");
+	SRunner *sr = srunner_create (s);
+	gettimeofday (&created, NULL);
+	srunner_add_suite (sr, make_testdefinitionparser_suite ());
+	srunner_add_suite (sr, make_argumentparser_suite ());
+	srunner_add_suite (sr, make_testresultlogger_suite ());
+	srunner_add_suite (sr, make_testexecutor_suite ());
+	srunner_add_suite (sr, make_features_suite ());
+	srunner_add_suite (sr, make_manualtestexecutor_suite ());
+	srunner_add_suite (sr, make_testfilter_suite ());
+	srunner_run_all (sr, CK_VERBOSE);
+	number_failed = srunner_ntests_failed (sr);
+	srunner_free (sr);
 
-    /* Create test cases and add to suite. */
-    TCase *tc;
-
-
-    tc = tcase_create ("Test filter parsing simple.");
-    tcase_add_test (tc, test_filter_parsing_simple);
-    tcase_add_unchecked_fixture (tc, setup, teardown);
-    suite_add_tcase (s, tc);
-
-    tc = tcase_create ("Test filter parsing complex.");
-    tcase_add_unchecked_fixture (tc, setup, teardown);
-    tcase_add_test (tc, test_filter_parsing_complex);
-    suite_add_tcase (s, tc);
-
-    tc = tcase_create ("Test filter parsing invalid white space.");
-    tcase_add_unchecked_fixture (tc, setup, teardown);
-    tcase_add_test (tc, test_filter_parsing_inv_white_space);
-    suite_add_tcase (s, tc);
-
-    tc = tcase_create ("Test filter invalid type.");
-    tcase_add_unchecked_fixture (tc, setup, teardown);
-    tcase_add_test (tc, test_filter_invalid_type);
-    suite_add_tcase (s, tc);
-
-    tc = tcase_create ("Test filter missing \".");
-    tcase_add_unchecked_fixture (tc, setup, teardown);
-    tcase_add_test (tc, test_filter_missing_quote);
-    suite_add_tcase (s, tc);
-    
-    return s;
+	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

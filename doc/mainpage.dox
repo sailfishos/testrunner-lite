@@ -6,8 +6,25 @@ testrunner-lite  is  a tool for executing test commands.
 It is designed to be a lightweight wrapper for various test harnesses. The tool is driven by input XML file containing the test definitions (suite, set, case, step). Tests are executed as instructed in the input XML file and the  output
 is written to result XML or text file.
 
-\section opts Options
+@li @ref install
 
+@li @ref opt_page
+
+@li @ref manual_exec_page
+
+@li @ref main_mod_page
+
+\page install Installation
+
+The tool can be compiled into debian packages with 
+\code dpkg-buildpackage \endcode and installed with \code dpkg -i testrunner-lite_<version>_<architecture>.deb \endcode .
+
+\page opt_page Usage
+
+The program is excuted from commandline 
+\verbatim /usr/bin/testrunner-lite [options]
+\endverbatim
+\section opts Options
 \subsection opt_help  -h,  --help
 Display short help and exit
 
@@ -46,10 +63,62 @@ Do only input xml validation, do not execute tests
 Enable host-based testing. If given, commands are executed from test control 
 PC (host) side. ADDRESS is the ipv4 adress of the system under test.
 
-\section install_sec Installation
 
-The tool can be compiled into debian packages with dpkg-buildpackage and installed with dpkg -i testrunner-lite_<version>_<architecture>.deb.
+\subsection filt_opts Filtering options  
 
+Filtering options allow selecting which tests are to be executed. Filtering options are given as a string. String may contain one or more filter entries. Format of each entry is 'filtername=values' where 'filtername' typically corresponds to an attribute in Test Definition XML and 'values' is a string to which the filter should match. Multiple values can be specified if separated by comma (without extra space). A value containing space must be enclosed in double quotes (""). Current list of forbidden characters in values is as follows: Single quote ('), double quote ("), is-equal-to sign (=), comma (,).
+
+How filtering is carried out: Before processing the filter options, all tests are active by default. Filters can only deactivate tests: If filter value does not match with the value of the corresponding attribute, the test is disabled. Each filter entry is applied for all the active tests in the test package, one after another, in the given order. Filtering is always carried out at the lowest level of the "suite-set-case-step" hierarchy where the corresponding attribute can be defined. Note that some attributes may inherit the value from the upper level. Please refer to Test Definition XML for details.
+
+If 'filtername' is prefixed with dash (-), the filter behaviour is reversed: those tests for which the filter value does match, are disabled.
+
+'filtername' can be any of the following:
+@li feature
+@li requirement
+@li testset
+@li type
+@li testcase
+
+The following example does the following: First it disables all test cases except those with attribute type='unit'. Next, a test case named as Bad Test is disabled. The tests left active will be executed.
+\code
+testrunner-lite -f tests.xml -o ~/results -l 'type=unit -testcase="Bad Test"'
+\endcode
+The following example executes test cases that specify the requirement attribute with a value containing at least one of the following strings: '50001', '50002', '50003'.
+\code
+testrunner-lite -f tests.xml -o ~/results -l 'requirement=50001,50002,50003'
+\endcode
+
+\page manual_exec_page Manual Test Cases
+
+It is also possible to execute manual test cases using testrunner-lite, as defined in Test Definition XML.
+
+In case manual test case is encountered during execution, testrunner-lite will go through the defined test steps and ask user whether the step is passed or failed. The test case will terminate at the first failure, otherwise every step defined will be executed. After the test case is done, user has the option to enter additional comments.
+
+Example output when running manual case:
+\verbatim
+[INFO] 15:15:53 Starting test case: ExampleTestCase
+--- Execute test step ---
+Description:
+Open calculator. Expected result: calculator opens up.
+
+Please enter the result ([P/p]ass or [F/f]ail):
+P
+
+--- Execute test step ---
+Description:
+Stop calculator
+
+Please enter the result ([P/p]ass or [F/f]ail):
+P
+
+--- Test steps executed, case is PASSED ---
+Please enter additional comments (ENTER to finish):
+Execution was slow.
+
+[INFO] 15:16:41 Finished test case. Result: PASS
+\endverbatim
+
+\page main_mod_page Main Modules
 \section main_mod Main Modules
 
 Following gives short introduction to main modules of testrunner-lite. To give

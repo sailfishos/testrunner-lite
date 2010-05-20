@@ -46,6 +46,7 @@ typedef struct {
 	xmlChar *name;          /**< Name (for suite, set, case ...) */
         xmlChar *description;   /**< Description */
         xmlChar *requirement;   /**< Requirement attribute */
+	xmlChar *type;          /**< Type attribute */
 	unsigned long timeout;  /**< Timeout (defaults to 90) */
 	xmlChar *level;         /**< Level (Component, Feature, System) */
 	int      manual;        /**< Manual flag (default false) */
@@ -56,7 +57,7 @@ typedef struct {
 typedef struct {
 	td_gen_attribs gen;   /**< General attributes */
 	xmlChar    *domain;   /**< Domain */
-
+	int        filtered;  /**< Suite is filtered */
 } td_suite;
 /* ------------------------------------------------------------------------- */
 /** Test set. */
@@ -68,7 +69,7 @@ typedef struct {
 	xmlListPtr cases;        /**< Test cases in this set */
 	xmlListPtr environments; /**< Environments (hardware, scratchbox) */
 	xmlListPtr gets;         /**< Get commands */
-	
+	int        filtered;     /**< Set is filtered */
 	/* Executor fills */
 	xmlChar    *environment; /**< Current environment */
 	
