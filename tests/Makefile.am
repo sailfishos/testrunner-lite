@@ -36,6 +36,7 @@ testrunnerlitetests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/executor.o \
 			    $(top_builddir)/src/hwinfo.o \
 			    $(top_builddir)/src/log.o \
+			    $(top_builddir)/src/utils.o \
                             -lcheck \
                             -lgcov
 

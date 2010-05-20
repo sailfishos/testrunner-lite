@@ -29,7 +29,7 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
-
+#include "testrunnerlitetestscommon.h"
 #include "testrunnerlite.h"
 #include "../src/testfilters.c"
 /* ------------------------------------------------------------------------- */
@@ -215,8 +215,54 @@ START_TEST (test_feature_filter)
 
      filt.exclude = 1;
      fail_unless (feature_filter (&filt, (void *)&s));
-     
 END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (acceptance_test_requirement_filter)
+     int ret;
+     char cmd[1024];
+
+     /* Execute testrunner with filter_tests.xml and requirement filter  */
+     sprintf (cmd, "%s -a -e scratchbox -v -f %s "
+	      "-o /tmp/testrunnerlitetestdir/res.xml "
+	      "-l'requirement=66666,50002'", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_FILTER_TESTS_XML);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     /* Check that cases are filtered correctly by grepping result file */
+     /* set testset11 */
+     ret = system ("grep serm002 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep serm003 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep serm004 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     /* set testset12 */
+     ret = system ("grep serm005 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep manual_test_1 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep manual_test_2 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep serm006 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     /* set testset21 */
+     ret = system ("grep abc111 /tmp/testrunnerlitetestdir/res.xml");
+     fail_if (ret);
+     ret = system ("grep abc112 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep abc113 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     /* set testset31 */
+     ret = system ("grep abc211 /tmp/testrunnerlitetestdir/res.xml");
+     fail_if (ret);
+     ret = system ("grep abc212 /tmp/testrunnerlitetestdir/res.xml");
+     fail_if (ret);
+     ret = system ("grep abc213 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+END_TEST
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -273,6 +319,10 @@ Suite *make_testfilter_suite (void)
     tcase_add_test (tc, test_type_filter);
     suite_add_tcase (s, tc);
 
+    //    tc = tcase_create ("ACCEPTANCE: test feature filter");
+    tc = tcase_create ("ACCEPTANCE: Test requirement filter");
+    tcase_add_test (tc, acceptance_test_requirement_filter);
+    suite_add_tcase (s, tc);
     
     return s;
 }

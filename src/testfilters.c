@@ -30,6 +30,7 @@
 
 #include "testrunnerlite.h"
 #include "testfilters.h"
+#include "utils.h"
 #include "log.h"
 
 /* ------------------------------------------------------------------------- */
@@ -217,7 +218,7 @@ LOCAL int filter_add (test_filter *filter)
 LOCAL xmlListPtr string2valuelist (char *str)
 {
 	char *p;
-	xmlChar *val;
+	xmlChar *val, *clean_val;
 	xmlListPtr list = xmlListCreate (filter_value_delete, 
 					 filter_value_list_compare);
 	if (!list) {
@@ -241,7 +242,11 @@ LOCAL xmlListPtr string2valuelist (char *str)
 			val = xmlCharStrndup(&p[1], strlen(p)-2);
 		} else
 			val = xmlCharStrdup (p);
-		xmlListAppend (list, val);
+		/* trim leading and trailing white spaces */
+		clean_val = xmlStrdup (val);
+		trim_string ((char *)val, (char *)clean_val);
+		free (val);
+		xmlListAppend (list, clean_val);
 	} while ((p = strtok (NULL, ",")));
 	
 	return list;
