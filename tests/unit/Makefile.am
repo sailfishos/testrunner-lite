@@ -1,3 +1,5 @@
+testsdefinitiondir = /usr/share/testrunner-lite-tests/
+testsdefinition_DATA = tests.xml
 
 testrunnerliteunittestsdir = $(libdir)/testrunner-lite-tests
 

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="1.0">
+  <suite name="testrunner-lite-regression-tests">
+    <set name="basic-regression-tests">
+
+      <case name="trlitereg01">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg01.xml</step>
+      </case>
+
+      <case name="trlitereg02">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg02.xml</step>
+      </case>
+
+      <case name="trlitereg03">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg03.xml</step>
+      </case>
+
+      <case name="trlitereg04">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg04.xml</step>
+      </case>
+
+      <case name="trlitereg05">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg05.xml</step>
+      </case>
+
+      <environments>
+	<scratchbox>false</scratchbox>
+	<hardware>true</hardware>
+      </environments>
+    </set>
+  </suite>
+</testdefinition>

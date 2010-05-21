@@ -36,7 +36,7 @@ if [ -z "${EXPECTED_RETVAL}" ]; then
 fi
 
 # Run tests
-src/testrunner-lite -f ${INPUTXML} -o ${OUTPUTXML} -v
+testrunner-lite -f ${INPUTXML} -o ${OUTPUTXML} -v
 RETVAL=$?
 
 if [ ${RETVAL} -ne "${EXPECTED_RETVAL}" ]; then
@@ -52,8 +52,8 @@ check_step_results
 rm -f ${OUTPUTXML} ${CASESIN} ${CASESOUT} ${STEPSIN} ${STEPSOUT}
 
 if [ "${RESULT}" -ne 0 ]; then
-    echo FAILED
+    echo "$(basename $0) with ${INPUTXML} FAILED"
     exit 1
 else
-    echo PASSED
+    echo "$(basename $0) with ${INPUTXML} PASSED"
 fi

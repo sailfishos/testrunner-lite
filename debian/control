@@ -22,3 +22,11 @@ Depends: ci-testing, testrunner-lite, check, ${shlibs:Depends}
 XB-Maemo-CI-Packages: testrunner-lite
 XB-Maemo-CI-Stage: fast, staging, acceptance, validation
 Description: Unit tests for testrunner
+
+Package: testrunner-lite-regression-tests
+Section: tests
+Architecture: any
+Depends: ci-testing, testrunner-lite, check, ${shlibs:Depends}
+XB-Maemo-CI-Packages: testrunner-lite
+XB-Maemo-CI-Stage: fast, staging, acceptance, validation
+Description: Regression tests for testrunner

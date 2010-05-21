@@ -9,6 +9,7 @@ AC_CONFIG_FILES([
 	         tests/Makefile
           	 tests/utils/Makefile
 		 tests/unit/Makefile
+		 tests/regression/Makefile
          	 testdata/Makefile
                 ])
 AC_OUTPUT
