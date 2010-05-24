@@ -119,80 +119,6 @@ START_TEST (test_ctrl_char_strip)
 
 END_TEST
 
-START_TEST (test_non_utf8)
-
-    int ret;
-    char cmd[1024];
-
-    /* Test that we have stdout.<pid> file after running test defintion
-     * that produces non utf-8 output  */
-    sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir/res.xml ", 
-	     TESTRUNNERLITE_BIN, 
-	     TESTDATA_NON_UTF8_XML_1);
-    ret = system (cmd);
-    fail_if (ret, cmd);
-
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/stdout.*");
-    fail_if (ret, cmd);
-
-END_TEST
-
-START_TEST (test_get)
-
-    int ret;
-    char cmd[1024];
-
-    /* Test that -o creates a directory and that get tag does what is 
-       supposed to  */
-    sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir/res.xml ", 
-	     TESTRUNNERLITE_BIN, 
-	     TESTDATA_GET_XML_1);
-    ret = system (cmd);
-    fail_if (ret, cmd);
-
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/");
-    ret = system (cmd);
-    fail_if (ret, cmd);
-    
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest.txt");
-    ret = system (cmd);
-    fail_if (ret, cmd);
-    
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest2.txt");
-    ret = system (cmd);
-    fail_if (ret, cmd);
-
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest3.txt");
-    ret = system (cmd);
-    fail_if (ret, cmd);
-
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/gettest4.txt");
-    ret = system (cmd);
-    fail_if (ret, cmd);
-
-    sprintf (cmd, "stat /tmp/testrunnerlitetestdir/get\\ test5.txt");
-    ret = system (cmd);
-    fail_if (ret, cmd);
-
-END_TEST
-
-START_TEST (test_utf8)
-    int ret;
-    char cmd[1024];
-    char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
-    
-    sprintf (cmd, "%s -f %s -o %s", TESTRUNNERLITE_BIN, TESTDATA_UTF8_XML_1, 
-	     out_file);
-    ret = system (cmd);
-    fail_if (ret != 0, cmd);
-
-    sprintf (cmd, "out=$(cat /usr/share/testrunner-lite-tests/testdata/unicode.txt); grep \"$out\" %s", out_file);
-    ret = system (cmd);
-    fail_if (ret != 0, cmd);
-
-
-END_TEST
-
 START_TEST (test_logging)
 
     char *stdout_tmp = "/tmp/testrunner-lite-stdout.log";
@@ -486,18 +412,6 @@ Suite *make_features_suite (void)
     tcase_add_test (tc, test_ctrl_char_strip);
     suite_add_tcase (s, tc);
 
-    tc = tcase_create ("Test output dir creation and get tag.");
-    tcase_add_test (tc, test_get);
-    suite_add_tcase (s, tc);
-    
-    tc = tcase_create ("Test UTF-8 Support.");
-    tcase_add_test (tc, test_utf8);
-    suite_add_tcase (s, tc);
-
-    tc = tcase_create ("Test non UTF-8 ouput handling.");
-    tcase_add_test (tc, test_non_utf8);
-    suite_add_tcase (s, tc);
-  
     tc = tcase_create ("Test logging.");
     tcase_add_test (tc, test_logging);
     suite_add_tcase (s, tc);

@@ -2,7 +2,6 @@
 <testdefinition version="1.0">
   <suite name="testrunner-lite-regression-tests">
     <set name="basic-regression-tests">
-
       <case name="trlitereg01">
 	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg01.xml</step>
       </case>
@@ -22,6 +21,85 @@
       <case name="trlitereg05">
 	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg05.xml</step>
       </case>
+
+      <environments>
+	<scratchbox>false</scratchbox>
+	<hardware>true</hardware>
+      </environments>
+    </set>
+
+
+    <set name="test_executor_tests">
+      <pre_steps>
+	<step>rm -fr /tmp/testrunnerlitetestdir</step>
+      </pre_steps>
+
+      <case name="test_background_process_cleanup">
+	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-bg.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>sleep 1</step>
+	<step>! pidof unterminating</step>
+      </case>
+
+      <case name="test_presteps_failure_info">
+	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-pre_step-fail.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep &quot;pre_steps failed&quot; /tmp/testrunnerlitetestdir/res.xml</step>
+      </case>
+
+      <post_steps>
+	<step>rm -fr /tmp/testrunnerlitetestdir</step>
+      </post_steps>
+
+      <environments>
+	<scratchbox>false</scratchbox>
+	<hardware>true</hardware>
+      </environments>
+    </set>
+
+
+    <set name="test_output_stream_formats">
+      <pre_steps>
+	<step>rm -fr /tmp/testrunnerlitetestdir</step>
+      </pre_steps>
+
+      <case name="test_utf8">
+	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-utf8.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep &quot;$(cat /usr/share/testrunner-lite-tests/testdata/unicode.txt)&quot; /tmp/testrunnerlitetestdir/res.xml</step>
+      </case>
+
+      <case name="test_non_utf8">
+	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-non-utf8.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>stat /tmp/testrunnerlitetestdir/stdout.*</step>
+      </case>
+
+      <post_steps>
+	<step>rm -fr /tmp/testrunnerlitetestdir</step>
+      </post_steps>
+
+      <environments>
+	<scratchbox>false</scratchbox>
+	<hardware>true</hardware>
+      </environments>
+    </set>
+
+
+    <set name="test_get_file_feature">
+      <pre_steps>
+	<step>rm -fr /tmp/testrunnerlitetestdir</step>
+      </pre_steps>
+
+      <case name="test_non_utf8">
+	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-get.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>[ -d /tmp/testrunnerlitetestdir/ ]</step>
+	<step>[ -f /tmp/testrunnerlitetestdir/gettest.txt ]</step>
+	<step>[ -f /tmp/testrunnerlitetestdir/gettest2.txt ]</step>
+	<step>[ -f /tmp/testrunnerlitetestdir/gettest3.txt ]</step>
+	<step>[ -f /tmp/testrunnerlitetestdir/gettest4.txt ]</step>
+	<step>[ -f /tmp/testrunnerlitetestdir/get\ test5.txt ]</step>
+      </case>
+
+      <post_steps>
+	<step>rm -fr /tmp/testrunnerlitetestdir</step>
+      </post_steps>
 
       <environments>
 	<scratchbox>false</scratchbox>
