@@ -87,7 +87,7 @@
 	<step>rm -fr /tmp/testrunnerlitetestdir</step>
       </pre_steps>
 
-      <case name="test_non_utf8">
+      <case name="test_local_get_file">
 	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-get.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>[ -d /tmp/testrunnerlitetestdir/ ]</step>
 	<step>[ -f /tmp/testrunnerlitetestdir/gettest.txt ]</step>

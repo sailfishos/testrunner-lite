@@ -53,6 +53,7 @@ typedef struct {
 	char *environment;     /**< execution environment */
 	char *remote_logger;     /**< Remote logger URL */
 	long  remote_logger_port; /** Remote logger port number */
+	int   syslog_output;   /**< flag for syslog */
 	int   disable_schema;  /**< flag for disabling DTD validation */
 	int   semantic_schema; /**< flag for enabling sricter DTD */
 	result_output   output_type;   /**< result output type selector */

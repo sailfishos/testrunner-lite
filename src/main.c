@@ -152,20 +152,19 @@ LOCAL void usage()
 		"to be executed.\n");
 	printf ("  -m, --manual\tEnable only manual tests to be executed.\n");
 	
-#if 1 /* do not advertise features we do not have yet .. */
 	printf ("  -l FILTER, --filter=FILTER\n\t\t"
 		"Filtering option to select tests (not) to be executed.\n\t\t"
 		"E.g. '-testcase=bad_test -type=unknown' first disables\n\t\t"
 		"test case named as bad_test. Next, all tests with type\n\t\t"
 		"unknown are disabled. The remaining tests will be\n\t\t"
 		"executed.\n");
-#endif 
 	printf ("  -c, --ci\tDisable validation of test "
 		"definition against schema.\n");
 	printf ("  -s, --semantic\n\t\tEnable validation of test "
 		"definition against stricter (semantics) schema.\n");
 	printf ("  -A, --validate-only\n\t\tDo only input xml validation, "
 		"do not execute tests.\n");
+	printf ("  -S, --syslog\n\t\tWrite log messages also to syslog.\n");
 	printf ("  -t [USER@]ADDRESS, --target=[USER@]ADDRESS\n\t\t"
 		"Enable host-based testing. "
 		"If given, commands are executed from\n\t\t"
@@ -447,7 +446,7 @@ LOCAL int process_get (const void *data, const void *user)
 	execute((char*)command, &edata);
 
 	if (edata.result) {
-		LOG_MSG (LOG_ERROR, "%s: %s failed: %s\n", PROGNAME, command,
+		LOG_MSG (LOG_ERR, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
@@ -517,7 +516,7 @@ LOCAL void process_set (td_set *s)
 		LOG_MSG (LOG_INFO, "Executing pre steps");
 		xmlListWalk (s->pre_steps, step_execute, &dummy);
 		if (dummy.case_res != CASE_PASS) {
-			LOG_MSG (LOG_ERROR, "Pre steps failed. "
+			LOG_MSG (LOG_ERR, "Pre steps failed. "
 				 "Test set %s aborted.", s->gen.name); 
 			xmlListWalk (s->cases, case_result_na, 
 				     global_failure ? global_failure :
@@ -537,7 +536,7 @@ LOCAL void process_set (td_set *s)
 		dummy.gen.timeout = COMMON_SOFT_TIMEOUT;
 		xmlListWalk (s->post_steps, step_execute, &dummy);
 		if (dummy.case_res == CASE_FAIL)
-			LOG_MSG (LOG_ERROR, 
+			LOG_MSG (LOG_ERR, 
 				 "Post steps failed for %s.", s->gen.name);
 	}
 
@@ -571,7 +570,7 @@ LOCAL int create_output_folder ()
 	} else {
 		pwd = getenv ("PWD");
 		if (!pwd) {
-			LOG_MSG (LOG_ERROR, "%s: getenv() failed %s\n",
+			LOG_MSG (LOG_ERR, "%s: getenv() failed %s\n",
 				 PROGNAME, strerror (errno));
 			return 1;
 		}
@@ -586,7 +585,7 @@ LOCAL int create_output_folder ()
 	sprintf (cmd, "mkdir -p %s", opts.output_folder);
 
 	if  (system (cmd)) {
-		LOG_MSG (LOG_ERROR, "%s failed to create output "
+		LOG_MSG (LOG_ERR, "%s failed to create output "
 			 "directory %s\n",
 			 PROGNAME, opts.output_folder);
 		free (cmd);
@@ -656,6 +655,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"format", required_argument, NULL, 'r'},
 			{"environment", required_argument, NULL, 'e'},
 			{"verbose", optional_argument, NULL, 'v'},
+			{"syslog", no_argument, &opts.syslog_output, 1},
 			{"automatic", no_argument, &a_flag, 1},
 			{"manual", no_argument, &m_flag, 1},
 			{"filter", required_argument, NULL, 'l'},
@@ -685,7 +685,7 @@ int main (int argc, char *argv[], char *envp[])
 	while (1) {
 		option_idx = 0;
      
-		opt_char = getopt_long (argc, argv, ":haAsmcf:o:e:l:r:L:t:v::",
+		opt_char = getopt_long (argc, argv, ":haASsmcf:o:e:l:r:L:t:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -709,10 +709,6 @@ int main (int argc, char *argv[], char *envp[])
 			else {
 				opts.log_level = LOG_LEVEL_INFO;
 			}
-			/*
-			 * Set logging level.
-			 */
-			log_init (&opts);
 			break;
 		case 'a':
 			a_flag = 1;
@@ -761,6 +757,9 @@ int main (int argc, char *argv[], char *envp[])
 		case 'A':
 			A_flag = 1;
 			break;
+		case 'S':
+			opts.syslog_output = 1;
+			break;
 		case 'L':
 			if (parse_remote_logger(optarg, &opts) != 0) {
 				retval = EXIT_FAILURE;
@@ -796,6 +795,7 @@ int main (int argc, char *argv[], char *envp[])
 		}
 	}
 
+
 	/*
 	 * Do some post-validation for the options
 	 */
@@ -825,6 +825,10 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	}
 	
+	/*
+	 * Initialize logging.
+	 */
+	log_init (&opts);
 	/*
 	 * Set remote execution options.
 	 */

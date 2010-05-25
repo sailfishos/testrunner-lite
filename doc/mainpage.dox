@@ -47,6 +47,9 @@ an IPv4 address.
 \subsection opt_auto -a,  --automatic
 Enable only automatic tests to be executed
 
+\subsection opt_syslog       -S,  --syslog
+Enable logging to syslog.
+
 \subsection opt_manual       -m,  --manual
 Enable only manual tests to be executed
 
