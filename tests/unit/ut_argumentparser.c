@@ -100,6 +100,12 @@ START_TEST (test_parse_cmd_line_arguments)
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
+    /* Test -S  */
+    sprintf (cmd, "%s -a -f %s -A -S", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
     /* Test -A -s flag. */
     sprintf (cmd, "%s -a -f %s -A --semantic", TESTRUNNERLITE_BIN, 
 	     TESTDATA_VALID_XML_1);

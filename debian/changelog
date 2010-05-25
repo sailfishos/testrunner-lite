@@ -3,6 +3,7 @@ testrunner-lite (1.2.7) unstable; urgency=low
   * Implemented: SWP#MTT-220 - Filters for testrunner-lite
   * Implemented: SWP#MTT-259 - Setting environment for automated testing
   * Implemented: SWP#MTT-279 - Acceptance tests for testrunner-lite
+  * Implemented: SWP#MTT-271 - Syslog support to testrunner-lite
 
  -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Tue, 25 May 2010 14:45:11 +0300
 
@@ -17,9 +18,9 @@ testrunner-lite (1.2.5) unstable; urgency=low
   * Fixes: NB#165821 - testrunner-lite fails to copy file if <file> tag contains newlines
   * Implemented: SWP#MTT-260 - N/A result for manual testing support
   * Implemented: SWP#MTT-269 - testrunner-lite ssh return value
-	
+
  -- Raimo Gratseff <ext-raimo.gratseff@nokia.com>  Tue, 04 May 2010 12:18:49 +0300
- 
+
 testrunner-lite (1.2.4) unstable; urgency=low
 
   * Fixes: NB#164179 - Preventing "hanging" in SSH connections.
@@ -102,7 +103,7 @@ testrunner-lite (0.0.1-1) unstable; urgency=low
 
 testrunner-lite (0.0.1) UNRELEASED; urgency=low
 
-  * Initial release. 
+  * Initial release.
   * Added: Command line arguments parsing.
   * Added: Validates given test definition against schema.
   * Added: Unit tests for current functionality.

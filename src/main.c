@@ -387,9 +387,11 @@ LOCAL int case_result_na (const void *data, const void *user)
 
 	td_case *c = (td_case *)data;
 	
-	LOG_MSG (LOG_DEBUG, "Setting N/A result for case %s", c->gen.name);
+	LOG_MSG (LOG_DEBUG, "Setting FAIL result for case %s", c->gen.name);
 
-	c->case_res = CASE_NA;
+	/* FIXME */
+	c->case_res = CASE_FAIL;
+	/* c->case_res = CASE_NA; */
 
 	xmlListWalk (c->steps, step_result_na, user);
 	
