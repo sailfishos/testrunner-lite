@@ -39,7 +39,12 @@
 /* MACROS */
 
 #define SHELLCMD       "/bin/sh"
-#define SHELLCMD_ARG1  "-c"
+/* shell options are
+ * -l : Login shell. .profile is read upon login
+ * -c : Execute a command. This must be the last option followed by a command
+ */
+#define SHELLCMD_ARGS      "-l", "-c"
+#define SHELLCMD_ARGS_STR  "-l -c"
 #define FAILURE_INFO_TIMEOUT "timeout"
 #define POLL_TIMEOUT_MS   100
 #define POLL_TIMEOUT_US   (1000*POLL_TIMEOUT_MS)
