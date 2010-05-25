@@ -35,9 +35,13 @@ if [ -z "${EXPECTED_RETVAL}" ]; then
     exit 2
 fi
 
+echo "Running $(basename $0) with ${INPUTXML}"
+
 # Run tests
+echo "---- testrunner-lite output begins ----"
 testrunner-lite -f ${INPUTXML} -o ${OUTPUTXML} -v
 RETVAL=$?
+echo "---- testrunner-lite output ends ----"
 
 if [ ${RETVAL} -ne "${EXPECTED_RETVAL}" ]; then
     echo "ERROR: Expected return value ${EXPECTED_RETVAL} from testrunner-lite but $RETVAL was returned" 1>&2
@@ -52,8 +56,8 @@ check_step_results
 rm -f ${OUTPUTXML} ${CASESIN} ${CASESOUT} ${STEPSIN} ${STEPSOUT}
 
 if [ "${RESULT}" -ne 0 ]; then
-    echo "$(basename $0) with ${INPUTXML} FAILED"
+    echo "$(basename $0) with ${INPUTXML}: FAIL"
     exit 1
 else
-    echo "$(basename $0) with ${INPUTXML} PASSED"
+    echo "$(basename $0) with ${INPUTXML}: PASS"
 fi

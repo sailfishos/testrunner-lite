@@ -22,6 +22,10 @@
 	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg05.xml</step>
       </case>
 
+      <case name="trlitereg06">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg06.xml</step>
+      </case>
+
       <environments>
 	<scratchbox>false</scratchbox>
 	<hardware>true</hardware>
