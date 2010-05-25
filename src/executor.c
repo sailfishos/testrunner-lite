@@ -233,7 +233,7 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		/* execution should never reach this point */
 		exit(1);
 	} else {
-		LOG_MSG(LOG_ERROR, "Fork failed: %s", strerror(errno));
+		LOG_MSG(LOG_ERR, "Fork failed: %s", strerror(errno));
 		goto error_fork;
 	}
 
@@ -268,7 +268,7 @@ static pid_t fork_process(const char *command) {
 		/* execution should never reach this point */
 		exit(1);
 	} else {
-		LOG_MSG(LOG_ERROR, "Fork failed: %s", strerror(errno));
+		LOG_MSG(LOG_ERR, "Fork failed: %s", strerror(errno));
 	}
 
 	return pid;
@@ -292,7 +292,7 @@ static void* stream_data_realloc(stream_data* data, int size) {
 		data->size = size;
 		free(oldptr);
 	} else {
-		LOG_MSG(LOG_ERROR, "Stream data memory allocation failed");
+		LOG_MSG(LOG_ERR, "Stream data memory allocation failed");
 	}
 
 	return (void*)newptr;
@@ -457,7 +457,7 @@ static int execution_terminated(exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "waitpid reported no more children");
 			ret = 1;
 		} else {
-			LOG_MSG(LOG_ERROR, "waitpid: %s", strerror (errno));
+			LOG_MSG(LOG_ERR, "waitpid: %s", strerror (errno));
 		}
 		
 		break;
@@ -486,7 +486,7 @@ static int execution_terminated(exec_data* data) {
 						bail_out = data->result;
 						global_failure = "connection "
 							"fail";
-						LOG_MSG(LOG_ERROR, 
+						LOG_MSG(LOG_ERR, 
 							"ssh connection "
 							"failure");
 						
@@ -509,7 +509,7 @@ static int execution_terminated(exec_data* data) {
 			 */
 			if (options->target_address && 
 			    (ret = ssh_check_conn (options->target_address))) {
-				LOG_MSG(LOG_ERROR, "ssh connection failure "
+				LOG_MSG(LOG_ERR, "ssh connection failure "
 					"(%d)", ret);
 					
 				bail_out = ret;
@@ -518,7 +518,7 @@ static int execution_terminated(exec_data* data) {
 
 		} else {
 			data->result = -1;
-			LOG_MSG(LOG_ERROR,
+			LOG_MSG(LOG_ERR,
 				"Unexpected return status %d from process %d",
 				status, pid);
 		}
@@ -710,7 +710,7 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 	fname = (char *)malloc (strlen (options->output_folder) + 
 				strlen ("id") + 10 + 1 + 1);
 	if (!fname) {
-			LOG_MSG(LOG_ERROR, "OOM");
+			LOG_MSG(LOG_ERR, "OOM");
 			goto error;
 	}
 	sprintf (fname, "%s/%s.%d", options->output_folder, 
@@ -718,7 +718,7 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 	
 	ofile = fopen (fname, "w+");
 	if (!ofile)  {
-		LOG_MSG (LOG_ERROR, "%s:%s:failed to open file %s %s\n",
+		LOG_MSG (LOG_ERR, "%s:%s:failed to open file %s %s\n",
 			 PROGNAME, __FUNCTION__, fname,
 			 strerror(errno));
 		goto error;
@@ -733,7 +733,7 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 							"detected - see file ")
 						 + strlen (fname) + 1);
 	if (!data->buffer) {
-		LOG_MSG(LOG_ERROR, "OOM");
+		LOG_MSG(LOG_ERR, "OOM");
 		goto error;
 	}
 
@@ -786,7 +786,7 @@ int execute(const char* command, exec_data* data) {
 		/* wait that child runs the setsid() */
 		ppgid = getpgid (0);
 		if (ppgid == -1)
-			LOG_MSG (LOG_ERROR, "getpgid() failed %s",
+			LOG_MSG (LOG_ERR, "getpgid() failed %s",
 				 strerror (errno));
 		else
 			while (ppgid == getpgid(data->pid)) sched_yield();
@@ -859,13 +859,13 @@ void clean_stream_data(stream_data* data) {
  */
 void kill_pgroup(int pgroup, int sig) {
 	if (pgroup <= 1) {
-		LOG_MSG(LOG_ERROR, "Invalid pgid %d", pgroup);
+		LOG_MSG(LOG_ERR, "Invalid pgid %d", pgroup);
 		return;
 	}
 
 	/* pgroup must be different than the pgid of testrunner-lite */
 	if (pgroup == getpgid(0)) {
-		LOG_MSG(LOG_ERROR, "Pgid equals the pgid of testrunner-lite");
+		LOG_MSG(LOG_ERR, "Pgid equals the pgid of testrunner-lite");
 		return;
 	}
 
@@ -873,7 +873,7 @@ void kill_pgroup(int pgroup, int sig) {
 		sig, pgroup);
 
 	if (killpg(pgroup, sig) < 0 && errno != ESRCH) {
-		LOG_MSG(LOG_ERROR, "killpg failed: %s", strerror(errno));
+		LOG_MSG(LOG_ERR, "killpg failed: %s", strerror(errno));
 	}
 }
 

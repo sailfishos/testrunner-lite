@@ -33,6 +33,9 @@ messages. Default behaviour is silent mode.
 Remote HTTP logger. Log messages are sent to given URL in a HTTP POST message.
 URL format is [http://]host[:port][/path/], where host may be a hostname or an IPv4 address.
 .TP
+\fB\-S\fR,  \fB\-\-syslog\fR 
+Enable logging to syslog.
+.TP
 \fB\-a\fR,  \fB\-\-automatic\fR 
 Enable only automatic tests to be executed
 .TP

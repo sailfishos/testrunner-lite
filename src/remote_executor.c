@@ -96,7 +96,7 @@ void ssh_executor_init ()
 	unique_id = (char *)malloc (UNIQUE_ID_MAX_LEN);
 	ret = gethostname(unique_id, HOST_NAME_MAX);
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "Failed to get host name: %s", 
+		LOG_MSG(LOG_ERR, "Failed to get host name: %s", 
 			strerror (errno));
 		strcpy (unique_id, "foo");
 	}
