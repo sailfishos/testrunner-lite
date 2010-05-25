@@ -29,6 +29,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <stdio.h>
+#include <syslog.h>
 #include "testrunnerlite.h"
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -41,6 +42,8 @@
 		log_msg (__level__, __FILE__, __FUNCTION__, __LINE__,	\
 			 __format__, ##__args__);			\
 	} while (0)
+#define LOG_TYPES_COUNT LOG_DEBUG + 1
+
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
@@ -58,15 +61,6 @@ enum log_levels {
     LOG_LEVEL_DEBUG,
     LOG_LEVELS_COUNT, /* number of entries in enum */
 };
-
-enum log_message_types {
-  LOG_ERROR = 0,
-  LOG_INFO,
-  LOG_DEBUG,
-  LOG_WARNING,
-  LOG_TYPES_COUNT /* number of entries in enum */
-};
-
 
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */

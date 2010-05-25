@@ -63,12 +63,14 @@ extern struct timeval created;
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 LOCAL CURL *curl;
+LOCAL int  do_syslog = 0;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 
-/* Match these to log.h log_message_types */
-const char *stream_names[] = {"ERROR", "INFO", "DEBUG", "WARNING", "UNKNOWN" };
+/* Match these to priorities in syslog.h */
+const char *stream_names[] = {"EMERG", "ALERT", "CRITICAL", "ERROR",
+			      "WARNING", "NOTICE", "INFO", "DEBUG", "UNKNOWN" };
 
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
@@ -232,9 +234,11 @@ void log_msg(int type, const char *file, const char *function,
 	msg = vcreate_msg (format, args);
 	va_end(args);
 
-
 	if (!msg)
 		return;
+
+	if (do_syslog)
+		syslog (type, "%s", msg);
 	
 	fprintf (stdout, "%s\n", msg);
 	
@@ -323,7 +327,7 @@ void log_init (testrunner_lite_options *opts) {
 		LOG_MSG (LOG_INFO, "Verbosity level set to: %d\n", 
 			 opts->log_level);
 	} else {
-		LOG_MSG (LOG_ERROR, 
+		LOG_MSG (LOG_ERR, 
 			 "Incorrect verbosity level %d, values [0..%d]\n", 
 			 opts->log_level, LOG_LEVELS_COUNT - 1);
 	}
@@ -338,6 +342,10 @@ void log_init (testrunner_lite_options *opts) {
 					 opts->remote_logger_port);
 			
 	}
+	if (opts->syslog_output) {
+		openlog ("testrunner-lite", 0, LOG_LOCAL1);
+		do_syslog = 1;
+	}
 }
 
 /* ------------------------------------------------------------------------- */
@@ -349,6 +357,8 @@ void log_close () {
 		curl_easy_cleanup(curl);
 		curl = NULL;
 	}
+	if (do_syslog)
+		closelog();
 }
 
 

@@ -142,7 +142,7 @@ START_TEST (test_logging)
     /* Log INFO, WARNING and ERROR messages. */
     LOG_MSG (LOG_INFO, "INFO message: %s\n", "This works.");
     LOG_MSG (LOG_WARNING, "WARNING message: %s\n", "This works.");
-    LOG_MSG (LOG_ERROR, "ERROR message: %s\n", "This works.");
+    LOG_MSG (LOG_ERR, "ERROR message: %s\n", "This works.");
     LOG_MSG (LOG_INFO, message);
     memset (message, 'b', LOG_MSG_MAX_SIZE + 1);
     message [LOG_MSG_MAX_SIZE] = '\0';
@@ -191,7 +191,7 @@ START_TEST (test_logging)
     /* Log INFO, WARNING and ERROR messages. */
     LOG_MSG (LOG_INFO, "INFO message: %s\n", "This works.");
     LOG_MSG (LOG_WARNING, "WARNING message: %s\n", "This works.");
-    LOG_MSG (LOG_ERROR, "ERROR message: %s\n", "This works.");
+    LOG_MSG (LOG_ERR, "ERROR message: %s\n", "This works.");
     LOG_MSG (LOG_DEBUG, "DEBUG message: %s\n", "This works.");
     
     /* Back to terminal. */

@@ -200,7 +200,7 @@ LOCAL int filter_add (test_filter *filter)
 		filter->filter = test_case_filter;
 		return xmlListAppend (case_filter_list, filter);
 	} else {
-		LOG_MSG (LOG_ERROR, "Unknow filter type %s",
+		LOG_MSG (LOG_ERR, "Unknow filter type %s",
 			 filter->key);
 		free (filter->key);
 		xmlListDelete (filter->value_list);
@@ -222,7 +222,7 @@ LOCAL xmlListPtr string2valuelist (char *str)
 	xmlListPtr list = xmlListCreate (filter_value_delete, 
 					 filter_value_list_compare);
 	if (!list) {
-		LOG_MSG (LOG_ERROR, "OOM");
+		LOG_MSG (LOG_ERR, "OOM");
 		return NULL;
 	}
 	
@@ -232,11 +232,11 @@ LOCAL xmlListPtr string2valuelist (char *str)
 		/* Clean possible "-signs */
 		if (p[0] == '"') {
 			if (strlen (p) < 3) {
-				LOG_MSG (LOG_ERROR, "empty value");
+				LOG_MSG (LOG_ERR, "empty value");
 				goto err_out;
 			}
 			if (p[strlen(p)-1] != '"') {
-				LOG_MSG (LOG_ERROR, "Mismatched \" %s", p);
+				LOG_MSG (LOG_ERR, "Mismatched \" %s", p);
 				goto err_out;
 			}
 			val = xmlCharStrndup(&p[1], strlen(p)-2);
@@ -483,7 +483,7 @@ int parse_filter_string (char *filters)
 			*p = '\0';
 			p++;
 		} else {
-			LOG_MSG (LOG_ERROR, "failed to parse filter string - "
+			LOG_MSG (LOG_ERR, "failed to parse filter string - "
 				 "missing '='\n");
 			goto err_out;
 		}
@@ -509,7 +509,7 @@ int parse_filter_string (char *filters)
 			}
 		 } while (c != '\0');
 		if (in_quotes) {
-			LOG_MSG (LOG_ERROR, 
+			LOG_MSG (LOG_ERR, 
 				 "failed to parse filter string - "
 				 "mismatched \"");
 			goto err_out;

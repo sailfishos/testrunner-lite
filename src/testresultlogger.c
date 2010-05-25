@@ -329,7 +329,7 @@ LOCAL int xml_write_case (const void *data, const void *user)
 	return 1;
 
 err_out:
-	LOG_MSG (LOG_ERROR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	
 	return 0;
 }
@@ -521,7 +521,7 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 	     */
 	    writer = xmlNewTextWriterFilename(opts->output_filename, 0);
 	    if (!writer)  {
-		    LOG_MSG (LOG_ERROR, "%s:%s:failed to create writer for %s\n",
+		    LOG_MSG (LOG_ERR, "%s:%s:failed to create writer for %s\n",
 			     PROGNAME, __FUNCTION__, opts->output_filename);
 		    return 1;
 	    }
@@ -530,14 +530,14 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 					   "1.0", 
 					   "UTF-8", 
 					   NULL) < 0) {
-		    LOG_MSG (LOG_ERROR, "%s:%s:failed to write document start\n",
+		    LOG_MSG (LOG_ERR, "%s:%s:failed to write document start\n",
 			     PROGNAME, __FUNCTION__);
 		    return 1;
 	    }
 		    
 	    if (xmlTextWriterStartElement (writer, BAD_CAST "testresults") 
 		< 0) {
-		    LOG_MSG (LOG_ERROR, "%s:%s:failed to write testsresults tag\n",
+		    LOG_MSG (LOG_ERR, "%s:%s:failed to write testsresults tag\n",
 			     PROGNAME, __FUNCTION__);
 		    return 1;
 	    }
@@ -588,7 +588,7 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 	     */
 	    ofile = fopen (opts->output_filename, "w+");
 	    if (!ofile)  {
-		    LOG_MSG (LOG_ERROR, "%s:%s:failed to open file %s %s\n",
+		    LOG_MSG (LOG_ERR, "%s:%s:failed to open file %s %s\n",
 			     PROGNAME, __FUNCTION__, opts->output_filename,
 			     strerror(errno));
 		    return 1;
@@ -616,7 +616,7 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 	    break;
 
     default:
-	    LOG_MSG (LOG_ERROR, "%s:%s:invalid output type %d\n",
+	    LOG_MSG (LOG_ERR, "%s:%s:invalid output type %d\n",
 		     PROGNAME, __FUNCTION__, opts->output_type);
 	    return 1;
     }
@@ -692,7 +692,7 @@ void close_result_logger (void)
 		fclose (ofile);
 		ofile = NULL;
 	} else {
-		LOG_MSG (LOG_ERROR, "%s:%s: Result logger not open?\n",
+		LOG_MSG (LOG_ERR, "%s:%s: Result logger not open?\n",
 			 PROGNAME, __FUNCTION__);
 	}
 
