@@ -1,3 +1,11 @@
+testrunner-lite (1.2.7) unstable; urgency=low
+
+  * Implemented: SWP#MTT-220 - Filters for testrunner-lite
+  * Implemented: SWP#MTT-259 - Setting environment for automated testing
+  * Implemented: SWP#MTT-279 - Acceptance tests for testrunner-lite
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Tue, 25 May 2010 14:45:11 +0300
+
 testrunner-lite (1.2.6) unstable; urgency=low
 
   * Fixed bug in step execution return value.
