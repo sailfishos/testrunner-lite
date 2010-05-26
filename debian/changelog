@@ -1,3 +1,9 @@
+testrunner-lite (1.2.8) unstable; urgency=low
+
+  * Fixed a bug in filter string parsing and added one more acceptance test.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Wed, 26 May 2010 15:25:06 +0300
+
 testrunner-lite (1.2.7) unstable; urgency=low
 
   * Implemented: SWP#MTT-220 - Filters for testrunner-lite
