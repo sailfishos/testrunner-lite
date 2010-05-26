@@ -225,9 +225,12 @@ LOCAL xmlListPtr string2valuelist (char *str)
 		LOG_MSG (LOG_ERR, "OOM");
 		return NULL;
 	}
-	
 	/* Go through value list */
 	p = strtok (str, ",");
+	if (!p) {
+		LOG_MSG (LOG_ERR, "empty value");
+		return NULL;
+	}
 	do {
 		/* Clean possible "-signs */
 		if (p[0] == '"') {
@@ -487,6 +490,7 @@ int parse_filter_string (char *filters)
 				 "missing '='\n");
 			goto err_out;
 		}
+		
 		/* Find filter value */
 		value = p;
 		do {
@@ -514,8 +518,11 @@ int parse_filter_string (char *filters)
 				 "mismatched \"");
 			goto err_out;
 		}
+		retval = validate_and_add_filter (key, value);
+		if (retval) {
+		        goto err_out;
+		}
 	}
-	retval = validate_and_add_filter (key, value);
 	free (f);
 	return retval;
  err_out:
@@ -529,7 +536,7 @@ int parse_filter_string (char *filters)
  */
 int filter_suite (td_suite *s)
 {
-	xmlListWalk (set_filter_list, filter_exec, s);
+	xmlListWalk (suite_filter_list, filter_exec, s);
 	return s->filtered;
 }
 /* ------------------------------------------------------------------------- */

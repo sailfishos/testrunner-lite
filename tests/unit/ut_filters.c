@@ -423,6 +423,55 @@ START_TEST (acceptance_test_type_filter)
      fail_if (ret);
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST (acceptance_test_filter_combo)
+     int ret;
+     char cmd[1024];
+
+     /* Execute testrunner with filter_tests.xml and type filter  */
+     sprintf (cmd, "%s -a -v -f %s -e scratchbox "
+	      "-o /tmp/testrunnerlitetestdir/res.xml "
+	      "-l'type=Integration -testcase=xxx312'", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_FILTER_TESTS_XML);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     /* assert all cases in suites 0,1,2 have been filtered out */
+     ret = system ("grep serm002 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep serm003 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep serm004 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep serm005 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep manual_test_1 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep manual_test_2 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep serm006 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep abc111 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep abc112 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep abc113 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep abc211 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep abc212 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep abc213 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     /* assert all cases in expect xxx312 were left active */
+     ret = system ("grep xxx311 /tmp/testrunnerlitetestdir/res.xml");
+     fail_if (ret);
+     ret = system ("grep xxx312 /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep xxx313 /tmp/testrunnerlitetestdir/res.xml");
+     fail_if (ret);
+END_TEST
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 Suite *make_testfilter_suite (void)
@@ -496,6 +545,10 @@ Suite *make_testfilter_suite (void)
 
     tc = tcase_create ("ACCEPTANCE: Test type filter");
     tcase_add_test (tc, acceptance_test_type_filter);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("ACCEPTANCE: Test filter combo");
+    tcase_add_test (tc, acceptance_test_filter_combo);
     suite_add_tcase (s, tc);
     
     return s;
