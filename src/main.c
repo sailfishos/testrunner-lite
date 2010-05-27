@@ -490,25 +490,31 @@ LOCAL void end_suite ()
 LOCAL void process_set (td_set *s)
 {
 	td_case dummy;
-
 	
-	s->environment = xmlCharStrdup (opts.environment);
+	/*
+	** Check that the set is not filtered
+	*/
 	if (filter_set (s)) {
 		LOG_MSG (LOG_INFO, "Test set %s is filtered", s->gen.name);
-		return;
+		goto skip_all;
+	}
+
+	/*
+	** Check that the set is supposed to be executed in the current env
+	*/
+	s->environment = xmlCharStrdup (opts.environment);
+	if (xmlListSize(s->environments) > 0) {
+	        if (!xmlListSearch (s->environments, opts.environment)) {
+			LOG_MSG (LOG_INFO, "Test set %s not run on "
+				 "environment: %s", 
+				 s->gen.name, opts.environment);
+			goto skip_all;
+		}
 	}
 
 	LOG_MSG (LOG_INFO, "Test set: %s", s->gen.name);
 
 	write_pre_set_tag (s);
-	/*
-	** Check that the set is supposed to be executed in the current env
-	*/
-	if (xmlListSize(s->environments) > 0) {
-	        if (!xmlListSearch (s->environments, opts.environment)) {
-			goto skip;
-		}
-	}
 
 	if (xmlListSize (s->pre_steps) > 0) {
 		memset (&dummy, 0x0, sizeof (td_case));
@@ -523,7 +529,7 @@ LOCAL void process_set (td_set *s)
 			xmlListWalk (s->cases, case_result_na, 
 				     global_failure ? global_failure :
 				     "pre_steps failed");
-			goto skip;
+			goto short_circuit;
 		}
 	}
 	
@@ -541,15 +547,14 @@ LOCAL void process_set (td_set *s)
 			LOG_MSG (LOG_ERR, 
 				 "Post steps failed for %s.", s->gen.name);
 	}
-
- skip:
-	
+ short_circuit:
 	write_post_set_tag (s);
 	if (xmlListSize (s->pre_steps) > 0)
 		xmlListWalk (s->pre_steps, step_post_process, &dummy);
 	if (xmlListSize (s->post_steps) > 0)
 		xmlListWalk (s->post_steps, step_post_process, &dummy);
 	xml_end_element();
+ skip_all:
 	td_set_delete (s);
 	return;
 }
@@ -648,6 +653,7 @@ int main (int argc, char *argv[], char *envp[])
 	FILE *ifile = NULL;
 	int retval = EXIT_SUCCESS;
 	td_parser_callbacks cbs;
+	xmlChar *filter_string = NULL;
 
 	struct option testrunnerlite_options[] =
 		{
@@ -711,6 +717,7 @@ int main (int argc, char *argv[], char *envp[])
 			else {
 				opts.log_level = LOG_LEVEL_INFO;
 			}
+
 			break;
 		case 'a':
 			a_flag = 1;
@@ -769,11 +776,13 @@ int main (int argc, char *argv[], char *envp[])
 			}
 			break;
 		case 'l':
-			init_filters();
-			if (parse_filter_string (optarg) != 0) {
-				retval = EXIT_FAILURE;
-				goto OUT;
-			}
+		        if (filter_string) {
+				filter_string = xmlStrcat (filter_string,
+							   BAD_CAST " ");
+				filter_string = xmlStrcat (filter_string,
+							   BAD_CAST optarg);
+			} else
+				filter_string = xmlCharStrdup (optarg);
 			break;
 		case 't':
 			if (parse_target_address(optarg, &opts) != 0) {
@@ -793,10 +802,8 @@ int main (int argc, char *argv[], char *envp[])
 			retval = EXIT_FAILURE;
 			goto OUT;
 			break;
-
 		}
 	}
-
 
 	/*
 	 * Do some post-validation for the options
@@ -826,11 +833,21 @@ int main (int argc, char *argv[], char *envp[])
 		retval = EXIT_FAILURE;
 		goto OUT;
 	}
-	
 	/*
 	 * Initialize logging.
 	 */
 	log_init (&opts);
+	/*
+	 * Initialize filters if specified.
+	 */
+	if (filter_string) {
+	        init_filters();
+		if (parse_filter_string ((char *)filter_string) != 0) {
+		        LOG_MSG (LOG_ERR, "filter parsing failed .. exiting");
+			retval = EXIT_FAILURE;
+			goto OUT;
+		}
+	}
 	/*
 	 * Set remote execution options.
 	 */
@@ -915,6 +932,7 @@ OUT:
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
+	if (filter_string) free (filter_string);
 	if (bail_out) retval = 2;
 
 	return retval; 

@@ -10,8 +10,6 @@ is written to result XML or text file.
 
 @li @ref opt_page
 
-@li @ref manual_exec_page
-
 @li @ref main_mod_page
 
 \page install Installation
@@ -82,16 +80,16 @@ If 'filtername' is prefixed with dash (-), the filter behaviour is reversed: tho
 @li type
 @li testcase
 
-The following example does the following: First it disables all test cases except those with attribute type='unit'. Next, a test case named as Bad Test is disabled. The tests left active will be executed.
+The following example does the following: First it disables all test cases except those with attribute type='Integration'. Next, a test case named as Bad Test is disabled. The tests left active will be executed.
 \code
-testrunner-lite -f tests.xml -o ~/results -l 'type=unit -testcase="Bad Test"'
+testrunner-lite -f tests.xml -o ~/results -l 'type=Integration -testcase="Bad Test"'
 \endcode
 The following example executes test cases that specify the requirement attribute with a value containing at least one of the following strings: '50001', '50002', '50003'.
 \code
 testrunner-lite -f tests.xml -o ~/results -l 'requirement=50001,50002,50003'
 \endcode
 
-\page manual_exec_page Manual Test Cases
+\section manual_exec_sec Manual Test Cases
 
 It is also possible to execute manual test cases using testrunner-lite, as defined in Test Definition XML.
 
@@ -120,6 +118,7 @@ Execution was slow.
 
 [INFO] 15:16:41 Finished test case. Result: PASS
 \endverbatim
+
 
 \page main_mod_page Main Modules
 \section main_mod Main Modules

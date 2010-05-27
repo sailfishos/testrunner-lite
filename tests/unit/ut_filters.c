@@ -261,7 +261,7 @@ START_TEST (acceptance_test_set_filter)
      char cmd[1024];
 
      /* Execute testrunner with filter_tests.xml and set filter  */
-     sprintf (cmd, "%s -a -v -f %s "
+     sprintf (cmd, "%s -a -v -f %s -e scratchbox "
 	      "-o /tmp/testrunnerlitetestdir/res.xml "
 	      "-l'-testset=testset21'", 
 	      TESTRUNNERLITE_BIN, 
