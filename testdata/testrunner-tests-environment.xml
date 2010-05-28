@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="environment tests" domain="demo domain" timeout="10">  
+    <set name="hw_set" description="">    
+      <case name="case_1" description="" timeout="20">
+	<step>/bin/true</step>
+      </case>
+      <environments> 
+        <scratchbox>false</scratchbox>
+        <hardware>true</hardware>
+      </environments>
+    </set>
+    <set name="sb_set" description="">    
+      <case name="case_1" description="" timeout="20">
+	<step>/bin/true</step>
+      </case>
+      <environments> 
+        <scratchbox>true</scratchbox>
+        <hardware>false</hardware>
+      </environments>
+    </set>
+    <set name="both_set" description="">    
+      <case name="case_1" description="" timeout="20">
+	<step>/bin/true</step>
+      </case>
+      <environments> 
+        <scratchbox>true</scratchbox>
+        <hardware>true</hardware>
+      </environments>
+    </set>
+    <set name="neither_set" description="">    
+      <case name="case_1" description="" timeout="20">
+	<step>/bin/true</step>
+      </case>
+      <environments> 
+        <scratchbox>false</scratchbox>
+        <hardware>false</hardware>
+      </environments>
+    </set>
+  </suite>
+</testdefinition>
+

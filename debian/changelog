@@ -1,3 +1,10 @@
+testrunner-lite (1.2.9) unstable; urgency=low
+
+  * Fixed environment flag handling (support ticket #152916).
+  * Added acceptance test for environment flag handling.
+
+  -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Fri, 28 May 2010 12:36:11 +0300
+
 testrunner-lite (1.2.8) unstable; urgency=low
 
   * Fixed a bug in filter string parsing and added one more acceptance test.

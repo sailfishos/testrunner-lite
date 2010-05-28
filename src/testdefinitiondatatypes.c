@@ -179,6 +179,7 @@ void td_suite_delete(td_suite *s)
 td_set *td_set_create ()
 {
 	td_set *set = (td_set *)malloc (sizeof (td_set));
+	xmlChar *env;
 	if (set == NULL) {
 		LOG_MSG (LOG_ERR, "%s: FATAL : OOM", PROGNAME);
 		return NULL;
@@ -189,6 +190,15 @@ td_set *td_set_create ()
 	set->cases = xmlListCreate (td_case_delete, list_dummy_compare);
 	set->environments = xmlListCreate (list_string_delete, 
 					   list_string_compare);
+
+	/*
+	** Initialize environments with default values
+	*/
+	env =  xmlCharStrdup ("hardware");
+	xmlListAppend (set->environments, env);
+	env =  xmlCharStrdup ("scratchbox");
+	xmlListAppend (set->environments, env);
+
 	set->gets = xmlListCreate (list_string_delete, NULL);
 
 	return set;

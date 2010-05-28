@@ -72,7 +72,6 @@ typedef struct {
 	int        filtered;     /**< Set is filtered */
 	/* Executor fills */
 	xmlChar    *environment; /**< Current environment */
-	
 } td_set;
 /* ------------------------------------------------------------------------- */
 /** Test step. */

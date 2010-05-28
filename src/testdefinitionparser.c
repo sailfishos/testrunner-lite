@@ -356,6 +356,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 	const xmlChar *name;
 	xmlChar *value;
 	xmlChar *env;
+	void *data;
 
 	do {
 		ret = xmlTextReaderRead(reader);
@@ -375,17 +376,11 @@ LOCAL int td_parse_environments(xmlListPtr list)
 				goto ERROUT;
 			}
 		}
-		/* add to list of environments if "true" */
+		/* remove from list of environments if "false" */
 		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
 			value = xmlTextReaderReadString (reader);
-			if (!xmlStrcmp (value, BAD_CAST "true")) {
-				env = xmlStrdup(name);
-				if (xmlListAppend (list, env)) {
-					LOG_MSG (LOG_ERR, 
-						 "%s:%s list insert failed\n",
-						 PROGNAME, __FUNCTION__);
-					goto ERROUT;
-				}
+			if (!xmlStrcmp (value, BAD_CAST "false")) {
+					xmlListRemoveAll (list, name);
 			}
 			free (value);
 		}

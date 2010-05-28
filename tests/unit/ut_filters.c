@@ -472,6 +472,45 @@ START_TEST (acceptance_test_filter_combo)
      fail_if (ret);
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST (acceptance_test_environment_flag)
+     int ret;
+     char cmd[1024];
+
+     /* Run testrunner-lite with -e scratchbox */
+     sprintf (cmd, "%s -a -v -f %s -e scratchbox "
+	      "-o /tmp/testrunnerlitetestdir/res.xml ", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_ENVIRONMENT_TESTS_XML);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     ret = system ("grep hw_set /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep sb_set /tmp/testrunnerlitetestdir/res.xml");
+     fail_if (ret);
+     ret = system ("grep both_set /tmp/testrunnerlitetestdir/res.xml");
+     fail_if (ret);
+     ret = system ("grep neither /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+
+     sprintf (cmd, "%s -a -v -f %s -e hardware "
+	      "-o /tmp/testrunnerlitetestdir/res.xml ", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_ENVIRONMENT_TESTS_XML);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     ret = system ("grep hw_set /tmp/testrunnerlitetestdir/res.xml");
+     fail_if (ret);
+     ret = system ("grep sb_set /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+     ret = system ("grep both_set /tmp/testrunnerlitetestdir/res.xml");
+     fail_if (ret);
+     ret = system ("grep neither /tmp/testrunnerlitetestdir/res.xml");
+     fail_unless (ret);
+
+END_TEST
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 Suite *make_testfilter_suite (void)
@@ -549,6 +588,10 @@ Suite *make_testfilter_suite (void)
 
     tc = tcase_create ("ACCEPTANCE: Test filter combo");
     tcase_add_test (tc, acceptance_test_filter_combo);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("ACCEPTANCE: environment flag");
+    tcase_add_test (tc, acceptance_test_environment_flag);
     suite_add_tcase (s, tc);
     
     return s;

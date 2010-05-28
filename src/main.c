@@ -503,13 +503,11 @@ LOCAL void process_set (td_set *s)
 	** Check that the set is supposed to be executed in the current env
 	*/
 	s->environment = xmlCharStrdup (opts.environment);
-	if (xmlListSize(s->environments) > 0) {
-	        if (!xmlListSearch (s->environments, opts.environment)) {
-			LOG_MSG (LOG_INFO, "Test set %s not run on "
-				 "environment: %s", 
-				 s->gen.name, opts.environment);
-			goto skip_all;
-		}
+	if (!xmlListSearch (s->environments, opts.environment)) {
+		LOG_MSG (LOG_INFO, "Test set %s not run on "
+			 "environment: %s", 
+			 s->gen.name, opts.environment);
+		goto skip_all;
 	}
 
 	LOG_MSG (LOG_INFO, "Test set: %s", s->gen.name);
