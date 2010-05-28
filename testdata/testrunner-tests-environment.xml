@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <testdefinition version="0.1">
-  <suite name="environment tests" domain="demo domain" timeout="10">  
+  <suite name="environment_tests" domain="demo domain" timeout="10">  
     <set name="hw_set" description="">    
       <case name="case_1" description="" timeout="20">
 	<step>/bin/true</step>
