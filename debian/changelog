@@ -5,7 +5,7 @@ testrunner-lite (1.2.9) unstable; urgency=low
   * Fixed documentation (invalid attribute type=unit in filter example).
   * Fixed moved filter parsing after log_init() so filter errors can be seen.
 
-  -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Fri, 28 May 2010 12:36:11 +0300
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Fri, 28 May 2010 12:36:11 +0300
 
 testrunner-lite (1.2.8) unstable; urgency=low
 

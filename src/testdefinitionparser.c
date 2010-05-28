@@ -355,8 +355,6 @@ LOCAL int td_parse_environments(xmlListPtr list)
 	int ret;
 	const xmlChar *name;
 	xmlChar *value;
-	xmlChar *env;
-	void *data;
 
 	do {
 		ret = xmlTextReaderRead(reader);
@@ -380,7 +378,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
 			value = xmlTextReaderReadString (reader);
 			if (!xmlStrcmp (value, BAD_CAST "false")) {
-					xmlListRemoveAll (list, name);
+				xmlListRemoveAll (list, (void *)name);
 			}
 			free (value);
 		}
