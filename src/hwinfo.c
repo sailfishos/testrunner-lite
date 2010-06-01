@@ -94,7 +94,7 @@ LOCAL unsigned char *get_sysinfo (const char *key)
 
 	cmd = (char *)malloc (strlen ("sysinfo-tool --get ") + 
 			      strlen (key) + 1);
-	sprintf (cmd, "sysinfo-tool --get %s", key);
+	sprintf (cmd, "sysinfo-tool --get /%s", key);
 	execute (cmd, &edata);
 	
 	if (edata.result) {
