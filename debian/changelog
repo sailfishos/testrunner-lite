@@ -1,3 +1,9 @@
+testrunner-lite (1.3.0) unstable; urgency=low
+
+  * Fixed problem with test step having single quotes in host based execution.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Wed, 02 Jun 2010 08:49:36 +0300
+
 testrunner-lite (1.2.9) unstable; urgency=low
 
   * Fixed environment flag handling (support ticket #152916).
