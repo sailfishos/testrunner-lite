@@ -118,10 +118,13 @@ int ssh_execute (const char *hostname, const char *command)
 	int ret;
 	char cmd [PID_FILE_MAX_LEN + 1024];
 
-	sprintf (cmd, "%s %s 'echo $PPID > " PID_FILE_FMT "';{ %s; }",
-		 SHELLCMD, SHELLCMD_ARGS_STR, unique_id, getpid(), command);
+	sprintf (cmd, "echo $$ > " PID_FILE_FMT 
+		 ";source .profile > /dev/null; %s",
+		 unique_id, getpid(), command);
+
 	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
 		    cmd, (char*)NULL);
+
 
 	return ret;
 }
@@ -162,7 +165,7 @@ int ssh_kill (const char *hostname, pid_t id)
 	sprintf(file, PID_FILE_FMT, unique_id, id);
 	sprintf (cmd, "[ -f %1$s ] && pkill -9 -P $(cat %1$s); rm -f %1$s", 
 		 file);
-	
+
 	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
 		    cmd, (char*)NULL);
 
