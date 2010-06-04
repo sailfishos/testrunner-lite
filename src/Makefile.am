@@ -12,7 +12,7 @@ testrunner_lite_SOURCES = main.c \
 			  utils.c \
 			  log.c
 
-testrunner_lite_LDFLAGS = -lxml2 -lcurl
+testrunner_lite_LDADD = -lxml2 -lcurl
 
 AM_CFLAGS =  -I/usr/include/libxml2 -D_GNU_SOURCE
 

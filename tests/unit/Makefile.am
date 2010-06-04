@@ -23,8 +23,6 @@ AM_CFLAGS = -I. \
             -fprofile-arcs \
             -ftest-coverage
 
-testrunnerliteunittests_LDFLAGS = -lxml2 -lcurl
-
 testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/testdefinitiondatatypes.o \
 			    $(top_builddir)/src/testresultlogger.o \
@@ -35,5 +33,7 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/log.o \
 			    $(top_builddir)/src/utils.o \
                             -lcheck \
-                            -lgcov
+                            -lgcov \
+                            -lxml2 \
+                            -lcurl
 
