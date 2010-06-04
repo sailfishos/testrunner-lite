@@ -646,7 +646,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 	if (options->target_address && !terminated && !killed && !bail_out) {
 		/* ssh_kill does cleaning if timeout occured */
-		ssh_clean(options->target_address, data->pid);
+		/* ssh_clean(options->target_address, data->pid); */
+		;
 	}
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		close(stdout_fd);

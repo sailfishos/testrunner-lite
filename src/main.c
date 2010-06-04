@@ -42,6 +42,7 @@
 #include "testresultlogger.h"
 #include "testfilters.h"
 #include "executor.h"
+#include "remote_executor.h"
 #include "manual_executor.h"
 #include "utils.h"
 #include "hwinfo.h"
@@ -243,6 +244,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		}
 		
 		step->pgid = edata.pgid; 
+		step->pid = edata.pid;
 		step->has_result = 1;
 		step->return_code = edata.result;
 		step->start = edata.start_time;
@@ -317,10 +319,14 @@ LOCAL int step_post_process (const void *data, const void *user)
 		goto out;
 
 	/* ... or ones that do not have process group ... */
-	if (!step->start)
+	if (!step->pgid)
 		goto out;
 
+	if (opts.target_address) {
+		ssh_kill (opts.target_address, step->pid);
+	} 
 	kill_pgroup(step->pgid, SIGKILL);
+	
  out:
 	return 1;
 }

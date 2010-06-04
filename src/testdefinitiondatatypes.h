@@ -90,6 +90,7 @@ typedef struct {
 	xmlChar *stdout_;         /**< step stdout printouts */
 	xmlChar *stderr_;         /**< step stderr printouts */
 	pid_t    pgid;            /**< step process group id */
+	pid_t    pid;             /**< step process id */
 } td_step;
 /* ------------------------------------------------------------------------- */
 /** Test case result */
