@@ -177,6 +177,14 @@
 	<step>echo '"Hello World!"' | grep '"Hello World!"'</step>
       </case>
 
+      <case name="ending_in_semicolon">
+	<step>echo '"Hello World!"';</step>
+      </case>
+
+      <case name="proper_env">
+	<step>env | grep -e ^DISPLAY</step>
+      </case>
+
       <environments>
 	<scratchbox>false</scratchbox>
 	<hardware>true</hardware>
