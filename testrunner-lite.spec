@@ -74,3 +74,5 @@ rm -rf %{buildroot}
 %changelog
 * Thu Jun 03 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.3.1
 - Initial RPM packaking
+* Thu Fri 04 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.2
+- Fixed process control in host based testing
