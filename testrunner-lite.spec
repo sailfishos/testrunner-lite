@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.2.9
+Version: 1.3.1
 Release:1%{?dist}
 Summary: Generic test executor tool
 Group: Test-tools
@@ -72,5 +72,5 @@ rm -rf %{buildroot}
 %attr(644,root,root) /usr/share/doc/testrunner-lite-doc/html/installdox
 
 %changelog
-* Thu Jun 03 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.2.9
+* Thu Jun 03 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.3.1
 - Initial RPM packaking
