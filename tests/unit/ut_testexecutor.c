@@ -403,6 +403,21 @@ START_TEST (test_executor_remote_killing_process)
 	sleep(1);
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST(test_executor_remote_test_bg_process_cleanup)
+     int ret;
+     char cmd[1024];
+     char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
+     
+     sprintf (cmd, "%s -v -f %s -o %s -tlocalhost", TESTRUNNERLITE_BIN, 
+	      TESTDATA_BG_XML,  out_file);
+     ret = system (cmd);
+     fail_if (ret != 0, cmd);
+
+     ret = system("pidof unterminating");
+     fail_unless (ret);
+     
+END_TEST
+/* ------------------------------------------------------------------------- */
 START_TEST (test_executor_ssh_conn_check)
 	int ret = ssh_check_conn ("localhost");
 	fail_if (ret, "ret=%d", ret);
@@ -516,6 +531,11 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test executor remote killing process.");
     tcase_set_timeout (tc, 10);
     tcase_add_test (tc, test_executor_remote_killing_process);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor remote bg process cleanup.");
+    tcase_set_timeout (tc, 10);
+    tcase_add_test (tc, test_executor_remote_test_bg_process_cleanup);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test get feature with remote host.");
