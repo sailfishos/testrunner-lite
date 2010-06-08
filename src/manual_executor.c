@@ -186,9 +186,19 @@ int execute_manual (td_step *step)
 		printf ("Invalid input.\n");
 		p = fgets (buff, 256, stdin);
 	}
-	if (ret != CASE_NA)
+	switch (ret) {
+	case  CASE_NA:
+		step->has_result = 0;
+		break;
+	case CASE_FAIL:
 		step->has_result = 1;
-
+		step->return_code = !step->expected_result;
+		break;
+	case CASE_PASS:
+		step->has_result = 1;
+		step->return_code = step->expected_result;
+		break;
+	}
 	step->end = time (NULL);
 	
 	return ret;
