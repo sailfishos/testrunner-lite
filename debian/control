@@ -26,7 +26,7 @@ Description: Unit tests for testrunner
 Package: testrunner-lite-regression-tests
 Section: tests
 Architecture: any
-Depends: ci-testing, testrunner-lite, ${shlibs:Depends}
+Depends: ci-testing, testrunner-lite, libxml2-utils, ${shlibs:Depends}
 XB-Maemo-CI-Packages: testrunner-lite
 XB-Maemo-CI-Stage: fast, staging, acceptance, validation
 Description: Regression tests for testrunner

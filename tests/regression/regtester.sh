@@ -48,6 +48,13 @@ if [ ${RETVAL} -ne "${EXPECTED_RETVAL}" ]; then
     RESULT=1
 fi
 
+# Validate output file of testrunner-lite
+if ! xmllint --noout --schema /usr/share/test-definition/testdefinition-results.xsd ${OUTPUTXML}
+then
+    echo "Output file ${OUTPUTXML} did not pass validation" 1>&2
+    RESULT=1
+fi
+
 # Run checking functions
 check_case_results
 check_step_results
