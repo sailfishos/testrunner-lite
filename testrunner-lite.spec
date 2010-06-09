@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.3.1
+Version: 1.3.3
 Release:1%{?dist}
 Summary: Generic test executor tool
 Group: Test-tools
@@ -10,7 +10,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel
 # libxml2 and libcurl are implicit dependencies  
-Requires: test-definition, ssh
+Requires: test-definition, openssh
 
 %package tests
 Summary: Unit tests for testrunner-lite
@@ -72,7 +72,9 @@ rm -rf %{buildroot}
 %attr(644,root,root) /usr/share/doc/testrunner-lite-doc/html/installdox
 
 %changelog
-* Thu Jun 03 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.3.1
-- Initial RPM packaking
+* Wed Jun 09 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.3.3
+- Implemented:SWP#MTT-284 - Schema and regression test cases for test results xml file
 * Thu Fri 04 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.2
 - Fixed process control in host based testing
+* Thu Jun 03 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.3.1
+- Initial RPM packaking
