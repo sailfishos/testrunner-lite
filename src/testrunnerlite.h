@@ -59,6 +59,7 @@ typedef struct {
 	result_output   output_type;   /**< result output type selector */
 	int   run_automatic;   /**< flag for automatic tests */  
 	int   run_manual;      /**< flag for manual tests */
+	int   skip_hwinfo;     /**< flag for skipping hwinfo step */
 	int   log_level;       /**< logging level */
 	char *target_address;   /**< SUT address. */
 } testrunner_lite_options;    

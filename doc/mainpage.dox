@@ -60,6 +60,9 @@ Enable validation of test definition against stricter (semantics) schema
 \subsection opt_valonly -A,  --validate-only
 Do only input xml validation, do not execute tests
 
+\subsection opt_nohwinfo -H,  --no-hwinfo
+Do not try to obtain hardware information
+
 \subsection opt_target  -t [USER@]ADDRESS, --target=[USER@]ADDRESS
 Enable host-based testing. If given, commands are executed from test control 
 PC (host) side. ADDRESS is the ipv4 adress of the system under test.

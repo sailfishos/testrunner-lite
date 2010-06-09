@@ -165,6 +165,7 @@ LOCAL void usage()
 		"definition against stricter (semantics) schema.\n");
 	printf ("  -A, --validate-only\n\t\tDo only input xml validation, "
 		"do not execute tests.\n");
+	printf ("  -H, --no-hwinfo\n\t\tSkip hwinfo obtaining.\n");
 	printf ("  -S, --syslog\n\t\tWrite log messages also to syslog.\n");
 	printf ("  -t [USER@]ADDRESS, --target=[USER@]ADDRESS\n\t\t"
 		"Enable host-based testing. "
@@ -675,6 +676,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"ci", no_argument, &opts.disable_schema},
 			{"semantic", no_argument, &opts.semantic_schema},
 			{"validate-only", no_argument, &A_flag},
+			{"no-hwinfo", no_argument, &opts.skip_hwinfo},
 			{"target", required_argument, NULL, 't'},
 			{0, 0, 0, 0}
 		};
@@ -697,7 +699,8 @@ int main (int argc, char *argv[], char *envp[])
 	while (1) {
 		option_idx = 0;
      
-		opt_char = getopt_long (argc, argv, ":haASsmcf:o:e:l:r:L:t:v::",
+		opt_char = getopt_long (argc, argv, 
+					":haAHSsmcf:o:e:l:r:L:t:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -769,6 +772,9 @@ int main (int argc, char *argv[], char *envp[])
 			break;
 		case 'A':
 			A_flag = 1;
+			break;
+		case 'H':
+			opts.skip_hwinfo = 1;
 			break;
 		case 'S':
 			opts.syslog_output = 1;
@@ -904,7 +910,8 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	** Obtain hardware info
 	*/
-	read_hwinfo (&hwinfo);
+	if (!opts.skip_hwinfo)
+		read_hwinfo (&hwinfo);
 	
 	/*
 	** Initialize result logger
