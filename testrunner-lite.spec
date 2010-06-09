@@ -72,6 +72,8 @@ rm -rf %{buildroot}
 %attr(644,root,root) /usr/share/doc/testrunner-lite-doc/html/installdox
 
 %changelog
+* Wed Jun 09 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.3-1
+- Support for -H, --no-hwinfo commandline option
 * Wed Jun 09 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.3.3
 - Implemented:SWP#MTT-284 - Schema and regression test cases for test results xml file
 * Thu Jun 04 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.2
