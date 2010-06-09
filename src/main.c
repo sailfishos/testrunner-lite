@@ -676,7 +676,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"ci", no_argument, &opts.disable_schema},
 			{"semantic", no_argument, &opts.semantic_schema},
 			{"validate-only", no_argument, &A_flag},
-			{"no-hwinfo", no_argument, &opts.skip_hwinfo},
+			{"no-hwinfo", no_argument, &opts.skip_hwinfo, 1},
 			{"target", required_argument, NULL, 't'},
 			{0, 0, 0, 0}
 		};
