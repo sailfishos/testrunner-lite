@@ -18,7 +18,7 @@ Requires: testrunner-lite, ci-testing
 
 %package regression-tests
 Summary: Regression tests for testrunner-lite
-Requires: testrunner-lite, ci-testing
+Requires: ci-testing, testrunner-lite, libxml2-utils
 
 %package docs
 Summary: Testrunner-lite doxygen documentation in html format
