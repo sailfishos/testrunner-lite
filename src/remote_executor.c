@@ -116,19 +116,24 @@ void ssh_executor_init ()
 int ssh_execute (const char *hostname, const char *command)
 {
 	int ret;
-	char cmd [PID_FILE_MAX_LEN + 1024];
+        char *cmd; 
+	
+        cmd = (char *)malloc (PID_FILE_MAX_LEN + 100 + strlen (command));
+        if (!cmd) {
+                fprintf (stderr, "%s: could not allocate memory for "
+                         "command %s\n", __FUNCTION__, command);
+        }
+        sprintf (cmd, "echo $$ > " PID_FILE_FMT 
+                 ";source .profile > /dev/null; %s",
+                 unique_id, getpid(), command);
+        /* cmd can not be freed since execl does not return here */
+        ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
+                    cmd, (char*)NULL);
 
-	sprintf (cmd, "echo $$ > " PID_FILE_FMT 
-		 ";source .profile > /dev/null; %s",
-		 unique_id, getpid(), command);
 
-	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-		    cmd, (char*)NULL);
+        return ret;
 
-
-	return ret;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Tries to check if ssh connections are still working
  * @param hostname SUT address 

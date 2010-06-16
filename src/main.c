@@ -240,7 +240,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		}
 		if (edata.failure_info.buffer) {
 			step->failure_info = edata.failure_info.buffer;
-			LOG_MSG (LOG_INFO, "FAILURE INFO %s",
+			LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
 				 step->failure_info);
 		}
 		
