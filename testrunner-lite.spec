@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.3.3
+Version: 1.3.4
 Release:1%{?dist}
 Summary: Generic test executor tool
 Group: Test-tools
@@ -72,6 +72,8 @@ rm -rf %{buildroot}
 %attr(644,root,root) /usr/share/doc/testrunner-lite-doc/html/installdox
 
 %changelog
+* Wed Jun 16 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.4
+- Fixed bug in long commands handling
 * Wed Jun 09 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.3-1
 - Support for -H, --no-hwinfo commandline option
 * Wed Jun 09 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.3.3

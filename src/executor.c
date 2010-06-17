@@ -447,6 +447,7 @@ static int execution_terminated(exec_data* data) {
 	pid_t pgroup = getpgid(data->pid);
 	int ret = 0;
 	int status = 0;
+	char fail_str [100];
 
 	pid = waitpid(-pgroup, &status, WNOHANG);
 
@@ -499,8 +500,10 @@ static int execution_terminated(exec_data* data) {
 		} else if (WIFSIGNALED(status)) {
 			/* child terminated by a signal */
 			data->result = WTERMSIG(status);
+			sprintf (fail_str, " terminated by signal %d ",
+				 WTERMSIG(status));
 			stream_data_append(&data->failure_info,
-					   FAILURE_INFO_TIMEOUT);
+					   fail_str);
 			LOG_MSG(LOG_DEBUG,
 				"Process %d was terminated by signal %d",
 				pid, WTERMSIG(status));
@@ -616,6 +619,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			if (options->target_address && !bail_out) {
 				ssh_kill (options->target_address, data->pid);
 			}
+			stream_data_append(&data->failure_info,
+					   FAILURE_INFO_TIMEOUT);
 
 			terminated = 1;
 			reset_timer();

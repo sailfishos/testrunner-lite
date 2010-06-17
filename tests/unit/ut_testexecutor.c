@@ -220,8 +220,8 @@ START_TEST (test_executor_terminating_process)
 	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
 			     "stderrtest", strlen("stderrtest")) == 0);
 	fail_if(edata.failure_info.buffer == NULL);
-	fail_unless (strcmp((char*)edata.failure_info.buffer, 
-			    FAILURE_INFO_TIMEOUT) == 0);
+	fail_if (strstr((char*)edata.failure_info.buffer, 
+			    FAILURE_INFO_TIMEOUT) == NULL);
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_killing_process)
@@ -244,8 +244,9 @@ START_TEST (test_executor_killing_process)
 	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
 			     "stderrtest", strlen("stderrtest")) == 0);
 	fail_if(edata.failure_info.buffer == NULL);
-	fail_unless (strcmp((char*)edata.failure_info.buffer, 
-			    FAILURE_INFO_TIMEOUT) == 0);
+	fail_if (strstr((char*)edata.failure_info.buffer, 
+			    FAILURE_INFO_TIMEOUT) == NULL);
+
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_piped_command)
@@ -338,6 +339,36 @@ START_TEST (test_executor_remote_command)
 	clean_exec_data(&edata);
 	fail_unless (edata.stdout_data.buffer == NULL);
 	fail_unless (edata.stderr_data.buffer == NULL);
+
+	/* Give time for either ssh_clean or ssh_kill called by execute.
+	   They have forked new ssh process to do cleanup */
+	sleep(1);
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_remote_long_command)
+	exec_data edata;
+	testrunner_lite_options opts;
+#define TEST_STRING_SIZE 5000
+	char test_string [TEST_STRING_SIZE];
+	char command [TEST_STRING_SIZE + 100];
+
+	opts.target_address = "localhost";
+	executor_init (&opts);
+	init_exec_data (&edata);
+	edata.soft_timeout = 5;
+	edata.hard_timeout = 4;
+
+	memset (test_string , 'c', TEST_STRING_SIZE);
+	test_string [TEST_STRING_SIZE - 1] = '\0';
+	sprintf (command, "echo %s; sleep 2", test_string);
+	fail_if (execute(command, &edata));
+	fail_unless (edata.result == 0, "result = %d", edata.result);
+	fail_unless (edata.stdout_data.length == TEST_STRING_SIZE, 
+		     "length %d",
+		     edata.stdout_data.length);
+	fail_unless (strncmp((char*)edata.stdout_data.buffer, test_string,
+			     TEST_STRING_SIZE -1) == 0,
+		     edata.stdout_data.buffer);
 
 	/* Give time for either ssh_clean or ssh_kill called by execute.
 	   They have forked new ssh process to do cleanup */
@@ -514,13 +545,17 @@ Suite *make_testexecutor_suite (void)
     tcase_add_test (tc, test_executor_exec_data_handling);
     suite_add_tcase (s, tc);
 
-
     if (set_env_for_remote_tests()) {
 	    fprintf (stderr, "skipping remote tests\n");
 	    return s;
     }
     tc = tcase_create ("Test executor remote command.");
     tcase_add_test (tc, test_executor_remote_command);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor remote long command.");
+    tcase_set_timeout (tc, 10);
+    tcase_add_test (tc, test_executor_remote_long_command);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote terminating process.");
