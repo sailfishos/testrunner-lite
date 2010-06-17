@@ -185,8 +185,8 @@ td_set *td_set_create ()
 		return NULL;
 	}
 	memset (set, 0x0, sizeof (td_set));
-	set->pre_steps = xmlListCreate (td_step_delete, list_dummy_compare);
-	set->post_steps = xmlListCreate (td_step_delete, list_dummy_compare);
+	set->pre_steps = xmlListCreate (td_steps_delete, list_dummy_compare);
+	set->post_steps = xmlListCreate (td_steps_delete, list_dummy_compare);
 	set->cases = xmlListCreate (td_case_delete, list_dummy_compare);
 	set->environments = xmlListCreate (list_string_delete, 
 					   list_string_compare);
@@ -255,6 +255,25 @@ td_case *td_case_create()
 	return td_c;
 }
 /* ------------------------------------------------------------------------- */
+/** Creates a td_steps data structure
+ *  @return pointer to td_case or NULL in case of OOM
+ */
+td_steps *td_steps_create()
+{
+	td_steps *steps;
+
+	steps = (td_steps *) malloc (sizeof (td_steps));
+	if (steps == NULL) {
+		LOG_MSG (LOG_ERR, "%s: FATAL : OOM", PROGNAME);
+		return NULL;
+	}
+	memset (steps, 0x0, sizeof (td_steps));
+	steps->timeout = 0;
+	steps->steps = xmlListCreate (td_step_delete, list_dummy_compare);
+
+	return steps;
+}
+/* ------------------------------------------------------------------------- */
 /** Deallocator for td_step called by xmlListDelete
  */
 void td_step_delete(xmlLinkPtr lk)
@@ -279,6 +298,15 @@ void td_case_delete(xmlLinkPtr lk)
 	free (td_c->comment);
 	gen_attribs_delete(&td_c->gen);
 	free (td_c);
+}
+/* ------------------------------------------------------------------------- */
+/** Deallocator for  td_steps data structure
+ */
+void td_steps_delete(xmlLinkPtr lk)
+{
+	td_steps *steps = xmlLinkGetData (lk);
+	xmlListDelete (steps->steps);
+	free (steps);
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

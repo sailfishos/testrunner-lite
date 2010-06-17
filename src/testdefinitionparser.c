@@ -240,8 +240,21 @@ LOCAL td_step *td_parse_step()
 LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 {
 	const xmlChar *name;
+	td_steps *steps = NULL;
 	td_step *step = NULL;
 	int ret;
+
+	steps = td_steps_create();
+
+	if (!steps) {
+		goto ERROUT;
+	}
+
+	if (xmlTextReaderMoveToAttribute (reader, BAD_CAST "timeout") == 1) {
+		steps->timeout = strtoul((char *)
+					 xmlTextReaderConstValue(reader),
+					 NULL, 10);
+	}
 
 	do {
 		ret = xmlTextReaderRead(reader);
@@ -250,19 +263,21 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 				 PROGNAME);
 			goto ERROUT;
 		}
+
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
 			LOG_MSG (LOG_ERR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
+
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "step")) {
 			step = td_parse_step();
 			if (!step)
 				goto ERROUT;
-			if (xmlListAppend (list, step)) {
+			if (xmlListAppend (steps->steps, step)) {
 				LOG_MSG (LOG_ERR, "%s: list insert failed\n",
 					 PROGNAME);
 				goto ERROUT;
@@ -272,10 +287,14 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 		    XML_READER_TYPE_END_ELEMENT &&
 		    !xmlStrcmp (name, BAD_CAST tag)));
 	
+	xmlListAppend (list, steps);
+
 	return 0;
  ERROUT:
 	LOG_MSG (LOG_ERR, "%s:%s: Exiting with error\n", 
 		 PROGNAME, __FUNCTION__);
+	xmlListDelete (steps->steps);
+	free(steps);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */

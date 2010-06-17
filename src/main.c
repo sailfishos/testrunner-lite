@@ -107,6 +107,8 @@ LOCAL int process_get (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_execute (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+LOCAL int prepost_steps_execute (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 LOCAL int step_result_na (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_post_process (const void *, const void *);
@@ -276,6 +278,30 @@ LOCAL int step_execute (const void *data, const void *user)
 	
 
 	return (res == CASE_PASS);
+}
+
+/* ------------------------------------------------------------------------- */
+/** Process pre/post steps.
+ *  @param data steps data
+ *  @param user dummy case data
+ *  @return 1 always
+ */
+LOCAL int prepost_steps_execute (const void *data, const void *user)
+{
+	td_steps *steps = (td_steps *)data;
+	td_case *dummy = (td_case *)user;
+
+	if (steps->timeout == 0) {
+		dummy->gen.timeout = 180; /* default for pre/post steps */
+	} else {
+		dummy->gen.timeout = steps->timeout;
+	}
+
+	if (xmlListSize(steps->steps) > 0) {
+		xmlListWalk (steps->steps, step_execute, dummy);
+	}
+
+	return 1;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -525,9 +551,8 @@ LOCAL void process_set (td_set *s)
 		memset (&dummy, 0x0, sizeof (td_case));
 		dummy.case_res = CASE_PASS;
 		dummy.dummy = 1;
-		dummy.gen.timeout = 0; /* No timeout for pre steps */
 		LOG_MSG (LOG_INFO, "Executing pre steps");
-		xmlListWalk (s->pre_steps, step_execute, &dummy);
+		xmlListWalk (s->pre_steps, prepost_steps_execute, &dummy);
 		if (dummy.case_res != CASE_PASS) {
 			LOG_MSG (LOG_ERR, "Pre steps failed. "
 				 "Test set %s aborted.", s->gen.name); 
@@ -545,9 +570,7 @@ LOCAL void process_set (td_set *s)
 		memset (&dummy, 0x0, sizeof (td_case));
 		dummy.case_res = CASE_PASS;
 		dummy.dummy = 1;
-		/* Default timeout for post steps */
-		dummy.gen.timeout = COMMON_SOFT_TIMEOUT;
-		xmlListWalk (s->post_steps, step_execute, &dummy);
+		xmlListWalk (s->post_steps, prepost_steps_execute, &dummy);
 		if (dummy.case_res == CASE_FAIL)
 			LOG_MSG (LOG_ERR, 
 				 "Post steps failed for %s.", s->gen.name);

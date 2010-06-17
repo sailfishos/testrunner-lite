@@ -113,6 +113,12 @@ typedef struct {
 	int        filtered;    /**< Case is filtered */
 } td_case;
 /* ------------------------------------------------------------------------- */
+/** Pre/post steps */
+typedef struct {
+	xmlListPtr steps;       /**< Steps of pre/post steps */
+	unsigned long timeout;  /**< Timeout */
+} td_steps;
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -140,6 +146,10 @@ void td_step_delete(xmlLinkPtr);
 td_case *td_case_create();
 /* ------------------------------------------------------------------------- */
 void td_case_delete(xmlLinkPtr);
+/* ------------------------------------------------------------------------- */
+td_steps *td_steps_create();
+/* ------------------------------------------------------------------------- */
+void td_steps_delete(xmlLinkPtr);
 /* ------------------------------------------------------------------------- */
 #endif                          /* TESTDEFINITIONDATATYPES_H */
 /* End of file */
