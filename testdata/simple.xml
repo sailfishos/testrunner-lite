@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="simple-suite">
+    <set name="simple-set" description="Example test definition">
+
+      <case name="simple-case" description="testrunner-lite tests">
+	<step>echo Hello World!</step>
+      </case>  
+
+    </set>
+  </suite>
+</testdefinition>   

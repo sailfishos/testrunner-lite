@@ -1,0 +1,157 @@
+testrunner-lite (1.3.3-1) unstable; urgency=low
+
+  * Added support for -H, --no-hwinfo commandline option
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Wed, 09 Jun 2010 15:27:25 +0300
+
+testrunner-lite (1.3.3) unstable; urgency=low
+
+  * Implemented:SWP#MTT-284 - Schema and regression test cases for test results xml file
+
+ -- Lahtinen Sami <ext-sami.t.lahtinen@nokia.com>  Wed, 09 Jun 2010 09:02:26 +0300
+
+testrunner-lite (1.3.2) unstable; urgency=low
+
+  * Fixed process control in host based execution. (same as "normal")
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Fri, 04 Jun 2010 18:32:46 +0300
+
+testrunner-lite (1.3.1) unstable; urgency=low
+
+  * Yet another fix to host based execution (Do not use /bin/sh -l -c).
+  * Linking flags changed to work in obs build system
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Thu, 03 Jun 2010 12:13:48 +0300
+
+testrunner-lite (1.3.0) unstable; urgency=low
+
+  * Fixed problem with test step having single quotes in host based execution.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Wed, 02 Jun 2010 08:49:36 +0300
+
+testrunner-lite (1.2.9) unstable; urgency=low
+
+  * Fixed environment flag handling (support ticket #152916).
+  * Added acceptance test for environment flag handling.
+  * Fixed documentation (invalid attribute type=unit in filter example).
+  * Fixed moved filter parsing after log_init() so filter errors can be seen.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Fri, 28 May 2010 12:36:11 +0300
+
+testrunner-lite (1.2.8) unstable; urgency=low
+
+  * Fixed a bug in filter string parsing and added one more acceptance test.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Wed, 26 May 2010 15:25:06 +0300
+
+testrunner-lite (1.2.7) unstable; urgency=low
+
+  * Implemented: SWP#MTT-220 - Filters for testrunner-lite
+  * Implemented: SWP#MTT-259 - Setting environment for automated testing
+  * Implemented: SWP#MTT-279 - Acceptance tests for testrunner-lite
+  * Implemented: SWP#MTT-271 - Syslog support to testrunner-lite
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Tue, 25 May 2010 14:45:11 +0300
+
+testrunner-lite (1.2.6) unstable; urgency=low
+
+  * Fixed bug in step execution return value.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Tue, 11 May 2010 12:38:38 +0300
+
+testrunner-lite (1.2.5) unstable; urgency=low
+
+  * Fixes: NB#165821 - testrunner-lite fails to copy file if <file> tag contains newlines
+  * Implemented: SWP#MTT-260 - N/A result for manual testing support
+  * Implemented: SWP#MTT-269 - testrunner-lite ssh return value
+
+ -- Raimo Gratseff <ext-raimo.gratseff@nokia.com>  Tue, 04 May 2010 12:18:49 +0300
+
+testrunner-lite (1.2.4) unstable; urgency=low
+
+  * Fixes: NB#164179 - Preventing "hanging" in SSH connections.
+  * Implemented: SWP#MTT-256 - testrunner-lite open source preparations.
+  * Fixed dependencies for i386 use.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Mon, 26 Apr 2010 12:47:52 +0300
+
+testrunner-lite (1.2.3) unstable; urgency=low
+
+  * Fixes: NB#164898 - testrunner-lite fails to run an XML for manual testing.
+  * Displays help if no arguments are given.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Tue, 20 Apr 2010 17:33:35 +0300
+
+testrunner-lite (1.2.2) unstable; urgency=low
+
+  * Fixes: NB#164129 - testrunner-lite does not substitute entities in
+    tests.xml
+  * Fixes: NB#163384 - Testrunner dies if stdout contains invalid characters (Support ticket #147795)
+  * Fixes: NB#151632 - testrunner.py gives ERROR on 'level' atribute
+
+ -- Riku Halonen <riku.halonen@nokia.com>  Tue, 20 Apr 2010 10:29:05 +0300
+
+testrunner-lite (1.2.1) unstable; urgency=low
+
+  * Fixed skipped tests showing in results file.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Wed, 14 Apr 2010 14:15:44 +0300
+
+testrunner-lite (1.2.0) unstable; urgency=low
+
+  * Implemented MTT-226 - host based execution.
+  * Implemented manual execution of test steps.
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Mon, 12 Apr 2010 11:07:00 +0300
+
+testrunner-lite (1.1.0) unstable; urgency=low
+
+  * Implemented MTT-225 - HTTP logging feature
+
+ -- Lahtinen Sami <ext-sami.t.lahtinen@nokia.com>  Tue, 30 Mar 2010 09:57:45 +0300
+
+testrunner-lite (1.0.2) unstable; urgency=low
+
+  * Fixed missing dependencies to sysinfod and sysinfo-tool
+
+ -- Lahtinen Sami <ext-sami.t.lahtinen@nokia.com>  Wed, 24 Mar 2010 14:05:46 +0200
+
+testrunner-lite (1.0.1) unstable; urgency=low
+
+  * Fixed erroneous 'Failed to read basic HW information from sysinfo' message
+  * Changes in debug messages
+
+ -- Lahtinen Sami <ext-sami.t.lahtinen@nokia.com>  Fri, 19 Mar 2010 10:10:53 +0200
+
+testrunner-lite (1.0.0) unstable; urgency=low
+
+  * Implemented MTT-208 - Tech debt (man pages).
+  * Implemented MTT-215 - Finalize testrunner-lite.
+  * Implemented MTT-219 - Run existing test packages with testrunner-lite.
+
+ -- Lahtinen Sami <ext-sami.t.lahtinen@nokia.com>  Tue, 16 Mar 2010 14:25:13 +0200
+
+testrunner-lite (0.1.0) unstable; urgency=low
+
+  * Implemented MTT-159.
+  * Implemented MTT-162.
+  * Added: support for test result logging in xml or text.
+  * Added: support for test step execution.
+  * Added: validation against simple or strict schema.
+
+ -- Sampo Saaristo <ext-sampo.1.saaristo@nokia.com>  Tue, 02 Mar 2010 10:05:35 +0200
+
+testrunner-lite (0.0.1-1) unstable; urgency=low
+
+  * Implemented MTT-160.
+
+ -- Sampo Saaristo <ext-sampo.1.saaristo@nokia.com>  Wed, 17 Feb 2010 15:07:13 +0200
+
+testrunner-lite (0.0.1) UNRELEASED; urgency=low
+
+  * Initial release.
+  * Added: Command line arguments parsing.
+  * Added: Validates given test definition against schema.
+  * Added: Unit tests for current functionality.
+
+ -- Sampo Saaristo <ext-sampo.1.saaristo@nokia.com>  Thu, 11 Feb 2010 15:31:41 +0200

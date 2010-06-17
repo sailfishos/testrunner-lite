@@ -1,0 +1,104 @@
+.\" Process this file with
+.\" groff -man -Tascii testrunner-lite.man
+.\" 
+.TH TESTRUNNER-LITE 1 "April 2010" Linux "User Manuals"
+.SH NAME
+testrunner-lite \- generic test executor tool 
+.SH SYNOPSIS
+.B testrunner-lite [options]
+.SH DESCRIPTION
+.B testrunner-lite 
+is a tool for executing test commands. It is designed to be a lightweight 
+wrapper for various test harnesses. The tool is driven by input XML file containing the test definitions (suite, set, case, step). Tests are executed as
+instructed in the input XML file and the output is written to result XML 
+or text file.
+.SH OPTIONS
+.TP
+\fB\-h\fR,  \fB\-\-help\fR
+Display short help and exit
+.TP
+\fB\-f\fR \fIFILE\fR,  \fB\-\-file\fR \fIFILE\fR
+Input file with test definitions in XML (required)
+.TP
+\fB\-o\fR \fIFILE\fR,  \fB\-\-output\fR \fIFILE\fR
+Output file format; FORMAT can be xml or text (Default xml)
+.TP
+\fB\-v, -vv\fR,  \fB\-\-verbose\fR[\fB=\fR{\fIINFO\fR|\fIDEBUG\fR}]
+Enable verbosity mode; -v and --verbose=INFO are equivalent
+outputting INFO, ERROR and WARNING messages. Similarly -vv 
+and --verbose=DEBUG are equivalent, outputting also debug 
+messages. Default behaviour is silent mode.
+.TP
+\fB\-L\fR \fIURL\fR,  \fB\-\-logger\fR=\fIURL\fR
+Remote HTTP logger. Log messages are sent to given URL in a HTTP POST message.
+URL format is [http://]host[:port][/path/], where host may be a hostname or an IPv4 address.
+.TP
+\fB\-S\fR,  \fB\-\-syslog\fR 
+Enable logging to syslog.
+.TP
+\fB\-a\fR,  \fB\-\-automatic\fR 
+Enable only automatic tests to be executed
+.TP
+\fB\-m\fR,  \fB\-\-manual\fR 
+Enable only manual tests to be executed
+.TP
+\fB\-l\fR \fIFILTER\fR,  \fB\-\-filter\fR=\fIFILTER\fR
+Filtering option to select tests (not) to be executed.
+E.g. '-testcase=bad_test -type=unknown' first disables
+test case named as bad_test; Next, all tests with type
+unknown are disabled; The remaining tests will be
+executed
+.TP
+\fB\-c\fR,  \fB\-\-ci\fR 
+Disable validation of test definition against schema
+.TP
+\fB\-s\fR,  \fB\-\-semantic\fR 
+Enable validation of test definition against stricter (semantics) schema
+.TP
+\fB\-A\fR,  \fB\-\-validate\-only\fR 
+Do only input xml validation, do not execute tests
+.TP
+\fB\-H\fR,  \fB\-\-no\-hwinfo\fR 
+Do not try to obtain hardware information
+.TP
+\fB\-t\fR [\fIUSER\fR@]\fIADDRESS\fR, \fB\-\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR
+Enable host-based testing. If given, commands are executed from
+test control PC (host) side. ADDRESS is the ipv4 adress of the
+system under test.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Successful program execution.
+.TP
+.B 1
+General error (invalid xml input, missing mandatory argument...).
+.TP
+.B 2
+Connection failure during host based testing.
+
+
+.SH FILES
+.I /usr/share/test-definition/testdefinition-syntax.xsd 
+.br
+.I /usr/share/test-definition/testdefinition-tm_terms.xsd
+.RS
+Test definition schema files. See
+.BR test-definition (5)
+for further details.
+
+.SH AUTHOR
+Written by Riku Halonen, Sami Lahtinen and Sampo Saaristo.
+
+.SH BUGS
+All filter types are not supported. Currently supporting filters of type 'testcase', 'testset', 'requirement', 'feature' and 'type'
+ 
+.SH "REPORTING BUGS"
+Report bugs to test-tools-dev@projects.maemo.org
+
+.SH COPYRIGHT
+testrunner-lite, © Nokia 2010, licensed under the GNU Lesser General Public License version 2.1, Contact: Ville Ilvonen, ville.p.ilvonen@nokia.com
+
+.SH "SEE ALSO"
+.BR test-definition (5)
+

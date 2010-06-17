@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="utf8_test"  timeout="10">  
+    <set name="utf8_set" description="try utf-8 output"  timeout="15">    
+      <case name="unicode_stuff_to_stdout" description="cat file with unicode chars" timeout="30">
+        <step expected_result="0">cat /usr/share/testrunner-lite-tests/testdata/unicode.txt</step>
+      </case>     
+    </set>
+ </suite>
+</testdefinition>
+

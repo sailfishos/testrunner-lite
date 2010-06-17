@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="sample-suite">
+    <set name="sample-set" description="set with a failing pre-step">
+
+      <pre_steps>
+	<step expected_result="0">xyzqwerrty</step>
+      </pre_steps>
+
+      <case name="simple-case" description="testrunner-lite tests">
+	<step>echo Hello World!</step>
+      </case>  
+
+    </set>
+  </suite>
+</testdefinition>   

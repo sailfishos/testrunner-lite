@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="1.0">  <!-- result="0" -->
+  <suite name="trlitereg06_suite1">
+    <set name="set1">
+      <pre_steps>
+	<step>/bin/false</step>                        <!-- failing pre-step  -->
+      </pre_steps>
+
+      <case name="case1_1">     <!-- result="PASS" -->
+	<step>/bin/true</step>  <!-- result="PASS" -->
+      </case>
+
+      <case name="case1_2">     <!-- result="FAIL" -->
+	<step>/bin/false</step> <!-- result="FAIL" -->
+      </case>
+    </set>
+
+
+    <set name="set2">
+      <pre_steps>
+	<step expected_result="0">/bin/false</step>    <!-- failing pre-step with expected result -->
+      </pre_steps>
+
+      <case name="case2_1">     <!-- result="FAIL" should not be executed -->
+	<step>/bin/true</step>  <!-- result="FAIL" should not be executed -->
+      </case>
+
+      <case name="case2_2">     <!-- result="FAIL" should not be executed -->
+	<step>/bin/false</step> <!-- result="FAIL" should not be executed -->
+      </case>
+    </set>
+
+
+    <set name="set3">
+      <pre_steps>
+	<step expected_result="0">/bin/true</step>
+      </pre_steps>
+
+      <case name="case3_1">     <!-- result="FAIL" -->
+	<step>/bin/false</step> <!-- result="FAIL" -->
+      </case>
+
+      <case name="case3_2">     <!-- result="PASS" -->
+	<step>/bin/true</step>  <!-- result="PASS" -->
+      </case>
+    </set>
+
+
+    <set name="set4">
+      <pre_steps>
+	<step expected_result="0">/bin/true</step>
+	<step expected_result="0">/bin/false</step>    <!-- failing pre-step with expected result -->
+      </pre_steps>
+
+      <case name="case4_1">     <!-- result="FAIL" should not be executed -->
+	<step>/bin/true</step>  <!-- result="FAIL" should not be executed -->
+
+      </case>
+      <case name="case4_2">     <!-- result="FAIL" should not be executed -->
+	<step>/bin/false</step> <!-- result="FAIL" should not be executed -->
+      </case>
+    </set>
+
+
+    <set name="set5">
+      <pre_steps>
+	<step expected_result="0">/bin/true</step>
+	<step expected_result="0">/bin/false</step>    <!-- failing pre-step with expected result -->
+	<step expected_result="0">/bin/true</step>
+      </pre_steps>
+
+      <case name="case5_1">     <!-- result="FAIL" should not be executed -->
+	<step>/bin/true</step>  <!-- result="FAIL" should not be executed -->
+      </case>
+
+      <case name="case5_2">     <!-- result="FAIL" should not be executed -->
+	<step>/bin/true</step>  <!-- result="FAIL" should not be executed -->
+      </case>
+    </set>
+
+
+    <set name="set6">
+      <pre_steps>
+	<step expected_result="1">/bin/false</step>
+      </pre_steps>
+
+      <case name="case6_1">     <!-- result="FAIL" -->
+	<step>/bin/false</step> <!-- result="FAIL" -->
+      </case>
+
+      <case name="case6_2">     <!-- result="PASS" -->
+	<step>/bin/true</step>  <!-- result="PASS" -->
+      </case>
+    </set>
+  </suite>
+</testdefinition>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+
+  <suite name="testsuite2" domain="test" type="Robustness" level="System"> 
+    <description>Second test suite is to verify that multiple test suites can be given.</description>
+    <set name="testset2">
+      <case name="meaningless_test">
+        <description>Meaningless test</description>
+        <step>cd</step>
+      </case>
+      <case name="insignificant_test_failing" insignificant="true">
+        <description>Insignificant test that just fails.</description>
+        <step expected_result="1">echo moi</step>
+      </case>
+      <case name="insignificant_test_timing_out" insignificant="true" timeout="1">
+        <description>Insignificant test that fails by timing out.</description>
+        <step>sleep 2</step>
+      </case>
+    </set>
+  </suite>
+
+  <suite name="testsuite3" domain="test" type="Robustness" level="FOO"> 
+    <description>Tests defined for specific environments: HW-only and SB-only</description>
+    <set name="sb-testset">
+      <case name="sb_test">
+        <description>A test defined only for scratchbox</description>
+        <step>cd</step>
+      </case>
+      <environments>
+        <scratchbox>true</scratchbox>
+        <hardware>false</hardware>
+      </environments>
+    </set>
+    <set name="hw-testset">
+      <case name="hw_test">
+        <description>A test defined only for hardware</description>
+        <step>cd</step>
+      </case>
+      <environments>
+        <scratchbox>false</scratchbox>
+        <hardware>true</hardware>
+      </environments>
+    </set>
+  </suite>
+
+
+  <suite name="requirements_tests"> 
+    <description>Tests for testing correct handling of requirements</description>
+    <set name="requirements_tests">
+      <case name="one_requirement" requirement="MTIS-188">
+        <description>This test tests the basic case of only one requirement defined</description>
+        <step>cd</step>
+      </case>
+      <case name="many_requirements" requirement="MTIS-188,MTIS-202,MTIS-162">
+        <description>This test case defines multiple requirements as a comma separated list</description>
+        <step>cd</step>
+      </case>
+      <case name="many_requirements_with_whitespace" requirement="  MTIS-188 ,MTIS-202   ,MTIS-162 ">
+        <description>This test case defines multiple requirements as a comma separated list and some extra whitespaces</description>
+        <step>cd</step>
+      </case>
+      <case name="empty_requirement" requirement="">
+        <description>This test has an empty requirement string</description>
+        <step>cd</step>
+      </case>
+      <case name="no_requirement">
+        <description>This test does not have a requirement attribute at all</description>
+        <step>cd</step>
+      </case>
+    </set>
+  </suite>
+</testdefinition>
+
