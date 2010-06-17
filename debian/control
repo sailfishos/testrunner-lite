@@ -22,12 +22,12 @@ Section: utils
 Architecture: any
 Description: Library for obtaining hardware information in maemo environment
 
-Package: testrunner-lite-hwinfo-meego
-Provides: testrunner-lite-hwinfo
-Conflicts: testrunner-lite-hwinfo-maemo
-Section: utils
-Architecture: any
-Description: Library for obtaining hardware information in meego environment
+#Package: testrunner-lite-hwinfo-meego
+#Provides: testrunner-lite-hwinfo
+#Conflicts: testrunner-lite-hwinfo-maemo
+#Section: utils
+#Architecture: any
+#Description: Library for obtaining hardware information in meego environment
 
 Package: testrunner-lite-tests
 Section: tests
