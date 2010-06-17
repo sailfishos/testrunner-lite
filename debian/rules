@@ -18,6 +18,7 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 	autoreconf --install
+	automake
 	./configure --prefix=/usr  $(confflags)
 	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS)" 
 	touch build-stamp 
