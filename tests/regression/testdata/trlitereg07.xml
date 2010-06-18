@@ -12,7 +12,12 @@
 
       <case name="case1_1_2">                          <!-- result="FAIL" -->
 	<step>/bin/false</step>                        <!-- result="FAIL" -->
-	<step>touch /tmp/trlitereg07_case1_1_2</step>  <!-- this step should not be executed -->
+	<step>touch /tmp/trlitereg07_case1_1_2</step>  <!-- result="N/A" this step should not be executed -->
+      </case>
+
+      <case name="case1_1_3">                            <!-- result="PASS" -->
+	<step>[ -f /tmp/trlitereg07_case1_1_1 ]</step>   <!-- result="PASS" -->
+	<step>[ ! -f /tmp/trlitereg07_case1_1_2 ]</step> <!-- result="PASS" -->
       </case>
 
       <post_steps>
@@ -34,7 +39,7 @@
 
       <case name="case2_1_2">                          <!-- result="FAIL" should not be executed -->
 	<step>/bin/false</step>                        <!-- result="FAIL" should not be executed -->
-	<step>touch /tmp/trlitereg07_case2_1_2</step>  <!-- this step should not be executed -->
+	<step>touch /tmp/trlitereg07_case2_1_2</step>  <!-- result="FAIL" this step should not be executed -->
       </case>
     </set>
 

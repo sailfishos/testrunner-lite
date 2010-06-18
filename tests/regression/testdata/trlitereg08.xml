@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="1.0">                           <!-- result="0" -->
+  <suite name="trlitereg08_init">
+    <set name="init">
+      <case name="init">                                 <!-- result="PASS" -->
+	<step>rm -fr /tmp/trlitereg08_*</step>           <!-- result="PASS" -->
+      </case>
+    </set>
+  </suite>
+
+
+  <suite name="trlitereg08_suite1">
+    <set name="set1_1">
+      <pre_steps timeout="1">
+	<step>sleep 2</step>                             <!-- timeouting pre-step  -->
+      </pre_steps>
+
+      <case name="case1_1_1">                            <!-- result="PASS" -->
+	<step>/bin/true</step>                           <!-- result="PASS" -->
+	<step>touch /tmp/trlitereg08_case1_1_1</step>    <!-- result="PASS" -->
+      </case>
+
+      <case name="case1_1_2">                            <!-- result="FAIL" -->
+	<step>/bin/false</step>                          <!-- result="FAIL" -->
+	<step>touch /tmp/trlitereg08_case1_1_2</step>    <!-- result="N/A" this step should not be executed -->
+      </case>
+
+      <case name="case1_1_3">                            <!-- result="PASS" -->
+	<step>[ -f /tmp/trlitereg08_case1_1_1 ]</step>   <!-- result="PASS" -->
+	<step>[ ! -f /tmp/trlitereg08_case1_1_2 ]</step> <!-- result="PASS" -->
+      </case>
+
+      <post_steps timeout="10">
+	<step>/bin/false</step>                          <!-- failing post step without expected result, the next step must be executed -->
+	<step>touch /tmp/trlitereg08_1_1_post</step>     <!-- create a file and check its existence in the next set -->
+      </post_steps>
+    </set>
+
+    <set name="set1_2">
+      <case name="case1_2_1">                            <!-- result="PASS" -->
+	<step>[ -f /tmp/trlitereg08_1_1_post ]</step>    <!-- result="PASS" -->
+      </case>
+    </set>
+  </suite>
+
+
+  <suite name="trlitereg08_suite2">
+    <set name="set2_1" timeout="10">
+      <pre_steps timeout="1">
+	<step expected_result="0">sleep 2</step>         <!-- timeouting pre-step with expected result -->
+      </pre_steps>
+
+      <case name="case2_1_1">                            <!-- result="FAIL" should not be executed -->
+	<step>touch /tmp/trlitereg08_case2_1_1</step>    <!-- result="FAIL" should not be executed -->
+      </case>
+
+      <case name="case2_1_2">                            <!-- result="FAIL" should not be executed -->
+	<step>/bin/false</step>                          <!-- result="FAIL" should not be executed -->
+	<step>touch /tmp/trlitereg08_case2_1_2</step>    <!-- result="FAIL" should not be executed -->
+      </case>
+
+      <post_steps>
+	<step>touch /tmp/trlitereg08_2_1_post</step>     <!-- should not be executed. check in the next set -->
+      </post_steps>
+    </set>
+
+    <set name="set2_2">
+      <case name="case2_2_1">                            <!-- result="PASS" -->
+	<step>[ ! -f /tmp/trlitereg08_case2_1_1 ]</step> <!-- result="PASS" -->
+	<step>[ ! -f /tmp/trlitereg08_case2_1_2 ]</step> <!-- result="PASS" -->
+	<step>[ ! -f /tmp/trlitereg08_2_1_post ]</step>  <!-- result="PASS" -->
+      </case>
+    </set>
+  </suite>
+
+
+  <suite name="trlitereg08_suite3">
+    <set name="set3_1">
+      <pre_steps timeout="1">
+	<step>sleep 2</step>                             <!-- timeouting pre-step -->
+      </pre_steps>
+
+      <case name="case3_1_1">                            <!-- result="PASS" -->
+	<step>touch /tmp/trlitereg08_case3_1_1</step>    <!-- result="PASS" -->
+      </case>
+
+      <post_steps timeout="1">
+	<step expected_result="0">sleep 2</step>         <!-- timeouting post step with expected result -->
+	<step>touch /tmp/trlitereg08_3_1_post</step>     <!-- should not be executed. check in the next set -->
+      </post_steps>
+    </set>
+
+    <set name="set3_2">
+      <case name="case3_2_1">                            <!-- result="PASS" -->
+	<step>[ -f /tmp/trlitereg08_case3_1_1 ]</step>   <!-- result="PASS" -->
+	<step>[ ! -f /tmp/trlitereg08_3_1_post ]</step>  <!-- result="PASS" -->
+      </case>
+    </set>
+  </suite>
+
+
+  <suite name="trlitereg08_clean">
+    <set name="clean">
+      <case name="clean">                                <!-- result="PASS" -->
+	<step>rm -fr /tmp/trlitereg08_*</step>           <!-- result="PASS" -->
+      </case>
+    </set>
+  </suite>
+</testdefinition>
