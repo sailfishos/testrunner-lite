@@ -297,6 +297,13 @@ LOCAL int xml_write_case (const void *data, const void *user)
 		
 		goto err_out;
 
+	if (c->failure_info) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "failure_info", 
+						 c->failure_info) < 0)
+			goto err_out;
+	}
+
 	if (c->subfeature)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "subfeature", 

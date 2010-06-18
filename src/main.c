@@ -206,8 +206,10 @@ LOCAL int step_execute (const void *data, const void *user)
 		res = CASE_FAIL;
 		step->has_result = 1; /* FIXME: temporary solution */
 		step->return_code = bail_out;
-		if (global_failure)
+		if (global_failure) {
 			step->failure_info = xmlCharStrdup (global_failure);
+			c->failure_info = xmlCharStrdup (global_failure);
+		}
 		goto out;
 	}
 
@@ -242,6 +244,9 @@ LOCAL int step_execute (const void *data, const void *user)
 		}
 		if (edata.failure_info.buffer) {
 			step->failure_info = edata.failure_info.buffer;
+			c->failure_info = xmlCharStrdup ((char *)
+							 step->failure_info);
+
 			LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
 				 step->failure_info);
 		}
@@ -419,12 +424,12 @@ LOCAL int case_result_na (const void *data, const void *user)
 {
 
 	td_case *c = (td_case *)data;
-	
+	char *failure_info = (char *)user;
+
 	LOG_MSG (LOG_DEBUG, "Setting FAIL result for case %s", c->gen.name);
 
-	/* FIXME */
 	c->case_res = CASE_FAIL;
-	/* c->case_res = CASE_NA; */
+	c->failure_info = xmlCharStrdup (failure_info);
 
 	xmlListWalk (c->steps, step_result_na, user);
 	

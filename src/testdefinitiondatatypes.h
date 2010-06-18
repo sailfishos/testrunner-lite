@@ -108,7 +108,8 @@ typedef struct {
 	xmlListPtr steps;       /**< Steps in this test case */
 	xmlChar   *comment;     /**< Manual test case comment */
 	/* Executor fills */
-	case_result_t  case_res; /**< r stating whether this case is passed */
+	case_result_t  case_res; /**< Case result */
+	xmlChar   *failure_info;   /**< optional failure info */
 	int        dummy;       /**< Case is dummy - used with pre post steps */
 	int        filtered;    /**< Case is filtered */
 } td_case;

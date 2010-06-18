@@ -54,7 +54,9 @@
 
       <case name="test_presteps_failure_info">
 	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-pre_step-fail.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
-	<step>grep &quot;pre_steps failed&quot; /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep step /tmp/testrunnerlitetestdir/res.xml | grep &quot;pre_steps failed&quot; </step>
+	<step>grep case /tmp/testrunnerlitetestdir/res.xml | grep &quot;pre_steps failed&quot; </step>
+
       </case>
 
       <post_steps>
