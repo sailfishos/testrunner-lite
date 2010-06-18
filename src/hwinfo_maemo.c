@@ -84,21 +84,21 @@
 /* ------------------------------------------------------------------------- */
 /** Return command for product information in maemo environment
  */
-const char hwinfo_product()
+const char *hwinfo_product()
 {
 	return "sysinfo-tool --get /component/product";
 }
 /* ------------------------------------------------------------------------- */
 /** Return command for hw-build information in maemo environment
  */
-const char hwinfo_hw_build()
+const char *hwinfo_hw_build()
 {
 	return "sysinfo-tool --get /component/hw-build";
 }
 /* ------------------------------------------------------------------------- */
 /** Return command for extra information in maemo environment
  */
-const char hwinfo_extra()
+const char *hwinfo_extra()
 {
 	return "sysinfo-tool --get /component/nolo;"
 		"sysinfo-tool --get /component/boot-mode;"

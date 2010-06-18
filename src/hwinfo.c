@@ -90,6 +90,9 @@ LOCAL unsigned char *exec_command (const char *cmd)
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data (&edata);
 	
+	if (cmd == NULL || strlen (cmd))
+		return NULL;
+
 	edata.soft_timeout = 5;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	LOG_MSG (LOG_INFO, "executing command %s", cmd);
@@ -123,6 +126,8 @@ int read_hwinfo (hw_info *hi)
         const char *(*hwinfo_product) ();
         const char *(*hwinfo_hw_build) ();
         const char *(*hwinfo_extra) ();
+
+	memset (hi, 0x0, sizeof (hw_info));
 
 	plugin = dlopen ("/usr/lib/testrunner-lite-hwinfo.so",
 			  RTLD_NOW | RTLD_LOCAL);

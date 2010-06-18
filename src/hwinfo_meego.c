@@ -87,21 +87,21 @@
  */
 /** Return command for product information in meego environment
  */
-const char hwinfo_product()
+const char *hwinfo_product()
 {
 	return "echo unknown";
 }
 /* ------------------------------------------------------------------------- */
 /** Return command for hw-build information in meego environment
  */
-const char hwinfo_hw_build()
+const char *hwinfo_hw_build()
 {
 	return "echo unknown";
 }
 /* ------------------------------------------------------------------------- */
 /** Return command for extra information in meego environment
  */
-const char hwinfo_extra()
+const char *hwinfo_extra()
 {
 	return NULL;
 }
