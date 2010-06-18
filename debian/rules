@@ -19,7 +19,7 @@ build-stamp:
 	dh_testdir
 	libtoolize --copy --force && aclocal  && autoheader && automake --add-missing --foreign && autoconf
 	./configure --prefix=/usr  $(confflags)
-	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS)" 
+	$(MAKE) CFLAGS="$(CFLAGS)" 
 	touch build-stamp 
 	$(MAKE) || exit 1 
 	$(MAKE) html || exit 1 
