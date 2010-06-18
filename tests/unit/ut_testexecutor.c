@@ -421,9 +421,11 @@ START_TEST (test_executor_remote_killing_process)
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
 	fail_unless (strncmp((char*)edata.stdout_data.buffer, 
-			     "stdouttest", strlen("stderrtest")) == 0);
+			     "stdouttest", strlen("stderrtest")) == 0,
+		     edata.stdout_data.buffer);
 	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
-			     "stderrtest", strlen("stderrtest")) == 0);
+			     "stderrtest", strlen("stderrtest")) == 0,
+		     edata.stderr_data.buffer);
 	/* sleep for a while such that remote killing has done its job */
 	sleep(2);
 	fail_if (execute("pidof unterminating", &edata));
