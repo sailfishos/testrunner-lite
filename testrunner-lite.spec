@@ -8,9 +8,9 @@ URL: http://meego.com
 Source0: %{name}_%{version}+0m6.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel
+BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel, libtool
 # libxml2 and libcurl are implicit dependencies  
-Requires: test-definition, openssh
+Requires: test-definition, openssh, testrunner-lite-hwinfo
 
 %package tests
 Summary: Unit tests for testrunner-lite
@@ -23,6 +23,16 @@ Requires: ci-testing, testrunner-lite, libxml2-utils
 %package docs
 Summary: Testrunner-lite doxygen documentation in html format
 
+%package hwinfo-maemo
+Summary: Provides commands for hardware information obtaining
+Provides: testrunner-lite-hwinfo
+Conflicts: testrunner-lite-hwinfo-meego
+
+%package hwinfo-meego
+Summary: Provides commands for hardware information obtaining
+Provides: testrunner-lite-hwinfo
+Conflicts: testrunner-lite-hwinfo-maemo
+
 %description
 Generic test executor tool
 
@@ -34,6 +44,12 @@ Regression tests for testrunner-lite
 
 %description docs
 Testrunner-lite doxygen documentation in html format
+
+%description hwinfo-maemo
+Library for obtaining hardware information in maemo environment
+
+%description hwinfo-meego
+Library for obtaining hardware information in meego environment
 
 %prep
 %setup -q -n %{name}-%{version}+0m6
@@ -70,6 +86,26 @@ rm -rf %{buildroot}
 /usr/share/man/man1/testrunner-lite.1.gz
 # need to remove executable flag because rpmlint complains about it
 %attr(644,root,root) /usr/share/doc/testrunner-lite-doc/html/installdox
+
+%files hwinfo-maemo
+%defattr(-,root,root,-)
+/usr/lib/testrunner-lite-hwinfo-maemo*
+
+%post hwinfo-maemo
+ln -s /usr/lib/testrunner-lite-hwinfo-maemo.so  /usr/lib/testrunner-lite-hwinfo.so
+
+%postun hwinfo-maemo
+rm /usr/lib/testrunner-lite-hwinfo.so
+
+%files hwinfo-meego
+%defattr(-,root,root,-)
+/usr/lib/testrunner-lite-hwinfo-meego*
+
+%post hwinfo-meego
+ln -s /usr/lib/testrunner-lite-hwinfo-meego.so  /usr/lib/testrunner-lite-hwinfo.so
+
+%postun hwinfo-meego
+rm /usr/lib/testrunner-lite-hwinfo.so
 
 %changelog
 * Wed Jun 16 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.4

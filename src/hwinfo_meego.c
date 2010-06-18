@@ -28,7 +28,6 @@
 #include <errno.h>
 #include <string.h>
 #include <libxml/xmlwriter.h>
-#include <dlfcn.h>
 #include "testrunnerlite.h"
 #include "executor.h"
 #include "hwinfo.h"
@@ -71,119 +70,41 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-LOCAL unsigned char *exec_command (const char *c);
-/* ------------------------------------------------------------------------- */
+/* None */
 /* FORWARD DECLARATIONS */
 /* None */
 
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/** Execute the command provided by plugin
- *  @param cmd the command
- *  @return stdout output of the  command
- */
-LOCAL unsigned char *exec_command (const char *cmd)
-{
-	char *p;
-	exec_data edata;
-	memset (&edata, 0x0, sizeof (exec_data));
-	init_exec_data (&edata);
-	
-	edata.soft_timeout = 5;
-	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	LOG_MSG (LOG_INFO, "executing command %s", cmd);
-	execute (cmd, &edata);
-	
-	if (edata.result) {
-		LOG_MSG (LOG_ERR, "%s:%s():%d:%s\n", PROGNAME, __FUNCTION__,
-			 edata.result, (char *)edata.stderr_data.buffer ?
-			 (char *)edata.stderr_data.buffer : 
-			 "no info available");
-		free (edata.stderr_data.buffer);
-		free (edata.stdout_data.buffer);
-		return NULL;
-	}
-	p = strchr  ((char *)edata.stdout_data.buffer, '\n');
-	if (p) *p ='\0';
-	
-	return edata.stdout_data.buffer;
-}
+/* None */
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-/** Obtain hardware info and save it to argument
- * @param hi container for hardware info
- * @return 0 if basic information can be obtained 1 otherwise
+/* FIXME: return unknown for know untill we know how to extract 
+ * the info in meego environment
  */
-int read_hwinfo (hw_info *hi)
+/** Return command for product information in meego environment
+ */
+const char hwinfo_product()
 {
-	void *plugin;
-        const char *(*hwinfo_product) ();
-        const char *(*hwinfo_hw_build) ();
-        const char *(*hwinfo_extra) ();
-
-	plugin = dlopen ("/usr/lib/testrunner-lite-hwinfo.so",
-			  RTLD_NOW | RTLD_LOCAL);
-	if  (!plugin) {
-		LOG_MSG (LOG_WARNING, "failed to load hwinfo plugin %s",
-			 dlerror());
-		return 1;
-	}
-
-	hwinfo_product = (const char*(*)())dlsym(plugin, "hwinfo_product");
-	if (!hwinfo_product) {
-		LOG_MSG (LOG_WARNING, "no function for hwinfo_product");
-	} else {
-		hi->product = exec_command (hwinfo_product());
-	}
-
-	hwinfo_hw_build = (const char*(*)())dlsym(plugin, "hwinfo_hw_build");
-	if (!hwinfo_hw_build) {
-		LOG_MSG (LOG_WARNING, "no function for hwinfo_hw_build");
-	} else {
-		hi->hw_build = exec_command (hwinfo_hw_build());
-	}
-
-	hwinfo_extra = (const char*(*)())dlsym(plugin, "hwinfo_extra");
-	if (hwinfo_extra) {
-		hi->extra = exec_command (hwinfo_extra());
-	}
-
-	dlclose (plugin);
-
-	return 0;
+	return "echo unknown";
 }
 /* ------------------------------------------------------------------------- */
-/** Print hardware info
- * @param hi hw_info data
+/** Return command for hw-build information in meego environment
  */
-void print_hwinfo (hw_info *hi)
+const char hwinfo_hw_build()
 {
-	printf ("Hardware Info:\n");
-	printf ("%s %s %s\n", 
-		(char *)(hi->product ? hi->product : 
-			 (unsigned char *)"<none>"), 
-		(char *)(hi->hw_build ? hi->hw_build : 
-			 (unsigned char *)"<none>"), 
-		(char *)(hi->extra ? hi->extra : 
-			 (unsigned char *)"")); 
+	return "echo unknown";
 }
 /* ------------------------------------------------------------------------- */
-/** Free the allocated data from hw_info
- * @param hi hw_info data
+/** Return command for extra information in meego environment
  */
-void clean_hwinfo (hw_info *hi)
+const char hwinfo_extra()
 {
-	
-        if (hi->product) free (hi->product); 
-	if (hi->hw_build) free (hi->hw_build);
-	if (hi->extra) free (hi->extra);
-
-	return;
-} 
-
+	return NULL;
+}
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */
 
