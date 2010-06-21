@@ -421,7 +421,13 @@ LOCAL int txt_write_case (const void *data, const void *user)
 		 (char *)c->gen.description : "");
 	fprintf (ofile, "      manual        : %s\n", c->gen.manual ?
 		 "true" : "false");
-	
+	fprintf (ofile, "      result        : %s", 
+		 case_result_str(c->case_res));
+	if (c->failure_info) {
+		fprintf (ofile, " (%s)", c->failure_info);
+	}
+	fprintf (ofile, "\n");
+
 	if (c->gen.requirement)
 	    fprintf (ofile, "      requirement   : %s\n", c->gen.requirement);
 	if (c->subfeature)
