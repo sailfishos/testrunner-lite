@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.3.4
+Version: 1.3.5
 Release:1%{?dist}
 Summary: Generic test executor tool
 Group: Test-tools
@@ -108,6 +108,8 @@ ln -s /usr/lib/testrunner-lite-hwinfo-meego.so  /usr/lib/testrunner-lite-hwinfo.
 rm /usr/lib/testrunner-lite-hwinfo.so
 
 %changelog
+* Tue Jun 22 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.5
+- Fixes: NB#173043 - failure_info attribute is not added to case element
 * Wed Jun 16 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.4
 - Fixed bug in long commands handling
 * Wed Jun 09 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.3-1
