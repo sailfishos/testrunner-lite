@@ -1,8 +1,13 @@
+testrunner-lite (1.3.6) unstable; urgency=low
+
+  * Implemented:SWP#MTT-282 - hwinfo interface to provide hw information
+
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Wed, 23 Jun 2010 11:06:03 +0300
+
 testrunner-lite (1.3.5) unstable; urgency=low
 
   * Fixes: NB#173043 - failure_info attribute is not added to case element
   * Fixes: NB#172872 - Pre-steps can't time out
-  * Implemented:SWP#MTT-282 - hwinfo interface to provide hw information
 
  -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Tue, 22 Jun 2010 13:16:19 +0300
 

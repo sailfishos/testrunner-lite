@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.3.5
+Version: 1.3.6
 Release:1%{?dist}
 Summary: Generic test executor tool
 Group: Test-tools
@@ -108,10 +108,11 @@ ln -s /usr/lib/testrunner-lite-hwinfo-meego.so  /usr/lib/testrunner-lite-hwinfo.
 rm /usr/lib/testrunner-lite-hwinfo.so
 
 %changelog
+* Wed Jun 23 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.6
+- Implemented:SWP#MTT-282 - hwinfo interface to provide hw information
 * Tue Jun 22 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.5
 - Fixes: NB#173043 - failure_info attribute is not added to case element
 - Fixes: NB#172872 - Pre-steps can't time out
-- Implemented:SWP#MTT-282 - hwinfo interface to provide hw information
 * Wed Jun 16 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.4
 - Fixed bug in long commands handling
 * Wed Jun 09 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.3-1
