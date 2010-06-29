@@ -445,7 +445,7 @@ LOCAL int case_result_na (const void *data, const void *user)
 LOCAL int process_get (const void *data, const void *user)
 {
 
-	xmlChar *rawfname = (xmlChar *)data;
+	td_file *file = (td_file *)data;
 	xmlChar *command;
 	char *fname;
 	exec_data edata;
@@ -456,8 +456,8 @@ LOCAL int process_get (const void *data, const void *user)
 	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
-	fname = malloc (strlen((char *)rawfname) + 1);
-	trim_string ((char *)rawfname, fname);
+	fname = malloc (strlen((char *)file->filename) + 1);
+	trim_string ((char *)file->filename, fname);
 
 	/*
 	** Compose command 
@@ -495,9 +495,31 @@ LOCAL int process_get (const void *data, const void *user)
 	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
 	if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
 	if (edata.failure_info.buffer) free (edata.failure_info.buffer);
+
+	if (!file->delete_after)
+		goto out;
+
+	memset (&edata, 0x0, sizeof (exec_data));
+	init_exec_data(&edata);
+	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
+	edata.hard_timeout = COMMON_HARD_TIMEOUT;
+	sprintf ((char *)command, "rm -f %s", fname);
+	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
+		 (char*)command);
+	execute((char*)command, &edata);
+	if (edata.result) {
+		LOG_MSG (LOG_ERR, "%s: %s failed: %s\n", PROGNAME, command,
+			 (char *)(edata.stderr_data.buffer ?
+				  edata.stderr_data.buffer : 
+				  BAD_CAST "no info available"));
+	}
+	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
+	if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
+	if (edata.failure_info.buffer) free (edata.failure_info.buffer);
+
+ out:
 	free (command);
 	free (fname);
-
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -569,7 +591,6 @@ LOCAL void process_set (td_set *s)
 	}
 	
 	xmlListWalk (s->cases, process_case, s);
-	xmlListWalk (s->gets, process_get, s);
 	if (xmlListSize (s->post_steps) > 0) {
 		LOG_MSG (LOG_INFO, "Executing post steps");
 		memset (&dummy, 0x0, sizeof (td_case));
@@ -580,6 +601,8 @@ LOCAL void process_set (td_set *s)
 			LOG_MSG (LOG_ERR, 
 				 "Post steps failed for %s.", s->gen.name);
 	}
+	xmlListWalk (s->gets, process_get, s);
+
  short_circuit:
 	write_post_set_tag (s);
 	if (xmlListSize (s->pre_steps) > 0)

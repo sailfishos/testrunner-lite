@@ -52,13 +52,19 @@ typedef struct {
 	int      manual;        /**< Manual flag (default false) */
 	int      insignificant; /**< Insignificant flag (default false) */
 } td_gen_attribs;
-
+/* ------------------------------------------------------------------------- */
 /** Test suite */
 typedef struct {
 	td_gen_attribs gen;   /**< General attributes */
 	xmlChar    *domain;   /**< Domain */
 	int        filtered;  /**< Suite is filtered */
 } td_suite;
+/* ------------------------------------------------------------------------- */
+/** File element (for get tag) */
+typedef struct {
+	int        delete_after;  /**< Delete_after attribute */
+	xmlChar    *filename;     /**< File name */
+} td_file;
 /* ------------------------------------------------------------------------- */
 /** Test set. */
 typedef struct {

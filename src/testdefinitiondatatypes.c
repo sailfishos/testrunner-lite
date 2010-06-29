@@ -87,7 +87,6 @@ LOCAL int list_string_compare (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/* ------------------------------------------------------------------------- */
 /** Deallocator for list with xmlchar* items
  *  @param lk list item
  */
@@ -120,6 +119,17 @@ LOCAL int list_dummy_compare(const void * data0,
 	
 	return 0;
 }
+/* ------------------------------------------------------------------------- */
+/** Deallocator for list with td_file items
+ *  @param lk list item
+ */
+LOCAL void td_file_delete (xmlLinkPtr lk)
+{
+	td_file *file = (td_file *)xmlLinkGetData (lk);
+	free (file->filename);
+	free (file);
+}
+
 /* ------------------------------------------------------------------------- */
 /** Deallocator for general attributes 
  *  @param gen general attributes 
@@ -199,7 +209,7 @@ td_set *td_set_create ()
 	env =  xmlCharStrdup ("scratchbox");
 	xmlListAppend (set->environments, env);
 
-	set->gets = xmlListCreate (list_string_delete, NULL);
+	set->gets = xmlListCreate (td_file_delete, NULL);
 
 	return set;
 }

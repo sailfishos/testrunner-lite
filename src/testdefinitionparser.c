@@ -420,9 +420,11 @@ LOCAL int td_parse_environments(xmlListPtr list)
 LOCAL int td_parse_gets(xmlListPtr list)
 {
 	int ret;
-	xmlChar *value;
+	int delete_after = 0;
+	td_file *file;
 
 	do {
+
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
 			LOG_MSG (LOG_ERR, "%s:%s: ReaderRead() fail\n",
@@ -430,10 +432,21 @@ LOCAL int td_parse_gets(xmlListPtr list)
 			
 			goto ERROUT;
 		}
+
+		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_ELEMENT &&
+		    xmlTextReaderMoveToNextAttribute(reader) == 1) {
+			delete_after = !xmlStrcmp (xmlTextReaderConstValue
+							 (reader), 
+							 BAD_CAST "true");
+		} 
+
 		/* add to list get files */
 		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
-			value = xmlTextReaderReadString (reader);
-			if (xmlListAppend (list, value)) {
+			file = (td_file *)malloc (sizeof (td_file));
+			file->filename = xmlTextReaderReadString (reader);
+			file->delete_after = delete_after;
+			delete_after = 0;
+			if (xmlListAppend (list, file)) {
 				LOG_MSG (LOG_ERR, 
 					 "%s:%s list insert failed\n",
 					 PROGNAME, __FUNCTION__);
