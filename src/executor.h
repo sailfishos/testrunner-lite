@@ -43,8 +43,8 @@
  * -l : Login shell. .profile is read upon login
  * -c : Execute a command. This must be the last option followed by a command
  */
-#define SHELLCMD_ARGS      "-l", "-c"
-#define SHELLCMD_ARGS_STR  "-l -c"
+#define SHELLCMD_ARGS      "-c"
+#define SHELLCMD_ARGS_STR  "-c"
 #define FAILURE_INFO_TIMEOUT "timeout"
 #define POLL_TIMEOUT_MS   100
 #define POLL_TIMEOUT_US   (1000*POLL_TIMEOUT_MS)
