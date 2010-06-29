@@ -19,12 +19,12 @@
       </case>     
 
       <get>
-        <file>/tmp/gettest.txt</file>
+        <file delete_after="true">/tmp/gettest.txt</file>
         <file>/tmp/gettest2.txt</file>
-        <file>
+        <file delete_after="false">
             /tmp/gettest3.txt
         </file>
-	<file>	  	/tmp/gettest4.txt	  </file>
+	<file delete_after="true">	  	/tmp/gettest4.txt	  </file>
 	<file>/tmp/
 get\ test5.txt
 	</file>

@@ -109,6 +109,13 @@
 	<step>[ -f /tmp/testrunnerlitetestdir/gettest3.txt ]</step>
 	<step>[ -f /tmp/testrunnerlitetestdir/gettest4.txt ]</step>
 	<step>[ -f /tmp/testrunnerlitetestdir/get\ test5.txt ]</step>
+
+	<step>[ ! -f /tmp/gettest.txt ]</step>
+	<step>[ -f /tmp/gettest2.txt ]</step>
+	<step>[ -f /tmp/gettest3.txt ]</step>
+	<step>[ ! -f /tmp/gettest4.txt ]</step>
+	<step>[ -f /tmp/get\ test5.txt ]</step>
+
       </case>
 
       <post_steps>
