@@ -91,6 +91,14 @@ The following example executes test cases that specify the requirement attribute
 \code
 testrunner-lite -f tests.xml -o ~/results -l 'requirement=50001,50002,50003'
 \endcode
+Note that each key=values is handled as a separate filter, when checking whether a test case should be filtered. The following example will filter all the test cases, 
+\code
+testrunner-lite -f tests.xml -o ~/results -l 'testset=set1 testset=set2'
+\endcode
+whereas the following will accept tests from test sets "set1" and "set2".
+\code
+testrunner-lite -f tests.xml -o ~/results -l 'testset=set1,set2'
+\endcode
 
 \section manual_exec_sec Manual Test Cases
 
