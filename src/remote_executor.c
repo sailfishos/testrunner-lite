@@ -67,7 +67,7 @@
 LOCAL char *unique_id = NULL;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
-#define UNIQUE_ID_FMT     "%s.%d"
+#define UNIQUE_ID_FMT     "%d"
 #define PID_FILE_FMT      "/tmp/testrunner-lite-%s.%d.pid"
 #define UNIQUE_ID_MAX_LEN (HOST_NAME_MAX + 10 + 1 + 1)
 #define PID_FILE_MAX_LEN  (30 + UNIQUE_ID_MAX_LEN + 10 + 1 + 1)
@@ -91,10 +91,12 @@ LOCAL char *unique_id = NULL;
 /* ------------------------------------------------------------------------- */
 /** Init the ssh executor
  */
-void ssh_executor_init ()
+void ssh_executor_init (const char *hostname)
 {
 	int ret;
-	
+	pid_t pid;
+	char *cmd = "echo '#!/bin/sh' > /tmp/mypid.sh;"
+		" echo 'echo $PPID' >> /tmp/mypid.sh; chmod +x /tmp/mypid.sh";
 	unique_id = (char *)malloc (UNIQUE_ID_MAX_LEN);
 	ret = gethostname(unique_id, HOST_NAME_MAX);
 	if (ret) {
@@ -102,9 +104,19 @@ void ssh_executor_init ()
 			strerror (errno));
 		strcpy (unique_id, "foo");
 	}
-	sprintf (unique_id, UNIQUE_ID_FMT, unique_id, getpid());
+	sprintf (unique_id + strlen(unique_id), UNIQUE_ID_FMT, getpid());
 
 	LOG_MSG(LOG_DEBUG, "unique_id set to %s", unique_id);
+	
+	pid = fork();
+	if (pid > 0) 
+	    return;
+	if (pid < 0)
+	    return;
+	
+
+	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
+		    cmd, (char*)NULL);
 	
 }
 /* ------------------------------------------------------------------------- */
@@ -123,7 +135,7 @@ int ssh_execute (const char *hostname, const char *command)
                 fprintf (stderr, "%s: could not allocate memory for "
                          "command %s\n", __FUNCTION__, command);
         }
-        sprintf (cmd, "echo $$ > " PID_FILE_FMT 
+        sprintf (cmd, "/tmp/mypid.sh > " PID_FILE_FMT 
                  ";source .profile > /dev/null; %s",
                  unique_id, getpid(), command);
         /* cmd can not be freed since execl does not return here */

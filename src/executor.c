@@ -891,7 +891,7 @@ void executor_init (testrunner_lite_options *opts)
 	
 	options = opts;
 	if (options->target_address)
-		ssh_executor_init();
+		ssh_executor_init(options->target_address);
 }
 
 /** Clean up for executor
