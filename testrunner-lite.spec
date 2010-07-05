@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.3.6
+Version: 1.3.7
 Release:1%{?dist}
 Summary: Generic test executor tool
 Group: Test-tools
@@ -108,6 +108,12 @@ ln -s /usr/lib/testrunner-lite-hwinfo-meego.so  /usr/lib/testrunner-lite-hwinfo.
 rm /usr/lib/testrunner-lite-hwinfo.so
 
 %changelog
+* Mon Jul 05 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.7
+- Fixed hwinfo bug
+- Fixes: NB#176572 - The order of execution of post_steps and get tag
+- Fixes: NB#177206 - Domain and feature attributes to result XML
+- Fixes: NB#177969 - Several stuck ssh processes on worker
+- Fixes: NB#176103 - Executing local test steps (removed -l shell command)
 * Wed Jun 23 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.6
 - Implemented:SWP#MTT-282 - hwinfo interface to provide hw information
 * Tue Jun 22 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.5
