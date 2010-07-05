@@ -56,8 +56,14 @@
 	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-pre_step-fail.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>grep step /tmp/testrunnerlitetestdir/res.xml | grep &quot;pre_steps failed&quot; </step>
 	<step>grep case /tmp/testrunnerlitetestdir/res.xml | grep &quot;pre_steps failed&quot; </step>
-
       </case>
+
+      <case name="test_domain_and_feature_results">
+	<step>testrunner-lite -a -v -f /usr/share/testrunner-lite-regression-tests/testdata/filter_tests.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep feature2 /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep sample_suite_domain /tmp/testrunnerlitetestdir/res.xml</step>
+      </case>
+
 
       <post_steps>
 	<step>rm -fr /tmp/testrunnerlitetestdir</step>

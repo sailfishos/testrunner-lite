@@ -117,6 +117,12 @@ LOCAL int xml_write_pre_suite_tag (td_suite *suite)
 	if (xmlTextWriterWriteAttribute (writer,  BAD_CAST "name", 
 					 suite->gen.name) < 0)
 		goto err_out;
+
+	if (suite->domain && xmlTextWriterWriteAttribute (writer,  
+							  BAD_CAST "domain", 
+							  suite->domain) < 0)
+		goto err_out;
+
 	return 0;
 err_out:
 	return 1;
@@ -142,6 +148,12 @@ LOCAL int xml_write_pre_set_tag (td_set *set)
 						 set->gen.description) < 0)
 			goto err_out;
 	
+	if (set->feature)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "feature", 
+						 set->feature) < 0)
+			goto err_out;
+
 	if (set->environment)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "environment", 
@@ -186,6 +198,8 @@ LOCAL int xml_write_step (const void *data, const void *user)
 		goto err_out;
 	
 	if (step->failure_info) {
+		if (strlen (step->failure_info) >= FAILURE_INFO_MAX)
+			step->failure_info[FAILURE_INFO_MAX - 1] = '\0';
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "failure_info", 
 						 step->failure_info) < 0)
@@ -298,6 +312,8 @@ LOCAL int xml_write_case (const void *data, const void *user)
 		goto err_out;
 
 	if (c->failure_info) {
+		if (strlen (c->failure_info) >= FAILURE_INFO_MAX)
+			c->failure_info[FAILURE_INFO_MAX - 1] = '\0';
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "failure_info", 
 						 c->failure_info) < 0)
