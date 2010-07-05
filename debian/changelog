@@ -6,7 +6,7 @@ testrunner-lite (1.3.7) unstable; urgency=low
   * Fixes: NB#177969 - Several stuck ssh processes on worker
   * Fixes: NB#176103 - Executing local test steps (removed -l shell command)
 
-  -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Mon, 05 Jul 2010 14:39:31 +0300
+ -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Mon, 05 Jul 2010 14:39:31 +0300
 
 testrunner-lite (1.3.6) unstable; urgency=low
 
