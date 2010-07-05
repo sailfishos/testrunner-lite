@@ -198,7 +198,7 @@ LOCAL int xml_write_step (const void *data, const void *user)
 		goto err_out;
 	
 	if (step->failure_info) {
-		if (strlen (step->failure_info) >= FAILURE_INFO_MAX)
+		if (strlen ((char *)step->failure_info) >= FAILURE_INFO_MAX)
 			step->failure_info[FAILURE_INFO_MAX - 1] = '\0';
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "failure_info", 
@@ -312,7 +312,7 @@ LOCAL int xml_write_case (const void *data, const void *user)
 		goto err_out;
 
 	if (c->failure_info) {
-		if (strlen (c->failure_info) >= FAILURE_INFO_MAX)
+		if (strlen ((char *)c->failure_info) >= FAILURE_INFO_MAX)
 			c->failure_info[FAILURE_INFO_MAX - 1] = '\0';
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "failure_info", 
