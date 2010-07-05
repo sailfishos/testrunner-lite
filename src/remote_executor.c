@@ -176,8 +176,6 @@ int ssh_kill (const char *hostname, pid_t id)
 	char file [PID_FILE_MAX_LEN];
 	int status;
 	
-	LOG_MSG(LOG_INFO, "trying to kill %d", id);
-
 	pid = fork();
 	if (pid > 0) { 
 		waitpid(pid, &status, 0);
