@@ -68,7 +68,7 @@ LOCAL char *unique_id = NULL;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 #define UNIQUE_ID_FMT     "%d"
-#define PID_FILE_FMT      "/tmp/testrunner-lite-%s.%d.pid"
+#define PID_FILE_FMT      "/var/tmp/testrunner-lite-%s.%d.pid"
 #define UNIQUE_ID_MAX_LEN (HOST_NAME_MAX + 10 + 1 + 1)
 #define PID_FILE_MAX_LEN  (30 + UNIQUE_ID_MAX_LEN + 10 + 1 + 1)
 
@@ -93,7 +93,7 @@ LOCAL char *unique_id = NULL;
  */
 void ssh_executor_init (const char *hostname)
 {
-	int ret;
+	int ret, status;
 	pid_t pid;
 	char *cmd = "echo '#!/bin/sh' > /tmp/mypid.sh;"
 		" echo 'echo $PPID' >> /tmp/mypid.sh; chmod +x /tmp/mypid.sh";
@@ -109,10 +109,12 @@ void ssh_executor_init (const char *hostname)
 	LOG_MSG(LOG_DEBUG, "unique_id set to %s", unique_id);
 	
 	pid = fork();
-	if (pid > 0) 
-	    return;
+	if (pid > 0) { 
+		waitpid(pid, &status, 0);
+		return;
+	}
 	if (pid < 0)
-	    return;
+		return;
 	
 
 	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
@@ -172,12 +174,17 @@ int ssh_kill (const char *hostname, pid_t id)
 	pid_t pid;
 	char cmd [PID_FILE_MAX_LEN * 3 + 80];
 	char file [PID_FILE_MAX_LEN];
+	int status;
 	
+	LOG_MSG(LOG_INFO, "trying to kill %d", id);
+
 	pid = fork();
-	if (pid > 0) 
-	    return 0;
+	if (pid > 0) { 
+		waitpid(pid, &status, 0);
+		return status;
+	}
 	if (pid < 0)
-	    return 1;
+		return 1;
 	
 	sprintf(file, PID_FILE_FMT, unique_id, id);
 	sprintf (cmd, "[ -f %1$s ] && pkill -9 -P $(cat %1$s); rm -f %1$s", 
@@ -195,7 +202,7 @@ int ssh_kill (const char *hostname, pid_t id)
  */
 void ssh_clean (const char *hostname, pid_t id)
 {
-	int ret;
+	int ret, status;
 	pid_t pid;
 	char cmd [PID_FILE_MAX_LEN + 80];
 
@@ -204,6 +211,7 @@ void ssh_clean (const char *hostname, pid_t id)
 	pid = fork();
 
 	if (pid) {
+		waitpid(pid, &status, 0);
 		return;
 	}
 

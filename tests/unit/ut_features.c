@@ -390,6 +390,9 @@ START_TEST (test_hwinfo)
      memset (&hi, 0x0, sizeof (hw_info));
      fail_if (read_hwinfo(&hi));
 	      
+     fail_unless (hi.product);
+     fail_unless (hi.hw_build);
+
      print_hwinfo (&hi);
 
      clean_hwinfo (&hi);

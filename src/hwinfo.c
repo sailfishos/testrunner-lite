@@ -90,7 +90,7 @@ LOCAL unsigned char *exec_command (const char *cmd)
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data (&edata);
 	
-	if (cmd == NULL || strlen (cmd))
+	if (cmd == NULL || !strlen (cmd))
 		return NULL;
 
 	edata.soft_timeout = 5;
