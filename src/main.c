@@ -204,7 +204,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	memset (&edata, 0x0, sizeof (exec_data));
 	if (bail_out) {
 		res = CASE_FAIL;
-		step->has_result = 1; /* FIXME: temporary solution */
+		step->has_result = 1; 
 		step->return_code = bail_out;
 		if (global_failure) {
 			step->failure_info = xmlCharStrdup (global_failure);
@@ -212,14 +212,14 @@ LOCAL int step_execute (const void *data, const void *user)
 		}
 		goto out;
 	}
-
+	
 	if (c->gen.manual) {
 		res = execute_manual (step);
 		goto out;
 	}
-
+	
 	init_exec_data(&edata);
-
+	
 	if (c->dummy) {
 		/* Pre or post step */
 		edata.redirect_output = DONT_REDIRECT_OUTPUT;
@@ -228,14 +228,14 @@ LOCAL int step_execute (const void *data, const void *user)
 	}
 	edata.soft_timeout = c->gen.timeout;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-
+	
 	if (step->step) {
 		execute((char*)step->step, &edata);
 		
 		if (step->stdout_) free (step->stdout_);
 		if (step->stderr_) free (step->stderr_);
 		if (step->failure_info) free (step->failure_info);
-
+		
 		if (edata.stdout_data.buffer) {
 			step->stdout_ = edata.stdout_data.buffer;
 		}
@@ -246,7 +246,7 @@ LOCAL int step_execute (const void *data, const void *user)
 			step->failure_info = edata.failure_info.buffer;
 			c->failure_info = xmlCharStrdup ((char *)
 							 step->failure_info);
-
+			
 			LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
 				 step->failure_info);
 		}
@@ -281,7 +281,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	if (res != CASE_PASS)
 		c->case_res = res;
 	
-
+	
 	return (res == CASE_PASS);
 }
 
@@ -295,17 +295,17 @@ LOCAL int prepost_steps_execute (const void *data, const void *user)
 {
 	td_steps *steps = (td_steps *)data;
 	td_case *dummy = (td_case *)user;
-
+	
 	if (steps->timeout == 0) {
 		dummy->gen.timeout = 180; /* default for pre/post steps */
 	} else {
 		dummy->gen.timeout = steps->timeout;
 	}
-
+	
 	if (xmlListSize(steps->steps) > 0) {
 		xmlListWalk (steps->steps, step_execute, dummy);
 	}
-
+	
 	return 1;
 }
 
@@ -319,11 +319,11 @@ LOCAL int step_result_na (const void *data, const void *user)
 {
 	td_step *step = (td_step *)data;
 	char *failure_info = (char *)user;
-	/* FIXME: temporary solution */
+
 	step->has_result = 1;
 	step->return_code = step->expected_result + 255; 
 	step->failure_info = xmlCharStrdup (failure_info);
-
+	
 	return 1;
 }
 
@@ -390,24 +390,24 @@ LOCAL int process_case (const void *data, const void *user)
 		LOG_MSG (LOG_INFO, "Test case %s is filtered", c->gen.name);
 		return 1;
 	}
-
-
+	
+	
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
-
+	
 	c->case_res = CASE_PASS;
 	if (c->gen.timeout == 0)
 		c->gen.timeout = COMMON_SOFT_TIMEOUT; /* the default one */
 	
 	if (c->gen.manual && opts.run_manual)
 		pre_manual (c);
-
+	
 	xmlListWalk (c->steps, step_execute, data);
 	xmlListWalk (c->steps, step_post_process, data);
-
+	
 	if (c->gen.manual && opts.run_manual)
 		post_manual (c);
-
+	
 	LOG_MSG (LOG_INFO, "Finished test case Result: %s", 
 		 case_result_str(c->case_res));
 	passcount += (c->case_res == CASE_PASS);
