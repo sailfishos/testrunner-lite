@@ -553,39 +553,37 @@ Suite *make_testexecutor_suite (void)
     }
     tc = tcase_create ("Test executor remote command.");
     tcase_add_test (tc, test_executor_remote_command);
-    //    suite_add_tcase (s, tc);
+    suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote long command.");
     tcase_set_timeout (tc, 10);
     tcase_add_test (tc, test_executor_remote_long_command);
-    //suite_add_tcase (s, tc);
+    suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote terminating process.");
     tcase_set_timeout (tc, 10);
     tcase_add_test (tc, test_executor_remote_terminating_process);
-    //suite_add_tcase (s, tc);
+    suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote killing process.");
     tcase_set_timeout (tc, 10);
     tcase_add_test (tc, test_executor_remote_killing_process);
-    //suite_add_tcase (s, tc);
-#if 0
+    suite_add_tcase (s, tc);
+
     tc = tcase_create ("Test executor remote bg process cleanup.");
     tcase_set_timeout (tc, 10);
     tcase_add_test (tc, test_executor_remote_test_bg_process_cleanup);
     suite_add_tcase (s, tc);
-#endif
+
     tc = tcase_create ("Test get feature with remote host.");
     tcase_set_timeout (tc, 25);
     tcase_add_test (tc, test_remote_get);
-    //suite_add_tcase (s, tc);
+    suite_add_tcase (s, tc);
     
-#if 0
     tc = tcase_create ("Test ssh connection check routine.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_ssh_conn_check);
     suite_add_tcase (s, tc);
-#endif
     
     return s;
 }

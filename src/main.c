@@ -40,6 +40,7 @@
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
 #include "testresultlogger.h"
+#include "testdefinitionprocessor.h"
 #include "testfilters.h"
 #include "executor.h"
 #include "remote_executor.h"
@@ -55,7 +56,7 @@
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL GLOBAL VARIABLES */
 extern char* optarg;
-
+extern int bail_out;
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL FUNCTION PROTOTYPES */
 /* None */
@@ -64,8 +65,6 @@ extern char* optarg;
 /* GLOBAL VARIABLES */
 struct timeval created;
 testrunner_lite_options opts;
-char *global_failure = NULL;
-int bail_out = 0;
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
 /* None */
@@ -78,8 +77,6 @@ int bail_out = 0;
 /* LOCAL GLOBAL VARIABLES */
 LOCAL td_suite *current_suite = NULL;
 LOCAL hw_info hwinfo;
-LOCAL int passcount = 0;
-LOCAL int casecount = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -94,24 +91,6 @@ LOCAL int casecount = 0;
 LOCAL void usage();
 /* ------------------------------------------------------------------------- */
 LOCAL void copyright();
-/* ------------------------------------------------------------------------- */
-LOCAL void process_suite(td_suite *);
-/* ------------------------------------------------------------------------- */
-LOCAL void process_set(td_set *);
-/* ------------------------------------------------------------------------- */
-LOCAL int process_case (const void *, const void *);
-/* ------------------------------------------------------------------------- */
-LOCAL int case_result_na (const void *, const void *);
-/* ------------------------------------------------------------------------- */
-LOCAL int process_get (const void *, const void *);
-/* ------------------------------------------------------------------------- */
-LOCAL int step_execute (const void *, const void *);
-/* ------------------------------------------------------------------------- */
-LOCAL int prepost_steps_execute (const void *, const void *);
-/* ------------------------------------------------------------------------- */
-LOCAL int step_result_na (const void *, const void *);
-/* ------------------------------------------------------------------------- */
-LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int create_output_folder ();
 /* ------------------------------------------------------------------------- */
@@ -186,433 +165,6 @@ LOCAL void copyright () {
                 "licensed under the Gnu Lesser General Public License "
 		"version 2.1,\n"
                 "Contact: Ville Ilvonen <ville.p.ilvonen@nokia.com>\n");
-}
-
-/* ------------------------------------------------------------------------- */
-/** Process step data. execute one step from case.
- *  @param data step data
- *  @param user case data
- *  @return 1 if step is passed 0 if not
- */
-LOCAL int step_execute (const void *data, const void *user) 
-{
-	int res = CASE_PASS;
-	td_step *step = (td_step *)data;
-	td_case *c = (td_case *)user;
-	exec_data edata;
-
-	memset (&edata, 0x0, sizeof (exec_data));
-	if (bail_out) {
-		res = CASE_FAIL;
-		step->has_result = 1; 
-		step->return_code = bail_out;
-		if (global_failure) {
-			step->failure_info = xmlCharStrdup (global_failure);
-			c->failure_info = xmlCharStrdup (global_failure);
-		}
-		goto out;
-	}
-	
-	if (c->gen.manual) {
-		res = execute_manual (step);
-		goto out;
-	}
-	
-	init_exec_data(&edata);
-	
-	if (c->dummy) {
-		/* Pre or post step */
-		edata.redirect_output = DONT_REDIRECT_OUTPUT;
-	} else {
-		edata.redirect_output = REDIRECT_OUTPUT;
-	}
-	edata.soft_timeout = c->gen.timeout;
-	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	
-	if (step->step) {
-		execute((char*)step->step, &edata);
-		
-		if (step->stdout_) free (step->stdout_);
-		if (step->stderr_) free (step->stderr_);
-		if (step->failure_info) free (step->failure_info);
-		
-		if (edata.stdout_data.buffer) {
-			step->stdout_ = edata.stdout_data.buffer;
-		}
-		if (edata.stderr_data.buffer) {
-			step->stderr_ = edata.stderr_data.buffer;
-		}
-		if (edata.failure_info.buffer) {
-			step->failure_info = edata.failure_info.buffer;
-			c->failure_info = xmlCharStrdup ((char *)
-							 step->failure_info);
-			
-			LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
-				 step->failure_info);
-		}
-		
-		step->pgid = edata.pgid; 
-		step->pid = edata.pid;
-		step->has_result = 1;
-		step->return_code = edata.result;
-		step->start = edata.start_time;
-		step->end = edata.end_time;
-		/*
-		** Post and pre steps fail only if the expected result is 
-		*  specified
-		*/
-		if (c->dummy) {
-			if (step->has_expected_result &&
-			    (step->return_code != step->expected_result)) {
-				LOG_MSG (LOG_INFO, 
-					 "STEP: %s return %d expected %d\n",
-					 step->step, step->return_code, 
-					 step->expected_result);
-				res = CASE_FAIL;
-			}
-		} else if (step->return_code != step->expected_result) {
-			LOG_MSG (LOG_INFO, "STEP: %s return %d expected %d\n",
-				 step->step, step->return_code, 
-				 step->expected_result);
-			res = CASE_FAIL;
-		}
-	}
- out:
-	if (res != CASE_PASS)
-		c->case_res = res;
-	
-	
-	return (res == CASE_PASS);
-}
-
-/* ------------------------------------------------------------------------- */
-/** Process pre/post steps.
- *  @param data steps data
- *  @param user dummy case data
- *  @return 1 always
- */
-LOCAL int prepost_steps_execute (const void *data, const void *user)
-{
-	td_steps *steps = (td_steps *)data;
-	td_case *dummy = (td_case *)user;
-	
-	if (steps->timeout == 0) {
-		dummy->gen.timeout = 180; /* default for pre/post steps */
-	} else {
-		dummy->gen.timeout = steps->timeout;
-	}
-	
-	if (xmlListSize(steps->steps) > 0) {
-		xmlListWalk (steps->steps, step_execute, dummy);
-	}
-	
-	return 1;
-}
-
-/* ------------------------------------------------------------------------- */
-/** Set N/A result for test step
- *  @param data step data
- *  @param user failure info string
- *  @return 1 always
- */
-LOCAL int step_result_na (const void *data, const void *user) 
-{
-	td_step *step = (td_step *)data;
-	char *failure_info = (char *)user;
-
-	step->has_result = 1;
-	step->return_code = step->expected_result + 255; 
-	step->failure_info = xmlCharStrdup (failure_info);
-	
-	return 1;
-}
-
-/* ------------------------------------------------------------------------- */
-/** Do step post processing. Mainly to ascertain that no dangling processes are
- *  left behind.
- *  @param data step data
- *  @param user case data
- *  @return 1 always
- */
-LOCAL int step_post_process (const void *data, const void *user) 
-{
-	td_step *step = (td_step *)data;
-	td_case *c = (td_case *)user;
-
-	/* No post processing for manual steps ... */
-	if (c->gen.manual) 
-		goto out;
-	/* ... or filtered ones ... */
-	if (c->filtered)
-		goto out;
-
-	/* ... or ones that are not run ... */
-	if (!step->start)
-		goto out;
-
-	/* ... or ones that do not have process group ... */
-	if (!step->pgid)
-		goto out;
-
-	if (opts.target_address) {
-		ssh_kill (opts.target_address, step->pid);
-	} 
-	kill_pgroup(step->pgid, SIGKILL);
-	
- out:
-	return 1;
-}
-
-/* ------------------------------------------------------------------------- */
-/** Process case data. execute steps in case.
- *  @param data case data
- *  @param user set data
- *  @return 1 always
- */
-LOCAL int process_case (const void *data, const void *user) 
-{
-
-	td_case *c = (td_case *)data;
-	
-	if (c->gen.manual && !opts.run_manual) {
-		LOG_MSG(LOG_DEBUG, "Skipping manual case %s",
-			c->gen.name);
-		c->filtered = 1;
-		return 1;
-	}
-	if (!c->gen.manual && !opts.run_automatic) {
-		LOG_MSG(LOG_DEBUG, "Skipping automatic case %s",
-			c->gen.name);
-		c->filtered = 1;
-		return 1;
-	}
-	if (filter_case (c)) {
-		LOG_MSG (LOG_INFO, "Test case %s is filtered", c->gen.name);
-		return 1;
-	}
-	
-	
-	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
-	casecount++;
-	
-	c->case_res = CASE_PASS;
-	if (c->gen.timeout == 0)
-		c->gen.timeout = COMMON_SOFT_TIMEOUT; /* the default one */
-	
-	if (c->gen.manual && opts.run_manual)
-		pre_manual (c);
-	
-	xmlListWalk (c->steps, step_execute, data);
-	xmlListWalk (c->steps, step_post_process, data);
-	
-	if (c->gen.manual && opts.run_manual)
-		post_manual (c);
-	
-	LOG_MSG (LOG_INFO, "Finished test case Result: %s", 
-		 case_result_str(c->case_res));
-	passcount += (c->case_res == CASE_PASS);
-	
-	return 1;
-}
-/* ------------------------------------------------------------------------- */
-/** Set case result to N/A
- *  @param data case data
- *  @param user failure info
- *  @return 1 always
- */
-LOCAL int case_result_na (const void *data, const void *user)
-{
-
-	td_case *c = (td_case *)data;
-	char *failure_info = (char *)user;
-
-	LOG_MSG (LOG_DEBUG, "Setting FAIL result for case %s", c->gen.name);
-
-	c->case_res = CASE_FAIL;
-	c->failure_info = xmlCharStrdup (failure_info);
-
-	xmlListWalk (c->steps, step_result_na, user);
-	
-	return 1;
-}
-
-/* ------------------------------------------------------------------------- */
-/** Process get data. execute steps in case.
- *  @param data case data
- *  @param user set data
- *  @return 1 always
- */
-LOCAL int process_get (const void *data, const void *user)
-{
-
-	td_file *file = (td_file *)data;
-	xmlChar *command;
-	char *fname;
-	exec_data edata;
-	char    *remote = opts.target_address;
-
-	memset (&edata, 0x0, sizeof (exec_data));
-	init_exec_data(&edata);
-	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
-	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-
-	fname = malloc (strlen((char *)file->filename) + 1);
-	trim_string ((char *)file->filename, fname);
-
-	/*
-	** Compose command 
-	*/
-	if (remote) {
-		opts.target_address = NULL; /* execute locally */
-		command = (xmlChar *)malloc (strlen ("scp ") + 
-					     strlen (fname) +
-					     strlen (opts.output_folder) +
-					     strlen (remote) + 10);
-		sprintf ((char *)command, "scp %s:\'%s\' %s", remote, fname,
-			 opts.output_folder);
-
-	} else {
-		command = (xmlChar *)malloc (strlen ("cp ") + 
-					     strlen (fname) +
-					     strlen (opts.output_folder) + 2);
-		sprintf ((char *)command, "cp %s %s", fname,
-			 opts.output_folder);
-	}
-	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
-		 (char*)command);
-	/*
-	** Execute it
-	*/
-	execute((char*)command, &edata);
-
-	if (edata.result) {
-		LOG_MSG (LOG_ERR, "%s: %s failed: %s\n", PROGNAME, command,
-			 (char *)(edata.stderr_data.buffer ?
-				  edata.stderr_data.buffer : 
-				  BAD_CAST "no info available"));
-	}
-	opts.target_address = remote;
-	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
-	if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
-	if (edata.failure_info.buffer) free (edata.failure_info.buffer);
-
-	if (!file->delete_after)
-		goto out;
-
-	memset (&edata, 0x0, sizeof (exec_data));
-	init_exec_data(&edata);
-	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
-	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	sprintf ((char *)command, "rm -f %s", fname);
-	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
-		 (char*)command);
-	execute((char*)command, &edata);
-	if (edata.result) {
-		LOG_MSG (LOG_ERR, "%s: %s failed: %s\n", PROGNAME, command,
-			 (char *)(edata.stderr_data.buffer ?
-				  edata.stderr_data.buffer : 
-				  BAD_CAST "no info available"));
-	}
-	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
-	if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
-	if (edata.failure_info.buffer) free (edata.failure_info.buffer);
-
- out:
-	free (command);
-	free (fname);
-	return 1;
-}
-/* ------------------------------------------------------------------------- */
-/** Do processing on suite, currently just writes the pre suite tag to results
- *  @param s suite data
- */
-LOCAL void process_suite (td_suite *s)
-{
-	LOG_MSG (LOG_INFO, "Test suite: %s", s->gen.name);
-
-	write_pre_suite_tag (s);
-	current_suite = s;
-	
-}
-/* ------------------------------------------------------------------------- */
-/** Suite end function, write suite and delete the current_suite
- */
-LOCAL void end_suite ()
-{
-	write_post_suite_tag ();
-	td_suite_delete (current_suite);
-	current_suite = NULL;
-}
-/* ------------------------------------------------------------------------- */
-/** Process set data. Walk through cases and free set when done.
- *  @param s set data
- */
-LOCAL void process_set (td_set *s)
-{
-	td_case dummy;
-	
-	/*
-	** Check that the set is not filtered
-	*/
-	if (filter_set (s)) {
-		LOG_MSG (LOG_INFO, "Test set %s is filtered", s->gen.name);
-		goto skip_all;
-	}
-
-	/*
-	** Check that the set is supposed to be executed in the current env
-	*/
-	s->environment = xmlCharStrdup (opts.environment);
-	if (!xmlListSearch (s->environments, opts.environment)) {
-		LOG_MSG (LOG_INFO, "Test set %s not run on "
-			 "environment: %s", 
-			 s->gen.name, opts.environment);
-		goto skip_all;
-	}
-
-	LOG_MSG (LOG_INFO, "Test set: %s", s->gen.name);
-
-	write_pre_set_tag (s);
-
-	if (xmlListSize (s->pre_steps) > 0) {
-		memset (&dummy, 0x0, sizeof (td_case));
-		dummy.case_res = CASE_PASS;
-		dummy.dummy = 1;
-		LOG_MSG (LOG_INFO, "Executing pre steps");
-		xmlListWalk (s->pre_steps, prepost_steps_execute, &dummy);
-		if (dummy.case_res != CASE_PASS) {
-			LOG_MSG (LOG_ERR, "Pre steps failed. "
-				 "Test set %s aborted.", s->gen.name); 
-			xmlListWalk (s->cases, case_result_na, 
-				     global_failure ? global_failure :
-				     "pre_steps failed");
-			goto short_circuit;
-		}
-	}
-	
-	xmlListWalk (s->cases, process_case, s);
-	if (xmlListSize (s->post_steps) > 0) {
-		LOG_MSG (LOG_INFO, "Executing post steps");
-		memset (&dummy, 0x0, sizeof (td_case));
-		dummy.case_res = CASE_PASS;
-		dummy.dummy = 1;
-		xmlListWalk (s->post_steps, prepost_steps_execute, &dummy);
-		if (dummy.case_res == CASE_FAIL)
-			LOG_MSG (LOG_ERR, 
-				 "Post steps failed for %s.", s->gen.name);
-	}
-	xmlListWalk (s->gets, process_get, s);
-
- short_circuit:
-	write_post_set_tag (s);
-	if (xmlListSize (s->pre_steps) > 0)
-		xmlListWalk (s->pre_steps, step_post_process, &dummy);
-	if (xmlListSize (s->post_steps) > 0)
-		xmlListWalk (s->post_steps, step_post_process, &dummy);
-	xml_end_element();
- skip_all:
-	td_set_delete (s);
-	return;
 }
 /* ------------------------------------------------------------------------- */
 /** Create output folder based on the argument for -o
@@ -708,7 +260,6 @@ int main (int argc, char *argv[], char *envp[])
 	int opt_char, option_idx;
 	FILE *ifile = NULL;
 	int retval = EXIT_SUCCESS;
-	td_parser_callbacks cbs;
 	xmlChar *filter_string = NULL;
 
 	struct option testrunnerlite_options[] =
@@ -736,7 +287,6 @@ int main (int argc, char *argv[], char *envp[])
 	LIBXML_TEST_VERSION
 
 	memset (&opts, 0x0, sizeof(testrunner_lite_options));
-        memset (&cbs, 0x0, sizeof(td_parser_callbacks));
         memset (&hwinfo, 0x0, sizeof(hwinfo));
 	
 	opts.output_type = OUTPUT_TYPE_XML;
@@ -942,16 +492,6 @@ int main (int argc, char *argv[], char *envp[])
 		strcpy (opts.environment, "hardware");
 	}
 
-	
-	/*
-	** Set callbacks for parser
-	*/
-	cbs.test_suite = process_suite;
-	cbs.test_suite_end = end_suite;
-	cbs.test_set = process_set;
-
-	retval = td_register_callbacks (&cbs);
-	
         /*
 	** Initialize the reader
 	*/
@@ -972,17 +512,13 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	
 	/*
-	** Call td_next_node untill error occurs or the end of data is reached
+	** Process test definition
 	*/
-	LOG_MSG (LOG_INFO, "Starting to run tests...");
+	td_process();
 
-	while (td_next_node() == 0);
-	LOG_MSG (LOG_INFO, "Finished running tests.");
 	executor_close();
 	td_reader_close();
 	close_result_logger();
-	LOG_MSG (LOG_INFO, "Executed %d cases. Passed %d Failed %d",
-		 casecount, passcount, casecount - passcount);
 	LOG_MSG (LOG_INFO, "Results were written to: %s", opts.output_filename);
 	LOG_MSG (LOG_INFO, "Finished!");
 	cleanup_filters();
