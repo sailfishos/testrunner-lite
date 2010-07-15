@@ -259,7 +259,7 @@ int main (int argc, char *argv[], char *envp[])
 	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0;
 	int opt_char, option_idx;
 	FILE *ifile = NULL;
-	int retval = EXIT_SUCCESS;
+	testrunner_lite_return_code retval = TESTRUNNER_LITE_OK;
 	xmlChar *filter_string = NULL;
 
 	struct option testrunnerlite_options[] =
@@ -347,7 +347,7 @@ int main (int argc, char *argv[], char *envp[])
 			else {
 				fprintf (stderr, "%s Unknown format %s\n",
 					 PROGNAME, optarg);
-				retval = EXIT_FAILURE;
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
 			break;
@@ -356,7 +356,7 @@ int main (int argc, char *argv[], char *envp[])
 			if (!ifile) {
 				fprintf (stderr, "%s Failed to open %s %s\n",
 					 PROGNAME, optarg, strerror (errno));
-				retval = EXIT_FAILURE;
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
 			fclose (ifile);
@@ -382,7 +382,7 @@ int main (int argc, char *argv[], char *envp[])
 			break;
 		case 'L':
 			if (parse_remote_logger(optarg, &opts) != 0) {
-				retval = EXIT_FAILURE;
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
 			break;
@@ -397,20 +397,20 @@ int main (int argc, char *argv[], char *envp[])
 			break;
 		case 't':
 			if (parse_target_address(optarg, &opts) != 0) {
-				retval = EXIT_FAILURE;
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
 			break;    
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
 				 PROGNAME);
-			retval = EXIT_FAILURE;
+			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 			goto OUT;
 			break;
 		case '?':
 			fprintf (stderr, "%s unknown option - exiting\n",
 				 PROGNAME);
-			retval = EXIT_FAILURE;
+			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 			goto OUT;
 			break;
 		}
@@ -428,7 +428,7 @@ int main (int argc, char *argv[], char *envp[])
 		fprintf (stderr, 
 			 "%s: -a and -m are mutually exclusive\n",
 			 PROGNAME);
-		retval = EXIT_FAILURE;
+		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
 	}
 
@@ -441,7 +441,7 @@ int main (int argc, char *argv[], char *envp[])
 		fprintf (stderr, 
 			 "%s: mandatory option missing -f input_file\n",
 			 PROGNAME);
-		retval = EXIT_FAILURE;
+		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
 	}
 	/*
@@ -455,7 +455,7 @@ int main (int argc, char *argv[], char *envp[])
 	        init_filters();
 		if (parse_filter_string ((char *)filter_string) != 0) {
 		        LOG_MSG (LOG_ERR, "filter parsing failed .. exiting");
-			retval = EXIT_FAILURE;
+			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 			goto OUT;
 		}
 	}
@@ -479,11 +479,11 @@ int main (int argc, char *argv[], char *envp[])
 		fprintf (stderr, 
 			 "%s: mandatory option missing -o output_file\n",
 			 PROGNAME);
-		retval = EXIT_FAILURE;
+		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
 	}
 	if (create_output_folder(&opts)) {
-		retval = EXIT_FAILURE;
+		retval = TESTRUNNER_LITE_OUTPUT_FOLDER_CREATE_FAIL;
 		goto OUT;
 	}
 
@@ -496,8 +496,10 @@ int main (int argc, char *argv[], char *envp[])
 	** Initialize the reader
 	*/
 	retval = td_reader_init(&opts);
-	if (retval)
+	if (retval) {
+		retval = TESTRUNNER_LITE_XML_READER_FAIL;
 		goto OUT;
+	}
 	/*
 	** Obtain hardware info
 	*/
@@ -508,9 +510,10 @@ int main (int argc, char *argv[], char *envp[])
 	** Initialize result logger
 	*/
 	retval =  init_result_logger(&opts, &hwinfo);
-	if (retval)
+	if (retval) {
+		retval = TESTRUNNER_LITE_RESULT_LOGGING_FAIL;
 		goto OUT;
-	
+	}
 	/*
 	** Process test definition
 	*/
@@ -531,7 +534,7 @@ OUT:
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
 	if (filter_string) free (filter_string);
-	if (bail_out) retval = 2;
+	if (bail_out) retval = TESTRUNNER_LITE_SSH_FAIL;
 
 	return retval; 
 }	

@@ -45,6 +45,18 @@ typedef enum {
 	OUTPUT_TYPE_TXT 
 } result_output;
 
+/** testrunner-lite exit codes */
+typedef enum {
+	TESTRUNNER_LITE_OK = 0,
+	TESTRUNNER_LITE_INVALID_ARGUMENTS,
+	TESTRUNNER_LITE_SSH_FAIL,
+	TESTRUNNER_LITE_XML_PARSE_FAIL,
+	TESTRUNNER_LITE_XML_VALIDATION_FAIL,
+	TESTRUNNER_LITE_OUTPUT_FOLDER_CREATE_FAIL,
+	TESTRUNNER_LITE_XML_READER_FAIL,
+	TESTRUNNER_LITE_RESULT_LOGGING_FAIL
+} testrunner_lite_return_code;
+
 /** Used for storing and passing user (command line) options.*/
 typedef struct {
 	char *input_filename;  /**< the input xml file */

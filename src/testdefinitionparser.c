@@ -561,7 +561,7 @@ LOCAL int td_parse_set ()
  */
 int parse_test_definition (testrunner_lite_options *opts)
 {
-	int ret = 1;
+	int ret = TESTRUNNER_LITE_XML_PARSE_FAIL;
 	xmlDocPtr doc = NULL; 
 	xmlParserCtxtPtr ctxt = NULL; 
 	xmlSchemaPtr sch = NULL;
@@ -629,6 +629,8 @@ int parse_test_definition (testrunner_lite_options *opts)
 	}
 	
 	ret = xmlSchemaValidateDoc(valid_ctxt, doc);
+	if (ret)
+		ret = TESTRUNNER_LITE_XML_VALIDATION_FAIL;
 out:
 	/* 
 	 * 3) Clean up
