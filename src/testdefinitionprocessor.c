@@ -75,7 +75,11 @@ int bail_out = 0;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-LOCAL td_suite *current_suite = NULL;
+LOCAL td_suite *current_suite = NULL; /* Suite currently executed */
+LOCAL td_set   *current_set = NULL;   /* Set currently executed */
+LOCAL xmlChar  *cur_case_name = "";   /* Name of the current case or pre/post */
+LOCAL int       cur_step_num;         /* Number of current step within case */
+
 LOCAL int passcount = 0;
 LOCAL int casecount = 0;
 /* ------------------------------------------------------------------------- */
@@ -124,6 +128,8 @@ LOCAL int step_execute (const void *data, const void *user)
 	td_step *step = (td_step *)data;
 	td_case *c = (td_case *)user;
 	exec_data edata;
+
+	cur_step_num++;
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	if (bail_out) {
@@ -315,7 +321,7 @@ LOCAL int process_case (const void *data, const void *user)
 		return 1;
 	}
 	
-	
+	cur_case_name = c->gen.name;
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
 	
@@ -325,7 +331,7 @@ LOCAL int process_case (const void *data, const void *user)
 	
 	if (c->gen.manual && opts.run_manual)
 		pre_manual (c);
-	
+	cur_step_num = 0;
 	xmlListWalk (c->steps, step_execute, data);
 	xmlListWalk (c->steps, step_post_process, data);
 	
@@ -474,7 +480,7 @@ LOCAL void end_suite ()
 LOCAL void process_set (td_set *s)
 {
 	td_case dummy;
-	
+
 	/*
 	** Check that the set is not filtered
 	*/
@@ -493,12 +499,13 @@ LOCAL void process_set (td_set *s)
 			 s->gen.name, opts.environment);
 		goto skip_all;
 	}
-
+	current_set = s;
 	LOG_MSG (LOG_INFO, "Test set: %s", s->gen.name);
-
 	write_pre_set_tag (s);
 
 	if (xmlListSize (s->pre_steps) > 0) {
+		cur_case_name = (xmlChar *)"pre_steps";
+		cur_step_num = 0;
 		memset (&dummy, 0x0, sizeof (td_case));
 		dummy.case_res = CASE_PASS;
 		dummy.dummy = 1;
@@ -517,6 +524,8 @@ LOCAL void process_set (td_set *s)
 	xmlListWalk (s->cases, process_case, s);
 	if (xmlListSize (s->post_steps) > 0) {
 		LOG_MSG (LOG_INFO, "Executing post steps");
+		cur_case_name = (xmlChar *)"post_steps";
+		cur_step_num = 0;
 		memset (&dummy, 0x0, sizeof (td_case));
 		dummy.case_res = CASE_PASS;
 		dummy.dummy = 1;
@@ -541,6 +550,9 @@ LOCAL void process_set (td_set *s)
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
+/** Walks through the whole test definition and executes all suites, 
+ *  sets, cases and steps.
+ */
 void td_process () {
 	int retval;
 	td_parser_callbacks cbs;
@@ -567,7 +579,32 @@ void td_process () {
 		 casecount, passcount, casecount - passcount);
 	return; 
 }	
-
+/* ------------------------------------------------------------------------- */
+/** Name of the currently executed set
+ * @return name of the set or NULL
+ */
+const char *current_set_name ()
+{
+	if (current_set)
+		return (char *)current_set->gen.name;
+	return NULL;
+}
+/* ------------------------------------------------------------------------- */
+/** Name of the currently executed case (can be also "pre/post_steps"
+ * @return case name
+ */
+const char *current_case_name ()
+{
+	return (char *)cur_case_name;
+}
+/* ------------------------------------------------------------------------- */
+/** Number of the step currently executed
+ *  return 0 if no step is executed, > 0 otherwise
+ */
+int current_step_num ()
+{
+	return cur_step_num;
+}
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */

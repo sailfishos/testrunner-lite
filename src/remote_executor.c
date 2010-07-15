@@ -29,9 +29,12 @@
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "testrunnerlite.h"
 #include "executor.h"
+#include "testdefinitionprocessor.h"
 #include "remote_executor.h"
 #include "log.h"
 
@@ -129,24 +132,40 @@ void ssh_executor_init (const char *hostname)
  */
 int ssh_execute (const char *hostname, const char *command)
 {
-	int ret;
+	int   ret;
         char *cmd; 
-	
-        cmd = (char *)malloc (PID_FILE_MAX_LEN + 100 + strlen (command));
+	char *casename;
+	int   stepnum;
+	/*
+	 * Query the current case name from testdefintion processor
+	 * so we can make put some debug to target syslog
+	 */
+	casename = current_case_name();
+	stepnum  = current_step_num();
+
+        cmd = (char *)malloc (PID_FILE_MAX_LEN + 120 + strlen (command)
+			      + strlen (casename));
         if (!cmd) {
                 fprintf (stderr, "%s: could not allocate memory for "
                          "command %s\n", __FUNCTION__, command);
         }
-        sprintf (cmd, "/tmp/mypid.sh > " PID_FILE_FMT 
-                 ";source .profile > /dev/null; %s",
-                 unique_id, getpid(), command);
+	if (strlen (casename)) 
+		sprintf (cmd, "logger case:%s-step:%d;/tmp/mypid.sh > " 
+			 PID_FILE_FMT 
+			 ";source .profile > /dev/null; %s",
+			 casename, stepnum, unique_id, getpid(), command);
+	else
+		sprintf (cmd, "/tmp/mypid.sh > " 
+			 PID_FILE_FMT 
+			 ";source .profile > /dev/null; %s",
+			 unique_id, getpid(), command);
+
         /* cmd can not be freed since execl does not return here */
         ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
                     cmd, (char*)NULL);
 
 
         return ret;
-
 }
 /* ------------------------------------------------------------------------- */
 /** Tries to check if ssh connections are still working
@@ -158,11 +177,10 @@ int ssh_check_conn (const char *hostname)
 	int ret;
 	char cmd[1024];
 	
-	sprintf (cmd, "%s %s %s echo", SSHCMD, SSHCMDARGS_STR, hostname);
+	sprintf (cmd, "%s %s %s echo foo", SSHCMD, SSHCMDARGS_STR, hostname);
 	ret = system (cmd);
 	return ret;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Tries to kill program started by ssh and removes temporary file
  *  @param hostname SUT address 
