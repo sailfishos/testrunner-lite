@@ -135,25 +135,28 @@ int ssh_execute (const char *hostname, const char *command)
 	int   ret;
         char *cmd; 
 	char *casename;
+	char *setname;
 	int   stepnum;
 	/*
-	 * Query the current case name from testdefintion processor
-	 * so we can make put some debug to target syslog
+	 * Query the current set name, case name and step number 
+	 * from testdefinition processor so we can put some debug 
+	 * to target syslog
 	 */
 	casename = current_case_name();
 	stepnum  = current_step_num();
+	setname  = current_set_name();
 
-        cmd = (char *)malloc (PID_FILE_MAX_LEN + 120 + strlen (command)
-			      + strlen (casename));
+        cmd = (char *)malloc (PID_FILE_MAX_LEN + 130 + strlen (command)
+			      + strlen (casename) + strlen (setname));
         if (!cmd) {
                 fprintf (stderr, "%s: could not allocate memory for "
                          "command %s\n", __FUNCTION__, command);
         }
-	if (strlen (casename)) 
-		sprintf (cmd, "logger case:%s-step:%d;/tmp/mypid.sh > " 
+	if (strlen (casename) && strlen (setname)) 
+		sprintf (cmd, "logger set:%s-case:%s-step:%d;/tmp/mypid.sh > " 
 			 PID_FILE_FMT 
 			 ";source .profile > /dev/null; %s",
-			 casename, stepnum, unique_id, getpid(), command);
+			 setname, casename, stepnum, unique_id, getpid(), command);
 	else
 		sprintf (cmd, "/tmp/mypid.sh > " 
 			 PID_FILE_FMT 
