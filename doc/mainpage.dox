@@ -26,6 +26,9 @@ The program is excuted from commandline
 \subsection opt_help  -h,  --help
 Display short help and exit
 
+\subsection opt_version  -V,  --version
+Display version information and exit
+
 \subsection opt_file -f FILE,  --file FILE
 Input file with test definitions in XML (required)
 
