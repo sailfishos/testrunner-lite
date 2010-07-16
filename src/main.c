@@ -90,6 +90,8 @@ LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 LOCAL void usage();
 /* ------------------------------------------------------------------------- */
+LOCAL void version();
+/* ------------------------------------------------------------------------- */
 LOCAL void copyright();
 /* ------------------------------------------------------------------------- */
 LOCAL int create_output_folder ();
@@ -109,6 +111,7 @@ LOCAL void usage()
 		"-e hardware\n");
 	printf ("\nOptions:\n");
 	printf ("  -h, --help\tShow this help message and exit.\n");
+	printf ("  -V, --version\tDisplay version and exit.\n");
 	printf ("  -f FILE, --file=FILE\tInput file with test definitions "
 		"in XML (required).\n");
 	printf ("  -o FILE, --output=FILE\n\t\t"
@@ -156,6 +159,18 @@ LOCAL void usage()
 		"system under test.\n");
     
 	return;
+}
+/** Print version
+ */
+LOCAL void version()
+{
+#ifdef VERSIONSTR
+#define AS_STRING_(x) #x
+#define AS_STRING(x) AS_STRING_(x)
+	printf ("testrunner-lite version %s\n", AS_STRING(VERSIONSTR));
+#else
+	printf ("no version information available\n");
+#endif
 }
 /* ------------------------------------------------------------------------- */
 /** Display license information.
@@ -256,15 +271,15 @@ LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) {
  */
 int main (int argc, char *argv[], char *envp[])
 {
-	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0;
+	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0, V_flag = 0;
 	int opt_char, option_idx;
 	FILE *ifile = NULL;
 	testrunner_lite_return_code retval = TESTRUNNER_LITE_OK;
 	xmlChar *filter_string = NULL;
-
 	struct option testrunnerlite_options[] =
 		{
 			{"help", no_argument, &h_flag, 1},
+			{"version", no_argument, &V_flag, 1},
 			{"file", required_argument, NULL, 'f'},
 			{"output", required_argument, NULL, 'o'},
 			{"format", required_argument, NULL, 'r'},
@@ -301,7 +316,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":haAHSsmcf:o:e:l:r:L:t:v::",
+					":hVaAHSsmcf:o:e:l:r:L:t:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -310,6 +325,9 @@ int main (int argc, char *argv[], char *envp[])
 		{
 		case 'h':
 			h_flag = 1;
+			break;
+		case 'V':
+			V_flag = 1;
 			break;
 		case 'v':
 			if (opts.log_level != 0)
@@ -423,6 +441,10 @@ int main (int argc, char *argv[], char *envp[])
 		usage();
 		goto OUT;
 	}
+	if (V_flag) {
+		version();
+		goto OUT;
+	}
 	
 	if (m_flag && a_flag) {
 		fprintf (stderr, 
@@ -448,6 +470,14 @@ int main (int argc, char *argv[], char *envp[])
 	 * Initialize logging.
 	 */
 	log_init (&opts);
+	/*
+	** Log version if we have it
+	*/
+#ifdef VERSIONSTR
+#define AS_STRING_(x) #x
+#define AS_STRING(x) AS_STRING_(x)
+	LOG_MSG (LOG_INFO, "Version %s", AS_STRING(VERSIONSTR));
+#endif
 	/*
 	 * Initialize filters if specified.
 	 */

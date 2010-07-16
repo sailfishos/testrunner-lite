@@ -587,7 +587,7 @@ const char *current_set_name ()
 {
 	if (current_set)
 		return (char *)current_set->gen.name;
-	return NULL;
+	return "";
 }
 /* ------------------------------------------------------------------------- */
 /** Name of the currently executed case (can be also "pre/post_steps"

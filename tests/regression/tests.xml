@@ -200,6 +200,10 @@
 	<step>echo '"Hello World!"';</step>
       </case>
 
+      <case name="testrunner_lite_version">
+	<step>testrunner-lite -V | grep  "testrunner-lite version"</step>
+      </case>
+
       <environments>
 	<scratchbox>false</scratchbox>
 	<hardware>true</hardware>

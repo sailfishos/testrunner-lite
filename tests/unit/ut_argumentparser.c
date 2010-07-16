@@ -117,6 +117,10 @@ START_TEST (test_parse_cmd_line_arguments)
 	     TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
+    /* Test -V */
+    sprintf (cmd, "%s -V", TESTRUNNERLITE_BIN);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
 END_TEST
 
 START_TEST (test_parse_cmd_line_invalid_arguments)
