@@ -3,7 +3,7 @@ testrunner-lite (1.3.8) unstable; urgency=low
   * Implemented:SWP#331 - Ensuring syslog synchronization
   * Implemented:SWP#274 - Display version information of testrunner-lite
   * Modified return values so that they reflect different error situations
-  * Dependecy to sysinfotool removed
+  * Dependecy to sysinfo-tool moved to hwinfo-maemo package
 
  -- Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>  Fri, 16 Jul 2010 13:35:38 +0300
 
