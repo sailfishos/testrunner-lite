@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.3.7
+Version: 1.3.8
 Release:1%{?dist}
 Summary: Generic test executor tool
 Group: Test-tools
@@ -55,6 +55,7 @@ Library for obtaining hardware information in meego environment
 %setup -q -n %{name}-%{version}+0m6
 
 %build
+CFLAGS=-DVERSIONSTR=%{version}
 autoreconf --install
 %configure
 make %{?_smp_mflags}
@@ -108,6 +109,11 @@ ln -s /usr/lib/testrunner-lite-hwinfo-meego.so  /usr/lib/testrunner-lite-hwinfo.
 rm /usr/lib/testrunner-lite-hwinfo.so
 
 %changelog
+* Mon Jul 19 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.8
+- Implemented:SWP#331 - Ensuring syslog synchronization
+- Implemented:SWP#274 - Display version information of testrunner-lite
+- Modified return values so that they reflect different error situations
+-  Dependecy to sysinfo-tool moved to hwinfo-maemo package
 * Mon Jul 05 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.7
 - Fixed hwinfo bug
 - Fixes: NB#176572 - The order of execution of post_steps and get tag
