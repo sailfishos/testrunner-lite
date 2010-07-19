@@ -17,7 +17,7 @@ Description: Doxygen documentation in html format
 
 Package: testrunner-lite-hwinfo-maemo
 Provides: testrunner-lite-hwinfo
-Depends: sysinfo-tool
+Depends: sysinfo-tool [armel]
 Conflicts: testrunner-lite-hwinfo-meego
 Section: utils
 Architecture: any
