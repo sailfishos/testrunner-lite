@@ -1,13 +1,15 @@
 Name: testrunner-lite
-Version: 1.3.8
+Version: 1.3.9
 Release:1%{?dist}
 Summary: Generic test executor tool
 Group: Test-tools
 License: LGPL 2.1
 URL: http://meego.com
-Source0: %{name}_%{version}+0m6.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-
+#Source0: %{name}_%{version}+0m6.tar.gz
+#BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Source0: testrunner-lite.tar.gz  
+BuildRoot: %{_tmppath}/testrunner-lite-root  
+   
 BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel, libtool
 # libxml2 and libcurl are implicit dependencies  
 Requires: test-definition, openssh, testrunner-lite-hwinfo
@@ -109,6 +111,9 @@ ln -s /usr/lib/testrunner-lite-hwinfo-meego.so  /usr/lib/testrunner-lite-hwinfo.
 rm /usr/lib/testrunner-lite-hwinfo.so
 
 %changelog
+* Fri Jul 23 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.9
+- Fixes: NB#178835 - Testrunner-lite breaks logged command lines at semicolons
+- Fixed logging levels for http log 
 * Mon Jul 19 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.8
 - Implemented:SWP#331 - Ensuring syslog synchronization
 - Implemented:SWP#274 - Display version information of testrunner-lite
