@@ -1,6 +1,7 @@
 Name: testrunner-lite
 Version: 1.3.9
-Release:1%{?dist}
+# build.meego.com proposed patch > Release:7.1
+Release:7.1
 Summary: Generic test executor tool
 Group: Test-tools
 License: LGPL 2.1
@@ -54,7 +55,8 @@ Library for obtaining hardware information in maemo environment
 Library for obtaining hardware information in meego environment
 
 %prep
-%setup -q -n %{name}-%{version}+0m6
+# snapshot from gitorious.org webgui - unpack dir named with qa-tools prefix
+%setup -n qa-tools-testrunner-lite
 
 %build
 CFLAGS=-DVERSIONSTR=%{version}
