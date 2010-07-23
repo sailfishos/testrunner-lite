@@ -295,6 +295,7 @@ START_TEST (test_remote_logging)
     char buffer[1024];
     char error[128];
     const char sample_message[] = "Remote logger test data";
+    const char sample_message_url_enc[] = "Remote%20logger%20test%20data";
     const char logger[] = "127.0.0.1";
     pid_t pid = 0;
 
@@ -330,7 +331,7 @@ START_TEST (test_remote_logging)
 
     /* Check that buffer contains at least something we expected */
     fail_if(strstr(buffer, "HTTP") == NULL);
-    fail_if(strstr(buffer, sample_message) == NULL);
+    fail_if(strstr(buffer, sample_message_url_enc) == NULL);
 }
 END_TEST
 
