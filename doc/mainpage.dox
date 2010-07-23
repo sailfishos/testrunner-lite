@@ -137,17 +137,21 @@ Execution was slow.
 \page main_mod_page Main Modules
 \section main_mod Main Modules
 
-Following gives short introduction to main modules of testrunner-lite. To give
+Following gives short introduction to main modules of testrunner-lite to give
 better understanding of the program flow.
 
 \subsection main Main
 
-File \ref main.c contains basic commandline parsing and the high level logic of execution.
+File \ref main.c contains basic commandline parsing and calls for init functions of the testrunner-lite modules.
 
 \subsection test_def Test definition parser
 
 The test definition parsing is done in \ref testdefinitionparser.c. The data is saved to data structures defined in \ref testdefinitiondatatypes.h as the parsing progresses. File \ref testdefinitiondatatypes.c contains routines for intialization and cleanup of the test definition data types.
 
+\subsection test_pro Test definition processor
+
+The test definition processor communicates with the parser module. It calls \ref td_next_node as long as there is data to parse in test definition (or error occurs). The parser in turn calls callbacks in the processor for suite and set, so that when the parser has a set parsed into internal structs (\ref testdefinitiondatatypes.h), those are passed to processor that then executes steps in the set, writes results and frees the data. This way testrunner-lite needs to keep only one test set data at a time in its memory. For the actual execution of a test step, the processor module uses executor module.
+ 
 \subsection execution Executor
 
 The executor module (\ref executor.c) takes care of test step execution. File 
