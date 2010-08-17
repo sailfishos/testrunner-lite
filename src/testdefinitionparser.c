@@ -174,6 +174,7 @@ LOCAL td_step *td_parse_step()
 	td_step *step = NULL;
 	xmlNodePtr node;
 	int ret;
+	int a = 0;
 
 	step = td_step_create();
 	if (xmlTextReaderMoveToAttribute (reader, 
@@ -222,6 +223,12 @@ LOCAL td_step *td_parse_step()
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
 		    !xmlStrcmp (name, BAD_CAST "step")));
+
+	printf("\nSTEPHEX:");
+	while(step->step[a] != '\0') {
+	  printf("%02x ", step->step[a++]);
+	}
+	printf("\n");
 	
 	return step;
  ERROUT:
