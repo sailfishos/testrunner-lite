@@ -85,7 +85,7 @@
 	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-utf8.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>grep &quot;$(cat /usr/share/testrunner-lite-tests/testdata/unicode.txt)&quot; /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>cat /tmp/testrunnerlitetestdir/utf8_testdata</step>
-	<step>grep &quot;$(cat /tmp/testrunnerlitetestdir/utf8_testdata)&quot; /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep -f /tmp/testrunnerlitetestdir/utf8_testdata /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>[ "$(stat /tmp/testrunnerlitetestdir/utf8_testdata | awk '/Size: [0-9]+/ { print $2 }')" = "17" ]</step>
 	<step>rm -f /tmp/testrunnerlitetestdir/utf8_testdata</step>
       </case>
