@@ -141,6 +141,7 @@ LOCAL xmlChar *get_comments ()
 	buff [0] = '\0';
 	xmlChar *ret = NULL;
 	printf ("Please enter additional comments (ENTER to finish): ");
+	fflush(stdout);
 	p = fgets (buff, 4096, stdin);
 	if (p)  {
 		p = strchr (buff, '\n');
@@ -181,6 +182,7 @@ int execute_manual (td_step *step)
 	
 	buff [0] = '\0';
 	printf ("Please enter the result ([P/p]ass,[F/f]ail or [N/n]/a): ");
+	fflush(stdout);
 	p = fgets (buff, 256, stdin);
 	while (check_user_input(buff, &ret)) {
 		printf ("Invalid input.\n");
