@@ -67,6 +67,7 @@ LOCAL xmlTextReaderPtr reader;
 LOCAL xmlSchemaParserCtxtPtr schema_context = NULL;
 LOCAL xmlSchemaPtr schema = NULL;
 LOCAL td_suite *current_suite;
+LOCAL td_set *current_set;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -85,7 +86,7 @@ LOCAL int td_parse_suite (void);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_steps (xmlListPtr, const char *);
 /* ------------------------------------------------------------------------- */
-LOCAL td_step *td_parse_step (void);
+LOCAL td_step *td_parse_step (int manual_default);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_case (td_set *s);
 /* ------------------------------------------------------------------------- */
@@ -168,7 +169,7 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 /** Parse one step  
  *  @return *td_step on success, NULL on error
  */
-LOCAL td_step *td_parse_step()
+LOCAL td_step *td_parse_step(int manual_default)
 {
 	const xmlChar *name;
 	td_step *step = NULL;
@@ -176,14 +177,25 @@ LOCAL td_step *td_parse_step()
 	int ret;
 
 	step = td_step_create();
-	if (xmlTextReaderMoveToAttribute (reader, 
-					  BAD_CAST "expected_result") == 1) {
-		step->expected_result = strtoul((char *)
-						xmlTextReaderConstValue(reader),
-						NULL, 10);
-		step->has_expected_result = 1;
-	}
+	step->manual = manual_default;
 
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderConstName(reader);
+		if (!xmlStrcmp (name, BAD_CAST "expected_result")) {
+			step->expected_result = 
+				strtoul((char *)xmlTextReaderConstValue(reader),
+					NULL, 10);
+			step->has_expected_result = 1;
+			
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "manual")) {
+			step->manual = !xmlStrcmp (xmlTextReaderConstValue
+						   (reader), BAD_CAST "true");
+			continue;
+		}
+	}
+	
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
@@ -274,7 +286,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "step")) {
-			step = td_parse_step();
+			step = td_parse_step (current_set->gen.manual);
 			if (!step)
 				goto ERROUT;
 			if (xmlListAppend (steps->steps, step)) {
@@ -338,7 +350,7 @@ LOCAL int td_parse_case(td_set *s)
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "step")) {
-		    step = td_parse_step();
+		    step = td_parse_step (c->gen.manual);
 		    if (!step)
 			    goto ERROUT;
 		    if (xmlListAppend (c->steps, step)) {
@@ -503,6 +515,7 @@ LOCAL int td_parse_set ()
 	if (!cbs->test_set)
 		return 1;
 	s = td_set_create ();
+	current_set = s;
 
 	if (td_parse_gen_attribs(&s->gen, &current_suite->gen))
 		goto ERROUT;

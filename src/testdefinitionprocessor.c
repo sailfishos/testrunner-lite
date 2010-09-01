@@ -143,7 +143,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		goto out;
 	}
 	
-	if (c->gen.manual) {
+	if (step->manual) {
 		res = execute_manual (step);
 		goto out;
 	}
@@ -270,7 +270,7 @@ LOCAL int step_post_process (const void *data, const void *user)
 	td_case *c = (td_case *)user;
 
 	/* No post processing for manual steps ... */
-	if (c->gen.manual) 
+	if (step->manual) 
 		goto out;
 	/* ... or filtered ones ... */
 	if (c->filtered)

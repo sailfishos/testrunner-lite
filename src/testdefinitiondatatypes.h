@@ -89,6 +89,8 @@ typedef struct {
 	int      expected_result; /**< expected result of step */
 	int      has_result;      /**< should we trust the return_code */
 	int      return_code;     /**< actual result of step */
+	int      manual;          /**< Manual flag (default from case) */
+
 	/* Executor fills */
 	xmlChar *failure_info;    /**< optional failure info */
 	time_t   start;           /**< step execution start time */
