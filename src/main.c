@@ -142,7 +142,8 @@ LOCAL void usage()
 		"E.g. '-testcase=bad_test -type=unknown' first disables\n\t\t"
 		"test case named as bad_test. Next, all tests with type\n\t\t"
 		"unknown are disabled. The remaining tests will be\n\t\t"
-		"executed.\n");
+		"executed. (Currently supported filter type are: \n\t\t"
+		"testset,requirement,feature and type)\n");
 	printf ("  -c, --ci\tDisable validation of test "
 		"definition against schema.\n");
 	printf ("  -s, --semantic\n\t\tEnable validation of test "
