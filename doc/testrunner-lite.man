@@ -46,11 +46,7 @@ Enable only automatic tests to be executed
 Enable only manual tests to be executed
 .TP
 \fB\-l\fR \fIFILTER\fR,  \fB\-\-filter\fR=\fIFILTER\fR
-Filtering option to select tests (not) to be executed.
-E.g. '-testcase=bad_test -type=unknown' first disables
-test case named as bad_test; Next, all tests with type
-unknown are disabled; The remaining tests will be
-executed
+Filtering option to select tests (not) to be executed. E.g. '-testcase=bad_test -type=unknown' first disables test case named as bad_test; Next, all tests with type unknown are disabled; The remaining tests will be executed. If filter type is prepended with '-' it is a blacklist filter, '+' or no prefix specifies white list filter. A filter can have multiple values separated by ','. E.g. 'testset=foo,wuz' would execute tests from test sets foo and wuz. 
 .TP
 \fB\-c\fR,  \fB\-\-ci\fR 
 Disable validation of test definition against schema
