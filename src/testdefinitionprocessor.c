@@ -144,6 +144,11 @@ LOCAL int step_execute (const void *data, const void *user)
 	}
 	
 	if (step->manual) {
+		if (!c->gen.manual)
+			LOG_MSG (LOG_WARNING, "Executing manual step from "
+				 "automatic case %s "
+				 "(generally not a good idea)",
+				 c->gen.name);
 		res = execute_manual (step);
 		goto out;
 	}
