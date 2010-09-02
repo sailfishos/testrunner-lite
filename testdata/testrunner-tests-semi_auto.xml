@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <suite name="semi_auto_suite"  timeout="10" manual="false">  
+    <set name="semi_auto_set1" description="execute semi automatic cases"  manual="true" timeout="15">    
+      <case name="semi_auto_case_1" description="case with couple manual steps" timeout="30">
+        <step manual="false">ls</step>
+        <step>manual step</step>
+      </case>     
+    </set>
+ </suite>
+</testdefinition>
+
