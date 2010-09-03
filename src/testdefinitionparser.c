@@ -359,6 +359,21 @@ LOCAL int td_parse_case(td_set *s)
 			    goto ERROUT;
 		    }
 		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, BAD_CAST "description")) {
+			if (c->gen.description) {
+				c->gen.description = xmlStrcat 
+					(c->gen.description, 
+					 " - ");
+				c->gen.description = xmlStrcat 
+					(c->gen.description, 
+					 xmlTextReaderReadString (reader));
+			}
+			else
+				c->gen.description = xmlTextReaderValue(reader);
+		}
+
 	    
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&

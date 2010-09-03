@@ -259,6 +259,7 @@ void log_msg(int type, const char *file, const char *function,
 		syslog (type, "%s", msg);
 	
 	fprintf (stdout, "%s\n", msg);
+	fflush (stdout);
 	
 	if (!curl) {
 		free (msg);
