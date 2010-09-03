@@ -371,7 +371,7 @@ LOCAL int td_parse_case(td_set *s)
 					 xmlTextReaderReadString (reader));
 			}
 			else
-				c->gen.description = xmlTextReaderValue(reader);
+				c->gen.description = xmlTextReaderReadString(reader);
 		}
 
 	    
