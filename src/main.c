@@ -557,7 +557,7 @@ int main (int argc, char *argv[], char *envp[])
 	LOG_MSG (LOG_INFO, "Finished!");
 	cleanup_filters();
 	log_close();
-OUT:
+ OUT:
 	if (opts.input_filename) free (opts.input_filename);
 	if (opts.output_filename) free (opts.output_filename);
 	if (opts.output_folder) free (opts.output_folder);

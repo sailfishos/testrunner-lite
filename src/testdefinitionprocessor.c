@@ -337,6 +337,11 @@ LOCAL int process_case (const void *data, const void *user)
 	if (c->gen.manual && opts.run_manual)
 		pre_manual (c);
 	cur_step_num = 0;
+	if (xmlListSize (c->steps) == 0) {
+		LOG_MSG (LOG_WARNING, "Case with no steps (%s).",
+			 c->gen.name);
+	}
+
 	xmlListWalk (c->steps, step_execute, data);
 	xmlListWalk (c->steps, step_post_process, data);
 	
