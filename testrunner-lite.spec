@@ -15,11 +15,11 @@ Requires: test-definition, openssh, testrunner-lite-hwinfo
 
 %package tests
 Summary: Unit tests for testrunner-lite
-Requires: testrunner-lite, ci-testing
+Requires: testrunner-lite, eat
 
 %package regression-tests
 Summary: Regression tests for testrunner-lite
-Requires: ci-testing, testrunner-lite, libxml2-utils
+Requires: testrunner-lite, eat, libxml2-utils
 
 %package docs
 Summary: Testrunner-lite doxygen documentation in html format

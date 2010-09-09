@@ -51,6 +51,9 @@ Enable only automatic tests to be executed
 \subsection opt_syslog       -S,  --syslog
 Enable logging to syslog.
 
+\subsection opt_P  -P,  --print-step-output\fR
+Output standard streams from test steps.
+
 \subsection opt_manual       -m,  --manual
 Enable only manual tests to be executed
 

@@ -68,6 +68,7 @@ typedef struct {
 	int   syslog_output;   /**< flag for syslog */
 	int   disable_schema;  /**< flag for disabling DTD validation */
 	int   semantic_schema; /**< flag for enabling sricter DTD */
+	int   print_step_output; /**< enable logging of step std streams */
 	result_output   output_type;   /**< result output type selector */
 	int   run_automatic;   /**< flag for automatic tests */  
 	int   run_manual;      /**< flag for manual tests */

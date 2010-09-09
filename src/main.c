@@ -151,6 +151,8 @@ LOCAL void usage()
 	printf ("  -A, --validate-only\n\t\tDo only input xml validation, "
 		"do not execute tests.\n");
 	printf ("  -H, --no-hwinfo\n\t\tSkip hwinfo obtaining.\n");
+	printf ("  -P, --print-step-output\n\t\tOutput standard streams from"
+		" programs started in steps\n");
 	printf ("  -S, --syslog\n\t\tWrite log messages also to syslog.\n");
 	printf ("  -t [USER@]ADDRESS, --target=[USER@]ADDRESS\n\t\t"
 		"Enable host-based testing. "
@@ -296,6 +298,8 @@ int main (int argc, char *argv[], char *envp[])
 			{"validate-only", no_argument, &A_flag},
 			{"no-hwinfo", no_argument, &opts.skip_hwinfo, 1},
 			{"target", required_argument, NULL, 't'},
+			{"print-step-output", no_argument, 
+			 &opts.print_step_output, 1},
 			{0, 0, 0, 0}
 		};
 
@@ -317,7 +321,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSsmcf:o:e:l:r:L:t:v::",
+					":hVaAHSsmcPf:o:e:l:r:L:t:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -420,6 +424,10 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			break;    
+		case 'P':
+			opts.print_step_output = 1;
+			break;
+
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
 				 PROGNAME);

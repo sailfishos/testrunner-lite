@@ -39,6 +39,9 @@ URL format is [http://]host[:port][/path/], where host may be a hostname or an I
 \fB\-S\fR,  \fB\-\-syslog\fR 
 Enable logging to syslog.
 .TP
+\fB\-P\fR,  \fB\-\-print-step-output\fR
+Output standard streams from test steps.
+.TP
 \fB\-a\fR,  \fB\-\-automatic\fR 
 Enable only automatic tests to be executed
 .TP
