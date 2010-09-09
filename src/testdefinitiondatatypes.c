@@ -141,6 +141,9 @@ LOCAL void gen_attribs_delete (td_gen_attribs *gen)
 	free (gen->requirement);
 	free (gen->level);
 	free (gen->type);
+	free (gen->domain);
+	free (gen->feature);
+	free (gen->component);
 }
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -176,10 +179,6 @@ td_suite *td_suite_create()
 void td_suite_delete(td_suite *s)
 {
 	gen_attribs_delete (&s->gen);
-	if (s->domain) free (s->domain);
-#if 0
-	if (s->suite_type) free (s->suite_type);
-#endif
 	free (s);
 }
 /* ------------------------------------------------------------------------- */
@@ -220,8 +219,7 @@ td_set *td_set_create ()
 void td_set_delete(td_set *s)
 {
 	gen_attribs_delete(&s->gen);
-	free (s->feature);
-	
+
 	xmlListDelete (s->pre_steps);
 	xmlListDelete (s->post_steps);
 	xmlListDelete (s->cases);
@@ -307,6 +305,8 @@ void td_case_delete(xmlLinkPtr lk)
 	xmlListDelete (td_c->steps);
 	free (td_c->comment);
 	free (td_c->failure_info);
+	free (td_c->tc_title);
+	free (td_c->state);
 	gen_attribs_delete(&td_c->gen);
 	free (td_c);
 }

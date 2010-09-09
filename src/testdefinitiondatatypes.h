@@ -49,6 +49,10 @@ typedef struct {
 	xmlChar *type;          /**< Type attribute */
 	unsigned long timeout;  /**< Timeout (defaults to 90) */
 	xmlChar *level;         /**< Level (Component, Feature, System) */
+	xmlChar *domain;        /**< Domain */
+	xmlChar *feature;       /**< Feature attribute */
+	xmlChar *component;     /**< Component attribute */
+
 	int      manual;        /**< Manual flag (default false) */
 	int      insignificant; /**< Insignificant flag (default false) */
 } td_gen_attribs;
@@ -56,7 +60,6 @@ typedef struct {
 /** Test suite */
 typedef struct {
 	td_gen_attribs gen;   /**< General attributes */
-	xmlChar    *domain;   /**< Domain */
 	int        filtered;  /**< Suite is filtered */
 } td_suite;
 /* ------------------------------------------------------------------------- */
@@ -69,7 +72,6 @@ typedef struct {
 /** Test set. */
 typedef struct {
 	td_gen_attribs gen;      /**< General attributes */
-	xmlChar   *feature;      /**< Feature attribute */
 	xmlListPtr pre_steps;    /**< Steps executed before each test case */
 	xmlListPtr post_steps;   /**< Steps executed after each test case */
 	xmlListPtr cases;        /**< Test cases in this set */
@@ -114,8 +116,10 @@ typedef struct {
 	td_gen_attribs gen;     /**< General attributes */
 	xmlChar   *subfeature;  /**< Sub feature attribute */
 	xmlListPtr steps;       /**< Steps in this test case */
-	xmlChar   *comment;     /**< Manual test case comment */
+	xmlChar   *tc_title;    /**< TC_Title */
+	xmlChar   *state;       /**< State attribute */
 	/* Executor fills */
+	xmlChar   *comment;     /**< Manual test case comment */
 	case_result_t  case_res; /**< Case result */
 	xmlChar   *failure_info;   /**< optional failure info */
 	int        dummy;       /**< Case is dummy - used with pre post steps */

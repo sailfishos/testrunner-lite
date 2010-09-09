@@ -383,9 +383,9 @@ LOCAL int feature_filter (test_filter *filter, const void *data)
 	xmlLinkPtr lk;
 	xmlChar *fea, *feas;
 	
-	if (!s->feature)
+	if (!s->gen.feature)
 		goto skip;
-	feas = xmlStrdup (s->feature);
+	feas = xmlStrdup (s->gen.feature);
 	fea_list = string2valuelist ((char *)feas);
 	while (xmlListSize (fea_list) > 0) {
 		lk = xmlListFront (fea_list);

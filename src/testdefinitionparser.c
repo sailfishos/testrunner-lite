@@ -150,7 +150,21 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			attr->level =  xmlTextReaderValue(reader);
 			continue;
 		}
-		
+		if (!xmlStrcmp (name, BAD_CAST "domain")) {
+			if (attr->domain) free (attr->domain);
+			attr->domain =  xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "feature")) {
+			if (attr->feature) free (attr->feature);
+			attr->feature =  xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "component")) {
+			if (attr->component) free (attr->component);
+			attr->component =  xmlTextReaderValue(reader);
+			continue;
+		}
 		if (!xmlStrcmp (name, BAD_CAST "manual")) {
 			attr->manual = !xmlStrcmp (xmlTextReaderConstValue
 						   (reader), BAD_CAST "true");
@@ -361,13 +375,26 @@ LOCAL int td_parse_case(td_set *s)
 		}
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, BAD_CAST "TC_Title")) {
+			c->tc_title = xmlTextReaderReadString (reader);
+			
+		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, BAD_CAST "state")) {
+			c->state = xmlTextReaderReadString (reader);
+			
+		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "description")) {
 			if (c->gen.description) {
 				c->gen.description = xmlStrcat 
 					(c->gen.description, 
-					 " - ");
+					 BAD_CAST " - ");
 				c->gen.description = xmlStrcat 
 					(c->gen.description, 
+					 BAD_CAST 
 					 xmlTextReaderReadString (reader));
 			}
 			else
@@ -509,10 +536,6 @@ LOCAL int td_parse_suite ()
 	current_suite = s;
 
 	td_parse_gen_attribs (&s->gen, NULL);
-	if (xmlTextReaderMoveToAttribute (reader, 
-					  BAD_CAST "domain") == 1) {
-		s->domain =  xmlTextReaderValue(reader);
-	}
 	cbs->test_suite(s);
 
 	return 0;
@@ -534,11 +557,6 @@ LOCAL int td_parse_set ()
 
 	if (td_parse_gen_attribs(&s->gen, &current_suite->gen))
 		goto ERROUT;
-
-	if (xmlTextReaderMoveToAttribute (reader, 
-					  BAD_CAST "feature") == 1) {
-		s->feature =  xmlTextReaderValue(reader);
-	}
 
 	do {
 		ret = xmlTextReaderRead(reader);

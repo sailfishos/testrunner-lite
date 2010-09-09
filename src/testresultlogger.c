@@ -118,9 +118,10 @@ LOCAL int xml_write_pre_suite_tag (td_suite *suite)
 					 suite->gen.name) < 0)
 		goto err_out;
 
-	if (suite->domain && xmlTextWriterWriteAttribute (writer,  
-							  BAD_CAST "domain", 
-							  suite->domain) < 0)
+	if (suite->gen.domain && xmlTextWriterWriteAttribute (writer,  
+							      BAD_CAST 
+							      "domain", 
+							      suite->gen.domain) < 0)
 		goto err_out;
 
 	return 0;
@@ -148,10 +149,10 @@ LOCAL int xml_write_pre_set_tag (td_set *set)
 						 set->gen.description) < 0)
 			goto err_out;
 	
-	if (set->feature)
+	if (set->gen.feature)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "feature", 
-						 set->feature) < 0)
+						 set->gen.feature) < 0)
 			goto err_out;
 
 	if (set->environment)
@@ -480,8 +481,8 @@ LOCAL int txt_write_pre_suite_tag (td_suite *suite)
         fprintf (ofile, "Test suite name : %s\n", suite->gen.name);
 	fprintf (ofile, "  description   : %s\n", suite->gen.description ? 
 		 (char *)suite->gen.description : " ");
-	if (suite->domain)
-		fprintf (ofile, "  domain        : %s\n", suite->domain);
+	if (suite->gen.domain)
+		fprintf (ofile, "  domain        : %s\n", suite->gen.domain);
 	
 	fflush (ofile);
 	
@@ -509,8 +510,8 @@ LOCAL int txt_write_pre_set_tag (td_set *set)
 	fprintf (ofile, "  Test set name   : %s\n", set->gen.name);
 	fprintf (ofile, "    description   : %s\n", set->gen.description ? 
 		 (char *)set->gen.description : "");
-	if (set->feature)
-		fprintf (ofile, "    feature       : %s\n", set->feature);
+	if (set->gen.feature)
+		fprintf (ofile, "    feature       : %s\n", set->gen.feature);
 	
 	fprintf (ofile, "    environment   : %s\n", set->environment ? 
 		 (char *)set->environment : "");
