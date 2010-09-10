@@ -217,16 +217,13 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		close(err_pipe[0]);
 
 		/* redirect stdout to the pipe */
-		if (!options->print_step_output)
-			close(1);
+		close(1);
 		if (dup(out_pipe[1]) < 0) {
 			perror("dup(out_pipe[1]");
 		}
 		
 		/* redirect stderr to the pipe */
-		if (!options->print_step_output)
-			close(2);
-
+		close(2);
 		if (dup(err_pipe[1]) < 0) {
 			perror("dup(err_pipe[1])");
 		}
@@ -353,11 +350,9 @@ static int read_and_append(int fd, stream_data* data) {
 		if (ret > 0) {
 			/* read was successful, update stream_data */
 			data->buffer[data->length + ret] = '\0';
-#if 0
 			if (options->print_step_output)
-				printf ("%s",
-					&data->buffer[data->length]);
-#endif
+				printf ("%s", &data->buffer[data->length]);
+
 			data->length += ret;
 
 		}
