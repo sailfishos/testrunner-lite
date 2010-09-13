@@ -308,11 +308,11 @@ int main (int argc, char *argv[], char *envp[])
 
 	memset (&opts, 0x0, sizeof(testrunner_lite_options));
         memset (&hwinfo, 0x0, sizeof(hwinfo));
-	
+
 	opts.output_type = OUTPUT_TYPE_XML;
 	opts.run_automatic = opts.run_manual = 1;
 	gettimeofday (&created, NULL);
-
+	signal (SIGINT, handle_sigint);
 	copyright();
 	if (argc == 1)
 		h_flag = 1;

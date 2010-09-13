@@ -74,6 +74,8 @@ extern char *global_failure;
 static volatile sig_atomic_t timer_value = 0;
 static struct sigaction default_alarm_action = { .sa_handler = NULL };
 static testrunner_lite_options *options;
+static exec_data *current_data; 
+
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -517,7 +519,6 @@ static int execution_terminated(exec_data* data) {
 			    (ret = ssh_check_conn (options->target_address))) {
 				LOG_MSG(LOG_ERR, "ssh connection failure "
 					"(%d)", ret);
-					
 				bail_out = ret;
 				global_failure = "connection fail";
 			}
@@ -790,7 +791,8 @@ int execute(const char* command, exec_data* data) {
 	} else {
 		data->pid = fork_process(command);
 	}
-
+	current_data = data; 
+	
 	if (data->pid > 0) {
 		/* wait that child runs the setsid() */
 		ppgid = getpgid (0);
@@ -799,13 +801,12 @@ int execute(const char* command, exec_data* data) {
 				 strerror (errno));
 		else
 			while (ppgid == getpgid(data->pid)) sched_yield();
-
 		data->pgid = getpgid(data->pid);
 		LOG_MSG(LOG_DEBUG, "Process %d got process group %d",
 			data->pid, data->pgid);
 		communicate(stdout_fd, stderr_fd, data);
 	}
-
+	current_data = NULL;
 	data->end_time = time(NULL);
 	if (data->stdout_data.length) strip_ctrl_chars (&data->stdout_data);
 	if (data->stderr_data.length) strip_ctrl_chars (&data->stderr_data);
@@ -889,7 +890,7 @@ void kill_pgroup(int pgroup, int sig) {
 /** Sets the remote host for executor 
  * @param opts testrunner lite options
  */
-void executor_init (testrunner_lite_options *opts)
+void executor_init(testrunner_lite_options *opts)
 {
 	
 	options = opts;
@@ -899,12 +900,27 @@ void executor_init (testrunner_lite_options *opts)
 
 /** Clean up for executor
  */
-void executor_close ()
+void executor_close()
 {
 	
 	if (options->target_address && !bail_out)
 		ssh_executor_close(options->target_address);
 }
+/*
+** handler for SIGINT
+*/
+void handle_sigint (int signum)
+{
+	global_failure = "Interrupted by signal (2)";
+	bail_out = 1;
+	if (current_data) {
+		if (options->target_address)
+			ssh_kill (options->target_address, current_data->pid);
+		else
+			kill_pgroup(current_data->pgid, SIGKILL);
+	}
+}
+
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */
