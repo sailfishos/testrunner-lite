@@ -1,3 +1,5 @@
+* Tue Sep 14 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.11
+- Support for printing step output (-P) (BMC#5979)
 * Fri Sep 03 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.10
 - Information about filters improved on man page (BMC#5918)
 - Supported filter types listed on --help output (BMC#5917)
