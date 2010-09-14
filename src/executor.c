@@ -489,7 +489,7 @@ static int execution_terminated(exec_data* data) {
 					   do connection check */
 					if (ssh_check_conn (options->
 							    target_address)) {
-						bail_out = data->result;
+						bail_out = TESTRUNNER_LITE_SSH_FAIL;
 						global_failure = "connection "
 							"fail";
 						LOG_MSG(LOG_ERR, 
@@ -519,7 +519,7 @@ static int execution_terminated(exec_data* data) {
 			    (ret = ssh_check_conn (options->target_address))) {
 				LOG_MSG(LOG_ERR, "ssh connection failure "
 					"(%d)", ret);
-				bail_out = ret;
+				bail_out = TESTRUNNER_LITE_SSH_FAIL;
 				global_failure = "connection fail";
 			}
 
@@ -912,7 +912,7 @@ void executor_close()
 void handle_sigint (int signum)
 {
 	global_failure = "Interrupted by signal (2)";
-	bail_out = 1;
+	bail_out = 255+SIGINT;
 	if (current_data) {
 		if (options->target_address)
 			ssh_kill (options->target_address, current_data->pid);

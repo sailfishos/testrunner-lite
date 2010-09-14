@@ -573,7 +573,10 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
 	if (filter_string) free (filter_string);
-	if (bail_out) retval = TESTRUNNER_LITE_SSH_FAIL;
+	if (bail_out == 255+SIGINT) {
+		signal (SIGINT, SIG_DFL);
+		raise (SIGINT);
+	} else if (bail_out) retval = TESTRUNNER_LITE_SSH_FAIL;
 
 	return retval; 
 }	
