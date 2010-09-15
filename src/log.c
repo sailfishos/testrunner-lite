@@ -356,7 +356,6 @@ void log_init (testrunner_lite_options *opts) {
 	}
 	if (opts->remote_logger) {
 		curl =	curl_easy_init();
-		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 		curl_easy_setopt(curl, 
 				 CURLOPT_URL, 
 				 opts->remote_logger);
