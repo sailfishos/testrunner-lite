@@ -308,11 +308,11 @@ int main (int argc, char *argv[], char *envp[])
 
 	memset (&opts, 0x0, sizeof(testrunner_lite_options));
         memset (&hwinfo, 0x0, sizeof(hwinfo));
-	
+
 	opts.output_type = OUTPUT_TYPE_XML;
 	opts.run_automatic = opts.run_manual = 1;
 	gettimeofday (&created, NULL);
-
+	signal (SIGINT, handle_sigint);
 	copyright();
 	if (argc == 1)
 		h_flag = 1;
@@ -573,7 +573,10 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
 	if (filter_string) free (filter_string);
-	if (bail_out) retval = TESTRUNNER_LITE_SSH_FAIL;
+	if (bail_out == 255+SIGINT) {
+		signal (SIGINT, SIG_DFL);
+		raise (SIGINT);
+	} else if (bail_out) retval = TESTRUNNER_LITE_SSH_FAIL;
 
 	return retval; 
 }	

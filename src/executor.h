@@ -101,8 +101,10 @@ void init_exec_data(exec_data* data);
 void clean_exec_data(exec_data* data);
 void init_stream_data(stream_data* data, int allocate);
 void clean_stream_data(stream_data* data);
- void kill_pgroup(int pgroup, int sig);
+void kill_pgroup(int pgroup, int sig);
 void executor_close ();
+void handle_sigint (int signum);
+
 /* ------------------------------------------------------------------------- */
 #endif                          /* EXECUTOR_H */
 /* End of file */
