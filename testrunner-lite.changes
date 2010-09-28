@@ -1,3 +1,5 @@
+* Tue Sep 28  2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.13
+- Testrunner-lite uses "on-the-fly" created script (NB#195088)
 * Thu Sep 16 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.12
 - Added handling for SIGINT (BMC#6269)
 - Removed verbose option from curl (http logging)
