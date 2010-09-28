@@ -99,7 +99,7 @@ void ssh_executor_init (const char *hostname)
 	int ret, status;
 	pid_t pid;
 	char *cmd = "echo '#!/bin/sh' > /tmp/mypid.sh;"
-		" echo 'echo $PPID' >> /tmp/mypid.sh; chmod +x /tmp/mypid.sh";
+		"echo 'echo $PPID' >> /tmp/mypid.sh;";
 	unique_id = (char *)malloc (UNIQUE_ID_MAX_LEN);
 	ret = gethostname(unique_id, HOST_NAME_MAX);
 	if (ret) {
@@ -153,12 +153,13 @@ int ssh_execute (const char *hostname, const char *command)
                          "command %s\n", __FUNCTION__, command);
         }
 	if (strlen (casename) && strlen (setname)) 
-		sprintf (cmd, "logger set:%s-case:%s-step:%d;/tmp/mypid.sh > " 
+		sprintf (cmd, "logger set:%s-case:%s-step:%d;"
+			 "sh < /tmp/mypid.sh > " 
 			 PID_FILE_FMT 
 			 ";source .profile > /dev/null; %s",
 			 setname, casename, stepnum, unique_id, getpid(), command);
 	else
-		sprintf (cmd, "/tmp/mypid.sh > " 
+		sprintf (cmd, "sh < /tmp/mypid.sh > " 
 			 PID_FILE_FMT 
 			 ";source .profile > /dev/null; %s",
 			 unique_id, getpid(), command);
