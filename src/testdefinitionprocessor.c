@@ -144,6 +144,11 @@ LOCAL int step_execute (const void *data, const void *user)
 	}
 	
 	if (step->manual) {
+		if (c->dummy) {
+			LOG_MSG (LOG_WARNING, 
+				 "manual pre/post steps not supported");
+			goto out;
+		}
 		if (!c->gen.manual)
 			LOG_MSG (LOG_WARNING, "Executing manual step from "
 				 "automatic case %s "
