@@ -920,6 +920,20 @@ void handle_sigint (int signum)
 			kill_pgroup(current_data->pgid, SIGKILL);
 	}
 }
+/*
+** handler for SIGTERM
+*/
+void handle_sigterm (int signum)
+{
+	global_failure = "Interrupted by signal (15)";
+	bail_out = 255+SIGTERM;
+	if (current_data) {
+		if (options->target_address)
+			ssh_kill (options->target_address, current_data->pid);
+		else
+			kill_pgroup(current_data->pgid, SIGKILL);
+	}
+}
 
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
