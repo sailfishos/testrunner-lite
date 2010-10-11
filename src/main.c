@@ -313,6 +313,7 @@ int main (int argc, char *argv[], char *envp[])
 	opts.run_automatic = opts.run_manual = 1;
 	gettimeofday (&created, NULL);
 	signal (SIGINT, handle_sigint);
+	signal (SIGTERM, handle_sigterm);
 	copyright();
 	if (argc == 1)
 		h_flag = 1;
@@ -427,7 +428,6 @@ int main (int argc, char *argv[], char *envp[])
 		case 'P':
 			opts.print_step_output = 1;
 			break;
-
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
 				 PROGNAME);
@@ -576,6 +576,9 @@ int main (int argc, char *argv[], char *envp[])
 	if (bail_out == 255+SIGINT) {
 		signal (SIGINT, SIG_DFL);
 		raise (SIGINT);
+	} else if (bail_out == 255+SIGTERM) {
+		signal (SIGTERM, SIG_DFL);
+		raise (SIGTERM);
 	} else if (bail_out) retval = TESTRUNNER_LITE_SSH_FAIL;
 
 	return retval; 
