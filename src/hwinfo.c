@@ -95,7 +95,7 @@ LOCAL unsigned char *exec_command (const char *cmd)
 
 	edata.soft_timeout = 5;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	LOG_MSG (LOG_INFO, "executing command %s", cmd);
+	LOG_MSG (LOG_INFO, "Getting HW information");
 	execute (cmd, &edata);
 	
 	if (edata.result) {

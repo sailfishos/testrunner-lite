@@ -86,25 +86,34 @@
  */
 const char *hwinfo_product()
 {
-	return "sysinfo-tool --get /component/product";
+	return  "if echo $PATH | grep -q scratchbox;"
+		"then echo scratchbox;"
+		"else sysinfo-tool --get /component/product;"
+		"fi";
 }
 /* ------------------------------------------------------------------------- */
 /** Return command for hw-build information in maemo environment
  */
 const char *hwinfo_hw_build()
 {
-	return "sysinfo-tool --get /component/hw-build";
+	return  "if echo $PATH | grep -q scratchbox;"
+		"then echo scratchbox;"
+		"else sysinfo-tool --get /component/hw-build;"
+		"fi";
 }
 /* ------------------------------------------------------------------------- */
 /** Return command for extra information in maemo environment
  */
 const char *hwinfo_extra()
 {
-	return "sysinfo-tool --get /component/nolo;"
+	return "if echo $PATH | grep -q scratchbox;"
+		"then echo scratchbox;"
+		"else sysinfo-tool --get /component/nolo;"
 		"sysinfo-tool --get /component/boot-mode;"
 		"sysinfo-tool --get /device/production-sn;"
 		"sysinfo-tool --get /device/product-code;"
-		"sysinfo-tool --get /device/basic-product-code";
+		"sysinfo-tool --get /device/basic-product-code;"
+		"fi";
 
 }
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
