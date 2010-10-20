@@ -1,27 +1,38 @@
 Name: testrunner-lite
-Version: 1.3.4
-Release:1%{?dist}
+Version: 1.3.15
+# build.meego.com proposed patch > Release:7.1
+Release:7.1
 Summary: Generic test executor tool
 Group: Test-tools
 License: LGPL 2.1
 URL: http://meego.com
-Source0: %{name}_%{version}+0m6.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-
-BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel
+Source0: testrunner-lite.tar.gz  
+BuildRoot: %{_tmppath}/testrunner-lite-root  
+   
+BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel, libtool
 # libxml2 and libcurl are implicit dependencies  
-Requires: test-definition, openssh
+Requires: test-definition, openssh, testrunner-lite-hwinfo
 
 %package tests
 Summary: Unit tests for testrunner-lite
-Requires: testrunner-lite, ci-testing
+Requires: testrunner-lite
 
 %package regression-tests
 Summary: Regression tests for testrunner-lite
-Requires: ci-testing, testrunner-lite, libxml2-utils
+Requires: testrunner-lite, libxml2-utils
 
 %package docs
 Summary: Testrunner-lite doxygen documentation in html format
+
+%package hwinfo-maemo
+Summary: Provides commands for hardware information obtaining
+Provides: testrunner-lite-hwinfo
+Conflicts: testrunner-lite-hwinfo-meego
+
+%package hwinfo-meego
+Summary: Provides commands for hardware information obtaining
+Provides: testrunner-lite-hwinfo
+Conflicts: testrunner-lite-hwinfo-maemo
 
 %description
 Generic test executor tool
@@ -35,10 +46,18 @@ Regression tests for testrunner-lite
 %description docs
 Testrunner-lite doxygen documentation in html format
 
+%description hwinfo-maemo
+Library for obtaining hardware information in maemo environment
+
+%description hwinfo-meego
+Library for obtaining hardware information in meego environment
+
 %prep
-%setup -q -n %{name}-%{version}+0m6
+# snapshot from gitorious.org webgui - unpack dir named with qa-tools prefix
+%setup -n qa-tools-testrunner-lite
 
 %build
+CFLAGS=-DVERSIONSTR=%{version}
 autoreconf --install
 %configure
 make %{?_smp_mflags}
@@ -71,14 +90,23 @@ rm -rf %{buildroot}
 # need to remove executable flag because rpmlint complains about it
 %attr(644,root,root) /usr/share/doc/testrunner-lite-doc/html/installdox
 
-%changelog
-* Wed Jun 16 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.4
-- Fixed bug in long commands handling
-* Wed Jun 09 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.3-1
-- Support for -H, --no-hwinfo commandline option
-* Wed Jun 09 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.3.3
-- Implemented:SWP#MTT-284 - Schema and regression test cases for test results xml file
-* Thu Jun 04 2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.2
-- Fixed process control in host based testing
-* Thu Jun 03 2010 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.3.1
-- Initial RPM packaking
+%files hwinfo-maemo
+%defattr(-,root,root,-)
+/usr/lib/testrunner-lite-hwinfo-maemo*
+
+%post hwinfo-maemo
+ln -s /usr/lib/testrunner-lite-hwinfo-maemo.so  /usr/lib/testrunner-lite-hwinfo.so
+
+%postun hwinfo-maemo
+rm /usr/lib/testrunner-lite-hwinfo.so
+
+%files hwinfo-meego
+%defattr(-,root,root,-)
+/usr/lib/testrunner-lite-hwinfo-meego*
+
+%post hwinfo-meego
+ln -s /usr/lib/testrunner-lite-hwinfo-meego.so  /usr/lib/testrunner-lite-hwinfo.so
+
+%postun hwinfo-meego
+rm /usr/lib/testrunner-lite-hwinfo.so
+

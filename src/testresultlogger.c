@@ -117,6 +117,13 @@ LOCAL int xml_write_pre_suite_tag (td_suite *suite)
 	if (xmlTextWriterWriteAttribute (writer,  BAD_CAST "name", 
 					 suite->gen.name) < 0)
 		goto err_out;
+
+	if (suite->gen.domain && xmlTextWriterWriteAttribute (writer,  
+							      BAD_CAST 
+							      "domain", 
+							      suite->gen.domain) < 0)
+		goto err_out;
+
 	return 0;
 err_out:
 	return 1;
@@ -142,6 +149,12 @@ LOCAL int xml_write_pre_set_tag (td_set *set)
 						 set->gen.description) < 0)
 			goto err_out;
 	
+	if (set->gen.feature)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "feature", 
+						 set->gen.feature) < 0)
+			goto err_out;
+
 	if (set->environment)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "environment", 
@@ -186,6 +199,8 @@ LOCAL int xml_write_step (const void *data, const void *user)
 		goto err_out;
 	
 	if (step->failure_info) {
+		if (strlen ((char *)step->failure_info) >= FAILURE_INFO_MAX)
+			step->failure_info[FAILURE_INFO_MAX - 1] = '\0';
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "failure_info", 
 						 step->failure_info) < 0)
@@ -244,7 +259,7 @@ LOCAL int xml_write_step (const void *data, const void *user)
 	xml_end_element();
 	
 
-	return (step->expected_result == step->return_code);
+	return 1;
 	
 err_out:
 	return 0;
@@ -296,6 +311,15 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						   (c->case_res))) < 0)
 		
 		goto err_out;
+
+	if (c->failure_info) {
+		if (strlen ((char *)c->failure_info) >= FAILURE_INFO_MAX)
+			c->failure_info[FAILURE_INFO_MAX - 1] = '\0';
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "failure_info", 
+						 c->failure_info) < 0)
+			goto err_out;
+	}
 
 	if (c->subfeature)
 		if (xmlTextWriterWriteAttribute (writer, 
@@ -391,7 +415,7 @@ LOCAL int txt_write_step (const void *data, const void *user)
 		 step->stderr_ ? (char *)step->stderr_ : " ");
 	fflush (ofile);
 
-	return (step->expected_result == step->return_code);
+	return 1;
 }
 /* ------------------------------------------------------------------------- */
 /** Write case result to text file
@@ -413,7 +437,13 @@ LOCAL int txt_write_case (const void *data, const void *user)
 		 (char *)c->gen.description : "");
 	fprintf (ofile, "      manual        : %s\n", c->gen.manual ?
 		 "true" : "false");
-	
+	fprintf (ofile, "      result        : %s", 
+		 case_result_str(c->case_res));
+	if (c->failure_info) {
+		fprintf (ofile, " (%s)", c->failure_info);
+	}
+	fprintf (ofile, "\n");
+
 	if (c->gen.requirement)
 	    fprintf (ofile, "      requirement   : %s\n", c->gen.requirement);
 	if (c->subfeature)
@@ -451,8 +481,8 @@ LOCAL int txt_write_pre_suite_tag (td_suite *suite)
         fprintf (ofile, "Test suite name : %s\n", suite->gen.name);
 	fprintf (ofile, "  description   : %s\n", suite->gen.description ? 
 		 (char *)suite->gen.description : " ");
-	if (suite->domain)
-		fprintf (ofile, "  domain        : %s\n", suite->domain);
+	if (suite->gen.domain)
+		fprintf (ofile, "  domain        : %s\n", suite->gen.domain);
 	
 	fflush (ofile);
 	
@@ -480,8 +510,8 @@ LOCAL int txt_write_pre_set_tag (td_set *set)
 	fprintf (ofile, "  Test set name   : %s\n", set->gen.name);
 	fprintf (ofile, "    description   : %s\n", set->gen.description ? 
 		 (char *)set->gen.description : "");
-	if (set->feature)
-		fprintf (ofile, "    feature       : %s\n", set->feature);
+	if (set->gen.feature)
+		fprintf (ofile, "    feature       : %s\n", set->gen.feature);
 	
 	fprintf (ofile, "    environment   : %s\n", set->environment ? 
 		 (char *)set->environment : "");

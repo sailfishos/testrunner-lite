@@ -93,7 +93,7 @@ START_TEST (test_ctrl_char_strip)
     const char test_str[] = {'t',0x02,'e','s','t','f',0x06,0x07,0x08,0x09,
 			     'o',0x0B,'o',0x0C,0x0E,0x0F,0x10,0x11,0x12,
 			     0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,
-			     0x1C,0x1D,0x1E,0x1F,0x7F,'b','a','r'};
+			     0x1C,0x1D,0x1E,0x1F,0x7F,'b','a','r', '\0'};
 
      const char valid_str[] = {'t',' ','e','s','t','f',' ',' ',' ',' ',
 			       'o',' ','o',' ',' ',' ',' ',' ',' ',
@@ -295,6 +295,7 @@ START_TEST (test_remote_logging)
     char buffer[1024];
     char error[128];
     const char sample_message[] = "Remote logger test data";
+    const char sample_message_url_enc[] = "Remote%20logger%20test%20data";
     const char logger[] = "127.0.0.1";
     pid_t pid = 0;
 
@@ -330,7 +331,7 @@ START_TEST (test_remote_logging)
 
     /* Check that buffer contains at least something we expected */
     fail_if(strstr(buffer, "HTTP") == NULL);
-    fail_if(strstr(buffer, sample_message) == NULL);
+    fail_if(strstr(buffer, sample_message_url_enc) == NULL);
 }
 END_TEST
 
@@ -390,6 +391,9 @@ START_TEST (test_hwinfo)
      memset (&hi, 0x0, sizeof (hw_info));
      fail_if (read_hwinfo(&hi));
 	      
+     fail_unless (hi.product);
+     fail_unless (hi.hw_build);
+
      print_hwinfo (&hi);
 
      clean_hwinfo (&hi);

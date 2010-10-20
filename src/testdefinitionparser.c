@@ -67,6 +67,7 @@ LOCAL xmlTextReaderPtr reader;
 LOCAL xmlSchemaParserCtxtPtr schema_context = NULL;
 LOCAL xmlSchemaPtr schema = NULL;
 LOCAL td_suite *current_suite;
+LOCAL td_set *current_set;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -85,7 +86,7 @@ LOCAL int td_parse_suite (void);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_steps (xmlListPtr, const char *);
 /* ------------------------------------------------------------------------- */
-LOCAL td_step *td_parse_step (void);
+LOCAL td_step *td_parse_step (int manual_default);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_case (td_set *s);
 /* ------------------------------------------------------------------------- */
@@ -149,7 +150,21 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			attr->level =  xmlTextReaderValue(reader);
 			continue;
 		}
-		
+		if (!xmlStrcmp (name, BAD_CAST "domain")) {
+			if (attr->domain) free (attr->domain);
+			attr->domain =  xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "feature")) {
+			if (attr->feature) free (attr->feature);
+			attr->feature =  xmlTextReaderValue(reader);
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "component")) {
+			if (attr->component) free (attr->component);
+			attr->component =  xmlTextReaderValue(reader);
+			continue;
+		}
 		if (!xmlStrcmp (name, BAD_CAST "manual")) {
 			attr->manual = !xmlStrcmp (xmlTextReaderConstValue
 						   (reader), BAD_CAST "true");
@@ -168,7 +183,7 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 /** Parse one step  
  *  @return *td_step on success, NULL on error
  */
-LOCAL td_step *td_parse_step()
+LOCAL td_step *td_parse_step(int manual_default)
 {
 	const xmlChar *name;
 	td_step *step = NULL;
@@ -176,14 +191,25 @@ LOCAL td_step *td_parse_step()
 	int ret;
 
 	step = td_step_create();
-	if (xmlTextReaderMoveToAttribute (reader, 
-					  BAD_CAST "expected_result") == 1) {
-		step->expected_result = strtoul((char *)
-						xmlTextReaderConstValue(reader),
-						NULL, 10);
-		step->has_expected_result = 1;
-	}
+	step->manual = manual_default;
 
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderConstName(reader);
+		if (!xmlStrcmp (name, BAD_CAST "expected_result")) {
+			step->expected_result = 
+				strtoul((char *)xmlTextReaderConstValue(reader),
+					NULL, 10);
+			step->has_expected_result = 1;
+			
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "manual")) {
+			step->manual = !xmlStrcmp (xmlTextReaderConstValue
+						   (reader), BAD_CAST "true");
+			continue;
+		}
+	}
+	
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
@@ -222,7 +248,7 @@ LOCAL td_step *td_parse_step()
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
 		    !xmlStrcmp (name, BAD_CAST "step")));
-	
+
 	return step;
  ERROUT:
 	LOG_MSG (LOG_ERR, "%s:%s: Exiting with error\n", 
@@ -240,8 +266,21 @@ LOCAL td_step *td_parse_step()
 LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 {
 	const xmlChar *name;
+	td_steps *steps = NULL;
 	td_step *step = NULL;
 	int ret;
+
+	steps = td_steps_create();
+
+	if (!steps) {
+		goto ERROUT;
+	}
+
+	if (xmlTextReaderMoveToAttribute (reader, BAD_CAST "timeout") == 1) {
+		steps->timeout = strtoul((char *)
+					 xmlTextReaderConstValue(reader),
+					 NULL, 10);
+	}
 
 	do {
 		ret = xmlTextReaderRead(reader);
@@ -250,19 +289,21 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 				 PROGNAME);
 			goto ERROUT;
 		}
+
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
 			LOG_MSG (LOG_ERR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
+
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "step")) {
-			step = td_parse_step();
+			step = td_parse_step (current_set->gen.manual);
 			if (!step)
 				goto ERROUT;
-			if (xmlListAppend (list, step)) {
+			if (xmlListAppend (steps->steps, step)) {
 				LOG_MSG (LOG_ERR, "%s: list insert failed\n",
 					 PROGNAME);
 				goto ERROUT;
@@ -272,10 +313,14 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 		    XML_READER_TYPE_END_ELEMENT &&
 		    !xmlStrcmp (name, BAD_CAST tag)));
 	
+	xmlListAppend (list, steps);
+
 	return 0;
  ERROUT:
 	LOG_MSG (LOG_ERR, "%s:%s: Exiting with error\n", 
 		 PROGNAME, __FUNCTION__);
+	xmlListDelete (steps->steps);
+	free(steps);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -319,7 +364,7 @@ LOCAL int td_parse_case(td_set *s)
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "step")) {
-		    step = td_parse_step();
+		    step = td_parse_step (c->gen.manual);
 		    if (!step)
 			    goto ERROUT;
 		    if (xmlListAppend (c->steps, step)) {
@@ -328,6 +373,34 @@ LOCAL int td_parse_case(td_set *s)
 			    goto ERROUT;
 		    }
 		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, BAD_CAST "TC_Title")) {
+			c->tc_title = xmlTextReaderReadString (reader);
+			
+		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, BAD_CAST "state")) {
+			c->state = xmlTextReaderReadString (reader);
+			
+		}
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, BAD_CAST "description")) {
+			if (c->gen.description) {
+				c->gen.description = xmlStrcat 
+					(c->gen.description, 
+					 BAD_CAST " - ");
+				c->gen.description = xmlStrcat 
+					(c->gen.description, 
+					 BAD_CAST 
+					 xmlTextReaderReadString (reader));
+			}
+			else
+				c->gen.description = xmlTextReaderReadString(reader);
+		}
+
 	    
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
@@ -401,9 +474,11 @@ LOCAL int td_parse_environments(xmlListPtr list)
 LOCAL int td_parse_gets(xmlListPtr list)
 {
 	int ret;
-	xmlChar *value;
+	int delete_after = 0;
+	td_file *file;
 
 	do {
+
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
 			LOG_MSG (LOG_ERR, "%s:%s: ReaderRead() fail\n",
@@ -411,10 +486,21 @@ LOCAL int td_parse_gets(xmlListPtr list)
 			
 			goto ERROUT;
 		}
+
+		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_ELEMENT &&
+		    xmlTextReaderMoveToNextAttribute(reader) == 1) {
+			delete_after = !xmlStrcmp (xmlTextReaderConstValue
+							 (reader), 
+							 BAD_CAST "true");
+		} 
+
 		/* add to list get files */
 		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
-			value = xmlTextReaderReadString (reader);
-			if (xmlListAppend (list, value)) {
+			file = (td_file *)malloc (sizeof (td_file));
+			file->filename = xmlTextReaderReadString (reader);
+			file->delete_after = delete_after;
+			delete_after = 0;
+			if (xmlListAppend (list, file)) {
 				LOG_MSG (LOG_ERR, 
 					 "%s:%s list insert failed\n",
 					 PROGNAME, __FUNCTION__);
@@ -450,10 +536,6 @@ LOCAL int td_parse_suite ()
 	current_suite = s;
 
 	td_parse_gen_attribs (&s->gen, NULL);
-	if (xmlTextReaderMoveToAttribute (reader, 
-					  BAD_CAST "domain") == 1) {
-		s->domain =  xmlTextReaderValue(reader);
-	}
 	cbs->test_suite(s);
 
 	return 0;
@@ -471,14 +553,10 @@ LOCAL int td_parse_set ()
 	if (!cbs->test_set)
 		return 1;
 	s = td_set_create ();
+	current_set = s;
 
 	if (td_parse_gen_attribs(&s->gen, &current_suite->gen))
 		goto ERROUT;
-
-	if (xmlTextReaderMoveToAttribute (reader, 
-					  BAD_CAST "feature") == 1) {
-		s->feature =  xmlTextReaderValue(reader);
-	}
 
 	do {
 		ret = xmlTextReaderRead(reader);
@@ -529,7 +607,7 @@ LOCAL int td_parse_set ()
  */
 int parse_test_definition (testrunner_lite_options *opts)
 {
-	int ret = 1;
+	int ret = TESTRUNNER_LITE_XML_PARSE_FAIL;
 	xmlDocPtr doc = NULL; 
 	xmlParserCtxtPtr ctxt = NULL; 
 	xmlSchemaPtr sch = NULL;
@@ -597,6 +675,8 @@ int parse_test_definition (testrunner_lite_options *opts)
 	}
 	
 	ret = xmlSchemaValidateDoc(valid_ctxt, doc);
+	if (ret)
+		ret = TESTRUNNER_LITE_XML_VALIDATION_FAIL;
 out:
 	/* 
 	 * 3) Clean up

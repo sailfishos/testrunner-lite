@@ -3,7 +3,7 @@
   <suite name="testrunner-lite-tests" domain="AutomatedTesting">
    <set name="testrunner-lite-unit-tests" description="Unit tests for testrunner-lite">
 
-    <case type="Functional" name="testrunnerlite_unit_tests" description="testrunner-lite tests">
+    <case type="Functional" name="testrunnerlite_unit_tests" description="testrunner-lite tests" timeout="180">
      <step>export CK_DEFAULT_TIMEOUT=10;/usr/lib/testrunner-lite-tests/testrunnerliteunittests</step>
     </case>  
 

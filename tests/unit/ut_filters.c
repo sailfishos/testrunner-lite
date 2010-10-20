@@ -201,7 +201,7 @@ START_TEST (test_feature_filter)
 
      filt.exclude = 0;
      filt.key = BAD_CAST "feature";
-     s.feature = BAD_CAST "some_fea,voice call,3g data";
+     s.gen.feature = BAD_CAST "some_fea,voice call,3g data";
 
      fail_unless (feature_filter (&filt, (void *)&s));
 

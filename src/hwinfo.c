@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <string.h>
 #include <libxml/xmlwriter.h>
+#include <dlfcn.h>
 #include "testrunnerlite.h"
 #include "executor.h"
 #include "hwinfo.h"
@@ -70,7 +71,7 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-LOCAL unsigned char *get_sysinfo (const char *);
+LOCAL unsigned char *exec_command (const char *c);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -78,23 +79,23 @@ LOCAL unsigned char *get_sysinfo (const char *);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/** Execute sysinfo-tool --get for given key
- *  @param key to be passed to sysinfo-tool e.g. "component/product"
- *  @return stdout output of the sysinfo-tool command
+/** Execute the command provided by plugin
+ *  @param cmd the command
+ *  @return stdout output of the  command
  */
-LOCAL unsigned char *get_sysinfo (const char *key)
+LOCAL unsigned char *exec_command (const char *cmd)
 {
-	char *cmd, *p;
+	char *p;
 	exec_data edata;
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data (&edata);
 	
+	if (cmd == NULL || !strlen (cmd))
+		return NULL;
+
 	edata.soft_timeout = 5;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-
-	cmd = (char *)malloc (strlen ("sysinfo-tool --get ") + 
-			      strlen (key) + 1);
-	sprintf (cmd, "sysinfo-tool --get /%s", key);
+	LOG_MSG (LOG_INFO, "executing command %s", cmd);
 	execute (cmd, &edata);
 	
 	if (edata.result) {
@@ -104,12 +105,10 @@ LOCAL unsigned char *get_sysinfo (const char *key)
 			 "no info available");
 		free (edata.stderr_data.buffer);
 		free (edata.stdout_data.buffer);
-		free (cmd);
 		return NULL;
 	}
 	p = strchr  ((char *)edata.stdout_data.buffer, '\n');
 	if (p) *p ='\0';
-	free (cmd);
 	
 	return edata.stdout_data.buffer;
 }
@@ -117,48 +116,48 @@ LOCAL unsigned char *get_sysinfo (const char *key)
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-/* ------------------------------------------------------------------------- */
 /** Obtain hardware info and save it to argument
  * @param hi container for hardware info
  * @return 0 if basic information can be obtained 1 otherwise
  */
 int read_hwinfo (hw_info *hi)
 {
+	void *plugin;
+        const char *(*hwinfo_product) ();
+        const char *(*hwinfo_hw_build) ();
+        const char *(*hwinfo_extra) ();
+
 	memset (hi, 0x0, sizeof (hw_info));
-	
-	hi->product = get_sysinfo("component/product");
-	hi->hw_build = get_sysinfo("component/hw-build");
-	if (!hi->product || !hi->hw_build) {
-		fprintf (stderr, "%s: Failed to read basic HW "
-			 "information from sysinfo.\n", PROGNAME);
+
+	plugin = dlopen ("/usr/lib/testrunner-lite-hwinfo.so",
+			  RTLD_NOW | RTLD_LOCAL);
+	if  (!plugin) {
+		LOG_MSG (LOG_WARNING, "failed to load hwinfo plugin %s",
+			 dlerror());
 		return 1;
-	} else {
-		LOG_MSG (LOG_INFO, "Hardware: Product: %s HWbuild: %s",
-			 hi->product, hi->hw_build);
 	}
-	
-	hi->nolo = get_sysinfo("component/nolo");
-	hi->boot_mode = get_sysinfo("component/boot-mode");
-	hi->production_sn = get_sysinfo("device/production-sn");
-	hi->product_code = get_sysinfo("device/product-code");
-	hi->basic_product_code = get_sysinfo("device/basic-product-code");
-	
-	if (!hi->nolo)
-		return 0;
-	
-	LOG_MSG(LOG_INFO, "Hardware: Nolo: %s"
-		" Boot_mode: %s"
-		" Production_sn: %s" 
-		" Product_code: %s"
-		" Basic_product_code: %s",
-		hi->nolo, 
-		hi->boot_mode ? hi->boot_mode : (unsigned char *)"unknown",
-		hi->production_sn ? hi->production_sn : 
-		(unsigned char *)"unknown",
-		hi->product_code ? hi->product_code : 
-		(unsigned char *)"unknown",
-		hi->basic_product_code ? hi->product_code : 
-		(unsigned char *)"unknown");
+
+	hwinfo_product = (const char*(*)())dlsym(plugin, "hwinfo_product");
+	if (!hwinfo_product) {
+		LOG_MSG (LOG_WARNING, "no function for hwinfo_product");
+	} else {
+		hi->product = exec_command (hwinfo_product());
+	}
+
+	hwinfo_hw_build = (const char*(*)())dlsym(plugin, "hwinfo_hw_build");
+	if (!hwinfo_hw_build) {
+		LOG_MSG (LOG_WARNING, "no function for hwinfo_hw_build");
+	} else {
+		hi->hw_build = exec_command (hwinfo_hw_build());
+	}
+
+	hwinfo_extra = (const char*(*)())dlsym(plugin, "hwinfo_extra");
+	if (hwinfo_extra) {
+		hi->extra = exec_command (hwinfo_extra());
+	}
+
+	dlclose (plugin);
+
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -168,22 +167,13 @@ int read_hwinfo (hw_info *hi)
 void print_hwinfo (hw_info *hi)
 {
 	printf ("Hardware Info:\n");
-	printf ("%s %s %s %s\n", 
+	printf ("%s %s %s\n", 
 		(char *)(hi->product ? hi->product : 
 			 (unsigned char *)"<none>"), 
 		(char *)(hi->hw_build ? hi->hw_build : 
 			 (unsigned char *)"<none>"), 
-		(char *)(hi->nolo ? hi->nolo : 
-			 (unsigned char *)"<none>"), 
-		(char *)(hi->boot_mode ? hi->boot_mode : 
-			 (unsigned char *)"<none>"));
-	printf ("%s %s %s\n", 
-		(char *)(hi->production_sn ? hi->production_sn : 
-			 (unsigned char *)"<none>") , 
-		(char *)(hi->product_code ? hi->product_code : 
-			 (unsigned char *)"<none>"),
-		(char *)(hi->basic_product_code ? hi->basic_product_code : 
-			 (unsigned char *)"<none>"));
+		(char *)(hi->extra ? hi->extra : 
+			 (unsigned char *)"")); 
 }
 /* ------------------------------------------------------------------------- */
 /** Free the allocated data from hw_info
@@ -194,11 +184,8 @@ void clean_hwinfo (hw_info *hi)
 	
         if (hi->product) free (hi->product); 
 	if (hi->hw_build) free (hi->hw_build);
-	if (hi->nolo) free (hi->nolo);
-	if (hi->boot_mode) free (hi->boot_mode);
-	if (hi->production_sn) free (hi->production_sn);
-	if (hi->product_code) free (hi->product_code);
-	if (hi->basic_product_code) free (hi->basic_product_code);
+	if (hi->extra) free (hi->extra);
+
 	return;
 } 
 

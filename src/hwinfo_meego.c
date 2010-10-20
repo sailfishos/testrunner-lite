@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Riku Halonen <riku.halonen@nokia.com>
+ * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,11 +23,15 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
-#include <check.h>
-#include <stdlib.h>
-#include <sys/time.h>
-
-#include "testrunnerlitetestscommon.h"
+#include <time.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <libxml/xmlwriter.h>
+#include "testrunnerlite.h"
+#include "executor.h"
+#include "hwinfo.h"
+#include "log.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -43,7 +47,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-struct timeval created;
+/* None */
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -56,7 +60,6 @@ struct timeval created;
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 /* None */
-
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -64,13 +67,10 @@ struct timeval created;
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
-
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
 /* None */
-
-/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -82,26 +82,29 @@ struct timeval created;
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-int main (void)
+/* FIXME: return unknown for know untill we know how to extract 
+ * the info in meego environment
+ */
+/** Return command for product information in meego environment
+ */
+const char *hwinfo_product()
 {
-	int number_failed;
-	Suite *s = suite_create ("master");
-	SRunner *sr = srunner_create (s);
-	gettimeofday (&created, NULL);
-	srunner_add_suite (sr, make_testdefinitionparser_suite ());
-	srunner_add_suite (sr, make_argumentparser_suite ());
-	srunner_add_suite (sr, make_testresultlogger_suite ());
-	srunner_add_suite (sr, make_testexecutor_suite ());
-	srunner_add_suite (sr, make_features_suite ());
-	srunner_add_suite (sr, make_manualtestexecutor_suite ());
-	srunner_add_suite (sr, make_testfilter_suite ());
-	srunner_run_all (sr, CK_VERBOSE);
-	number_failed = srunner_ntests_failed (sr);
-	srunner_free (sr);
-
-	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return "echo unknown";
 }
-
+/* ------------------------------------------------------------------------- */
+/** Return command for hw-build information in meego environment
+ */
+const char *hwinfo_hw_build()
+{
+	return "echo unknown";
+}
+/* ------------------------------------------------------------------------- */
+/** Return command for extra information in meego environment
+ */
+const char *hwinfo_extra()
+{
+	return NULL;
+}
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */
 

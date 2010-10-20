@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef TESTRUNNERLITE_H
-#define TESTRUNNERLITE_H
+#ifndef TESTDEFINITION_PROCESSOR_H
+#define TESTDEFINITION_PROCESSOR_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
@@ -34,48 +34,13 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-#define LOCAL static
-#define PROGNAME "testrunner-lite"
 /* ------------------------------------------------------------------------- */
+/* None */
+
 /* DATA TYPES */
 /* ------------------------------------------------------------------------- */
-/** Result output type */
-typedef enum {
-	OUTPUT_TYPE_XML = 1,
-	OUTPUT_TYPE_TXT 
-} result_output;
+/* None */
 
-/** testrunner-lite exit codes */
-typedef enum {
-	TESTRUNNER_LITE_OK = 0,
-	TESTRUNNER_LITE_INVALID_ARGUMENTS,
-	TESTRUNNER_LITE_SSH_FAIL,
-	TESTRUNNER_LITE_XML_PARSE_FAIL,
-	TESTRUNNER_LITE_XML_VALIDATION_FAIL,
-	TESTRUNNER_LITE_OUTPUT_FOLDER_CREATE_FAIL,
-	TESTRUNNER_LITE_XML_READER_FAIL,
-	TESTRUNNER_LITE_RESULT_LOGGING_FAIL
-} testrunner_lite_return_code;
-
-/** Used for storing and passing user (command line) options.*/
-typedef struct {
-	char *input_filename;  /**< the input xml file */
-	char *output_filename; /**< the result file */
-	char *output_folder;   /**< folder for storing results */
-	char *environment;     /**< execution environment */
-	char *remote_logger;     /**< Remote logger URL */
-	long  remote_logger_port; /** Remote logger port number */
-	int   syslog_output;   /**< flag for syslog */
-	int   disable_schema;  /**< flag for disabling DTD validation */
-	int   semantic_schema; /**< flag for enabling sricter DTD */
-	int   print_step_output; /**< enable logging of step std streams */
-	result_output   output_type;   /**< result output type selector */
-	int   run_automatic;   /**< flag for automatic tests */  
-	int   run_manual;      /**< flag for manual tests */
-	int   skip_hwinfo;     /**< flag for skipping hwinfo step */
-	int   log_level;       /**< logging level */
-	char *target_address;   /**< SUT address. */
-} testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -86,8 +51,14 @@ typedef struct {
 
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
-/* None */
-
 /* ------------------------------------------------------------------------- */
-#endif                          /* TESTRUNNERLITE_H */
+void td_process ();
+/* ------------------------------------------------------------------------- */
+const char *current_set_name ();
+/* ------------------------------------------------------------------------- */
+const char *current_case_name ();
+/* ------------------------------------------------------------------------- */
+int current_step_num ();
+/* ------------------------------------------------------------------------- */
+#endif                          /* TESTDEFINTIONPROCESSOR_H */
 /* End of file */

@@ -26,6 +26,7 @@ AM_CFLAGS = -I. \
 testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/testdefinitiondatatypes.o \
 			    $(top_builddir)/src/testresultlogger.o \
+			    $(top_builddir)/src/testdefinitionprocessor.o \
 			    $(top_builddir)/src/remote_executor.o \
 			    $(top_builddir)/src/manual_executor.o \
 			    $(top_builddir)/src/executor.o \

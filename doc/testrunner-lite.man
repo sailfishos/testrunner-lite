@@ -17,6 +17,9 @@ or text file.
 \fB\-h\fR,  \fB\-\-help\fR
 Display short help and exit
 .TP
+\fB\-V\fR,  \fB\-\-version\fR
+Display version and exit
+.TP
 \fB\-f\fR \fIFILE\fR,  \fB\-\-file\fR \fIFILE\fR
 Input file with test definitions in XML (required)
 .TP
@@ -36,6 +39,9 @@ URL format is [http://]host[:port][/path/], where host may be a hostname or an I
 \fB\-S\fR,  \fB\-\-syslog\fR 
 Enable logging to syslog.
 .TP
+\fB\-P\fR,  \fB\-\-print-step-output\fR
+Output standard streams from test steps.
+.TP
 \fB\-a\fR,  \fB\-\-automatic\fR 
 Enable only automatic tests to be executed
 .TP
@@ -43,11 +49,7 @@ Enable only automatic tests to be executed
 Enable only manual tests to be executed
 .TP
 \fB\-l\fR \fIFILTER\fR,  \fB\-\-filter\fR=\fIFILTER\fR
-Filtering option to select tests (not) to be executed.
-E.g. '-testcase=bad_test -type=unknown' first disables
-test case named as bad_test; Next, all tests with type
-unknown are disabled; The remaining tests will be
-executed
+Filtering option to select tests (not) to be executed. E.g. '-testcase=bad_test -type=unknown' first disables test case named as bad_test; Next, all tests with type unknown are disabled; The remaining tests will be executed. If filter type is prepended with '-' it is a blacklist filter, '+' or no prefix specifies white list filter. A filter can have multiple values separated by ','. E.g. 'testset=foo,wuz' would execute tests from test sets foo and wuz. 
 .TP
 \fB\-c\fR,  \fB\-\-ci\fR 
 Disable validation of test definition against schema
@@ -72,11 +74,25 @@ system under test.
 Successful program execution.
 .TP
 .B 1
-General error (invalid xml input, missing mandatory argument...).
+Invalid arguments.
 .TP
 .B 2
 Connection failure during host based testing.
-
+.TP
+.B 3
+Test definition xml parsing failed.
+.TP
+.B 4
+Test definition xml semantically incorrect.
+.TP
+.B 5
+Can not create output folder for results.
+.TP
+.B 6 
+Failed to create xml reader for parsing.
+.TP
+.B 7 
+Failed to initialize result logging.
 
 .SH FILES
 .I /usr/share/test-definition/testdefinition-syntax.xsd 

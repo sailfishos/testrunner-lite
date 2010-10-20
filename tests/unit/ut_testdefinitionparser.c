@@ -207,7 +207,7 @@ START_TEST (test_reader_suite)
     
     fail_unless (suite != NULL);
     fail_if (strcmp ((const char *)suite->gen.name, "examplebinary-tests"));
-    fail_if (strcmp ((const char *)suite->domain, "sample_suite_domain"));
+    fail_if (strcmp ((const char *)suite->gen.domain, "sample_suite_domain"));
     td_suite_delete (suite);
     suite = NULL;
 END_TEST
@@ -237,7 +237,7 @@ START_TEST (test_reader_set)
     
     fail_unless (suite != NULL);
     fail_if (strcmp ((const char *)suite->gen.name, "examplebinary-tests2"));
-    fail_if (strcmp ((const char *)suite->domain, "domain2"));
+    fail_if (strcmp ((const char *)suite->gen.domain, "domain2"));
     td_suite_delete (suite);
     suite = NULL;
 
@@ -245,7 +245,7 @@ START_TEST (test_reader_set)
     fail_if (strcmp ((const char *)set->gen.name, "testset3"));
     fail_if (strcmp ((const char *)set->gen.name, "testset3"));
     fail_if (strcmp ((const char *)set->gen.description, "set description 1"));
-    fail_if (strcmp ((const char *)set->feature, "feature2"));
+    fail_if (strcmp ((const char *)set->gen.feature, "feature2"));
     fail_unless (xmlListSize(set->environments) == 1);
     fail_unless (xmlListSize(set->pre_steps) == 1);
     fail_unless (xmlListSize(set->cases) == 3);

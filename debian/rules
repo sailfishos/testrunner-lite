@@ -12,16 +12,17 @@ endif
 DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+VERSION    ?= $(shell head  -1 debian/changelog | cut -d ' ' -f 2 | sed 's/[\(\)]//g')
+CFLAGS += -DVERSIONSTR="$(VERSION)"
 confflags += --build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE)
 
 build: build-stamp
 build-stamp:
 	dh_testdir
-	autoreconf --install
-	./configure --prefix=/usr  $(confflags)
-	$(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS)" 
+	libtoolize --copy --force && aclocal  && autoheader && automake --add-missing --foreign && autoconf
 	touch build-stamp 
-	$(MAKE) || exit 1 
+	./configure --prefix=/usr  $(confflags)
+	$(MAKE) CFLAGS="$(CFLAGS)"  || exit 1 
 	$(MAKE) html || exit 1 
 	touch NEWS 
 	touch ChangeLog

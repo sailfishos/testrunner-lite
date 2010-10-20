@@ -87,7 +87,6 @@ LOCAL int list_string_compare (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/* ------------------------------------------------------------------------- */
 /** Deallocator for list with xmlchar* items
  *  @param lk list item
  */
@@ -121,6 +120,17 @@ LOCAL int list_dummy_compare(const void * data0,
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Deallocator for list with td_file items
+ *  @param lk list item
+ */
+LOCAL void td_file_delete (xmlLinkPtr lk)
+{
+	td_file *file = (td_file *)xmlLinkGetData (lk);
+	free (file->filename);
+	free (file);
+}
+
+/* ------------------------------------------------------------------------- */
 /** Deallocator for general attributes 
  *  @param gen general attributes 
  */
@@ -131,6 +141,9 @@ LOCAL void gen_attribs_delete (td_gen_attribs *gen)
 	free (gen->requirement);
 	free (gen->level);
 	free (gen->type);
+	free (gen->domain);
+	free (gen->feature);
+	free (gen->component);
 }
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -166,10 +179,6 @@ td_suite *td_suite_create()
 void td_suite_delete(td_suite *s)
 {
 	gen_attribs_delete (&s->gen);
-	if (s->domain) free (s->domain);
-#if 0
-	if (s->suite_type) free (s->suite_type);
-#endif
 	free (s);
 }
 /* ------------------------------------------------------------------------- */
@@ -185,8 +194,8 @@ td_set *td_set_create ()
 		return NULL;
 	}
 	memset (set, 0x0, sizeof (td_set));
-	set->pre_steps = xmlListCreate (td_step_delete, list_dummy_compare);
-	set->post_steps = xmlListCreate (td_step_delete, list_dummy_compare);
+	set->pre_steps = xmlListCreate (td_steps_delete, list_dummy_compare);
+	set->post_steps = xmlListCreate (td_steps_delete, list_dummy_compare);
 	set->cases = xmlListCreate (td_case_delete, list_dummy_compare);
 	set->environments = xmlListCreate (list_string_delete, 
 					   list_string_compare);
@@ -199,7 +208,7 @@ td_set *td_set_create ()
 	env =  xmlCharStrdup ("scratchbox");
 	xmlListAppend (set->environments, env);
 
-	set->gets = xmlListCreate (list_string_delete, NULL);
+	set->gets = xmlListCreate (td_file_delete, NULL);
 
 	return set;
 }
@@ -210,8 +219,7 @@ td_set *td_set_create ()
 void td_set_delete(td_set *s)
 {
 	gen_attribs_delete(&s->gen);
-	free (s->feature);
-	
+
 	xmlListDelete (s->pre_steps);
 	xmlListDelete (s->post_steps);
 	xmlListDelete (s->cases);
@@ -255,6 +263,25 @@ td_case *td_case_create()
 	return td_c;
 }
 /* ------------------------------------------------------------------------- */
+/** Creates a td_steps data structure
+ *  @return pointer to td_case or NULL in case of OOM
+ */
+td_steps *td_steps_create()
+{
+	td_steps *steps;
+
+	steps = (td_steps *) malloc (sizeof (td_steps));
+	if (steps == NULL) {
+		LOG_MSG (LOG_ERR, "%s: FATAL : OOM", PROGNAME);
+		return NULL;
+	}
+	memset (steps, 0x0, sizeof (td_steps));
+	steps->timeout = 0;
+	steps->steps = xmlListCreate (td_step_delete, list_dummy_compare);
+
+	return steps;
+}
+/* ------------------------------------------------------------------------- */
 /** Deallocator for td_step called by xmlListDelete
  */
 void td_step_delete(xmlLinkPtr lk)
@@ -277,8 +304,20 @@ void td_case_delete(xmlLinkPtr lk)
 	td_case *td_c = xmlLinkGetData (lk);
 	xmlListDelete (td_c->steps);
 	free (td_c->comment);
+	free (td_c->failure_info);
+	free (td_c->tc_title);
+	free (td_c->state);
 	gen_attribs_delete(&td_c->gen);
 	free (td_c);
+}
+/* ------------------------------------------------------------------------- */
+/** Deallocator for  td_steps data structure
+ */
+void td_steps_delete(xmlLinkPtr lk)
+{
+	td_steps *steps = xmlLinkGetData (lk);
+	xmlListDelete (steps->steps);
+	free (steps);
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

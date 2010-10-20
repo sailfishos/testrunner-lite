@@ -49,21 +49,29 @@ typedef struct {
 	xmlChar *type;          /**< Type attribute */
 	unsigned long timeout;  /**< Timeout (defaults to 90) */
 	xmlChar *level;         /**< Level (Component, Feature, System) */
+	xmlChar *domain;        /**< Domain */
+	xmlChar *feature;       /**< Feature attribute */
+	xmlChar *component;     /**< Component attribute */
+
 	int      manual;        /**< Manual flag (default false) */
 	int      insignificant; /**< Insignificant flag (default false) */
 } td_gen_attribs;
-
+/* ------------------------------------------------------------------------- */
 /** Test suite */
 typedef struct {
 	td_gen_attribs gen;   /**< General attributes */
-	xmlChar    *domain;   /**< Domain */
 	int        filtered;  /**< Suite is filtered */
 } td_suite;
+/* ------------------------------------------------------------------------- */
+/** File element (for get tag) */
+typedef struct {
+	int        delete_after;  /**< Delete_after attribute */
+	xmlChar    *filename;     /**< File name */
+} td_file;
 /* ------------------------------------------------------------------------- */
 /** Test set. */
 typedef struct {
 	td_gen_attribs gen;      /**< General attributes */
-	xmlChar   *feature;      /**< Feature attribute */
 	xmlListPtr pre_steps;    /**< Steps executed before each test case */
 	xmlListPtr post_steps;   /**< Steps executed after each test case */
 	xmlListPtr cases;        /**< Test cases in this set */
@@ -83,6 +91,8 @@ typedef struct {
 	int      expected_result; /**< expected result of step */
 	int      has_result;      /**< should we trust the return_code */
 	int      return_code;     /**< actual result of step */
+	int      manual;          /**< Manual flag (default from case) */
+
 	/* Executor fills */
 	xmlChar *failure_info;    /**< optional failure info */
 	time_t   start;           /**< step execution start time */
@@ -106,12 +116,21 @@ typedef struct {
 	td_gen_attribs gen;     /**< General attributes */
 	xmlChar   *subfeature;  /**< Sub feature attribute */
 	xmlListPtr steps;       /**< Steps in this test case */
-	xmlChar   *comment;     /**< Manual test case comment */
+	xmlChar   *tc_title;    /**< TC_Title */
+	xmlChar   *state;       /**< State attribute */
 	/* Executor fills */
-	case_result_t  case_res; /**< r stating whether this case is passed */
+	xmlChar   *comment;     /**< Manual test case comment */
+	case_result_t  case_res; /**< Case result */
+	xmlChar   *failure_info;   /**< optional failure info */
 	int        dummy;       /**< Case is dummy - used with pre post steps */
 	int        filtered;    /**< Case is filtered */
 } td_case;
+/* ------------------------------------------------------------------------- */
+/** Pre/post steps */
+typedef struct {
+	xmlListPtr steps;       /**< Steps of pre/post steps */
+	unsigned long timeout;  /**< Timeout */
+} td_steps;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -140,6 +159,10 @@ void td_step_delete(xmlLinkPtr);
 td_case *td_case_create();
 /* ------------------------------------------------------------------------- */
 void td_case_delete(xmlLinkPtr);
+/* ------------------------------------------------------------------------- */
+td_steps *td_steps_create();
+/* ------------------------------------------------------------------------- */
+void td_steps_delete(xmlLinkPtr);
 /* ------------------------------------------------------------------------- */
 #endif                          /* TESTDEFINITIONDATATYPES_H */
 /* End of file */

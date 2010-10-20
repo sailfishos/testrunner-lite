@@ -42,11 +42,7 @@
 typedef struct {
         unsigned char *product; 
 	unsigned char *hw_build;
-        unsigned char *nolo;
-        unsigned char *boot_mode;
-        unsigned char *production_sn;
-        unsigned char *product_code; 
-	unsigned char *basic_product_code;
+        unsigned char *extra;
 } hw_info;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

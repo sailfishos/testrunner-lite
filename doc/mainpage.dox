@@ -26,6 +26,9 @@ The program is excuted from commandline
 \subsection opt_help  -h,  --help
 Display short help and exit
 
+\subsection opt_version  -V,  --version
+Display version information and exit
+
 \subsection opt_file -f FILE,  --file FILE
 Input file with test definitions in XML (required)
 
@@ -47,6 +50,9 @@ Enable only automatic tests to be executed
 
 \subsection opt_syslog       -S,  --syslog
 Enable logging to syslog.
+
+\subsection opt_P  -P,  --print-step-output\fR
+Output standard streams from test steps.
 
 \subsection opt_manual       -m,  --manual
 Enable only manual tests to be executed
@@ -91,6 +97,14 @@ The following example executes test cases that specify the requirement attribute
 \code
 testrunner-lite -f tests.xml -o ~/results -l 'requirement=50001,50002,50003'
 \endcode
+Note that each key=values is handled as a separate filter, when checking whether a test case should be filtered. The following example will filter all the test cases, 
+\code
+testrunner-lite -f tests.xml -o ~/results -l 'testset=set1 testset=set2'
+\endcode
+whereas the following will accept tests from test sets "set1" and "set2".
+\code
+testrunner-lite -f tests.xml -o ~/results -l 'testset=set1,set2'
+\endcode
 
 \section manual_exec_sec Manual Test Cases
 
@@ -126,17 +140,21 @@ Execution was slow.
 \page main_mod_page Main Modules
 \section main_mod Main Modules
 
-Following gives short introduction to main modules of testrunner-lite. To give
+Following gives short introduction to main modules of testrunner-lite to give
 better understanding of the program flow.
 
 \subsection main Main
 
-File \ref main.c contains basic commandline parsing and the high level logic of execution.
+File \ref main.c contains basic commandline parsing and calls for init functions of the testrunner-lite modules.
 
 \subsection test_def Test definition parser
 
 The test definition parsing is done in \ref testdefinitionparser.c. The data is saved to data structures defined in \ref testdefinitiondatatypes.h as the parsing progresses. File \ref testdefinitiondatatypes.c contains routines for intialization and cleanup of the test definition data types.
 
+\subsection test_pro Test definition processor
+
+The test definition processor communicates with the parser module. It calls \ref td_next_node as long as there is data to parse in test definition (or error occurs). The parser in turn calls callbacks in the processor for suite and set, so that when the parser has a set parsed into internal structs (\ref testdefinitiondatatypes.h), those are passed to processor that then executes steps in the set, writes results and frees the data. This way testrunner-lite needs to keep only one test set data at a time in its memory. For the actual execution of a test step, the processor module uses executor module.
+ 
 \subsection execution Executor
 
 The executor module (\ref executor.c) takes care of test step execution. File 

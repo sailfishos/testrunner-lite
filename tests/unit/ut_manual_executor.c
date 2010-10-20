@@ -279,7 +279,6 @@ START_TEST (test_execute_manual_step_na)
     
 END_TEST
 /* ------------------------------------------------------------------------- */
-
 START_TEST (test_execute_manual_set)
      int ret;
      FILE *f;
@@ -298,7 +297,25 @@ START_TEST (test_execute_manual_set)
      fail_unless (ret, "/tmp/res.xml contains FAIL");
 
 END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_execute_semi_auto)
+     int ret;
+     FILE *f;
 
+     f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
+		 "testrunner-tests-semi_auto.xml -o /tmp/res.xml", "w");
+     fail_if (f == NULL, "popen() failed");
+     ret = fwrite ("P\n\n", 1, 5, f);
+     fail_if (ret != 5, "fwrite() returned : %d", ret);
+     fclose (f);
+     
+     ret = system ("grep PASS /tmp/res.xml");
+     fail_if (ret, "/tmp/res.xml does not contain PASS");
+
+     ret = system ("grep FAIL /tmp/res.xml");
+     fail_unless (ret, "/tmp/res.xml contains FAIL");
+
+END_TEST
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -322,9 +339,12 @@ Suite *make_manualtestexecutor_suite (void)
     tcase_add_test (tc, test_execute_manual_step_na);
     suite_add_tcase (s, tc);
 
-
     tc = tcase_create ("Test executing manual set.");
     tcase_add_test (tc, test_execute_manual_set);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executing semi automatic set.");
+    tcase_add_test (tc, test_execute_semi_auto);
     suite_add_tcase (s, tc);
 
     return s;

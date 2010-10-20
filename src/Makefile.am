@@ -1,9 +1,17 @@
 bin_PROGRAMS = testrunner-lite
+lib_LTLIBRARIES = testrunner-lite-hwinfo-maemo.la \
+		  testrunner-lite-hwinfo-meego.la
+testrunner_lite_hwinfo_maemo_la_SOURCES = hwinfo_maemo.c
+testrunner_lite_hwinfo_maemo_la_LDFLAGS = -avoid-version -module -shared -fPIC
+testrunner_lite_hwinfo_maemo_la_CLFAGS  = -fPIC
+testrunner_lite_hwinfo_meego_la_SOURCES = hwinfo_meego.c
+testrunner_lite_hwinfo_meego_la_LDFLAGS = -avoid-version -module -shared -fPIC
 
 testrunner_lite_SOURCES = main.c \
 	                  testdefinitionparser.c \
 	                  testdefinitiondatatypes.c \
 			  testresultlogger.c \
+			  testdefinitionprocessor.c \
 			  testfilters.c \
 	                  executor.c \
 			  remote_executor.c \
@@ -20,6 +28,7 @@ noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \
 	         testdefinitiondatatypes.h \
 		 testresultlogger.h \
+	         testdefinitionprocessor.h \
 		 testfilters.h \
 	         executor.h \
 		 remote_executor.h \

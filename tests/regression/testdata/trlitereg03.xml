@@ -4,7 +4,7 @@
     <set name="set1">
       <case name="case1_1">     <!-- result="FAIL" -->
  	<step>/bin/false</step> <!-- result="FAIL" -->
-	<step>/bin/true</step>  <!-- this step should not be executed -->
+	<step>/bin/true</step>  <!-- result="N/A" this step should not be executed -->
       </case>
 
       <case name="case1_2">     <!-- result="PASS" -->

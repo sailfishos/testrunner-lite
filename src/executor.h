@@ -43,8 +43,8 @@
  * -l : Login shell. .profile is read upon login
  * -c : Execute a command. This must be the last option followed by a command
  */
-#define SHELLCMD_ARGS      "-l", "-c"
-#define SHELLCMD_ARGS_STR  "-l -c"
+#define SHELLCMD_ARGS      "-c"
+#define SHELLCMD_ARGS_STR  "-c"
 #define FAILURE_INFO_TIMEOUT "timeout"
 #define POLL_TIMEOUT_MS   100
 #define POLL_TIMEOUT_US   (1000*POLL_TIMEOUT_MS)
@@ -95,14 +95,26 @@ typedef struct _exec_data exec_data;
 
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
+/* ------------------------------------------------------------------------- */
 void executor_init (testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
 int execute(const char* command, exec_data* data);
+/* ------------------------------------------------------------------------- */
 void init_exec_data(exec_data* data);
+/* ------------------------------------------------------------------------- */
 void clean_exec_data(exec_data* data);
+/* ------------------------------------------------------------------------- */
 void init_stream_data(stream_data* data, int allocate);
+/* ------------------------------------------------------------------------- */
 void clean_stream_data(stream_data* data);
- void kill_pgroup(int pgroup, int sig);
+/* ------------------------------------------------------------------------- */
+void kill_pgroup(int pgroup, int sig);
+/* ------------------------------------------------------------------------- */
 void executor_close ();
+/* ------------------------------------------------------------------------- */
+void handle_sigint (int signum);
+/* ------------------------------------------------------------------------- */
+void handle_sigterm (int signum);
 /* ------------------------------------------------------------------------- */
 #endif                          /* EXECUTOR_H */
 /* End of file */

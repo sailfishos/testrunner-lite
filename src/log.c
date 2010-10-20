@@ -195,13 +195,31 @@ void log_msg(int type, const char *file, const char *function,
 	
 	const char *stream_name;
 	char timestamp[10];
-	char *msg, *post_msg, *module, *p;
+	char *msg, *post_msg, *url_enc_msg,*module, *p;
 	CURLcode res;
 	struct tm *tm;
 	time_t current_time;
 	struct timeval now, diff;
 	va_list args;
-	unsigned int to_python_level[] = {40,20,10,30,0};
+	/* Syslog:
+	   LOG_EMERG	0
+	   LOG_ALERT	1
+	   LOG_CRIT	2	
+	   LOG_ERR	3	
+	   LOG_WARNING	4	
+	   LOG_NOTICE	5
+	   LOG_INFO	6	
+	   LOG_DEBUG	7	
+	   Python:
+	   CRITICAL 	50
+	   ERROR 	40
+	   WARNING 	30
+	   INFO         20
+	   DEBUG 	10
+	   NOTSET 	0 
+	*/
+	unsigned int to_python_level[] = {50, 50, 50, 40,
+					  30, 20, 20, 10, 0};
 
 	/* Check if message should be printed */
 	if (verbosity_level == LOG_LEVEL_SILENT || 
@@ -241,6 +259,7 @@ void log_msg(int type, const char *file, const char *function,
 		syslog (type, "%s", msg);
 	
 	fprintf (stdout, "%s\n", msg);
+	fflush (stdout);
 	
 	if (!curl) {
 		free (msg);
@@ -258,9 +277,11 @@ void log_msg(int type, const char *file, const char *function,
 	strcpy (module, file);
 	if ((p = strchr (module, '.')))
 	    *p = '\0';
+
 	/*
 	** Compose http POST
 	*/
+	url_enc_msg = curl_easy_escape (curl, msg, strlen(msg));
 	post_msg = create_msg ("levelno=%d&"
 			       "name=testrunner-lite&"
 			       "levelname=%s&" 
@@ -279,13 +300,13 @@ void log_msg(int type, const char *file, const char *function,
 			       "process=%d&"
 			       "relativeCreated=%d.%d&"
 			       "msecs=%d.%d&"
-			       ,to_python_level[verbosity_level],
+			       ,to_python_level[type],
 			       stream_name,
 			       module,
 			       file,
 			       function,
 			       lineno,
-			       msg,
+			       url_enc_msg,
 			       created.tv_sec,
 			       created.tv_usec,
 			       getpid(),
@@ -294,6 +315,7 @@ void log_msg(int type, const char *file, const char *function,
 			       diff.tv_usec ? diff.tv_usec/1000 : 0,
 			       diff.tv_usec % 1000);
 	if (!post_msg) {
+		curl_free (url_enc_msg);
 		free (msg);
 		return;
 	}
@@ -307,6 +329,7 @@ void log_msg(int type, const char *file, const char *function,
 
 		log_close();
 	}
+	curl_free (url_enc_msg);
 	free (msg);
 	free (post_msg);
 	free (module);

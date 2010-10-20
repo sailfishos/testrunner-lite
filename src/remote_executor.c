@@ -29,9 +29,12 @@
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "testrunnerlite.h"
 #include "executor.h"
+#include "testdefinitionprocessor.h"
 #include "remote_executor.h"
 #include "log.h"
 
@@ -67,8 +70,8 @@
 LOCAL char *unique_id = NULL;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
-#define UNIQUE_ID_FMT     "%s.%d"
-#define PID_FILE_FMT      "/tmp/testrunner-lite-%s.%d.pid"
+#define UNIQUE_ID_FMT     "%d"
+#define PID_FILE_FMT      "/var/tmp/testrunner-lite-%s.%d.pid"
 #define UNIQUE_ID_MAX_LEN (HOST_NAME_MAX + 10 + 1 + 1)
 #define PID_FILE_MAX_LEN  (30 + UNIQUE_ID_MAX_LEN + 10 + 1 + 1)
 
@@ -91,10 +94,12 @@ LOCAL char *unique_id = NULL;
 /* ------------------------------------------------------------------------- */
 /** Init the ssh executor
  */
-void ssh_executor_init ()
+void ssh_executor_init (const char *hostname)
 {
-	int ret;
-	
+	int ret, status;
+	pid_t pid;
+	char *cmd = "echo '#!/bin/sh' > /tmp/mypid.sh;"
+		"echo 'echo $PPID' >> /tmp/mypid.sh;";
 	unique_id = (char *)malloc (UNIQUE_ID_MAX_LEN);
 	ret = gethostname(unique_id, HOST_NAME_MAX);
 	if (ret) {
@@ -102,9 +107,21 @@ void ssh_executor_init ()
 			strerror (errno));
 		strcpy (unique_id, "foo");
 	}
-	sprintf (unique_id, UNIQUE_ID_FMT, unique_id, getpid());
+	sprintf (unique_id + strlen(unique_id), UNIQUE_ID_FMT, getpid());
 
 	LOG_MSG(LOG_DEBUG, "unique_id set to %s", unique_id);
+	
+	pid = fork();
+	if (pid > 0) { 
+		waitpid(pid, &status, 0);
+		return;
+	}
+	if (pid < 0)
+		return;
+	
+
+	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
+		    cmd, (char*)NULL);
 	
 }
 /* ------------------------------------------------------------------------- */
@@ -115,24 +132,44 @@ void ssh_executor_init ()
  */
 int ssh_execute (const char *hostname, const char *command)
 {
-	int ret;
+	int   ret;
         char *cmd; 
-	
-        cmd = (char *)malloc (PID_FILE_MAX_LEN + 100 + strlen (command));
+	char *casename;
+	char *setname;
+	int   stepnum;
+	/*
+	 * Query the current set name, case name and step number 
+	 * from testdefinition processor so we can put some debug 
+	 * to target syslog
+	 */
+	casename = current_case_name();
+	stepnum  = current_step_num();
+	setname  = current_set_name();
+
+        cmd = (char *)malloc (PID_FILE_MAX_LEN + 130 + strlen (command)
+			      + strlen (casename) + strlen (setname));
         if (!cmd) {
                 fprintf (stderr, "%s: could not allocate memory for "
                          "command %s\n", __FUNCTION__, command);
         }
-        sprintf (cmd, "echo $$ > " PID_FILE_FMT 
-                 ";source .profile > /dev/null; %s",
-                 unique_id, getpid(), command);
+	if (strlen (casename) && strlen (setname)) 
+		sprintf (cmd, "logger set:%s-case:%s-step:%d;"
+			 "sh < /tmp/mypid.sh > " 
+			 PID_FILE_FMT 
+			 ";source .profile > /dev/null; %s",
+			 setname, casename, stepnum, unique_id, getpid(), command);
+	else
+		sprintf (cmd, "sh < /tmp/mypid.sh > " 
+			 PID_FILE_FMT 
+			 ";source .profile > /dev/null; %s",
+			 unique_id, getpid(), command);
+
         /* cmd can not be freed since execl does not return here */
         ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
                     cmd, (char*)NULL);
 
 
         return ret;
-
 }
 /* ------------------------------------------------------------------------- */
 /** Tries to check if ssh connections are still working
@@ -144,11 +181,10 @@ int ssh_check_conn (const char *hostname)
 	int ret;
 	char cmd[1024];
 	
-	sprintf (cmd, "%s %s %s echo", SSHCMD, SSHCMDARGS_STR, hostname);
+	sprintf (cmd, "%s %s %s echo foo", SSHCMD, SSHCMDARGS_STR, hostname);
 	ret = system (cmd);
 	return ret;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Tries to kill program started by ssh and removes temporary file
  *  @param hostname SUT address 
@@ -160,12 +196,15 @@ int ssh_kill (const char *hostname, pid_t id)
 	pid_t pid;
 	char cmd [PID_FILE_MAX_LEN * 3 + 80];
 	char file [PID_FILE_MAX_LEN];
+	int status;
 	
 	pid = fork();
-	if (pid > 0) 
-	    return 0;
+	if (pid > 0) { 
+		waitpid(pid, &status, 0);
+		return status;
+	}
 	if (pid < 0)
-	    return 1;
+		return 1;
 	
 	sprintf(file, PID_FILE_FMT, unique_id, id);
 	sprintf (cmd, "[ -f %1$s ] && pkill -9 -P $(cat %1$s); rm -f %1$s", 
@@ -183,7 +222,7 @@ int ssh_kill (const char *hostname, pid_t id)
  */
 void ssh_clean (const char *hostname, pid_t id)
 {
-	int ret;
+	int ret, status;
 	pid_t pid;
 	char cmd [PID_FILE_MAX_LEN + 80];
 
@@ -192,6 +231,7 @@ void ssh_clean (const char *hostname, pid_t id)
 	pid = fork();
 
 	if (pid) {
+		waitpid(pid, &status, 0);
 		return;
 	}
 

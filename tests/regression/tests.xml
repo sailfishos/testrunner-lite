@@ -30,6 +30,10 @@
 	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg07.xml</step>
       </case>
 
+      <case name="trlitereg08">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg08.xml</step>
+      </case>
+
       <environments>
 	<scratchbox>false</scratchbox>
 	<hardware>true</hardware>
@@ -50,8 +54,16 @@
 
       <case name="test_presteps_failure_info">
 	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-pre_step-fail.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
-	<step>grep &quot;pre_steps failed&quot; /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep step /tmp/testrunnerlitetestdir/res.xml | grep &quot;pre_steps failed&quot; </step>
+	<step>grep case /tmp/testrunnerlitetestdir/res.xml | grep &quot;pre_steps failed&quot; </step>
       </case>
+
+      <case name="test_domain_and_feature_results">
+	<step>testrunner-lite -a -v -f /usr/share/testrunner-lite-regression-tests/testdata/filter_tests.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep feature2 /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep sample_suite_domain /tmp/testrunnerlitetestdir/res.xml</step>
+      </case>
+
 
       <post_steps>
 	<step>rm -fr /tmp/testrunnerlitetestdir</step>
@@ -72,6 +84,10 @@
       <case name="test_utf8">
 	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-utf8.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>grep &quot;$(cat /usr/share/testrunner-lite-tests/testdata/unicode.txt)&quot; /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>cat /tmp/testrunnerlitetestdir/utf8_testdata</step>
+	<step>grep -f /tmp/testrunnerlitetestdir/utf8_testdata /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>[ "$(stat /tmp/testrunnerlitetestdir/utf8_testdata | awk '/Size: [0-9]+/ { print $2 }')" = "17" ]</step>
+	<step>rm -f /tmp/testrunnerlitetestdir/utf8_testdata</step>
       </case>
 
       <case name="test_non_utf8">
@@ -103,6 +119,13 @@
 	<step>[ -f /tmp/testrunnerlitetestdir/gettest3.txt ]</step>
 	<step>[ -f /tmp/testrunnerlitetestdir/gettest4.txt ]</step>
 	<step>[ -f /tmp/testrunnerlitetestdir/get\ test5.txt ]</step>
+
+	<step>[ ! -f /tmp/gettest.txt ]</step>
+	<step>[ -f /tmp/gettest2.txt ]</step>
+	<step>[ -f /tmp/gettest3.txt ]</step>
+	<step>[ ! -f /tmp/gettest4.txt ]</step>
+	<step>[ -f /tmp/get\ test5.txt ]</step>
+
       </case>
 
       <post_steps>
@@ -179,6 +202,10 @@
 
       <case name="ending_in_semicolon">
 	<step>echo '"Hello World!"';</step>
+      </case>
+
+      <case name="testrunner_lite_version">
+	<step>testrunner-lite -V | grep  "testrunner-lite version"</step>
       </case>
 
       <environments>
