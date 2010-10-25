@@ -8,6 +8,9 @@ Standards-Version: 3.8.0
 Package: testrunner-lite
 Architecture: any
 Depends: libxml2, test-definition, libcurl3, openssh | ssh, testrunner-lite-hwinfo
+Provides: testrunner
+Conflicts: testrunner
+Replaces: testrunner
 Description: generic test executor tool
 
 Package: testrunner-lite-doc
