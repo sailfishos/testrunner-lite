@@ -75,6 +75,7 @@ int bail_out = 0;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
+LOCAL td_td    *current_td = NULL;    /* Test definition currently executed */
 LOCAL td_suite *current_suite = NULL; /* Suite currently executed */
 LOCAL td_set   *current_set = NULL;   /* Set currently executed */
 LOCAL xmlChar  *cur_case_name = "";   /* Name of the current case or pre/post */
@@ -92,6 +93,12 @@ LOCAL int casecount = 0;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
+/* ------------------------------------------------------------------------- */
+LOCAL void process_td(td_td *);
+/* ------------------------------------------------------------------------- */
+LOCAL void end_td();
+/* ------------------------------------------------------------------------- */
+LOCAL void process_hwiddetect();
 /* ------------------------------------------------------------------------- */
 LOCAL void process_suite(td_suite *);
 /* ------------------------------------------------------------------------- */
@@ -330,7 +337,7 @@ LOCAL int process_case (const void *data, const void *user)
 		LOG_MSG (LOG_INFO, "Test case %s is filtered", c->gen.name);
 		return 1;
 	}
-	
+
 	cur_case_name = c->gen.name;
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
@@ -468,6 +475,59 @@ LOCAL int process_get (const void *data, const void *user)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/** Process test definition
+ *  @param *td Test definition data
+ */
+LOCAL void process_td (td_td *td)
+{
+	current_td = td;
+}
+/* ------------------------------------------------------------------------- */
+/** Do test definition cleaning
+ */
+LOCAL void end_td ()
+{
+	td_td_delete (current_td);
+	current_td = NULL;
+}
+/* ------------------------------------------------------------------------- */
+/** Process hwiddetect: Run detector command and store result in current td
+ */
+LOCAL void process_hwiddetect ()
+{
+	exec_data edata;
+	char* trimmed = NULL;
+	size_t length = 0;
+
+	if (current_td && current_td->hw_detector) {
+		init_exec_data(&edata);
+		edata.redirect_output = REDIRECT_OUTPUT;
+		edata.soft_timeout = COMMON_SOFT_TIMEOUT;
+		edata.hard_timeout = COMMON_HARD_TIMEOUT;
+
+		execute((char*)current_td->hw_detector, &edata);
+
+		if (edata.result != EXIT_SUCCESS) {
+			LOG_MSG (LOG_ERR, "Running HW ID detector "
+				 "failed with return value %d",
+				 edata.result);
+		} else if (edata.stdout_data.buffer) {
+			/* remove possible whitespace, linefeeds, etc. */
+			length = strlen((char*)edata.stdout_data.buffer);
+			trimmed = (char*)malloc(length + 1);
+			trim_string((char*)edata.stdout_data.buffer, trimmed);
+
+			current_td->detected_hw = xmlCharStrdup(trimmed);
+			LOG_MSG (LOG_INFO, "Detected HW ID '%s'",
+				 current_td->detected_hw);
+		}
+
+		clean_exec_data(&edata);
+	}
+
+	free(trimmed);
+}
+/* ------------------------------------------------------------------------- */
 /** Do processing on suite, currently just writes the pre suite tag to results
  *  @param s suite data
  */
@@ -501,6 +561,16 @@ LOCAL void process_set (td_set *s)
 	*/
 	if (filter_set (s)) {
 		LOG_MSG (LOG_INFO, "Test set %s is filtered", s->gen.name);
+		goto skip_all;
+	}
+
+	/*
+	** User defined HW ID based filtering
+	*/
+	if (s->gen.hwid && current_td->detected_hw &&
+	    xmlStrcmp(s->gen.hwid, current_td->detected_hw) != 0) {
+		LOG_MSG (LOG_INFO, "Test set %s is filtered based on HW ID",
+			 s->gen.name);
 		goto skip_all;
 	}
 
@@ -576,6 +646,9 @@ void td_process () {
 	/*
 	** Set callbacks for parser
 	*/
+	cbs.test_td = process_td;
+	cbs.test_td_end = end_td;
+	cbs.test_hwiddetect = process_hwiddetect;
 	cbs.test_suite = process_suite;
 	cbs.test_suite_end = end_suite;
 	cbs.test_set = process_set;
