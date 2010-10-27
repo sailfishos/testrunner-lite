@@ -42,6 +42,9 @@
 /* ------------------------------------------------------------------------- */
 /** Callbacks for parser. Parser uses these to pass parsed data to caller. */
 typedef struct {
+        void (*test_td) (td_td *);   /**< callback for testdefinition */
+        void (*test_td_end) ();      /**< callback for testdefinition end */
+        void (*test_hwiddetect) ();   /**< callback for hw id detection */
         void (*test_suite) (td_suite *); /**< callback for suite handler    */
         void (*test_suite_end) (); /**< callback for suite end handler */
         void (*test_suite_description) (char *); /**< callback for suite 

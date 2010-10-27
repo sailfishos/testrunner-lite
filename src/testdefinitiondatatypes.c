@@ -144,6 +144,7 @@ LOCAL void gen_attribs_delete (td_gen_attribs *gen)
 	free (gen->domain);
 	free (gen->feature);
 	free (gen->component);
+	free (gen->hwid);
 }
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -157,6 +158,32 @@ const char *case_result_str (case_result_t cr)
 	if (cr > CASE_NA || cr < CASE_FAIL)
 		return "INVALID";
 	return case_res_str[cr];
+}
+/** Creates test definition data structure
+ *  @return pointer to td_td or NULL in case of OOM
+ */
+td_td *td_td_create()
+{
+	td_td *td = (td_td *)malloc (sizeof (td_td));
+	if (td == NULL) {
+		LOG_MSG (LOG_ERR, "%s: FATAL : OOM", PROGNAME);
+		return NULL;
+	}
+
+	memset (td, 0x0, sizeof (td_td));
+	return td;
+}
+/* ------------------------------------------------------------------------- */
+/** De-allocate test definition data structure
+ *  @param *td td_td data
+ */
+void td_td_delete(td_td *td)
+{
+	if (td) {
+		xmlFree(td->hw_detector);
+		xmlFree(td->detected_hw);
+		free (td);
+	}
 }
 /** Creates a td_suite data structure, initializes lists for pre_steps etc.
  *  @return pointer to td_set or NULL in case of OOM
