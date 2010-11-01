@@ -107,7 +107,7 @@ for further details.
 Written by Riku Halonen, Sami Lahtinen and Sampo Saaristo.
 
 .SH BUGS
-All filter types are not supported. Currently supporting filters of type 'testcase', 'testset', 'requirement', 'feature' and 'type'
+All filter types are not supported. Currently supporting filters of type 'testcase', 'testset', 'requirement', 'feature' and 'type'. Test filtering based hwid attribute is currently supported only for sets.
  
 .SH "REPORTING BUGS"
 Report bugs to http://bugs.meego.com

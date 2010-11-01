@@ -106,6 +106,32 @@ whereas the following will accept tests from test sets "set1" and "set2".
 testrunner-lite -f tests.xml -o ~/results -l 'testset=set1,set2'
 \endcode
 
+\section hwid_detection Filtering Based on Hardware Identifier
+
+If different tests sets for different hardware are required then hwiddetect feature can be utilised. User can define a command used to get a hardware identifier within hwiddetect tag. The hardware identifier returned by the command is matched with optional hwid attribute of a test set. If not equal, test cases in the set are skipped and are not written to the result file. A test set will be never skipped if hwid attribute has not been defined for it.
+
+Command defined by hwiddetect can be a shell command or a separate executable. The executable should be included in the test package. Testrunner-lite removes extra whitespace and linefeeds from the the output of the hwiddetect command so that test developer does not need to care about it.
+
+Example usage of hwiddetect:
+\verbatim
+<testdefinition version="1.0">
+  <hwiddetect>/usr/bin/getmyhwid</hwiddetect>
+  <suite name="suite1">
+    <set name="test_feature_X_on_hw_bar" hwid="bar">
+      <case name="test_X_1">
+	<step>echo "hwid is bar"</step>
+      </case>
+    </set>
+    <set name="test_feature_X_on_hw_foo" hwid="foo">
+      <case name="test_X_1">
+	<step>echo "hwid is foo"</step>
+      </case>
+    </set>
+  </suite>
+</testdefinition>
+\endverbatim
+
+
 \section manual_exec_sec Manual Test Cases
 
 It is also possible to execute manual test cases using testrunner-lite, as defined in Test Definition XML.

@@ -66,6 +66,7 @@ LOCAL td_parser_callbacks *cbs;
 LOCAL xmlTextReaderPtr reader;
 LOCAL xmlSchemaParserCtxtPtr schema_context = NULL;
 LOCAL xmlSchemaPtr schema = NULL;
+LOCAL td_td *current_td;
 LOCAL td_suite *current_suite;
 LOCAL td_set *current_set;
 
@@ -82,6 +83,8 @@ LOCAL td_set *current_set;
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_gen_attribs (td_gen_attribs *,td_gen_attribs *);
 /* ------------------------------------------------------------------------- */
+LOCAL int td_parse_td (void);
+/* ------------------------------------------------------------------------- */
 LOCAL int td_parse_suite (void);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_steps (xmlListPtr, const char *);
@@ -95,6 +98,8 @@ LOCAL int td_parse_environments(xmlListPtr);
 LOCAL int td_parse_gets(xmlListPtr);
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_set ();
+/* ------------------------------------------------------------------------- */
+LOCAL int td_parse_hwiddetect ();
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -117,6 +122,8 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			attr->level = xmlStrdup(defaults->level);
 		if (defaults->type)
 			attr->type = xmlStrdup(defaults->type);
+		if (defaults->hwid)
+			attr->hwid = xmlStrdup(defaults->hwid);
 	}
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
@@ -174,6 +181,12 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			attr->insignificant = 
 				!xmlStrcmp (xmlTextReaderConstValue (reader), 
 					    BAD_CAST "true");
+			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "hwid")) {
+			if (attr->hwid)
+				free (attr->hwid);
+			attr->hwid =  xmlTextReaderValue(reader);
 			continue;
 		}
 	}
@@ -597,6 +610,52 @@ LOCAL int td_parse_set ()
 	
 	return 1;
 }
+/* ------------------------------------------------------------------------- */
+/** Create test definition data type and call callback function
+ *  @return 0 on success
+ */
+LOCAL int td_parse_td ()
+{
+	td_td *td;
+
+	td = td_td_create();
+	if (!td)
+		return 1;
+
+	current_td = td;
+	if (cbs->test_td)
+		cbs->test_td(td);
+
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Read hwiddetect tag, store detector command, and use callback to run it
+ *  @return 0 on success
+ */
+LOCAL int td_parse_hwiddetect ()
+{
+	int ret;
+	const xmlChar *name;
+
+	do {
+		if (xmlTextReaderHasValue(reader) > 0) {
+			current_td->hw_detector = xmlTextReaderValue(reader);
+			LOG_MSG (LOG_INFO, "HW ID dectector command: %s",
+				 current_td->hw_detector);
+		}
+		ret = xmlTextReaderRead(reader);
+		name = xmlTextReaderConstName(reader);
+	}
+	while(xmlTextReaderNodeType(reader) != XML_READER_TYPE_END_ELEMENT &&
+	      xmlStrcmp (name, BAD_CAST "hwiddetect"));
+
+	/* callback to perfrom hw detection */
+	if (cbs->test_hwiddetect) {
+		cbs->test_hwiddetect();
+	}
+
+	return 0;
+}
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -771,7 +830,23 @@ int td_next_node (void) {
 
 	if (!name)
 		return 1;
-	
+
+	if (!xmlStrcmp (name, BAD_CAST "testdefinition")) {
+		if (type == XML_READER_TYPE_ELEMENT)
+			return td_parse_td();
+		else if (type == XML_READER_TYPE_END_ELEMENT) {
+			if (cbs->test_td_end)
+				cbs->test_td_end();
+			return 0;
+		}
+	}
+
+	if (!xmlStrcmp (name, BAD_CAST "hwiddetect")) {
+		if (type == XML_READER_TYPE_ELEMENT) {
+			return td_parse_hwiddetect();
+		}
+	}
+
 	if (!xmlStrcmp (name, BAD_CAST "suite")) {
 		if (type == XML_READER_TYPE_ELEMENT)
 			return td_parse_suite();

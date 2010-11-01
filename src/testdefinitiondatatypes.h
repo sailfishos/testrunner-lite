@@ -55,7 +55,14 @@ typedef struct {
 
 	int      manual;        /**< Manual flag (default false) */
 	int      insignificant; /**< Insignificant flag (default false) */
+	xmlChar *hwid;          /**< HW identifier */
 } td_gen_attribs;
+/* ------------------------------------------------------------------------- */
+/** Test definition */
+typedef struct {
+	xmlChar *hw_detector;         /**< Command used to detect HW  */
+	xmlChar *detected_hw;         /**< Detected HW identifier */
+} td_td;
 /* ------------------------------------------------------------------------- */
 /** Test suite */
 typedef struct {
@@ -143,6 +150,10 @@ typedef struct {
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
 const char *case_result_str (case_result_t);
+/* ------------------------------------------------------------------------- */
+td_td *td_td_create();
+/* ------------------------------------------------------------------------- */
+void td_td_delete(td_td *);
 /* ------------------------------------------------------------------------- */
 td_suite *td_suite_create();
 /* ------------------------------------------------------------------------- */
