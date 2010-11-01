@@ -200,93 +200,67 @@ START_TEST (test_verbosity_flags)
     int ret;
     char cmd[1024];
     char *stdout_tmp = "/tmp/testrunner-lite-stdout.log";
+
     FILE *fp;
     
-    /* Forward stdout temporarily to a file. */
-    fp = freopen (stdout_tmp, "w", stdout);
-    
+     
     /* Test -v flag. */
-    sprintf (cmd, "%s -A -f %s -v", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    sprintf (cmd, "%s -A -f %s -v > %s", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1, stdout_tmp );
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
     
-    sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 1\" %s", stdout_tmp); 
+    sprintf (cmd, "/bin/grep '[INFO]* Verbosity level set to: 1' %s", stdout_tmp); 
     ret = system (cmd);
-    fail_if (ret != 0, cmd);
-    
-    /* Forward stdout temporarily to a file. */
-    fp = freopen (stdout_tmp, "w", stdout);
+    fail_if (ret != 0, "cmd %s, RET=%d", cmd, ret);
     
     /* Test -vv flag. */
-    sprintf (cmd, "%s -A -f %s -vv", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    sprintf (cmd, "%s -A -f %s -vv > %s", 
+	     TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
-    
-    /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
     
     sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 2\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    /* Forward stdout temporarily to a file. */
-    fp = freopen (stdout_tmp, "w", stdout);
-    
     /* Test --verbose=INFO flag. */
-    sprintf (cmd, "%s -A -f %s --verbose=INFO", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    sprintf (cmd, "%s -A -f %s --verbose=INFO > %s", 
+	     TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
-    
-    /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
     
     sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 1\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    /* Forward stdout temporarily to a file. */
-    fp = freopen (stdout_tmp, "w", stdout);
-    
     /* Test --verbose=DEBUG flag. */
-    sprintf (cmd, "%s -A -f %s --verbose=DEBUG", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    sprintf (cmd, "%s -A -f %s --verbose=DEBUG > %s", 
+	     TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
-    
-    /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
     
     sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 2\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    /* Forward stdout temporarily to a file. */
-    fp = freopen (stdout_tmp, "w", stdout);
     
     /* Test without -v or --verbose= flag. */
-    sprintf (cmd, "%s -A -f %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    sprintf (cmd, "%s -A -f %s > %s", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
-    
-    /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
     
     sprintf (cmd, "grep \"[INFO]* Verbosity level set to:*\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret == 0, cmd);
     
-    /* Forward stdout temporarily to a file. */
-    fp = freopen (stdout_tmp, "w", stdout);
-    
     /* Test with invalid --verbose= flag. */
-    sprintf (cmd, "%s -A -f %s --verbose=FOO", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    sprintf (cmd, "%s -A -f %s --verbose=FOO > %s", TESTRUNNERLITE_BIN, 
+	     TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
-    
-    /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
     
     sprintf (cmd, "grep \"[INFO]* Verbosity level set to:*\" %s", stdout_tmp); 
     ret = system (cmd);

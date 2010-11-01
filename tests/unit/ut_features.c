@@ -149,26 +149,32 @@ START_TEST (test_logging)
     
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
-
+    fflush (fp);
+    fclose (fp);
+    sleep (1);
     // And verify messages. */
-    sprintf (cmd, "grep \"[INFO]* INFO message: This works.\" %s", stdout_tmp); 
-    ret = system (cmd);
-    fail_if (ret != 0, cmd);
-    
-    sprintf (cmd, "grep \"[WARNING]* WARNING message: This works.\" %s", 
+    sprintf (cmd, "grep -q \"[INFO]* INFO message: This works.\" %s", 
 	     stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[ERROR]* ERROR message: This works.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"[WARNING]* WARNING message: This works.\" %s", 
+	     stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"[ERROR]* ERROR message: This works.\" %s", 
+	     stdout_tmp); 
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+    
+    sprintf (cmd, "grep -q aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab %s", 
+	     stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
-    sprintf (cmd, "grep bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb %s", stdout_tmp); 
+    sprintf (cmd, "grep -q bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb %s", 
+	     stdout_tmp); 
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
@@ -177,7 +183,8 @@ START_TEST (test_logging)
     LOG_MSG (LOG_DEBUG, "DEBUG message: %s\n", "This should not work.");
     freopen ("/dev/tty", "w", stdout);
     
-    sprintf (cmd, "grep \"[DEBUG]* DEBUG message: This should not work.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"[DEBUG]* DEBUG message: This should not work.\""
+	     " %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret == 0, cmd);
     
@@ -198,19 +205,23 @@ START_TEST (test_logging)
     freopen ("/dev/tty", "w", stdout);
 
     // And verify messages. */
-    sprintf (cmd, "grep \"[INFO]* INFO message: This works.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"[INFO]* INFO message: This works.\" %s", 
+	     stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[WARNING]* WARNING message: This works.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"[WARNING]* WARNING message: This works.\" %s", 
+	     stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[ERROR]* ERROR message: This works.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"[ERROR]* ERROR message: This works.\" %s", 
+	     stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[DEBUG]* DEBUG message: This works.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"[DEBUG]* DEBUG message: This works.\" %s", 
+	     stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -226,7 +237,8 @@ START_TEST (test_logging)
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
     
-    sprintf (cmd, "grep \"[INFO]* INFO message: Silent mode.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"[INFO]* INFO message: Silent mode.\" %s", 
+	     stdout_tmp); 
     
     ret = system (cmd);
     fail_if (ret == 0, cmd);
