@@ -106,7 +106,7 @@ START_TEST (test_execute_manual_step_passed)
     
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
-    sprintf (cmd, "grep \"This is manual test case.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"This is manual test case.\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -124,7 +124,7 @@ START_TEST (test_execute_manual_step_passed)
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep \"This is manual test step.\" %s", stdout_tmp);
+    sprintf (cmd, "grep -q \"This is manual test step.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -137,7 +137,7 @@ START_TEST (test_execute_manual_step_passed)
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep \"PASSED.\" %s", stdout_tmp);
+    sprintf (cmd, "grep -q \"PASSED.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
@@ -172,7 +172,7 @@ START_TEST (test_execute_manual_step_failed)
     
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
-    sprintf (cmd, "grep \"This is manual test case.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"This is manual test case.\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -190,7 +190,7 @@ START_TEST (test_execute_manual_step_failed)
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep \"This is manual test step.\" %s", stdout_tmp);
+    sprintf (cmd, "grep -q \"This is manual test step.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -203,7 +203,7 @@ START_TEST (test_execute_manual_step_failed)
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep \"FAILED.\" %s", stdout_tmp);
+    sprintf (cmd, "grep -q \"FAILED.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
@@ -239,7 +239,7 @@ START_TEST (test_execute_manual_step_na)
     
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
-    sprintf (cmd, "grep \"This is manual test case.\" %s", stdout_tmp); 
+    sprintf (cmd, "grep -q \"This is manual test case.\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -257,7 +257,7 @@ START_TEST (test_execute_manual_step_na)
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep \"This is manual test step.\" %s", stdout_tmp);
+    sprintf (cmd, "grep -q \"This is manual test step.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -270,7 +270,7 @@ START_TEST (test_execute_manual_step_na)
     /* Back to terminal. */
     freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep \"N/A.\" %s", stdout_tmp);
+    sprintf (cmd, "grep -q \"N/A.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
@@ -290,10 +290,10 @@ START_TEST (test_execute_manual_set)
      fail_if (ret != 5, "fwrite() returned : %d", ret);
      fclose (f);
      
-     ret = system ("grep PASS /tmp/res.xml");
+     ret = system ("grep -q PASS /tmp/res.xml");
      fail_if (ret, "/tmp/res.xml does not contain PASS");
 
-     ret = system ("grep FAIL /tmp/res.xml");
+     ret = system ("grep -q FAIL /tmp/res.xml");
      fail_unless (ret, "/tmp/res.xml contains FAIL");
 
 END_TEST
@@ -309,10 +309,10 @@ START_TEST (test_execute_semi_auto)
      fail_if (ret != 5, "fwrite() returned : %d", ret);
      fclose (f);
      
-     ret = system ("grep PASS /tmp/res.xml");
+     ret = system ("grep -q PASS /tmp/res.xml");
      fail_if (ret, "/tmp/res.xml does not contain PASS");
 
-     ret = system ("grep FAIL /tmp/res.xml");
+     ret = system ("grep -q FAIL /tmp/res.xml");
      fail_unless (ret, "/tmp/res.xml contains FAIL");
 
 END_TEST
