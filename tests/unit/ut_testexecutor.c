@@ -387,13 +387,15 @@ START_TEST (test_executor_remote_terminating_process)
 	edata.hard_timeout = 1;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
-	fail_unless (edata.result == 143); /* 128 + SIGKILL */
+	/* 128 + SIGKILL or 255 depends on ssh*/
+	fail_unless (edata.result == 143 ||
+		     edata.result == 255, "result=%d", edata.result);
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
-	fail_unless (strcmp((char*)edata.stdout_data.buffer, 
-			    "stdouttest") == 0);
-	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
-			     "stderrtest", strlen ("stderrtest")) == 0);
+	fail_if (strstr((char*)edata.stdout_data.buffer, "stdouttest") == 0, (char*)edata.stdout_data.buffer);
+	fail_if (strstr((char*)edata.stderr_data.buffer, 
+			     "stderrtest") == 0,
+		     (char*)edata.stderr_data.buffer);
 	/* sleep for a while such that remote killing has done its job */
 	sleep(2);
 	/* check that killing was succesfull */
@@ -417,14 +419,16 @@ START_TEST (test_executor_remote_killing_process)
 	edata.hard_timeout = 1;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
-	fail_unless (edata.result == 143); /* 128 + SIGKILL */
+	/* 128 + SIGKILL or 255 depends on ssh */
+	fail_unless (edata.result == 143 ||
+		     edata.result == 255, "result %d", edata.result); 
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
-	fail_unless (strncmp((char*)edata.stdout_data.buffer, 
-			     "stdouttest", strlen("stderrtest")) == 0,
+	fail_if (strstr((char*)edata.stdout_data.buffer, 
+			     "stdouttest") == 0,
 		     edata.stdout_data.buffer);
-	fail_unless (strncmp((char*)edata.stderr_data.buffer, 
-			     "stderrtest", strlen("stderrtest")) == 0,
+	fail_if (strstr((char*)edata.stderr_data.buffer, 
+			     "stderrtest") == 0,
 		     edata.stderr_data.buffer);
 	/* sleep for a while such that remote killing has done its job */
 	sleep(2);
