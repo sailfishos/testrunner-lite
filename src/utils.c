@@ -145,6 +145,30 @@ unsigned int trim_string (char *ins, char *outs)
 	return outs_i;
 }
 
+/** Check if a string list contains certain value
+ * @param *list List of values delimited by a character defined in delim
+ * @param *value The value searched from the list
+ * @param *delim Set of delimiter characters
+ * @return 1 if the value is found from the list of 0 if not
+ */
+int list_contains(const char *list, const char *value, const char* delim)
+{
+	int ret = 0;
+	char *str = strdup(list);
+	char *c = strtok(str, delim);
+
+	while (c != NULL) {
+		if (strcmp(value, c) == 0) {
+			ret = 1;
+			break;
+		}
+		c = strtok(NULL, delim);
+	}
+
+	free(str);
+	return ret;
+}
+
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */

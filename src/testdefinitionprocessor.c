@@ -568,7 +568,7 @@ LOCAL void process_set (td_set *s)
 	** User defined HW ID based filtering
 	*/
 	if (s->gen.hwid && current_td->detected_hw &&
-	    xmlStrcmp(s->gen.hwid, current_td->detected_hw) != 0) {
+	    list_contains(s->gen.hwid, current_td->detected_hw, ",") == 0) {
 		LOG_MSG (LOG_INFO, "Test set %s is filtered based on HW ID",
 			 s->gen.name);
 		goto skip_all;
