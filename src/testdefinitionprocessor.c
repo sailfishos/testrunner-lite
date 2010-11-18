@@ -360,8 +360,8 @@ LOCAL int process_case (const void *data, const void *user)
 	if (c->gen.manual && opts.run_manual)
 		post_manual (c);
 	
-	LOG_MSG (LOG_INFO, "Finished test case Result: %s", 
-		 case_result_str(c->case_res));
+	LOG_MSG (LOG_INFO, "Finished test case %s Result: %s",
+		 c->gen.name, case_result_str(c->case_res));
 	passcount += (c->case_res == CASE_PASS);
 	
 	return 1;
