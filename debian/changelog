@@ -1,3 +1,10 @@
+testrunner-lite (1.3.19) unstable; urgency=low
+
+  * Added test case name to the log message printing the result of the case
+  * Added missing automake build-dependency
+
+ -- Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>  Fri, 19 Nov 2010 12:30:58 +0200
+
 testrunner-lite (1.3.18) unstable; urgency=low
 
   * Fixes NB#201090 - Possibility to define an identifier list for hwid attribute
