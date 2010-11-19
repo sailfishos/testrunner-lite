@@ -55,7 +55,7 @@ typedef struct {
 
 	int      manual;        /**< Manual flag (default false) */
 	int      insignificant; /**< Insignificant flag (default false) */
-	xmlChar *hwid;          /**< HW identifier */
+	xmlChar *hwid;          /**< Comma separated list of HW identifiers */
 } td_gen_attribs;
 /* ------------------------------------------------------------------------- */
 /** Test definition */

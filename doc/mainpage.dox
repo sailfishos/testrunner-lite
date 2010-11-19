@@ -108,9 +108,9 @@ testrunner-lite -f tests.xml -o ~/results -l 'testset=set1,set2'
 
 \section hwid_detection Filtering Based on Hardware Identifier
 
-If different tests sets for different hardware are required then hwiddetect feature can be utilised. User can define a command used to get a hardware identifier within hwiddetect tag. The hardware identifier returned by the command is matched with optional hwid attribute of a test set. If not equal, test cases in the set are skipped and are not written to the result file. A test set will be never skipped if hwid attribute has not been defined for it.
+If different tests sets for different hardware are required then hwiddetect feature can be utilised. User can define a command used to get a hardware identifier within hwiddetect tag. The hardware identifier returned by the command is matched with optional hwid attribute of a test set. The syntax of hwid attribute is a comma separated list of allowed values. If the hardaware identifier is not contained by hwid attribute, then test cases in the set are skipped and are not written to the result file. A test set will be never skipped if hwid attribute has not been defined for it.
 
-Command defined by hwiddetect can be a shell command or a separate executable. The executable should be included in the test package. Testrunner-lite removes extra whitespace and linefeeds from the the output of the hwiddetect command so that test developer does not need to care about it.
+Command defined by hwiddetect can be a shell command or a separate executable. The executable should be included in the test package. Testrunner-lite removes extra whitespace and linefeeds from the the output of the hwiddetect command so that test developer does not need to care about it. It's also not allowed to use spaces or commas within hwid.
 
 Example usage of hwiddetect:
 \verbatim
@@ -122,9 +122,14 @@ Example usage of hwiddetect:
 	<step>echo "hwid is bar"</step>
       </case>
     </set>
-    <set name="test_feature_X_on_hw_foo" hwid="foo">
-      <case name="test_X_1">
-	<step>echo "hwid is foo"</step>
+    <set name="test_feature_Y_on_hw_foo_and_bar" hwid="foo,bar">
+      <case name="test_Y_1">
+	<step>echo "hwid is foo or bar"</step>
+      </case>
+    </set>
+    <set name="test_feature_Z_on_any_hw">
+      <case name="test_Z_1">
+	<step>echo "test on any hw"</step>
       </case>
     </set>
   </suite>
