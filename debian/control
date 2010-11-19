@@ -2,7 +2,7 @@ Source: testrunner-lite
 Section: misc
 Priority: optional
 Maintainer: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
-Build-Depends: debhelper (>= 5), libtool, autoconf, libxml2-dev, doxygen, check, libcurl3-dev, libtool
+Build-Depends: debhelper (>= 5), libtool, autoconf, automake, libxml2-dev, doxygen, check, libcurl3-dev, libtool
 Standards-Version: 3.8.0
 
 Package: testrunner-lite
