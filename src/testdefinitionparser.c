@@ -360,13 +360,13 @@ LOCAL int td_parse_case(td_set *s)
 		c->subfeature =  xmlTextReaderValue(reader);
 	}
 
+	if (xmlTextReaderIsEmptyElement (reader))
+		return 0;
+
 	do {
 		ret = xmlTextReaderRead(reader);
-		if (!ret) {
-			LOG_MSG (LOG_ERR, "%s: ReaderRead() fail\n",
-				 PROGNAME);
-			
-			goto ERROUT;
+		if (!ret) { /* no steps, we accept that */
+			goto OK_OUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
@@ -418,11 +418,11 @@ LOCAL int td_parse_case(td_set *s)
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
 		    !xmlStrcmp (name, BAD_CAST "case")));
-	
+ OK_OUT:	
 	xmlListAppend (s->cases, c);
 	
 	return 0;
-ERROUT:
+ ERROUT:
 	LOG_MSG (LOG_ERR, "%s:%s: Exiting with error\n", 
 		 PROGNAME, __FUNCTION__);
 	xmlListDelete (c->steps);
@@ -540,6 +540,9 @@ LOCAL int td_parse_suite ()
 {
 	td_suite *s;
 
+	if (xmlTextReaderIsEmptyElement (reader))
+		return 0;
+
 	if (!cbs->test_suite)
 		return 1;
 	
@@ -573,12 +576,8 @@ LOCAL int td_parse_set ()
 
 	do {
 		ret = xmlTextReaderRead(reader);
-		if (!ret) {
-			LOG_MSG (LOG_ERR, "%s:%s: ReaderRead() fail\n",
-				 PROGNAME, __FUNCTION__);
-
-			goto ERROUT;
-		}
+		if (!ret) 
+			goto OKOUT;
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
 			LOG_MSG (LOG_ERR, "%s: ReaderName() fail\n",
@@ -601,6 +600,7 @@ LOCAL int td_parse_set ()
 	} while (!(xmlTextReaderNodeType(reader) == 
 		   XML_READER_TYPE_END_ELEMENT &&
 		   !xmlStrcmp (name, BAD_CAST "set")));
+ OKOUT:
 	cbs->test_set(s);
 
 	return 0;
