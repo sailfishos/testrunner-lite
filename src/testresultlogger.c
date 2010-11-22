@@ -710,7 +710,7 @@ err_out:
 void close_result_logger (void)
 {
 	if (writer) {
-		xml_end_element(); /* </testresults> */	
+		while (!xml_end_element())
 		xmlTextWriterFlush (writer);
 		xmlFreeTextWriter (writer);
 		writer = NULL;

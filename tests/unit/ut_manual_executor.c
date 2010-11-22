@@ -317,6 +317,25 @@ START_TEST (test_execute_semi_auto)
 
 END_TEST
 /* ------------------------------------------------------------------------- */
+START_TEST (test_execute_manual_case_no_steps)
+     int ret;
+     FILE *f;
+
+     f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
+		 "testrunner-tests-manual-nosteps.xml -o /tmp/res.xml -v", "w");
+     fail_if (f == NULL, "popen() failed");
+     ret = fwrite ("F\n\n", 1, 5, f);
+     fail_if (ret != 5, "fwrite() returned : %d", ret);
+     fclose (f);
+     
+     ret = system ("grep -q FAIL /tmp/res.xml");
+     fail_if (ret, "/tmp/res.xml does not contain PASS");
+
+     ret = system ("grep -q PASS /tmp/res.xml");
+     fail_unless (ret, "/tmp/res.xml contains FAIL");
+    
+END_TEST
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 Suite *make_manualtestexecutor_suite (void)
@@ -345,6 +364,10 @@ Suite *make_manualtestexecutor_suite (void)
 
     tc = tcase_create ("Test executing semi automatic set.");
     tcase_add_test (tc, test_execute_semi_auto);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executing manual case with no steps.");
+    tcase_add_test (tc, test_execute_manual_case_no_steps);
     suite_add_tcase (s, tc);
 
     return s;

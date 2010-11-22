@@ -82,6 +82,7 @@ LOCAL xmlChar  *cur_case_name = "";   /* Name of the current case or pre/post */
 LOCAL int       cur_step_num;         /* Number of current step within case */
 
 LOCAL int passcount = 0;
+LOCAL int failcount = 0;
 LOCAL int casecount = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -352,6 +353,7 @@ LOCAL int process_case (const void *data, const void *user)
 	if (xmlListSize (c->steps) == 0) {
 		LOG_MSG (LOG_WARNING, "Case with no steps (%s).",
 			 c->gen.name);
+		c->case_res = CASE_NA;
 	}
 
 	xmlListWalk (c->steps, step_execute, data);
@@ -363,7 +365,7 @@ LOCAL int process_case (const void *data, const void *user)
 	LOG_MSG (LOG_INFO, "Finished test case Result: %s", 
 		 case_result_str(c->case_res));
 	passcount += (c->case_res == CASE_PASS);
-	
+	failcount += (c->case_res == CASE_FAIL);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -664,7 +666,7 @@ void td_process () {
 
 	LOG_MSG (LOG_INFO, "Finished running tests.");
 	LOG_MSG (LOG_INFO, "Executed %d cases. Passed %d Failed %d",
-		 casecount, passcount, casecount - passcount);
+		 casecount, passcount, failcount);
 	return; 
 }	
 /* ------------------------------------------------------------------------- */
