@@ -334,6 +334,9 @@ void td_case_delete(xmlLinkPtr lk)
 	free (td_c->failure_info);
 	free (td_c->tc_title);
 	free (td_c->state);
+	free (td_c->subfeature);
+	free (td_c->bugzilla_id);
+
 	gen_attribs_delete(&td_c->gen);
 	free (td_c);
 }
