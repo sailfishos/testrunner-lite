@@ -20,9 +20,11 @@ testrunner-lite (1.3.17) unstable; urgency=low
 
 testrunner-lite (1.3.16) unstable; urgency=low
 
-  * Fixes: NB#197117 - verbose testrunner-lite fails to find sysinfo-tool
+  * Fixed failures in unit test cases (BMC#8947)
+  * Fixes: NB#197117 - verbose testrunner-lite fails to find sysinfo-tool (by Sami Lahtinen)
+  * Added: hwidetect feature (by Sami Lahtinen)
 
- -- Lahtinen Sami <ext-sami.t.lahtinen@nokia.com>  Mon, 18 Oct 2010 16:09:07 +0300
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Mon, 01 Nov 2010 12:11:01 +0200
 
 testrunner-lite (1.3.15) unstable; urgency=low
 

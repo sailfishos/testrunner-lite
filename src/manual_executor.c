@@ -159,10 +159,22 @@ LOCAL xmlChar *get_comments ()
  */
 void pre_manual (td_case *c)
 {
+	td_step *pseudo_step;
+
 	printf ("\nDescription of test case:\n%s\n",
 		(char *)((char *)c->gen.description ? 
 			 (char *)c->gen.description : " "));
-
+	/*
+	 * Some folks like to write manual test case steps into case
+	 * description. Add pseudo test step for them, so that a verdict
+	 * for the case can be given.
+	 */
+	if (xmlListSize (c->steps) == 0) {
+		pseudo_step = td_step_create();
+		pseudo_step->manual = 1;
+		pseudo_step->step = xmlStrdup ("give verdict");
+		xmlListAppend (c->steps, pseudo_step);
+	}
 }
 /* ------------------------------------------------------------------------- */
 /** Execute manual test step
