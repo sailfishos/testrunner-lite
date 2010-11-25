@@ -1,3 +1,11 @@
+* Mon Nov 01  2010 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.3.17
+- Pseudo step added to manual cases with no steps (BMC#8661)
+- Automatic case with no steps gets result N/A (BMC#10071)
+- Improvements to hwidetect feature (by Sami Lahtinen)
+* Mon Nov 01  2010 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.3.16
+- Fixed failures in unit test cases (BMC#8947)
+- Fixed verbose testrunner-lite fails to find sysinfo-tool (by Sami Lahtinen)
+- Added hwidetect feature (by Sami Lahtinen)
 * Mon Oct 11  2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.15
 - Added handling for SIGTERM (BMC#6269)
 * Thu Oct 07  2010 Sampo Saaristo <ext-sampo.2.saaristo@nokia.com> 1.3.14
