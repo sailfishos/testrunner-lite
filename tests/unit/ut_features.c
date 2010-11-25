@@ -38,6 +38,7 @@
 #include "executor.h"
 #include "hwinfo.h"
 #include "log.h"
+#include "utils.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -412,6 +413,29 @@ START_TEST (test_hwinfo)
     
 END_TEST
 
+START_TEST (test_list_contains)
+{
+	fail_unless(list_contains("foo","foo",","));
+	fail_unless(list_contains("foo,bar","foo",","));
+	fail_unless(list_contains("bar,foo","foo",","));
+	fail_unless(list_contains("foo,bar,dummy","foo",","));
+	fail_unless(list_contains("bar,foo,dummy","foo",","));
+	fail_unless(list_contains("bar,dummy,foo","foo",","));
+
+	fail_if(list_contains("","",","));
+	fail_if(list_contains("","foo",","));
+	fail_if(list_contains("foobar","foo",","));
+	fail_if(list_contains("barfoo","foo",","));
+	fail_if(list_contains("foobar,bar","foo",","));
+	fail_if(list_contains("bar,foobar","foo",","));
+	fail_if(list_contains("foofoo,foobar,barfoo","foo",","));
+
+	fail_unless(list_contains("foo;bar","foo",",;"));
+	fail_unless(list_contains("bar;dummy,foo","foo",";,"));
+	fail_unless(list_contains("bar:foo;dummy","foo",",:;"));
+}
+END_TEST
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -442,6 +466,10 @@ Suite *make_features_suite (void)
 
     tc = tcase_create ("Test hw info.");
     tcase_add_test (tc, test_hwinfo);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test list_contains function.");
+    tcase_add_test (tc, test_list_contains);
     suite_add_tcase (s, tc);
 
     return s;

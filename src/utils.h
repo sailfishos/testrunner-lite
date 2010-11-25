@@ -53,6 +53,7 @@
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
 unsigned int trim_string (char *ins, char *outs);
+int list_contains(const char *list, const char *value, const char* delim);
 /* ------------------------------------------------------------------------- */
 
 #endif                          /* UTILS_H */
