@@ -1,3 +1,9 @@
+testrunner-lite (1.4.0) unstable; urgency=low
+
+  * Support for bugzilla_id attribute in case element. (BMC#10362)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Fri, 26 Nov 2010 13:43:04 +0200
+
 testrunner-lite (1.3.17) unstable; urgency=low
 
   * Pseudo step added to manual cases with no steps (BMC#8661)

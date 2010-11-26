@@ -453,6 +453,8 @@ LOCAL int txt_write_case (const void *data, const void *user)
 	    fprintf (ofile, "      requirement   : %s\n", c->gen.requirement);
 	if (c->subfeature)
 	    fprintf (ofile, "      subfeature    : %s\n", c->subfeature);
+	if (c->bugzilla_id)
+	    fprintf (ofile, "      bugzilla_id   : %s\n", c->bugzilla_id);
 #if 0
 	if (c->gen.type)
 	    fprintf (ofile, "      type          : %s\n", c->gen.type);
