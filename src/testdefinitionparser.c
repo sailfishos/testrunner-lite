@@ -357,7 +357,12 @@ LOCAL int td_parse_case(td_set *s)
 
 	if (xmlTextReaderMoveToAttribute (reader, 
 					  BAD_CAST "subfeature") == 1) {
-		c->subfeature =  xmlTextReaderValue(reader);
+		c->subfeature = xmlTextReaderValue(reader);
+	}
+
+	if (xmlTextReaderMoveToAttribute (reader, 
+					  BAD_CAST "bugzilla_id") == 1) {
+		c->bugzilla_id = xmlTextReaderValue(reader);
 	}
 
 	if (xmlTextReaderIsEmptyElement (reader))

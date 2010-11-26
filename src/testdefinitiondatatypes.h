@@ -125,6 +125,8 @@ typedef struct {
 	xmlListPtr steps;       /**< Steps in this test case */
 	xmlChar   *tc_title;    /**< TC_Title */
 	xmlChar   *state;       /**< State attribute */
+	xmlChar   *bugzilla_id;  /**< Id mapping the case to bug or 
+				    feature number in bugs.meego.com */
 	/* Executor fills */
 	xmlChar   *comment;     /**< Manual test case comment */
 	case_result_t  case_res; /**< Case result */
