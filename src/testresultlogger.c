@@ -79,7 +79,11 @@ LOCAL int xml_write_pre_suite_tag (td_suite *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_pre_set_tag (td_set *);
 /* ------------------------------------------------------------------------- */
+LOCAL int xml_write_general_attributes (td_gen_attribs *);
+/* ------------------------------------------------------------------------- */
 LOCAL int xml_write_step (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_pre_post_step (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
@@ -114,14 +118,14 @@ LOCAL int xml_write_pre_suite_tag (td_suite *suite)
 	if (xmlTextWriterStartElement (writer, BAD_CAST "suite") < 0)
 		goto err_out;
 	
-	if (xmlTextWriterWriteAttribute (writer,  BAD_CAST "name", 
-					 suite->gen.name) < 0)
+	if (xml_write_general_attributes (&suite->gen))
 		goto err_out;
 
-	if (suite->gen.domain && xmlTextWriterWriteAttribute (writer,  
-							      BAD_CAST 
-							      "domain", 
-							      suite->gen.domain) < 0)
+	if (suite->gen.domain 
+	    && xmlTextWriterWriteAttribute (writer,  
+					    BAD_CAST 
+					    "domain", 
+					    suite->gen.domain) < 0)
 		goto err_out;
 
 	return 0;
@@ -138,17 +142,9 @@ LOCAL int xml_write_pre_set_tag (td_set *set)
 	if (xmlTextWriterStartElement (writer, BAD_CAST "set") < 0)
 		goto err_out;
 	
-	if (xmlTextWriterWriteAttribute (writer, 
-					 BAD_CAST "name", 
-					 set->gen.name) < 0)
+	if (xml_write_general_attributes (&set->gen))
 		goto err_out;
-	
-	if (set->gen.description)
-		if (xmlTextWriterWriteAttribute (writer, 
-						 BAD_CAST "description", 
-						 set->gen.description) < 0)
-			goto err_out;
-	
+
 	if (set->gen.feature)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "feature", 
@@ -165,6 +161,74 @@ LOCAL int xml_write_pre_set_tag (td_set *set)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/** Write the values of general attributes
+ * @param gen 
+ * @return 0 on success, 1 on error
+ */
+LOCAL int xml_write_general_attributes (td_gen_attribs *gen)
+{
+	if (gen->name)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "name", 
+						 gen->name) < 0)
+			goto err_out;
+
+	if (gen->description)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "description", 
+						 gen->description) < 0)
+			goto err_out;
+
+	if (gen->requirement)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "requirement", 
+						 gen->requirement) < 0)
+			goto err_out;
+	
+	if (xmlTextWriterWriteFormatAttribute (writer,
+					       BAD_CAST "timeout",
+					       "%lu",
+					       gen->timeout) < 0)
+		goto err_out;
+
+	if (gen->type)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "type", 
+						 gen->type) < 0)
+			goto err_out;
+	
+
+	if (gen->level)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "level", 
+						 gen->level) < 0)
+			goto err_out;
+		
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "manual", 
+					 BAD_CAST (gen->manual ? "true" :
+						   "false")) < 0)
+		goto err_out;
+
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "insignificant", 
+					 BAD_CAST (gen->insignificant ? 
+						   "true" :
+						   "false")) < 0)
+		goto err_out;
+	
+	if (gen->hwid)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "hwid", 
+						 gen->hwid) < 0)
+			goto err_out;
+	
+	return 0;
+ err_out:
+	return 1;
+}
+
+/* ------------------------------------------------------------------------- */
 /** Write step result xml
  * @param data step data 
  * @param user not used
@@ -176,6 +240,12 @@ LOCAL int xml_write_step (const void *data, const void *user)
 	struct tm *tm;
 
 	if (xmlTextWriterStartElement (writer, BAD_CAST "step") < 0)
+		goto err_out;
+
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "manual", 
+					 BAD_CAST (step->manual ? "true" :
+						   "false")) < 0)
 		goto err_out;
 
 	if (xmlTextWriterWriteAttribute (writer, 
@@ -265,6 +335,103 @@ err_out:
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Write pre or post step result xml
+ * @param data step data 
+ * @param user not used
+ * @return 1 on success, 0 on error if the step is failed
+ */
+LOCAL int xml_write_pre_post_step (const void *data, const void *user)
+{
+	td_step *step = (td_step *)data;
+	struct tm *tm;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "step") < 0)
+		goto err_out;
+
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "command", 
+					 step->step) < 0)
+		goto err_out;
+	
+	if (step->has_result == 0) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "result", 
+						 BAD_CAST "N/A") < 0)
+			goto err_out;
+
+
+	} else if (xmlTextWriterWriteAttribute (writer, 
+						BAD_CAST "result", 
+						step->expected_result == 
+						step->return_code ? 
+						BAD_CAST "PASS" :
+						BAD_CAST "FAIL") < 0)
+		goto err_out;
+	
+	if (step->failure_info) {
+		if (strlen ((char *)step->failure_info) >= FAILURE_INFO_MAX)
+			step->failure_info[FAILURE_INFO_MAX - 1] = '\0';
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "failure_info", 
+						 step->failure_info) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "expected_result",
+					     "%d", step->expected_result) < 0)
+		goto err_out;
+	
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "return_code",
+					     "%d", step->return_code) < 0)
+		goto err_out;
+	
+	tm =  localtime (&step->start);
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "start",
+					     "%02d-%02d-%02d %02d:%02d:%02d", 
+					     tm->tm_year+1900,
+					     tm->tm_mon+1,
+					     tm->tm_mday,
+					     tm->tm_hour,
+					     tm->tm_min,
+					     tm->tm_sec) < 0)
+		goto err_out;
+
+	tm =  localtime (&step->end);
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "end",
+					     "%02d-%02d-%02d %02d:%02d:%02d", 
+					     tm->tm_year+1900,
+					     tm->tm_mon+1,
+					     tm->tm_mday,
+					     tm->tm_hour,
+					     tm->tm_min,
+					     tm->tm_sec) < 0)
+		goto err_out;
+
+	if (step->stdout_)
+		if (xmlTextWriterWriteFormatElement (writer,
+						     BAD_CAST "stdout",
+						     "%s", 
+						     step->stdout_) < 0)
+			goto err_out;
+
+	if (step->stderr_)
+		if (xmlTextWriterWriteFormatElement (writer,
+						     BAD_CAST "stderr",
+						     "%s", 
+						     step->stderr_) < 0)
+			goto err_out;
+
+
+	xml_end_element();
+	return 1;
+err_out:
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
 /** Write case result xml
  * @param data case data 
  * @param user not used
@@ -280,30 +447,8 @@ LOCAL int xml_write_case (const void *data, const void *user)
 	if (xmlTextWriterStartElement (writer, BAD_CAST "case") < 0)
 		goto err_out;
 
-	if (xmlTextWriterWriteAttribute (writer, 
-					 BAD_CAST "name", 
-					 c->gen.name) < 0)
+	if (xml_write_general_attributes (&c->gen))
 		goto err_out;
-	
-	if (c->gen.description)
-		if (xmlTextWriterWriteAttribute (writer, 
-						 BAD_CAST "description", 
-						 c->gen.description) < 0)
-		goto err_out;
-
-	if (xmlTextWriterWriteAttribute (writer, 
-					 BAD_CAST "manual", 
-					 BAD_CAST (c->gen.manual ? "true" :
-						   "false")) < 0)
-		goto err_out;
-
-	if (xmlTextWriterWriteAttribute (writer, 
-					 BAD_CAST "insignificant", 
-					 BAD_CAST (c->gen.insignificant ? 
-						   "true" :
-						   "false")) < 0)
-		goto err_out;
-
 
 	if (xmlTextWriterWriteAttribute (writer, 
 					 BAD_CAST "result", 
@@ -332,18 +477,6 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 c->bugzilla_id) < 0)
 			goto err_out;
 
-	if (c->gen.requirement)
-		if (xmlTextWriterWriteAttribute (writer, 
-						 BAD_CAST "requirement", 
-						 c->gen.requirement) < 0)
-			goto err_out;
-
-	if (c->gen.level)
-		if (xmlTextWriterWriteAttribute (writer, 
-						 BAD_CAST "level", 
-						 c->gen.level) < 0)
-			goto err_out;
-
 	if (c->gen.manual && c->comment)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "comment", 
@@ -369,11 +502,49 @@ err_out:
  */
 LOCAL int xml_write_post_set_tag (td_set *set)
 {
-	
-	
+	td_steps *steps;
+
+	if (xmlListSize (set->pre_steps) > 0) {
+		steps = xmlLinkGetData (xmlListFront (set->pre_steps));
+
+		if (xmlTextWriterStartElement (writer, 
+					       BAD_CAST "pre_steps") < 0)
+			goto err_out;
+
+		if (xmlTextWriterWriteFormatAttribute (writer,
+						       BAD_CAST "timeout",
+						       "%lu",
+						       steps->timeout) < 0)
+			goto err_out;
+
+		xmlListWalk (steps->steps, xml_write_pre_post_step, 
+			     NULL);
+		xml_end_element ();
+	}
+
 	xmlListWalk (set->cases, xml_write_case, NULL);
+
+	if (xmlListSize (set->post_steps) > 0) {
+		steps = xmlLinkGetData (xmlListFront (set->post_steps));
+
+		if (xmlTextWriterStartElement (writer, 
+					       BAD_CAST "post_steps") < 0)
+			goto err_out;
+		if (xmlTextWriterWriteFormatAttribute (writer,
+						       BAD_CAST "timeout",
+						       "%lu",
+						       steps->timeout) < 0)
+			goto err_out;
+
+		xmlListWalk (steps->steps, xml_write_pre_post_step, NULL);
+		xml_end_element ();
+	}
+
 	
 	return 0;
+
+ err_out:
+	return 1;
 }
 /* ------------------------------------------------------------------------- */
 /************************* text output ***************************************/
@@ -455,17 +626,14 @@ LOCAL int txt_write_case (const void *data, const void *user)
 	    fprintf (ofile, "      subfeature    : %s\n", c->subfeature);
 	if (c->bugzilla_id)
 	    fprintf (ofile, "      bugzilla_id   : %s\n", c->bugzilla_id);
-#if 0
 	if (c->gen.type)
 	    fprintf (ofile, "      type          : %s\n", c->gen.type);
-#endif
 	if (c->gen.level)
 	    fprintf (ofile, "      level         : %s\n", c->gen.level);
 	
         fprintf (ofile, "      insignificant : %s\n", c->gen.insignificant ?
 		 "true" : "false");
-	
-	
+
 	if (c->gen.manual && c->comment)
 		fprintf (ofile, "      comment       : %s\n", c->comment);
 		
@@ -476,6 +644,7 @@ LOCAL int txt_write_case (const void *data, const void *user)
 
 	return 1;
 }
+/* ------------------------------------------------------------------------- */
 /** Write suite start txt tag
  * @param suite suite data
  * @return 0 on success, 1 on error
@@ -574,7 +743,8 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 		    
 	    if (xmlTextWriterStartElement (writer, BAD_CAST "testresults") 
 		< 0) {
-		    LOG_MSG (LOG_ERR, "%s:%s:failed to write testsresults tag\n",
+		    LOG_MSG (LOG_ERR, "%s:%s:failed to write "
+			     "testsresults tag\n",
 			     PROGNAME, __FUNCTION__);
 		    return 1;
 	    }
