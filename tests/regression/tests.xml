@@ -74,7 +74,7 @@
       </case>
 
       <case name="test_bugzilla_id" bugzilla_id="10362">
-	<step>testrunner-lite -a -v -f /usr/share/testrunner-lite-regression-tests/testdata/trlitereg11.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>testrunner-lite -a -v -f /usr/share/testrunner-lite-regression-tests/trlitereg11.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>grep bugzilla_id /tmp/testrunnerlitetestdir/res.xml</step>
       </case>
 
