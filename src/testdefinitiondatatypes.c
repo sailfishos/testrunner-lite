@@ -182,6 +182,8 @@ void td_td_delete(td_td *td)
 	if (td) {
 		xmlFree(td->hw_detector);
 		xmlFree(td->detected_hw);
+		xmlFree(td->version);
+		xmlFree(td->description);
 		free (td);
 	}
 }
@@ -206,6 +208,7 @@ td_suite *td_suite_create()
 void td_suite_delete(td_suite *s)
 {
 	gen_attribs_delete (&s->gen);
+	xmlFree (s->description);
 	free (s);
 }
 /* ------------------------------------------------------------------------- */
@@ -252,7 +255,8 @@ void td_set_delete(td_set *s)
 	xmlListDelete (s->cases);
 	xmlListDelete (s->environments);
 	xmlListDelete (s->gets);
-	free (s->environment);
+	xmlFree (s->description);
+	xmlFree (s->environment);
 	free (s);
 }
 /* ------------------------------------------------------------------------- */
@@ -330,12 +334,13 @@ void td_case_delete(xmlLinkPtr lk)
 {
 	td_case *td_c = xmlLinkGetData (lk);
 	xmlListDelete (td_c->steps);
-	free (td_c->comment);
-	free (td_c->failure_info);
-	free (td_c->tc_title);
-	free (td_c->state);
-	free (td_c->subfeature);
-	free (td_c->bugzilla_id);
+	xmlFree (td_c->comment);
+	xmlFree (td_c->failure_info);
+	xmlFree (td_c->tc_title);
+	xmlFree (td_c->state);
+	xmlFree (td_c->subfeature);
+	xmlFree (td_c->bugzilla_id);
+	xmlFree (td_c->description);
 
 	gen_attribs_delete(&td_c->gen);
 	free (td_c);

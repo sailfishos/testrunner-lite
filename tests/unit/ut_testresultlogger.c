@@ -157,10 +157,10 @@ START_TEST (test_logger_write_xml)
     test_opts.output_type = OUTPUT_TYPE_XML;
     test_opts.output_filename = "/dev/null";
     fail_if (init_result_logger (&test_opts, &hwinfo));
-    fail_if (write_pre_suite_tag (suite));
-    fail_if (write_post_suite_tag ());
-    fail_if (write_pre_set_tag (set));
-    fail_if (write_post_set_tag (set));
+    fail_if (write_pre_suite (suite));
+    fail_if (write_post_suite ());
+    fail_if (write_pre_set (set));
+    fail_if (write_post_set (set));
 
     td_suite_delete (suite);
     suite = NULL;
@@ -202,10 +202,10 @@ START_TEST (test_logger_write_txt)
     test_opts.output_type = OUTPUT_TYPE_XML;
     test_opts.output_filename = "/dev/null";
     fail_if (init_result_logger (&test_opts, &hwinfo));
-    fail_if (write_pre_suite_tag (suite));
-    fail_if (write_post_suite_tag ());
-    fail_if (write_pre_set_tag (set));
-    fail_if (write_post_set_tag (set));
+    fail_if (write_pre_suite (suite));
+    fail_if (write_post_suite ());
+    fail_if (write_pre_set (set));
+    fail_if (write_post_set (set));
 
     td_suite_delete (suite);
     suite = NULL;

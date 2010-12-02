@@ -78,7 +78,7 @@ int bail_out = 0;
 LOCAL td_td    *current_td = NULL;    /* Test definition currently executed */
 LOCAL td_suite *current_suite = NULL; /* Suite currently executed */
 LOCAL td_set   *current_set = NULL;   /* Set currently executed */
-LOCAL xmlChar  *cur_case_name = "";   /* Name of the current case or pre/post */
+LOCAL xmlChar  *cur_case_name = BAD_CAST"";   /* Name of the current case */ 
 LOCAL int       cur_step_num;         /* Number of current step within case */
 
 LOCAL int passcount = 0;
@@ -482,6 +482,7 @@ LOCAL int process_get (const void *data, const void *user)
  */
 LOCAL void process_td (td_td *td)
 {
+	write_td_start (td);
 	current_td = td;
 }
 /* ------------------------------------------------------------------------- */
@@ -537,7 +538,7 @@ LOCAL void process_suite (td_suite *s)
 {
 	LOG_MSG (LOG_INFO, "Test suite: %s", s->gen.name);
 
-	write_pre_suite_tag (s);
+	write_pre_suite (s);
 	current_suite = s;
 	
 }
@@ -546,7 +547,7 @@ LOCAL void process_suite (td_suite *s)
  */
 LOCAL void end_suite ()
 {
-	write_post_suite_tag ();
+	write_post_suite ();
 	td_suite_delete (current_suite);
 	current_suite = NULL;
 }
@@ -570,7 +571,8 @@ LOCAL void process_set (td_set *s)
 	** User defined HW ID based filtering
 	*/
 	if (s->gen.hwid && current_td->detected_hw &&
-	    list_contains(s->gen.hwid, current_td->detected_hw, ",") == 0) {
+	    list_contains((const char *)s->gen.hwid, 
+			  current_td->detected_hw, ",") == 0) {
 		LOG_MSG (LOG_INFO, "Test set %s is filtered based on HW ID",
 			 s->gen.name);
 		goto skip_all;
@@ -588,7 +590,7 @@ LOCAL void process_set (td_set *s)
 	}
 	current_set = s;
 	LOG_MSG (LOG_INFO, "Test set: %s", s->gen.name);
-	write_pre_set_tag (s);
+	write_pre_set (s);
 
 	if (xmlListSize (s->pre_steps) > 0) {
 		cur_case_name = (xmlChar *)"pre_steps";
@@ -624,7 +626,7 @@ LOCAL void process_set (td_set *s)
 	xmlListWalk (s->gets, process_get, s);
 
  short_circuit:
-	write_post_set_tag (s);
+	write_post_set (s);
 	if (xmlListSize (s->pre_steps) > 0)
 		xmlListWalk (s->pre_steps, step_post_process, &dummy);
 	if (xmlListSize (s->post_steps) > 0)

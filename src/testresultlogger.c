@@ -67,17 +67,22 @@ LOCAL FILE *ofile;
 /* MODULE DATA STRUCTURES */
 struct  
 {
-    int (*write_pre_suite_tag) (td_suite *);
-    int (*write_post_suite_tag) (void);
-    int (*write_pre_set_tag) (td_set *);
-    int (*write_post_set_tag) (td_set *);
+    int (*write_td_start)  (td_td *);
+    int (*write_pre_suite) (td_suite *);
+    int (*write_post_suite) (void);
+    int (*write_pre_set) (td_set *);
+    int (*write_post_set) (td_set *);
 } out_cbs;
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_pre_suite_tag (td_suite *);
+LOCAL int xml_write_td_start (td_td *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_pre_set_tag (td_set *);
+LOCAL int xml_write_pre_suite (td_suite *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_post_suite (td_suite *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_pre_set (td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_general_attributes (td_gen_attribs *);
 /* ------------------------------------------------------------------------- */
@@ -87,15 +92,19 @@ LOCAL int xml_write_pre_post_step (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_post_set_tag (td_set *);
+LOCAL int xml_write_file_data (const void *, const void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int txt_write_pre_suite_tag (td_suite *);
+LOCAL int xml_write_post_set (td_set *);
 /* ------------------------------------------------------------------------- */
-LOCAL int txt_write_post_suite_tag ();
+LOCAL int txt_write_td_start (td_td *);
 /* ------------------------------------------------------------------------- */
-LOCAL int txt_write_pre_set_tag (td_set *);
+LOCAL int txt_write_pre_suite (td_suite *);
 /* ------------------------------------------------------------------------- */
-LOCAL int txt_write_post_set_tag (td_set *);
+LOCAL int txt_write_post_suite ();
+/* ------------------------------------------------------------------------- */
+LOCAL int txt_write_pre_set (td_set *);
+/* ------------------------------------------------------------------------- */
+LOCAL int txt_write_post_set (td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
@@ -108,11 +117,38 @@ LOCAL int txt_write_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 /************************** xml output ***************************************/
 /* ------------------------------------------------------------------------- */
+/** Write the test definition attributes to xml results 
+ * @param td test definition data
+ * @return 0 on success, 1 on error
+ */
+LOCAL int xml_write_td_start (td_td *td)
+{
+	
+	if (!td->version || xmlTextWriterWriteAttribute (writer, 
+							 BAD_CAST "version", 
+							 td->version) < 0)
+		goto err_out;
+	
+	if (td->hw_detector)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "hwidetect", 
+						 td->hw_detector) < 0)
+			goto err_out;
+	if (td->description)
+		if (xmlTextWriterWriteElement	(writer, 
+						 BAD_CAST "description", 
+						 td->description))
+			goto err_out;
+	return 0; 
+ err_out:
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
 /** Write suite start xml tag
  * @param suite suite data
  * @return 0 on success, 1 on error
  */
-LOCAL int xml_write_pre_suite_tag (td_suite *suite)
+LOCAL int xml_write_pre_suite (td_suite *suite)
 {
 	
 	if (xmlTextWriterStartElement (writer, BAD_CAST "suite") < 0)
@@ -133,11 +169,28 @@ err_out:
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/** Write suite end
+ * @param suite suite data
+ * @return 0 on success, 1 on error
+ */
+LOCAL int xml_write_post_suite (td_suite *suite)
+{
+	if (suite->description)
+		if (xmlTextWriterWriteElement	(writer, 
+						 BAD_CAST "description", 
+						 suite->description))
+			goto err_out;
+
+	return xml_end_element();
+err_out:
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
 /** Write pre-set xml tag
  * @param set set data
  * @return 0 on success, 1 on error
  */
-LOCAL int xml_write_pre_set_tag (td_set *set)
+LOCAL int xml_write_pre_set (td_set *set)
 {
 	if (xmlTextWriterStartElement (writer, BAD_CAST "set") < 0)
 		goto err_out;
@@ -326,10 +379,7 @@ LOCAL int xml_write_step (const void *data, const void *user)
 			goto err_out;
 
 
-	xml_end_element();
-	
-
-	return 1;
+	return !xml_end_element();
 	
 err_out:
 	return 0;
@@ -426,8 +476,8 @@ LOCAL int xml_write_pre_post_step (const void *data, const void *user)
 			goto err_out;
 
 
-	xml_end_element();
-	return 1;
+	
+	return !xml_end_element();
 err_out:
 	return 0;
 }
@@ -486,9 +536,7 @@ LOCAL int xml_write_case (const void *data, const void *user)
 
 	xmlListWalk (c->steps, xml_write_step, NULL);
 
-	xml_end_element ();
-
-	return 1;
+	return !xml_end_element ();
 
 err_out:
 	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
@@ -496,13 +544,50 @@ err_out:
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Write get/file data to results
+ * @param data td_dile
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_file_data (const void *data, const void *user)
+{
+	td_file *f = (td_file *)data;
+
+	if (f->delete_after) {
+		if (xmlTextWriterStartElement (writer, BAD_CAST "file") < 0)
+			goto err_out;
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "delete_after", 
+						 BAD_CAST "true") < 0)
+			goto err_out;
+		if (xmlTextWriterWriteString (writer, f->filename) < 0)
+			goto err_out;
+		return !xml_end_element();
+	} else {
+		if (xmlTextWriterWriteElement	(writer, 
+						 BAD_CAST "file", 
+						 f->filename) < 0)
+			goto err_out;
+	}
+	
+	return 1;
+ err_out:
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
 /** Write set start tag and cases result xml
  * @param set set data
  * @return 0 on success, 1 on error
  */
-LOCAL int xml_write_post_set_tag (td_set *set)
+LOCAL int xml_write_post_set (td_set *set)
 {
 	td_steps *steps;
+
+	if (set->description)
+		if (xmlTextWriterWriteElement	(writer, 
+						 BAD_CAST "description", 
+						 set->description))
+			goto err_out;
 
 	if (xmlListSize (set->pre_steps) > 0) {
 		steps = xmlLinkGetData (xmlListFront (set->pre_steps));
@@ -540,6 +625,14 @@ LOCAL int xml_write_post_set_tag (td_set *set)
 		xml_end_element ();
 	}
 
+	if (xmlListSize (set->gets) > 0) {
+		if (xmlTextWriterStartElement (writer, 
+					       BAD_CAST "get") < 0)
+			goto err_out;
+
+		xmlListWalk (set->gets, xml_write_file_data, NULL);
+		xml_end_element();
+	}
 	
 	return 0;
 
@@ -645,11 +738,21 @@ LOCAL int txt_write_case (const void *data, const void *user)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/**  Write the test definition attributes to xml results 
+ * @param td test definition data
+ * @return 0 on success, 1 on error
+ */
+LOCAL int txt_write_td_start (td_td *td)
+{
+
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
 /** Write suite start txt tag
  * @param suite suite data
  * @return 0 on success, 1 on error
  */
-LOCAL int txt_write_pre_suite_tag (td_suite *suite)
+LOCAL int txt_write_pre_suite (td_suite *suite)
 {
 	fprintf (ofile, "----------------------------------"
 		 "----------------------------------\n");
@@ -668,7 +771,7 @@ LOCAL int txt_write_pre_suite_tag (td_suite *suite)
 /** Write post suite to text file - does not do anything at the moment
  * @return 0 on always
  */
-LOCAL int txt_write_post_suite_tag ()
+LOCAL int txt_write_post_suite ()
 {
 	return 0;
 
@@ -678,7 +781,7 @@ LOCAL int txt_write_post_suite_tag ()
  * @param set set data
  * @return 0 on always
  */
-LOCAL int txt_write_pre_set_tag (td_set *set)
+LOCAL int txt_write_pre_set (td_set *set)
 {
 	fprintf (ofile, "----------------------------------"
 		 "----------------------------------\n");
@@ -701,7 +804,7 @@ LOCAL int txt_write_pre_set_tag (td_set *set)
  * @param set set data
  * @return 0 on always
  */
-LOCAL int txt_write_post_set_tag (td_set *set)
+LOCAL int txt_write_post_set (td_set *set)
 {
 	
 	xmlListWalk (set->cases, txt_write_case, NULL);
@@ -781,10 +884,11 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 	    /*
 	     * Set callbacks
 	     */
-	    out_cbs.write_pre_suite_tag = xml_write_pre_suite_tag;
-	    out_cbs.write_post_suite_tag = xml_end_element;
-	    out_cbs.write_pre_set_tag = xml_write_pre_set_tag;
-	    out_cbs.write_post_set_tag = xml_write_post_set_tag;
+	    out_cbs.write_td_start = xml_write_td_start;
+	    out_cbs.write_pre_suite = xml_write_pre_suite;
+	    out_cbs.write_post_suite = xml_write_post_suite;
+	    out_cbs.write_pre_set = xml_write_pre_set;
+	    out_cbs.write_post_set = xml_write_post_set;
 	     
 	    
 	    break;
@@ -815,10 +919,11 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 	    /*
 	     * Set callbacks
 	     */
-	    out_cbs.write_pre_suite_tag = txt_write_pre_suite_tag;
-	    out_cbs.write_post_suite_tag = txt_write_post_suite_tag;
-	    out_cbs.write_pre_set_tag = txt_write_pre_set_tag;
-	    out_cbs.write_post_set_tag = txt_write_post_set_tag;
+	    out_cbs.write_td_start = txt_write_td_start;
+	    out_cbs.write_pre_suite = txt_write_pre_suite;
+	    out_cbs.write_post_suite = txt_write_post_suite;
+	    out_cbs.write_pre_set = txt_write_pre_set;
+	    out_cbs.write_post_set = txt_write_post_set;
 	     
 	    break;
 
@@ -831,42 +936,51 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
     return 0;
 }
 /* ------------------------------------------------------------------------- */
-/** Call pre_suite_tag callback
+/** Call td_start callback
+ *  @param td td data
+ *  @return 0 on success
+ */
+int write_td_start (td_td *td)
+{
+	return out_cbs.write_td_start (td);
+}
+/* ------------------------------------------------------------------------- */
+/** Call pre_suite callback
  *  @param suite suite data
  *  @return 0 on success
  */
-int write_pre_suite_tag (td_suite *suite)
+int write_pre_suite (td_suite *suite)
 {
-	return out_cbs.write_pre_suite_tag (suite);
+	return out_cbs.write_pre_suite (suite);
 }
 /* ------------------------------------------------------------------------- */
-/** Call post_suite_tag callback
+/** Call post_suite callback
  *  @param suite suite data
  *  @return 0 on success
  */
-int write_post_suite_tag (td_suite *suite)
+int write_post_suite (td_suite *suite)
 {
 	
-	return out_cbs.write_post_suite_tag ();
+	return out_cbs.write_post_suite ();
 }
 /* ------------------------------------------------------------------------- */
-/** Call pre_set_tag callback
+/** Call pre_set callback
  *  @param set set data
  *  @return 0 on success
  */
-int write_pre_set_tag (td_set *set)
+int write_pre_set (td_set *set)
 {
-	return out_cbs.write_pre_set_tag (set);
+	return out_cbs.write_pre_set (set);
 }
 /* ------------------------------------------------------------------------- */
-/** Call post_set_tag callback
+/** Call post_set callback
  *  @param set set data
  *  @return 0 on success
  */
-int write_post_set_tag (td_set *set)
+int write_post_set (td_set *set)
 {
 	
-	return out_cbs.write_post_set_tag (set);
+	return out_cbs.write_post_set (set);
 }
 /* ------------------------------------------------------------------------- */
 /** Write end element tag
@@ -874,7 +988,7 @@ int write_post_set_tag (td_set *set)
  */
 int xml_end_element ()
 {
-	
+
 	if (xmlTextWriterFullEndElement (writer) < 0)
 		goto err_out;
 	return 0;

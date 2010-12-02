@@ -406,17 +406,7 @@ LOCAL int td_parse_case(td_set *s)
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "description")) {
-			if (c->gen.description) {
-				c->gen.description = xmlStrcat 
-					(c->gen.description, 
-					 BAD_CAST " - ");
-				c->gen.description = xmlStrcat 
-					(c->gen.description, 
-					 BAD_CAST 
-					 xmlTextReaderReadString (reader));
-			}
-			else
-				c->gen.description = xmlTextReaderReadString(reader);
+			c->description = xmlTextReaderReadString(reader);
 		}
 
 	    
@@ -622,12 +612,21 @@ LOCAL int td_parse_set ()
 LOCAL int td_parse_td ()
 {
 	td_td *td;
+	const xmlChar *name;
 
 	td = td_td_create();
 	if (!td)
 		return 1;
 
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderConstName(reader);
+ 		if (!xmlStrcmp (name, BAD_CAST "version")) {
+			td->version = xmlTextReaderValue(reader);
+			continue;
+		}
+	}
 	current_td = td;
+
 	if (cbs->test_td)
 		cbs->test_td(td);
 
@@ -822,7 +821,7 @@ void td_reader_close ()
  */
 int td_next_node (void) {
 	int ret;
-	const xmlChar *name;
+	const xmlChar *name = NULL, *prev_name;
 	xmlReaderTypes type;
 	
         ret = xmlTextReaderRead(reader);
@@ -830,6 +829,7 @@ int td_next_node (void) {
 	if (!ret)
 		return !ret;
 
+	prev_name = name;
 	name = xmlTextReaderConstName(reader);
 	type = xmlTextReaderNodeType(reader);
 
@@ -849,6 +849,20 @@ int td_next_node (void) {
 	if (!xmlStrcmp (name, BAD_CAST "hwiddetect")) {
 		if (type == XML_READER_TYPE_ELEMENT) {
 			return td_parse_hwiddetect();
+		}
+	}
+
+	if (!xmlStrcmp (name, BAD_CAST "description")) {
+		if (!xmlStrcmp (prev_name, "testdefintion"))
+			current_td->description = 
+				xmlTextReaderReadString (reader);
+		else if (!xmlStrcmp (prev_name, "suite"))
+			current_suite->description = 
+				xmlTextReaderReadString (reader);
+		else {
+			LOG_MSG (LOG_ERR, "%s:%s: unexpected description\n",
+				 PROGNAME, __FUNCTION__);
+			return 1;
 		}
 	}
 

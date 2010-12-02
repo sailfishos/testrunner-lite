@@ -161,9 +161,11 @@ void pre_manual (td_case *c)
 {
 	td_step *pseudo_step;
 
-	printf ("\nDescription of test case:\n%s\n",
+	printf ("\nDescription of test case:\n%s %s\n",
 		(char *)((char *)c->gen.description ? 
-			 (char *)c->gen.description : " "));
+			 (char *)c->gen.description : " "),
+		(char *)((char *)c->description ? 
+			 (char *)c->description : " "));
 	/*
 	 * Some folks like to write manual test case steps into case
 	 * description. Add pseudo test step for them, so that a verdict
