@@ -560,6 +560,8 @@ LOCAL int td_parse_set ()
 	int ret = 0;
 	td_set *s;
 	const xmlChar *name;
+	xmlReaderTypes type;
+
 
 	if (!cbs->test_set)
 		return 1;
@@ -574,6 +576,7 @@ LOCAL int td_parse_set ()
 		if (!ret) 
 			goto OKOUT;
 		name = xmlTextReaderConstName(reader);
+		type = xmlTextReaderNodeType(reader);
 		if (!name) {
 			LOG_MSG (LOG_ERR, "%s: ReaderName() fail\n",
 				 PROGNAME);
@@ -589,7 +592,11 @@ LOCAL int td_parse_set ()
 		    ret = !td_parse_environments(s->environments);
 		if (!xmlStrcmp (name, BAD_CAST "get"))
 		    ret = !td_parse_gets(s->gets);
-
+		if (!xmlStrcmp (name, BAD_CAST "description") &&
+		    type == XML_READER_TYPE_ELEMENT) {
+			s->description = 
+				xmlTextReaderReadString (reader);
+		}
 		if (!ret)
 			goto ERROUT;
 	} while (!(xmlTextReaderNodeType(reader) == 
@@ -821,7 +828,8 @@ void td_reader_close ()
  */
 int td_next_node (void) {
 	int ret;
-	const xmlChar *name = NULL, *prev_name;
+	static int level = 0;
+	const xmlChar *name = NULL;
 	xmlReaderTypes type;
 	
         ret = xmlTextReaderRead(reader);
@@ -829,7 +837,6 @@ int td_next_node (void) {
 	if (!ret)
 		return !ret;
 
-	prev_name = name;
 	name = xmlTextReaderConstName(reader);
 	type = xmlTextReaderNodeType(reader);
 
@@ -837,9 +844,12 @@ int td_next_node (void) {
 		return 1;
 
 	if (!xmlStrcmp (name, BAD_CAST "testdefinition")) {
-		if (type == XML_READER_TYPE_ELEMENT)
+		if (type == XML_READER_TYPE_ELEMENT) {
+			level++;
 			return td_parse_td();
+		}
 		else if (type == XML_READER_TYPE_END_ELEMENT) {
+			level--;
 			if (cbs->test_td_end)
 				cbs->test_td_end();
 			return 0;
@@ -852,24 +862,32 @@ int td_next_node (void) {
 		}
 	}
 
-	if (!xmlStrcmp (name, BAD_CAST "description")) {
-		if (!xmlStrcmp (prev_name, "testdefintion"))
+	if (!xmlStrcmp (name, BAD_CAST "description") &&
+	    type == XML_READER_TYPE_ELEMENT) {
+		switch (level) {
+		case 1:
 			current_td->description = 
 				xmlTextReaderReadString (reader);
-		else if (!xmlStrcmp (prev_name, "suite"))
+			break;
+		case 2:
 			current_suite->description = 
-				xmlTextReaderReadString (reader);
-		else {
-			LOG_MSG (LOG_ERR, "%s:%s: unexpected description\n",
-				 PROGNAME, __FUNCTION__);
+				xmlTextReaderReadString (reader); 
+			break;
+		default:
+			LOG_MSG (LOG_ERR, "run time error, "
+				 "invalid parsing level %d", level);
 			return 1;
 		}
+		return 0;
 	}
 
 	if (!xmlStrcmp (name, BAD_CAST "suite")) {
-		if (type == XML_READER_TYPE_ELEMENT)
+		if (type == XML_READER_TYPE_ELEMENT) {
+			level ++;
 			return td_parse_suite();
+		}
 		else if (type == XML_READER_TYPE_END_ELEMENT) {
+			level --;
 			if (cbs->test_suite_end) cbs->test_suite_end();
 			return 0;
 		}
@@ -878,9 +896,6 @@ int td_next_node (void) {
 	if (!xmlStrcmp (name, BAD_CAST "set") && 
 	    type == XML_READER_TYPE_ELEMENT)
 		return td_parse_set();
-	
-	/* fprintf (stderr, "Unhandled tag %s\n", name); */
-	
 	return !ret;
 } 
 /* ------------------------------------------------------------------------- */

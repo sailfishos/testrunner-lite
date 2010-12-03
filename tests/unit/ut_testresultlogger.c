@@ -158,7 +158,7 @@ START_TEST (test_logger_write_xml)
     test_opts.output_filename = "/dev/null";
     fail_if (init_result_logger (&test_opts, &hwinfo));
     fail_if (write_pre_suite (suite));
-    fail_if (write_post_suite ());
+    fail_if (write_post_suite (suite));
     fail_if (write_pre_set (set));
     fail_if (write_post_set (set));
 
@@ -203,7 +203,7 @@ START_TEST (test_logger_write_txt)
     test_opts.output_filename = "/dev/null";
     fail_if (init_result_logger (&test_opts, &hwinfo));
     fail_if (write_pre_suite (suite));
-    fail_if (write_post_suite ());
+    fail_if (write_post_suite (suite));
     fail_if (write_pre_set (set));
     fail_if (write_post_set (set));
 

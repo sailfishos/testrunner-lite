@@ -68,6 +68,7 @@ LOCAL FILE *ofile;
 struct  
 {
     int (*write_td_start)  (td_td *);
+    int (*write_td_end)  (td_td *);
     int (*write_pre_suite) (td_suite *);
     int (*write_post_suite) (void);
     int (*write_pre_set) (td_set *);
@@ -77,6 +78,8 @@ struct
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_td_start (td_td *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_td_end (td_td *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_pre_suite (td_suite *);
 /* ------------------------------------------------------------------------- */
@@ -97,6 +100,8 @@ LOCAL int xml_write_file_data (const void *, const void *);
 LOCAL int xml_write_post_set (td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_td_start (td_td *);
+/* ------------------------------------------------------------------------- */
+LOCAL int txt_write_td_end (td_td *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_pre_suite (td_suite *);
 /* ------------------------------------------------------------------------- */
@@ -129,17 +134,32 @@ LOCAL int xml_write_td_start (td_td *td)
 							 td->version) < 0)
 		goto err_out;
 	
+	return 0; 
+ err_out:
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
+/** Write the test definition top level elements
+ * @param td test definition data
+ * @return 0 on success, 1 on error
+ */
+LOCAL int xml_write_td_end (td_td *td)
+{
 	if (td->hw_detector)
-		if (xmlTextWriterWriteAttribute (writer, 
-						 BAD_CAST "hwidetect", 
-						 td->hw_detector) < 0)
+		if (xmlTextWriterWriteElement (writer, 
+					       BAD_CAST "hwidetect", 
+					       td->hw_detector) < 0)
 			goto err_out;
+	
 	if (td->description)
 		if (xmlTextWriterWriteElement	(writer, 
 						 BAD_CAST "description", 
-						 td->description))
+						 td->description) < 0)
 			goto err_out;
-	return 0; 
+
+	xmlTextWriterFlush (writer);
+	
+	return xml_end_element();
  err_out:
 	return 1;
 }
@@ -178,7 +198,7 @@ LOCAL int xml_write_post_suite (td_suite *suite)
 	if (suite->description)
 		if (xmlTextWriterWriteElement	(writer, 
 						 BAD_CAST "description", 
-						 suite->description))
+						 suite->description) < 0)
 			goto err_out;
 
 	return xml_end_element();
@@ -748,6 +768,19 @@ LOCAL int txt_write_td_start (td_td *td)
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/**  Write the test definition attributes to xml results 
+ * @param td test definition data
+ * @return 0 on success, 1 on error
+ */
+LOCAL int txt_write_td_end (td_td *td)
+{
+	fprintf (ofile, "----------------------------------"
+		 "----------------------------------\n");
+	fprintf (ofile, "End of test results.\n");
+
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
 /** Write suite start txt tag
  * @param suite suite data
  * @return 0 on success, 1 on error
@@ -851,10 +884,6 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 			     PROGNAME, __FUNCTION__);
 		    return 1;
 	    }
-	    if (xmlTextWriterWriteAttribute (writer, 
-					     BAD_CAST "version", 
-					     BAD_CAST "1.0") < 0)
-		    return 1;
 
 	    if (xmlTextWriterWriteAttribute (writer, 
 					     BAD_CAST "environment", 
@@ -885,6 +914,7 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 	     * Set callbacks
 	     */
 	    out_cbs.write_td_start = xml_write_td_start;
+	    out_cbs.write_td_end = xml_write_td_end;
 	    out_cbs.write_pre_suite = xml_write_pre_suite;
 	    out_cbs.write_post_suite = xml_write_post_suite;
 	    out_cbs.write_pre_set = xml_write_pre_set;
@@ -920,6 +950,7 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 	     * Set callbacks
 	     */
 	    out_cbs.write_td_start = txt_write_td_start;
+	    out_cbs.write_td_end = txt_write_td_end;
 	    out_cbs.write_pre_suite = txt_write_pre_suite;
 	    out_cbs.write_post_suite = txt_write_post_suite;
 	    out_cbs.write_pre_set = txt_write_pre_set;
@@ -943,6 +974,15 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 int write_td_start (td_td *td)
 {
 	return out_cbs.write_td_start (td);
+}
+/* ------------------------------------------------------------------------- */
+/** Call td_end callback
+ *  @param td td data
+ *  @return 0 on success
+ */
+int write_td_end (td_td *td)
+{
+	return out_cbs.write_td_end (td);
 }
 /* ------------------------------------------------------------------------- */
 /** Call pre_suite callback
@@ -1001,14 +1041,10 @@ err_out:
 void close_result_logger (void)
 {
 	if (writer) {
-		while (!xml_end_element())
 		xmlTextWriterFlush (writer);
 		xmlFreeTextWriter (writer);
 		writer = NULL;
 	} else if (ofile) {
-		fprintf (ofile, "----------------------------------"
-			 "----------------------------------\n");
-		fprintf (ofile, "End of test results.\n");
 		fflush (ofile);
 		fclose (ofile);
 		ofile = NULL;

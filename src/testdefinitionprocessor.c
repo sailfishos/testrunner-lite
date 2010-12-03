@@ -244,11 +244,7 @@ LOCAL int prepost_steps_execute (const void *data, const void *user)
 	td_steps *steps = (td_steps *)data;
 	td_case *dummy = (td_case *)user;
 	
-	if (steps->timeout == 0) {
-		dummy->gen.timeout = 180; /* default for pre/post steps */
-	} else {
-		dummy->gen.timeout = steps->timeout;
-	}
+	dummy->gen.timeout = steps->timeout;
 	
 	if (xmlListSize(steps->steps) > 0) {
 		xmlListWalk (steps->steps, step_execute, dummy);
@@ -482,14 +478,15 @@ LOCAL int process_get (const void *data, const void *user)
  */
 LOCAL void process_td (td_td *td)
 {
-	write_td_start (td);
 	current_td = td;
+	write_td_start (td);
 }
 /* ------------------------------------------------------------------------- */
 /** Do test definition cleaning
  */
 LOCAL void end_td ()
 {
+	write_td_end (current_td);
 	td_td_delete (current_td);
 	current_td = NULL;
 }
@@ -547,7 +544,7 @@ LOCAL void process_suite (td_suite *s)
  */
 LOCAL void end_suite ()
 {
-	write_post_suite ();
+	write_post_suite (current_suite);
 	td_suite_delete (current_suite);
 	current_suite = NULL;
 }
