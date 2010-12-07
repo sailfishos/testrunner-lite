@@ -190,6 +190,8 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			continue;
 		}
 	}
+	xmlTextReaderMoveToElement (reader);
+
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -365,13 +367,14 @@ LOCAL int td_parse_case(td_set *s)
 		c->bugzilla_id = xmlTextReaderValue(reader);
 	}
 
+	xmlTextReaderMoveToElement (reader);
 	if (xmlTextReaderIsEmptyElement (reader))
-		return 0;
+		goto OK_OUT;
 
 	do {
 		ret = xmlTextReaderRead(reader);
-		if (!ret) { /* no steps, we accept that */
-			goto OK_OUT;
+		if (!ret) { 
+			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
@@ -571,6 +574,9 @@ LOCAL int td_parse_set ()
 	if (td_parse_gen_attribs(&s->gen, &current_suite->gen))
 		goto ERROUT;
 
+	if (xmlTextReaderIsEmptyElement (reader))
+		goto OKOUT;
+
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) 
@@ -582,6 +588,7 @@ LOCAL int td_parse_set ()
 				 PROGNAME);
 			goto ERROUT;
 		}
+
 		if (!xmlStrcmp (name, BAD_CAST "pre_steps"))
 			ret = !td_parse_steps(s->pre_steps, "pre_steps");
 		if (!xmlStrcmp (name, BAD_CAST "post_steps"))
@@ -896,6 +903,7 @@ int td_next_node (void) {
 	if (!xmlStrcmp (name, BAD_CAST "set") && 
 	    type == XML_READER_TYPE_ELEMENT)
 		return td_parse_set();
+
 	return !ret;
 } 
 /* ------------------------------------------------------------------------- */

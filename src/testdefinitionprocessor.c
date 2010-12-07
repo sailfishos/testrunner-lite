@@ -168,12 +168,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	
 	init_exec_data(&edata);
 	
-	if (c->dummy) {
-		/* Pre or post step */
-		edata.redirect_output = DONT_REDIRECT_OUTPUT;
-	} else {
-		edata.redirect_output = REDIRECT_OUTPUT;
-	}
+	edata.redirect_output = REDIRECT_OUTPUT;
 	edata.soft_timeout = c->gen.timeout;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	

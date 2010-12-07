@@ -12,17 +12,16 @@
       <description>set 1 description</description>
       <environments>hardware</environments>
       <pre_steps timeout="100">
-         <step expected_result="0">echo foo > /tmp/gettest.txt</step>
-         <step expected_result="0">echo bar > /tmp/gettest2.txt</step>
-         <step expected_result="0">echo lorem > /tmp/gettest3.txt</step>
-         <step expected_result="0">echo ipsum > /tmp/gettest4.txt</step>
-	 <step expected_result="0">echo dolor > /tmp/get\ test5.txt</step>
+        <step expected_result="0">echo foo > /tmp/gettest.txt</step>
+        <step expected_result="0">echo bar > /tmp/gettest2.txt</step>
+        <step expected_result="0">echo lorem > /tmp/gettest3.txt</step>
+        <step expected_result="0">echo ipsum > /tmp/gettest4.txt</step>
+	<step expected_result="0">echo dolor > /tmp/get\ test5.txt</step>
       </pre_steps>
-            
-      <case name="set 1"  description="case 1 attr" requirement="12,13"
-	 timeout="11" type="Integration" level="Component" manual="false"
-	 insignificant="true" hwid="myhw" subfeature="subfea" 
-	 bugzilla_id="12121">
+      <case name="case_1"  description="case 1 attr" requirement="12,13"
+	    timeout="11" type="Integration" level="Component" manual="false"
+	    insignificant="true" hwid="myhw" subfeature="subfea" 
+	    bugzilla_id="12121">
 	<description>case 1 description </description>
         <step expected_result="0">stat /tmp/gettest.txt</step>
         <step expected_result="0">stat /tmp/gettest2.txt</step>
@@ -30,7 +29,6 @@
         <step expected_result="0">stat /tmp/gettest4.txt</step>
 	<step expected_result="0">stat /tmp/get\ test5.txt</step>
       </case>     
-
       <get>
         <file delete_after="true">/tmp/gettest.txt</file>
         <file>/tmp/gettest2.txt</file>
@@ -39,30 +37,13 @@
         </file>
 	<file delete_after="true">	  	/tmp/gettest4.txt	  </file>
 	<file>/tmp/
-get\ test5.txt
+	  get\ test5.txt
 	</file>
       </get>
+      <post_steps timeout="100">
+        <step expected_result="1">ls /tmp/gettest.txt</step>
+      </post_steps>
     </set>
- </suite>
-  <suite name="other_suite"  timeout="10" hwid="myhw">  
-    <set name="set1" description="diu diu" hwid="myhw"  timeout="15">    
-      <pre_steps>
-         <step>echo foo > /tmp/gettest.txt</step>
-         <step>echo bar > /tmp/gettest2.txt</step>
-         <step>echo lorem > /tmp/gettest3.txt</step>
-         <step>echo ipsum > /tmp/gettest4.txt</step>
-	 <step>echo dolor > /tmp/get\ test5.txt</step>
-      </pre_steps>
-            
-      <case name="check_files" description="check that files created in pre-step exist" timeout="30">
-        <step expected_result="0">stat /tmp/gettest.txt</step>
-        <step expected_result="0">stat /tmp/gettest2.txt</step>
-        <step expected_result="0">stat /tmp/gettest3.txt</step>
-        <step expected_result="0">stat /tmp/gettest4.txt</step>
-	<step expected_result="0">stat /tmp/get\ test5.txt</step>
-      </case>     
-    </set>
- </suite>
-
+  </suite>
 </testdefinition>
 

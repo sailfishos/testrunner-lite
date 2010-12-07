@@ -147,7 +147,7 @@ LOCAL int xml_write_td_end (td_td *td)
 {
 	if (td->hw_detector)
 		if (xmlTextWriterWriteElement (writer, 
-					       BAD_CAST "hwidetect", 
+					       BAD_CAST "hwiddetect", 
 					       td->hw_detector) < 0)
 			goto err_out;
 	
@@ -159,7 +159,8 @@ LOCAL int xml_write_td_end (td_td *td)
 
 	xmlTextWriterFlush (writer);
 	
-	return xml_end_element();
+	while (!xml_end_element());
+	return  0;
  err_out:
 	return 1;
 }
@@ -606,7 +607,7 @@ LOCAL int xml_write_post_set (td_set *set)
 	if (set->description)
 		if (xmlTextWriterWriteElement	(writer, 
 						 BAD_CAST "description", 
-						 set->description))
+						 set->description) < 0)
 			goto err_out;
 
 	if (xmlListSize (set->pre_steps) > 0) {
