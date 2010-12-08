@@ -69,7 +69,7 @@ LOCAL xmlSchemaPtr schema = NULL;
 LOCAL td_td *current_td;
 LOCAL td_suite *current_suite;
 LOCAL td_set *current_set;
-
+LOCAL parsing_level = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -538,8 +538,6 @@ LOCAL int td_parse_suite ()
 {
 	td_suite *s;
 
-	if (xmlTextReaderIsEmptyElement (reader))
-		return 0;
 
 	if (!cbs->test_suite)
 		return 1;
@@ -550,8 +548,13 @@ LOCAL int td_parse_suite ()
 	current_suite = s;
 
 	td_parse_gen_attribs (&s->gen, NULL);
+
 	cbs->test_suite(s);
 
+	if (xmlTextReaderIsEmptyElement (reader)) {
+	        parsing_level--;
+	        cbs->test_suite_end(s);
+	}
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -632,6 +635,7 @@ LOCAL int td_parse_td ()
 	if (!td)
 		return 1;
 
+	parsing_level++;
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
 		name = xmlTextReaderConstName(reader);
  		if (!xmlStrcmp (name, BAD_CAST "version")) {
@@ -835,7 +839,6 @@ void td_reader_close ()
  */
 int td_next_node (void) {
 	int ret;
-	static int level = 0;
 	const xmlChar *name = NULL;
 	xmlReaderTypes type;
 	
@@ -852,11 +855,10 @@ int td_next_node (void) {
 
 	if (!xmlStrcmp (name, BAD_CAST "testdefinition")) {
 		if (type == XML_READER_TYPE_ELEMENT) {
-			level++;
 			return td_parse_td();
 		}
 		else if (type == XML_READER_TYPE_END_ELEMENT) {
-			level--;
+			parsing_level--;
 			if (cbs->test_td_end)
 				cbs->test_td_end();
 			return 0;
@@ -871,7 +873,7 @@ int td_next_node (void) {
 
 	if (!xmlStrcmp (name, BAD_CAST "description") &&
 	    type == XML_READER_TYPE_ELEMENT) {
-		switch (level) {
+		switch (parsing_level) {
 		case 1:
 			current_td->description = 
 				xmlTextReaderReadString (reader);
@@ -882,7 +884,7 @@ int td_next_node (void) {
 			break;
 		default:
 			LOG_MSG (LOG_ERR, "run time error, "
-				 "invalid parsing level %d", level);
+				 "invalid parsing level %d", parsing_level);
 			return 1;
 		}
 		return 0;
@@ -890,11 +892,11 @@ int td_next_node (void) {
 
 	if (!xmlStrcmp (name, BAD_CAST "suite")) {
 		if (type == XML_READER_TYPE_ELEMENT) {
-			level ++;
+			parsing_level ++;
 			return td_parse_suite();
 		}
 		else if (type == XML_READER_TYPE_END_ELEMENT) {
-			level --;
+			parsing_level --;
 			if (cbs->test_suite_end) cbs->test_suite_end();
 			return 0;
 		}
