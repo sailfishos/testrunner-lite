@@ -134,8 +134,8 @@ int ssh_execute (const char *hostname, const char *command)
 {
 	int   ret;
         char *cmd; 
-	char *casename;
-	char *setname;
+	const char *casename;
+	const char *setname;
 	int   stepnum;
 	/*
 	 * Query the current set name, case name and step number 

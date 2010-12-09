@@ -70,7 +70,7 @@ struct
     int (*write_td_start)  (td_td *);
     int (*write_td_end)  (td_td *);
     int (*write_pre_suite) (td_suite *);
-    int (*write_post_suite) (void);
+    int (*write_post_suite) (td_suite *);
     int (*write_pre_set) (td_set *);
     int (*write_post_set) (td_set *);
 } out_cbs;
@@ -105,7 +105,7 @@ LOCAL int txt_write_td_end (td_td *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_pre_suite (td_suite *);
 /* ------------------------------------------------------------------------- */
-LOCAL int txt_write_post_suite ();
+LOCAL int txt_write_post_suite (td_suite *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_pre_set (td_set *);
 /* ------------------------------------------------------------------------- */
@@ -385,19 +385,19 @@ LOCAL int xml_write_step (const void *data, const void *user)
 					     tm->tm_sec) < 0)
 		goto err_out;
 
-	if (step->stdout_)
-		if (xmlTextWriterWriteFormatElement (writer,
-						     BAD_CAST "stdout",
-						     "%s", 
-						     step->stdout_) < 0)
-			goto err_out;
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "stdout",
+					     "%s", 
+					     step->stdout_ ? step->stdout_ :
+					     "") < 0)
+		goto err_out;
 
-	if (step->stderr_)
-		if (xmlTextWriterWriteFormatElement (writer,
-						     BAD_CAST "stderr",
-						     "%s", 
-						     step->stderr_) < 0)
-			goto err_out;
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "stderr",
+					     "%s", 
+					     step->stderr_ ? step->stderr_ :
+					     "") < 0)
+		goto err_out;
 
 
 	return !xml_end_element();
@@ -482,19 +482,19 @@ LOCAL int xml_write_pre_post_step (const void *data, const void *user)
 					     tm->tm_sec) < 0)
 		goto err_out;
 
-	if (step->stdout_)
-		if (xmlTextWriterWriteFormatElement (writer,
-						     BAD_CAST "stdout",
-						     "%s", 
-						     step->stdout_) < 0)
-			goto err_out;
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "stdout",
+					     "%s", 
+					     step->stdout_ ?
+					     step->stdout_ : "") < 0)
+		goto err_out;
 
-	if (step->stderr_)
-		if (xmlTextWriterWriteFormatElement (writer,
-						     BAD_CAST "stderr",
-						     "%s", 
-						     step->stderr_) < 0)
-			goto err_out;
+	if (xmlTextWriterWriteFormatElement (writer,
+					     BAD_CAST "stderr",
+					     "%s", 
+					     step->stderr_ ?
+					     step->stderr_ : "") < 0)
+		goto err_out;
 
 
 	
@@ -805,7 +805,7 @@ LOCAL int txt_write_pre_suite (td_suite *suite)
 /** Write post suite to text file - does not do anything at the moment
  * @return 0 on always
  */
-LOCAL int txt_write_post_suite ()
+LOCAL int txt_write_post_suite (td_suite *suite)
 {
 	return 0;
 
@@ -1002,7 +1002,7 @@ int write_pre_suite (td_suite *suite)
 int write_post_suite (td_suite *suite)
 {
 	
-	return out_cbs.write_post_suite ();
+	return out_cbs.write_post_suite (suite);
 }
 /* ------------------------------------------------------------------------- */
 /** Call pre_set callback

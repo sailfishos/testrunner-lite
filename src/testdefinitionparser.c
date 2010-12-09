@@ -69,7 +69,7 @@ LOCAL xmlSchemaPtr schema = NULL;
 LOCAL td_td *current_td;
 LOCAL td_suite *current_suite;
 LOCAL td_set *current_set;
-LOCAL parsing_level = 0;
+LOCAL int parsing_level = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */

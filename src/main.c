@@ -75,7 +75,6 @@ testrunner_lite_options opts;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-LOCAL td_suite *current_suite = NULL;
 LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */

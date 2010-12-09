@@ -174,7 +174,7 @@ void pre_manual (td_case *c)
 	if (xmlListSize (c->steps) == 0) {
 		pseudo_step = td_step_create();
 		pseudo_step->manual = 1;
-		pseudo_step->step = xmlStrdup ("give verdict");
+		pseudo_step->step = xmlStrdup (BAD_CAST "give verdict");
 		xmlListAppend (c->steps, pseudo_step);
 	}
 }

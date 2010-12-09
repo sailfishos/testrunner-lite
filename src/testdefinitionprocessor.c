@@ -107,7 +107,7 @@ LOCAL void process_set(td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int case_result_na (const void *, const void *);
+LOCAL int case_result_fail (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_get (const void *, const void *);
 /* ------------------------------------------------------------------------- */
@@ -360,12 +360,12 @@ LOCAL int process_case (const void *data, const void *user)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
-/** Set case result to N/A
+/** Set case result to fail
  *  @param data case data
  *  @param user failure info
  *  @return 1 always
  */
-LOCAL int case_result_na (const void *data, const void *user)
+LOCAL int case_result_fail (const void *data, const void *user)
 {
 
 	td_case *c = (td_case *)data;
@@ -564,7 +564,7 @@ LOCAL void process_set (td_set *s)
 	*/
 	if (s->gen.hwid && current_td->detected_hw &&
 	    list_contains((const char *)s->gen.hwid, 
-			  current_td->detected_hw, ",") == 0) {
+			 (const char *) current_td->detected_hw, ",") == 0) {
 		LOG_MSG (LOG_INFO, "Test set %s is filtered based on HW ID",
 			 s->gen.name);
 		goto skip_all;
@@ -595,7 +595,7 @@ LOCAL void process_set (td_set *s)
 		if (dummy.case_res != CASE_PASS) {
 			LOG_MSG (LOG_ERR, "Pre steps failed. "
 				 "Test set %s aborted.", s->gen.name); 
-			xmlListWalk (s->cases, case_result_na, 
+			xmlListWalk (s->cases, case_result_fail, 
 				     global_failure ? global_failure :
 				     "pre_steps failed");
 			goto short_circuit;
