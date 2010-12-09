@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -389,14 +389,14 @@ LOCAL int xml_write_step (const void *data, const void *user)
 					     BAD_CAST "stdout",
 					     "%s", 
 					     step->stdout_ ? step->stdout_ :
-					     "") < 0)
+					     BAD_CAST "") < 0)
 		goto err_out;
 
 	if (xmlTextWriterWriteFormatElement (writer,
 					     BAD_CAST "stderr",
 					     "%s", 
 					     step->stderr_ ? step->stderr_ :
-					     "") < 0)
+					     BAD_CAST "") < 0)
 		goto err_out;
 
 
@@ -486,14 +486,14 @@ LOCAL int xml_write_pre_post_step (const void *data, const void *user)
 					     BAD_CAST "stdout",
 					     "%s", 
 					     step->stdout_ ?
-					     step->stdout_ : "") < 0)
+					     step->stdout_ : BAD_CAST "") < 0)
 		goto err_out;
 
 	if (xmlTextWriterWriteFormatElement (writer,
 					     BAD_CAST "stderr",
 					     "%s", 
 					     step->stderr_ ?
-					     step->stderr_ : "") < 0)
+					     step->stderr_ : BAD_CAST "") < 0)
 		goto err_out;
 
 
@@ -574,24 +574,16 @@ LOCAL int xml_write_file_data (const void *data, const void *user)
 {
 	td_file *f = (td_file *)data;
 
-	if (f->delete_after) {
-		if (xmlTextWriterStartElement (writer, BAD_CAST "file") < 0)
-			goto err_out;
-		if (xmlTextWriterWriteAttribute (writer, 
-						 BAD_CAST "delete_after", 
-						 BAD_CAST "true") < 0)
-			goto err_out;
-		if (xmlTextWriterWriteString (writer, f->filename) < 0)
-			goto err_out;
-		return !xml_end_element();
-	} else {
-		if (xmlTextWriterWriteElement	(writer, 
-						 BAD_CAST "file", 
-						 f->filename) < 0)
-			goto err_out;
-	}
-	
-	return 1;
+	if (xmlTextWriterStartElement (writer, BAD_CAST "file") < 0)
+		goto err_out;
+	if (xmlTextWriterWriteAttribute (writer, 
+					 BAD_CAST "delete_after", 
+					 f->delete_after ? BAD_CAST "true"
+					 : BAD_CAST "false") < 0)
+		goto err_out;
+	if (xmlTextWriterWriteString (writer, f->filename) < 0)
+		goto err_out;
+	return !xml_end_element();
  err_out:
 	return 0;
 }
