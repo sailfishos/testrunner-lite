@@ -199,7 +199,7 @@ td_suite *td_suite_create()
 	}
 
 	memset (s, 0x0, sizeof (td_suite));
-	s->gen.timeout = 90;
+	s->gen.timeout = DEFAULT_TIMEOUT;
 	return s;
 }
 /* ------------------------------------------------------------------------- */
@@ -308,7 +308,7 @@ td_steps *td_steps_create()
 		return NULL;
 	}
 	memset (steps, 0x0, sizeof (td_steps));
-	steps->timeout = 180; /* Default timeout for post and pre steps */
+	steps->timeout = DEFAULT_PRE_STEP_TIMEOUT; 
 	steps->steps = xmlListCreate (td_step_delete, list_dummy_compare);
 
 	return steps;

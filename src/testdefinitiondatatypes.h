@@ -47,6 +47,7 @@ typedef struct {
         xmlChar *description;   /**< Description */
         xmlChar *requirement;   /**< Requirement attribute */
 	xmlChar *type;          /**< Type attribute */
+#define DEFAULT_TIMEOUT 90
 	unsigned long timeout;  /**< Timeout (defaults to 90) */
 	xmlChar *level;         /**< Level (Component, Feature, System) */
 	xmlChar *domain;        /**< Domain */
@@ -145,6 +146,7 @@ typedef struct {
 /** Pre/post steps */
 typedef struct {
 	xmlListPtr steps;       /**< Steps of pre/post steps */
+#define DEFAULT_PRE_STEP_TIMEOUT 180
 	unsigned long timeout;  /**< Timeout */
 } td_steps;
 /* ------------------------------------------------------------------------- */

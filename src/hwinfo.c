@@ -30,6 +30,7 @@
 #include <libxml/xmlwriter.h>
 #include <dlfcn.h>
 #include "testrunnerlite.h"
+#include "testdefinitiondatatypes.h"
 #include "executor.h"
 #include "hwinfo.h"
 #include "log.h"
@@ -93,7 +94,7 @@ LOCAL unsigned char *exec_command (const char *cmd)
 	if (cmd == NULL || !strlen (cmd))
 		return NULL;
 
-	edata.soft_timeout = 5;
+	edata.soft_timeout = DEFAULT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	LOG_MSG (LOG_INFO, "Getting HW information");
 	execute (cmd, &edata);
