@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -157,10 +157,10 @@ START_TEST (test_logger_write_xml)
     test_opts.output_type = OUTPUT_TYPE_XML;
     test_opts.output_filename = "/dev/null";
     fail_if (init_result_logger (&test_opts, &hwinfo));
-    fail_if (write_pre_suite_tag (suite));
-    fail_if (write_post_suite_tag ());
-    fail_if (write_pre_set_tag (set));
-    fail_if (write_post_set_tag (set));
+    fail_if (write_pre_suite (suite));
+    fail_if (write_post_suite (suite));
+    fail_if (write_pre_set (set));
+    fail_if (write_post_set (set));
 
     td_suite_delete (suite);
     suite = NULL;
@@ -202,10 +202,10 @@ START_TEST (test_logger_write_txt)
     test_opts.output_type = OUTPUT_TYPE_XML;
     test_opts.output_filename = "/dev/null";
     fail_if (init_result_logger (&test_opts, &hwinfo));
-    fail_if (write_pre_suite_tag (suite));
-    fail_if (write_post_suite_tag ());
-    fail_if (write_pre_set_tag (set));
-    fail_if (write_post_set_tag (set));
+    fail_if (write_pre_suite (suite));
+    fail_if (write_post_suite (suite));
+    fail_if (write_pre_set (set));
+    fail_if (write_post_set (set));
 
     td_suite_delete (suite);
     suite = NULL;

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -57,13 +57,17 @@ int init_result_logger (testrunner_lite_options *, hw_info *);
 /* ------------------------------------------------------------------------- */
 void close_result_logger (void);
 /* ------------------------------------------------------------------------- */
-int write_pre_suite_tag (td_suite *);
+int write_td_start (td_td *);
 /* ------------------------------------------------------------------------- */
-int write_post_suite_tag ();
+int write_td_end (td_td *);
 /* ------------------------------------------------------------------------- */
-int write_pre_set_tag (td_set *);
+int write_pre_suite (td_suite *);
 /* ------------------------------------------------------------------------- */
-int write_post_set_tag (td_set *);
+int write_post_suite ();
+/* ------------------------------------------------------------------------- */
+int write_pre_set (td_set *);
+/* ------------------------------------------------------------------------- */
+int write_post_set (td_set *);
 /* ------------------------------------------------------------------------- */
 int xml_end_element (void);
 /* ------------------------------------------------------------------------- */

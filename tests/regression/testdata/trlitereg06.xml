@@ -3,7 +3,7 @@
   <suite name="trlitereg06_suite1">
     <set name="set1">
       <pre_steps>
-	<step>/bin/false</step>                        <!-- failing pre-step  -->
+	<step>/bin/false</step> <!-- result="FAIL"  -->
       </pre_steps>
 
       <case name="case1_1">     <!-- result="PASS" -->
@@ -18,7 +18,7 @@
 
     <set name="set2">
       <pre_steps>
-	<step expected_result="0">/bin/false</step>    <!-- failing pre-step with expected result -->
+	<step expected_result="0">/bin/false</step>    <!--result="FAIL" -->
       </pre_steps>
 
       <case name="case2_1">     <!-- result="FAIL" should not be executed -->
@@ -33,7 +33,7 @@
 
     <set name="set3">
       <pre_steps>
-	<step expected_result="0">/bin/true</step>
+	<step expected_result="0">/bin/true</step>  <!--result="PASS" -->
       </pre_steps>
 
       <case name="case3_1">     <!-- result="FAIL" -->
@@ -48,8 +48,8 @@
 
     <set name="set4">
       <pre_steps>
-	<step expected_result="0">/bin/true</step>
-	<step expected_result="0">/bin/false</step>    <!-- failing pre-step with expected result -->
+	<step expected_result="0">/bin/true</step>     <!-- result="PASS" -->
+	<step expected_result="0">/bin/false</step>    <!-- result="FAIL" -->
       </pre_steps>
 
       <case name="case4_1">     <!-- result="FAIL" should not be executed -->
@@ -64,9 +64,9 @@
 
     <set name="set5">
       <pre_steps>
-	<step expected_result="0">/bin/true</step>
-	<step expected_result="0">/bin/false</step>    <!-- failing pre-step with expected result -->
-	<step expected_result="0">/bin/true</step>
+	<step expected_result="0">/bin/true</step> <!-- result="PASS" -->
+	<step expected_result="0">/bin/false</step> <!-- result="FAIL" -->
+	<step expected_result="0">/bin/true</step> <!-- result="N/A" -->
       </pre_steps>
 
       <case name="case5_1">     <!-- result="FAIL" should not be executed -->
@@ -81,7 +81,7 @@
 
     <set name="set6">
       <pre_steps>
-	<step expected_result="1">/bin/false</step>
+	<step expected_result="1">/bin/false</step> <!-- result="PASS" -->
       </pre_steps>
 
       <case name="case6_1">     <!-- result="FAIL" -->

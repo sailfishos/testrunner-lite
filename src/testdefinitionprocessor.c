@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -78,7 +78,7 @@ int bail_out = 0;
 LOCAL td_td    *current_td = NULL;    /* Test definition currently executed */
 LOCAL td_suite *current_suite = NULL; /* Suite currently executed */
 LOCAL td_set   *current_set = NULL;   /* Set currently executed */
-LOCAL xmlChar  *cur_case_name = "";   /* Name of the current case or pre/post */
+LOCAL xmlChar  *cur_case_name = BAD_CAST"";   /* Name of the current case */ 
 LOCAL int       cur_step_num;         /* Number of current step within case */
 
 LOCAL int passcount = 0;
@@ -107,7 +107,7 @@ LOCAL void process_set(td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int case_result_na (const void *, const void *);
+LOCAL int case_result_fail (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_get (const void *, const void *);
 /* ------------------------------------------------------------------------- */
@@ -168,12 +168,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	
 	init_exec_data(&edata);
 	
-	if (c->dummy) {
-		/* Pre or post step */
-		edata.redirect_output = DONT_REDIRECT_OUTPUT;
-	} else {
-		edata.redirect_output = REDIRECT_OUTPUT;
-	}
+	edata.redirect_output = REDIRECT_OUTPUT;
 	edata.soft_timeout = c->gen.timeout;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	
@@ -244,11 +239,7 @@ LOCAL int prepost_steps_execute (const void *data, const void *user)
 	td_steps *steps = (td_steps *)data;
 	td_case *dummy = (td_case *)user;
 	
-	if (steps->timeout == 0) {
-		dummy->gen.timeout = 180; /* default for pre/post steps */
-	} else {
-		dummy->gen.timeout = steps->timeout;
-	}
+	dummy->gen.timeout = steps->timeout;
 	
 	if (xmlListSize(steps->steps) > 0) {
 		xmlListWalk (steps->steps, step_execute, dummy);
@@ -369,12 +360,12 @@ LOCAL int process_case (const void *data, const void *user)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
-/** Set case result to N/A
+/** Set case result to fail
  *  @param data case data
  *  @param user failure info
  *  @return 1 always
  */
-LOCAL int case_result_na (const void *data, const void *user)
+LOCAL int case_result_fail (const void *data, const void *user)
 {
 
 	td_case *c = (td_case *)data;
@@ -483,12 +474,14 @@ LOCAL int process_get (const void *data, const void *user)
 LOCAL void process_td (td_td *td)
 {
 	current_td = td;
+	write_td_start (td);
 }
 /* ------------------------------------------------------------------------- */
 /** Do test definition cleaning
  */
 LOCAL void end_td ()
 {
+	write_td_end (current_td);
 	td_td_delete (current_td);
 	current_td = NULL;
 }
@@ -537,7 +530,7 @@ LOCAL void process_suite (td_suite *s)
 {
 	LOG_MSG (LOG_INFO, "Test suite: %s", s->gen.name);
 
-	write_pre_suite_tag (s);
+	write_pre_suite (s);
 	current_suite = s;
 	
 }
@@ -546,7 +539,7 @@ LOCAL void process_suite (td_suite *s)
  */
 LOCAL void end_suite ()
 {
-	write_post_suite_tag ();
+	write_post_suite (current_suite);
 	td_suite_delete (current_suite);
 	current_suite = NULL;
 }
@@ -570,7 +563,8 @@ LOCAL void process_set (td_set *s)
 	** User defined HW ID based filtering
 	*/
 	if (s->gen.hwid && current_td->detected_hw &&
-	    list_contains(s->gen.hwid, current_td->detected_hw, ",") == 0) {
+	    list_contains((const char *)s->gen.hwid, 
+			 (const char *) current_td->detected_hw, ",") == 0) {
 		LOG_MSG (LOG_INFO, "Test set %s is filtered based on HW ID",
 			 s->gen.name);
 		goto skip_all;
@@ -588,7 +582,7 @@ LOCAL void process_set (td_set *s)
 	}
 	current_set = s;
 	LOG_MSG (LOG_INFO, "Test set: %s", s->gen.name);
-	write_pre_set_tag (s);
+	write_pre_set (s);
 
 	if (xmlListSize (s->pre_steps) > 0) {
 		cur_case_name = (xmlChar *)"pre_steps";
@@ -601,7 +595,7 @@ LOCAL void process_set (td_set *s)
 		if (dummy.case_res != CASE_PASS) {
 			LOG_MSG (LOG_ERR, "Pre steps failed. "
 				 "Test set %s aborted.", s->gen.name); 
-			xmlListWalk (s->cases, case_result_na, 
+			xmlListWalk (s->cases, case_result_fail, 
 				     global_failure ? global_failure :
 				     "pre_steps failed");
 			goto short_circuit;
@@ -624,7 +618,7 @@ LOCAL void process_set (td_set *s)
 	xmlListWalk (s->gets, process_get, s);
 
  short_circuit:
-	write_post_set_tag (s);
+	write_post_set (s);
 	if (xmlListSize (s->pre_steps) > 0)
 		xmlListWalk (s->pre_steps, step_post_process, &dummy);
 	if (xmlListSize (s->post_steps) > 0)

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -134,8 +134,8 @@ int ssh_execute (const char *hostname, const char *command)
 {
 	int   ret;
         char *cmd; 
-	char *casename;
-	char *setname;
+	const char *casename;
+	const char *setname;
 	int   stepnum;
 	/*
 	 * Query the current set name, case name and step number 

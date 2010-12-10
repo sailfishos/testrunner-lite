@@ -1,3 +1,8 @@
+* Fri Dec 10 2010 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.1
+- Pre and post steps are written to results (BMC#7563)
+- Transfers all the data from test definition to results (BMC#10726)
+- Fixed testrunner-lite reports step results under wrong case (BMC#11032)
+- Fixed compilation warnings
 * Fri Nov 26 2010 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.0
 - Support for bugzilla_id attribute in case element (BMC#10362)
 * Mon Nov 22  2010 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.3.17

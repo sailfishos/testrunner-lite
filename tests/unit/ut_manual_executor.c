@@ -84,20 +84,22 @@ START_TEST (test_execute_manual_step_passed)
 
     td_case *t_case = NULL;
     td_step *t_step = NULL;
-    FILE *fp;
+    FILE *fp, *fp2;
     int ret;
     char cmd[1024];
     char *stdout_tmp = "/tmp/testrunner-lite-manual-exec-stdout.log";
-    int pipefd[2];
+    int pipefd[2], written;
     
     /* Forward stdout temporarily to a file. */
     fp = freopen (stdout_tmp, "w", stdout);
 
     /* redirect stdin from a pipe */
-    pipe(pipefd);
+    ret = pipe(pipefd);
+    fail_if (ret);
     close(0);
-    dup(pipefd[0]);
-    
+    ret = dup(pipefd[0]);
+    fail_if (ret < 0);
+
     t_case = td_case_create();
     t_case->gen.description = (xmlChar*)"This is manual test case.";
 
@@ -105,7 +107,7 @@ START_TEST (test_execute_manual_step_passed)
     pre_manual (t_case);
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
     sprintf (cmd, "grep -q \"This is manual test case.\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
@@ -118,11 +120,12 @@ START_TEST (test_execute_manual_step_passed)
     t_step->step = (xmlChar*)"This is manual test step.";
     
     /* Make test case pass. */
-    write(pipefd[1], "P\n", 2);
+    written = write(pipefd[1], "P\n", 2);
+    fail_if (written < 2);
     execute_manual (t_step);
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
 
     sprintf (cmd, "grep -q \"This is manual test step.\" %s", stdout_tmp);
     ret = system (cmd);
@@ -131,11 +134,12 @@ START_TEST (test_execute_manual_step_passed)
     t_case->case_res = CASE_PASS;
     fp = freopen (stdout_tmp, "w", stdout);
     
-    write(pipefd[1], "\n", 1);
+    written = write(pipefd[1], "\n", 1);
+    fail_if (written < 0);
     post_manual (t_case);
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
 
     sprintf (cmd, "grep -q \"PASSED.\" %s", stdout_tmp);
     ret = system (cmd);
@@ -150,19 +154,21 @@ START_TEST (test_execute_manual_step_failed)
 
     td_case *t_case = NULL;
     td_step *t_step = NULL;
-    FILE *fp;
+    FILE *fp, *fp2;
     int ret;
     char cmd[1024];
     char *stdout_tmp = "/tmp/testrunner-lite-manual-exec-stdout.log";
-    int pipefd[2];
+    int pipefd[2], written;
     
     /* Forward stdout temporarily to a file. */
     fp = freopen (stdout_tmp, "w", stdout);
     
     /* redirect stdin from a pipe */
-    pipe(pipefd);
+    ret = pipe(pipefd);
+    fail_if (ret < 0);
     close(0);
-    dup(pipefd[0]);
+    ret = dup(pipefd[0]);
+    fail_if (ret < 0);
 
     t_case = td_case_create();
     t_case->gen.description = (xmlChar*)"This is manual test case.";
@@ -171,7 +177,7 @@ START_TEST (test_execute_manual_step_failed)
     pre_manual (t_case);
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
     sprintf (cmd, "grep -q \"This is manual test case.\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
@@ -184,11 +190,12 @@ START_TEST (test_execute_manual_step_failed)
     t_step->step = (xmlChar*)"This is manual test step.";
     
     /* Make test case fail. */
-    write(pipefd[1], "F\n", 2);
+    written = write(pipefd[1], "F\n", 2);
+    fail_if (written < 2);
     execute_manual (t_step);
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
 
     sprintf (cmd, "grep -q \"This is manual test step.\" %s", stdout_tmp);
     ret = system (cmd);
@@ -197,11 +204,12 @@ START_TEST (test_execute_manual_step_failed)
     t_case->case_res = CASE_FAIL;
     fp = freopen (stdout_tmp, "w", stdout);
     
-    write(pipefd[1], "\n", 1);
+    written = write(pipefd[1], "\n", 1);
+    fail_if (written < 1);
     post_manual (t_case);
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
 
     sprintf (cmd, "grep -q \"FAILED.\" %s", stdout_tmp);
     ret = system (cmd);
@@ -217,19 +225,21 @@ START_TEST (test_execute_manual_step_na)
 
     td_case *t_case = NULL;
     td_step *t_step = NULL;
-    FILE *fp;
+    FILE *fp, *fp2;
     int ret;
     char cmd[1024];
     char *stdout_tmp = "/tmp/testrunner-lite-manual-exec-stdout.log";
-    int pipefd[2];
+    int pipefd[2], written;
     
     /* Forward stdout temporarily to a file. */
     fp = freopen (stdout_tmp, "w", stdout);
     
     /* redirect stdin from a pipe */
-    pipe(pipefd);
+    ret = pipe(pipefd);
+    fail_if (ret);
     close(0);
-    dup(pipefd[0]);
+    ret = dup(pipefd[0]);
+    fail_if (ret < 0);
 
     t_case = td_case_create();
     t_case->gen.description = (xmlChar*)"This is manual test case.";
@@ -238,7 +248,7 @@ START_TEST (test_execute_manual_step_na)
     pre_manual (t_case);
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
     sprintf (cmd, "grep -q \"This is manual test case.\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
@@ -251,11 +261,12 @@ START_TEST (test_execute_manual_step_na)
     t_step->step = (xmlChar*)"This is manual test step.";
     
     /* Make test case fail. */
-    write(pipefd[1], "N\n", 2);
+    written = write(pipefd[1], "N\n", 2);
+    fail_if (written < 2);
     execute_manual (t_step);
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
 
     sprintf (cmd, "grep -q \"This is manual test step.\" %s", stdout_tmp);
     ret = system (cmd);
@@ -264,11 +275,12 @@ START_TEST (test_execute_manual_step_na)
     t_case->case_res = CASE_NA;
     fp = freopen (stdout_tmp, "w", stdout);
     
-    write(pipefd[1], "\n", 1);
+    written = write(pipefd[1], "\n", 1);
+    fail_if (written < 1);
     post_manual (t_case);
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
 
     sprintf (cmd, "grep -q \"N/A.\" %s", stdout_tmp);
     ret = system (cmd);

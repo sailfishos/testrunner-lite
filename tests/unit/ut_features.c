@@ -126,7 +126,7 @@ START_TEST (test_logging)
     char cmd[1024];
     char message[LOG_MSG_MAX_SIZE + 1];
     int ret;
-    FILE *fp;
+    FILE *fp, *fp2;
     testrunner_lite_options opts;
     memset (&opts, 0x0, sizeof (testrunner_lite_options)); 
     memset (message, 'a', LOG_MSG_MAX_SIZE);
@@ -149,7 +149,7 @@ START_TEST (test_logging)
     message [LOG_MSG_MAX_SIZE] = '\0';
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
     fflush (fp);
     fclose (fp);
     sleep (1);
@@ -182,7 +182,7 @@ START_TEST (test_logging)
 
     /* Try to log DEBUG message with INFO verbosity (should not succeed.)*/
     LOG_MSG (LOG_DEBUG, "DEBUG message: %s\n", "This should not work.");
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
     
     sprintf (cmd, "grep -q \"[DEBUG]* DEBUG message: This should not work.\""
 	     " %s", stdout_tmp); 
@@ -194,7 +194,7 @@ START_TEST (test_logging)
     log_init (&opts);
     
     /* Forward stdout temporarily to a file. */
-    fp = freopen (stdout_tmp, "w", stdout);
+    fp2 = freopen (stdout_tmp, "w", stdout);
     
     /* Log INFO, WARNING and ERROR messages. */
     LOG_MSG (LOG_INFO, "INFO message: %s\n", "This works.");
@@ -203,7 +203,7 @@ START_TEST (test_logging)
     LOG_MSG (LOG_DEBUG, "DEBUG message: %s\n", "This works.");
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
 
     // And verify messages. */
     sprintf (cmd, "grep -q \"[INFO]* INFO message: This works.\" %s", 
@@ -236,7 +236,7 @@ START_TEST (test_logging)
     LOG_MSG (LOG_INFO, "INFO message: %s\n", "Silent mode.");
     
     /* Back to terminal. */
-    freopen ("/dev/tty", "w", stdout);
+    fp2 = freopen ("/dev/tty", "w", stdout);
     
     sprintf (cmd, "grep -q \"[INFO]* INFO message: Silent mode.\" %s", 
 	     stdout_tmp); 
@@ -258,6 +258,7 @@ static void run_server_socket(int portno, char* buffer, int length, char* error)
     int serverfd = 0, clientfd = 0;
     socklen_t clilen = 0;
     int reuseaddr_option = 1;
+    int written;
 
     serverfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -284,7 +285,8 @@ static void run_server_socket(int portno, char* buffer, int length, char* error)
 		}
 
 		/* create a dummy reply, the same as from CITA */
-		write(clientfd, reply_message, strlen(reply_message));
+		written = write(clientfd, reply_message, strlen(reply_message));
+		fail_if (written < strlen (reply_message));
 		close(clientfd);
 	    } else {
 		strcpy(error, strerror(errno));
@@ -404,8 +406,8 @@ START_TEST (test_hwinfo)
      memset (&hi, 0x0, sizeof (hw_info));
      fail_if (read_hwinfo(&hi));
 	      
-     fail_unless (hi.product);
-     fail_unless (hi.hw_build);
+     fail_unless (hi.product != NULL);
+     fail_unless (hi.hw_build != NULL);
 
      print_hwinfo (&hi);
 

@@ -3,7 +3,7 @@
   <suite name="trlitereg07_suite1">
     <set name="set1_1">
       <pre_steps>
-	<step>/bin/false</step>                        <!-- failing pre-step  -->
+	<step>/bin/false</step>                        <!-- result="FAIL" -->
       </pre_steps>
 
       <case name="case1_1_1">                          <!-- result="PASS" -->
@@ -21,7 +21,7 @@
       </case>
 
       <post_steps>
-	<step>rm -fr /tmp/trlitereg07_*</step>         <!--  clean-up -->
+	<step>rm -fr /tmp/trlitereg07_*</step>         <!-- result="PASS" -->
       </post_steps>
     </set>
   </suite>
@@ -30,7 +30,7 @@
   <suite name="trlitereg07_suite2">
     <set name="set2_1">
       <pre_steps>
-	<step expected_result="0">/bin/false</step>    <!-- failing pre-step with expected result -->
+	<step expected_result="0">/bin/false</step>    <!-- result="FAIL" -->
       </pre_steps>
 
       <case name="case2_1_1">                          <!-- result="FAIL" should not be executed -->

@@ -60,7 +60,7 @@ check_case_results
 check_step_results
 
 # Clean created files
-rm -f ${OUTPUTXML} ${CASESIN} ${CASESOUT} ${STEPSIN} ${STEPSOUT}
+#rm -f ${OUTPUTXML} ${CASESIN} ${CASESOUT} ${STEPSIN} ${STEPSOUT}
 
 if [ "${RESULT}" -ne 0 ]; then
     echo "$(basename $0) with ${INPUTXML}: FAIL"

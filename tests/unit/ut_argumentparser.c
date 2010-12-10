@@ -201,9 +201,6 @@ START_TEST (test_verbosity_flags)
     char cmd[1024];
     char *stdout_tmp = "/tmp/testrunner-lite-stdout.log";
 
-    FILE *fp;
-    
-     
     /* Test -v flag. */
     sprintf (cmd, "%s -A -f %s -v > %s", TESTRUNNERLITE_BIN, 
 	     TESTDATA_VALID_XML_1, stdout_tmp );

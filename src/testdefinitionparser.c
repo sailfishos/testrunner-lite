@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -69,7 +69,7 @@ LOCAL xmlSchemaPtr schema = NULL;
 LOCAL td_td *current_td;
 LOCAL td_suite *current_suite;
 LOCAL td_set *current_set;
-
+LOCAL int parsing_level = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -190,6 +190,8 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			continue;
 		}
 	}
+	xmlTextReaderMoveToElement (reader);
+
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -365,13 +367,14 @@ LOCAL int td_parse_case(td_set *s)
 		c->bugzilla_id = xmlTextReaderValue(reader);
 	}
 
+	xmlTextReaderMoveToElement (reader);
 	if (xmlTextReaderIsEmptyElement (reader))
-		return 0;
+		goto OK_OUT;
 
 	do {
 		ret = xmlTextReaderRead(reader);
-		if (!ret) { /* no steps, we accept that */
-			goto OK_OUT;
+		if (!ret) { 
+			goto ERROUT;
 		}
 		name = xmlTextReaderConstName(reader);
 		if (!name) {
@@ -406,17 +409,7 @@ LOCAL int td_parse_case(td_set *s)
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "description")) {
-			if (c->gen.description) {
-				c->gen.description = xmlStrcat 
-					(c->gen.description, 
-					 BAD_CAST " - ");
-				c->gen.description = xmlStrcat 
-					(c->gen.description, 
-					 BAD_CAST 
-					 xmlTextReaderReadString (reader));
-			}
-			else
-				c->gen.description = xmlTextReaderReadString(reader);
+			c->description = xmlTextReaderReadString(reader);
 		}
 
 	    
@@ -545,8 +538,6 @@ LOCAL int td_parse_suite ()
 {
 	td_suite *s;
 
-	if (xmlTextReaderIsEmptyElement (reader))
-		return 0;
 
 	if (!cbs->test_suite)
 		return 1;
@@ -557,8 +548,13 @@ LOCAL int td_parse_suite ()
 	current_suite = s;
 
 	td_parse_gen_attribs (&s->gen, NULL);
+
 	cbs->test_suite(s);
 
+	if (xmlTextReaderIsEmptyElement (reader)) {
+	        parsing_level--;
+	        cbs->test_suite_end(s);
+	}
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -570,6 +566,8 @@ LOCAL int td_parse_set ()
 	int ret = 0;
 	td_set *s;
 	const xmlChar *name;
+	xmlReaderTypes type;
+
 
 	if (!cbs->test_set)
 		return 1;
@@ -579,16 +577,21 @@ LOCAL int td_parse_set ()
 	if (td_parse_gen_attribs(&s->gen, &current_suite->gen))
 		goto ERROUT;
 
+	if (xmlTextReaderIsEmptyElement (reader))
+		goto OKOUT;
+
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) 
 			goto OKOUT;
 		name = xmlTextReaderConstName(reader);
+		type = xmlTextReaderNodeType(reader);
 		if (!name) {
 			LOG_MSG (LOG_ERR, "%s: ReaderName() fail\n",
 				 PROGNAME);
 			goto ERROUT;
 		}
+
 		if (!xmlStrcmp (name, BAD_CAST "pre_steps"))
 			ret = !td_parse_steps(s->pre_steps, "pre_steps");
 		if (!xmlStrcmp (name, BAD_CAST "post_steps"))
@@ -599,7 +602,11 @@ LOCAL int td_parse_set ()
 		    ret = !td_parse_environments(s->environments);
 		if (!xmlStrcmp (name, BAD_CAST "get"))
 		    ret = !td_parse_gets(s->gets);
-
+		if (!xmlStrcmp (name, BAD_CAST "description") &&
+		    type == XML_READER_TYPE_ELEMENT) {
+			s->description = 
+				xmlTextReaderReadString (reader);
+		}
 		if (!ret)
 			goto ERROUT;
 	} while (!(xmlTextReaderNodeType(reader) == 
@@ -622,12 +629,22 @@ LOCAL int td_parse_set ()
 LOCAL int td_parse_td ()
 {
 	td_td *td;
+	const xmlChar *name;
 
 	td = td_td_create();
 	if (!td)
 		return 1;
 
+	parsing_level++;
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderConstName(reader);
+ 		if (!xmlStrcmp (name, BAD_CAST "version")) {
+			td->version = xmlTextReaderValue(reader);
+			continue;
+		}
+	}
 	current_td = td;
+
 	if (cbs->test_td)
 		cbs->test_td(td);
 
@@ -822,7 +839,7 @@ void td_reader_close ()
  */
 int td_next_node (void) {
 	int ret;
-	const xmlChar *name;
+	const xmlChar *name = NULL;
 	xmlReaderTypes type;
 	
         ret = xmlTextReaderRead(reader);
@@ -837,9 +854,11 @@ int td_next_node (void) {
 		return 1;
 
 	if (!xmlStrcmp (name, BAD_CAST "testdefinition")) {
-		if (type == XML_READER_TYPE_ELEMENT)
+		if (type == XML_READER_TYPE_ELEMENT) {
 			return td_parse_td();
+		}
 		else if (type == XML_READER_TYPE_END_ELEMENT) {
+			parsing_level--;
 			if (cbs->test_td_end)
 				cbs->test_td_end();
 			return 0;
@@ -852,10 +871,32 @@ int td_next_node (void) {
 		}
 	}
 
+	if (!xmlStrcmp (name, BAD_CAST "description") &&
+	    type == XML_READER_TYPE_ELEMENT) {
+		switch (parsing_level) {
+		case 1:
+			current_td->description = 
+				xmlTextReaderReadString (reader);
+			break;
+		case 2:
+			current_suite->description = 
+				xmlTextReaderReadString (reader); 
+			break;
+		default:
+			LOG_MSG (LOG_ERR, "run time error, "
+				 "invalid parsing level %d", parsing_level);
+			return 1;
+		}
+		return 0;
+	}
+
 	if (!xmlStrcmp (name, BAD_CAST "suite")) {
-		if (type == XML_READER_TYPE_ELEMENT)
+		if (type == XML_READER_TYPE_ELEMENT) {
+			parsing_level ++;
 			return td_parse_suite();
+		}
 		else if (type == XML_READER_TYPE_END_ELEMENT) {
+			parsing_level --;
 			if (cbs->test_suite_end) cbs->test_suite_end();
 			return 0;
 		}
@@ -864,9 +905,7 @@ int td_next_node (void) {
 	if (!xmlStrcmp (name, BAD_CAST "set") && 
 	    type == XML_READER_TYPE_ELEMENT)
 		return td_parse_set();
-	
-	/* fprintf (stderr, "Unhandled tag %s\n", name); */
-	
+
 	return !ret;
 } 
 /* ------------------------------------------------------------------------- */

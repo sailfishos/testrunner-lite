@@ -42,6 +42,13 @@
 	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg10.xml</step>
       </case>
 
+      <case name="trlitereg12" bugzilla_id="11032">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg12.xml</step>
+      </case>
+
+      <case name="trlitereg13" bugzilla_id="10726">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg13.xml</step>
+      </case>
 
       <environments>
 	<scratchbox>false</scratchbox>
