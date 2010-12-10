@@ -42,6 +42,7 @@
 	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg10.xml</step>
       </case>
 
+
       <environments>
 	<scratchbox>false</scratchbox>
 	<hardware>true</hardware>
@@ -72,6 +73,10 @@
 	<step>grep sample_suite_domain /tmp/testrunnerlitetestdir/res.xml</step>
       </case>
 
+      <case name="test_bugzilla_id" bugzilla_id="10362">
+	<step>testrunner-lite -a -v -f /usr/share/testrunner-lite-regression-tests/trlitereg11.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep bugzilla_id /tmp/testrunnerlitetestdir/res.xml</step>
+      </case>
 
       <post_steps>
 	<step>rm -fr /tmp/testrunnerlitetestdir</step>

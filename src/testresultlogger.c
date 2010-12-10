@@ -326,6 +326,11 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 BAD_CAST "subfeature", 
 						 c->subfeature) < 0)
 			goto err_out;
+	if (c->bugzilla_id)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "bugzilla_id", 
+						 c->bugzilla_id) < 0)
+			goto err_out;
 
 	if (c->gen.requirement)
 		if (xmlTextWriterWriteAttribute (writer, 
@@ -448,6 +453,8 @@ LOCAL int txt_write_case (const void *data, const void *user)
 	    fprintf (ofile, "      requirement   : %s\n", c->gen.requirement);
 	if (c->subfeature)
 	    fprintf (ofile, "      subfeature    : %s\n", c->subfeature);
+	if (c->bugzilla_id)
+	    fprintf (ofile, "      bugzilla_id   : %s\n", c->bugzilla_id);
 #if 0
 	if (c->gen.type)
 	    fprintf (ofile, "      type          : %s\n", c->gen.type);
