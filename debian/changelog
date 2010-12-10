@@ -1,3 +1,12 @@
+testrunner-lite (1.4.1) unstable; urgency=low
+
+  * Pre and post steps are written to results (BMC#7563)
+  * Transfers all the data from test definition to results (BMC#10726)
+  * Fixed testrunner-lite reports step results under wrong case (BMC#11032)
+  * Fixed compilation warnings
+	
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Fri, 10 Dec 2010 12:50:33 +0200
+
 testrunner-lite (1.4.0) unstable; urgency=low
 
   * Support for bugzilla_id attribute in case element. (BMC#10362)
