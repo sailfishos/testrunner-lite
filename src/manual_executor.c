@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -161,9 +161,11 @@ void pre_manual (td_case *c)
 {
 	td_step *pseudo_step;
 
-	printf ("\nDescription of test case:\n%s\n",
+	printf ("\nDescription of test case:\n%s %s\n",
 		(char *)((char *)c->gen.description ? 
-			 (char *)c->gen.description : " "));
+			 (char *)c->gen.description : " "),
+		(char *)((char *)c->description ? 
+			 (char *)c->description : " "));
 	/*
 	 * Some folks like to write manual test case steps into case
 	 * description. Add pseudo test step for them, so that a verdict
@@ -172,7 +174,7 @@ void pre_manual (td_case *c)
 	if (xmlListSize (c->steps) == 0) {
 		pseudo_step = td_step_create();
 		pseudo_step->manual = 1;
-		pseudo_step->step = xmlStrdup ("give verdict");
+		pseudo_step->step = xmlStrdup (BAD_CAST "give verdict");
 		xmlListAppend (c->steps, pseudo_step);
 	}
 }

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -47,6 +47,7 @@ typedef struct {
         xmlChar *description;   /**< Description */
         xmlChar *requirement;   /**< Requirement attribute */
 	xmlChar *type;          /**< Type attribute */
+#define DEFAULT_TIMEOUT 90
 	unsigned long timeout;  /**< Timeout (defaults to 90) */
 	xmlChar *level;         /**< Level (Component, Feature, System) */
 	xmlChar *domain;        /**< Domain */
@@ -60,13 +61,18 @@ typedef struct {
 /* ------------------------------------------------------------------------- */
 /** Test definition */
 typedef struct {
+	/* parser fills */
 	xmlChar *hw_detector;         /**< Command used to detect HW  */
+	xmlChar *description;
+	xmlChar *version;
+	/* executor fills */
 	xmlChar *detected_hw;         /**< Detected HW identifier */
 } td_td;
 /* ------------------------------------------------------------------------- */
 /** Test suite */
 typedef struct {
 	td_gen_attribs gen;   /**< General attributes */
+	xmlChar *description; /**< Description */
 	int        filtered;  /**< Suite is filtered */
 } td_suite;
 /* ------------------------------------------------------------------------- */
@@ -85,6 +91,7 @@ typedef struct {
 	xmlListPtr environments; /**< Environments (hardware, scratchbox) */
 	xmlListPtr gets;         /**< Get commands */
 	int        filtered;     /**< Set is filtered */
+	xmlChar   *description;  /**< Set description */
 	/* Executor fills */
 	xmlChar    *environment; /**< Current environment */
 } td_set;
@@ -125,6 +132,9 @@ typedef struct {
 	xmlListPtr steps;       /**< Steps in this test case */
 	xmlChar   *tc_title;    /**< TC_Title */
 	xmlChar   *state;       /**< State attribute */
+	xmlChar   *bugzilla_id;  /**< Id mapping the case to bug or 
+				    feature number in bugs.meego.com */
+	xmlChar   *description;
 	/* Executor fills */
 	xmlChar   *comment;     /**< Manual test case comment */
 	case_result_t  case_res; /**< Case result */
@@ -136,6 +146,7 @@ typedef struct {
 /** Pre/post steps */
 typedef struct {
 	xmlListPtr steps;       /**< Steps of pre/post steps */
+#define DEFAULT_PRE_STEP_TIMEOUT 180
 	unsigned long timeout;  /**< Timeout */
 } td_steps;
 /* ------------------------------------------------------------------------- */

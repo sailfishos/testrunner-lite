@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- tests that bugzilla_id works -->
+<testdefinition version="1.0">  <!-- result="0" -->
+  <suite name="trlitereg11_suite1"/> <!-- empty suite -->
+
+  <suite name="trlitereg11_suite2">
+    <set name="set2_1"/> <!-- empty set -->
+
+    <set name="set2_2">
+      <case name="case2_2_1" bugzilla_id="10359"/>   <!-- result="N/A" -->
+    </set>
+  </suite>
+</testdefinition>

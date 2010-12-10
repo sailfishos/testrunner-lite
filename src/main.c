@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
+ * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -75,7 +75,6 @@ testrunner_lite_options opts;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-LOCAL td_suite *current_suite = NULL;
 LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
