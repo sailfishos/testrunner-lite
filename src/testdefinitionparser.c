@@ -396,8 +396,8 @@ LOCAL int td_parse_case(td_set *s)
 		}
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
-		    !xmlStrcmp (name, BAD_CAST "TC_Title")) {
-			c->tc_title = xmlTextReaderReadString (reader);
+		    !xmlStrcmp (name, BAD_CAST "TC_ID")) {
+			c->tc_id = xmlTextReaderReadString (reader);
 			
 		}
 		if (xmlTextReaderNodeType(reader) == 

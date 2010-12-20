@@ -337,7 +337,7 @@ void td_case_delete(xmlLinkPtr lk)
 	xmlListDelete (td_c->steps);
 	xmlFree (td_c->comment);
 	xmlFree (td_c->failure_info);
-	xmlFree (td_c->tc_title);
+	xmlFree (td_c->tc_id);
 	xmlFree (td_c->state);
 	xmlFree (td_c->subfeature);
 	xmlFree (td_c->bugzilla_id);
