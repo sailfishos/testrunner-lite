@@ -124,6 +124,12 @@ LOCAL int td_parse_gen_attribs (td_gen_attribs *attr,
 			attr->type = xmlStrdup(defaults->type);
 		if (defaults->hwid)
 			attr->hwid = xmlStrdup(defaults->hwid);
+		if (defaults->component)
+			attr->component = xmlStrdup(defaults->component);
+		if (defaults->feature)
+		        attr->feature = xmlStrdup(defaults->feature);
+		if (defaults->domain)
+		        attr->domain = xmlStrdup(defaults->domain);
 	}
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
@@ -366,6 +372,14 @@ LOCAL int td_parse_case(td_set *s)
 					  BAD_CAST "bugzilla_id") == 1) {
 		c->bugzilla_id = xmlTextReaderValue(reader);
 	}
+	if (xmlTextReaderMoveToAttribute (reader, 
+					  BAD_CAST "TC_ID") == 1) {
+		c->tc_id = xmlTextReaderValue(reader);
+	}
+	if (xmlTextReaderMoveToAttribute (reader, 
+					  BAD_CAST "state") == 1) {
+		c->state = xmlTextReaderValue(reader);
+	}
 
 	xmlTextReaderMoveToElement (reader);
 	if (xmlTextReaderIsEmptyElement (reader))
@@ -393,18 +407,6 @@ LOCAL int td_parse_case(td_set *s)
 				     PROGNAME);
 			    goto ERROUT;
 		    }
-		}
-		if (xmlTextReaderNodeType(reader) == 
-		    XML_READER_TYPE_ELEMENT && 
-		    !xmlStrcmp (name, BAD_CAST "TC_ID")) {
-			c->tc_id = xmlTextReaderReadString (reader);
-			
-		}
-		if (xmlTextReaderNodeType(reader) == 
-		    XML_READER_TYPE_ELEMENT && 
-		    !xmlStrcmp (name, BAD_CAST "state")) {
-			c->state = xmlTextReaderReadString (reader);
-			
 		}
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 

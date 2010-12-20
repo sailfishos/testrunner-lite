@@ -329,6 +329,12 @@ LOCAL int process_case (const void *data, const void *user)
 		LOG_MSG (LOG_INFO, "Test case %s is filtered", c->gen.name);
 		return 1;
 	}
+	if (c->state && !xmlStrcmp (c->state, BAD_CAST "Design")) {
+		LOG_MSG (LOG_INFO, "Skipping case in Design state (%s)",
+			 c->gen.name);
+		c->case_res = CASE_NA;
+		return 1;
+	}
 
 	cur_case_name = c->gen.name;
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
@@ -340,13 +346,13 @@ LOCAL int process_case (const void *data, const void *user)
 	
 	if (c->gen.manual && opts.run_manual)
 		pre_manual (c);
-	cur_step_num = 0;
 	if (xmlListSize (c->steps) == 0) {
 		LOG_MSG (LOG_WARNING, "Case with no steps (%s).",
 			 c->gen.name);
 		c->case_res = CASE_NA;
 	}
-
+	cur_step_num = 0;
+	
 	xmlListWalk (c->steps, step_execute, data);
 	xmlListWalk (c->steps, step_post_process, data);
 	
