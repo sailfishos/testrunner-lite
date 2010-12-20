@@ -178,12 +178,6 @@ LOCAL int xml_write_pre_suite (td_suite *suite)
 	if (xml_write_general_attributes (&suite->gen))
 		goto err_out;
 
-	if (suite->gen.domain 
-	    && xmlTextWriterWriteAttribute (writer,  
-					    BAD_CAST 
-					    "domain", 
-					    suite->gen.domain) < 0)
-		goto err_out;
 
 	return 0;
 err_out:
@@ -219,11 +213,6 @@ LOCAL int xml_write_pre_set (td_set *set)
 	if (xml_write_general_attributes (&set->gen))
 		goto err_out;
 
-	if (set->gen.feature)
-		if (xmlTextWriterWriteAttribute (writer, 
-						 BAD_CAST "feature", 
-						 set->gen.feature) < 0)
-			goto err_out;
 
 	if (set->environment)
 		if (xmlTextWriterWriteAttribute (writer, 
@@ -290,7 +279,27 @@ LOCAL int xml_write_general_attributes (td_gen_attribs *gen)
 						   "true" :
 						   "false")) < 0)
 		goto err_out;
-	
+
+
+	if (gen->domain) 
+	    if (xmlTextWriterWriteAttribute (writer,  
+					     BAD_CAST 
+					     "domain", 
+					     gen->domain) < 0)
+		goto err_out;
+
+	if (gen->feature)
+	    if (xmlTextWriterWriteAttribute (writer, 
+					     BAD_CAST "feature", 
+					     gen->feature) < 0)
+		goto err_out;
+
+	if (gen->component)
+	    if (xmlTextWriterWriteAttribute (writer, 
+					     BAD_CAST "component", 
+					     gen->component) < 0)
+		goto err_out;
+
 	if (gen->hwid)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "hwid", 
@@ -547,6 +556,12 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 BAD_CAST "bugzilla_id", 
 						 c->bugzilla_id) < 0)
 			goto err_out;
+	if (c->state)
+	    if (xmlTextWriterWriteAttribute (writer, 
+					     BAD_CAST "state", 
+					     c->state) < 0)
+		goto err_out;
+
 
 	if (c->gen.manual && c->comment)
 		if (xmlTextWriterWriteAttribute (writer, 
