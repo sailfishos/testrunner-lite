@@ -1,10 +1,16 @@
+testrunner-lite (1.4.2) unstable; urgency=low
+
+  * Support new attributes to comply with wiki.meego.com/TestCaseTemplate (BMC#11475)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Tue, 21 Dec 2010 13:50:31 +0200
+
 testrunner-lite (1.4.1) unstable; urgency=low
 
   * Pre and post steps are written to results (BMC#7563)
   * Transfers all the data from test definition to results (BMC#10726)
   * Fixed testrunner-lite reports step results under wrong case (BMC#11032)
   * Fixed compilation warnings
-	
+
  -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Fri, 10 Dec 2010 12:50:33 +0200
 
 testrunner-lite (1.4.0) unstable; urgency=low
