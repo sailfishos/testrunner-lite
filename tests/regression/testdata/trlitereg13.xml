@@ -18,7 +18,7 @@
         <step expected_result="0">echo ipsum  &gt;/tmp/gettest4.txt</step> <!-- result="PASS" -->
 	<step expected_result="0">echo dolor &gt;  /tmp/get\ test5.txt</step> <!-- result="PASS" -->
       </pre_steps>
-      <case name="case_1"  description="case 1 attr" requirement="12,13" timeout="11" type="Integration" level="Component" manual="false" insignificant="true" hwid="myhw" subfeature="subfea" bugzilla_id="12121" feature="21231" domain="testing" component="testrunner-lite" state="Accepted"> <!-- result="PASS" -->
+      <case name="case_1"  description="case 1 attr" requirement="12,13" timeout="11" type="Integration" level="Component" manual="false" insignificant="true" hwid="myhw" subfeature="subfea" bugzilla_id="12121" feature="21231" domain="testing" component="testrunner-lite" state="Approved"> <!-- result="PASS" -->
 	<description>case 1 description </description>
         <step expected_result="0">stat /tmp/gettest.txt</step> <!-- result="PASS" -->
         <step expected_result="0">stat /tmp/gettest2.txt</step> <!-- result="PASS" -->

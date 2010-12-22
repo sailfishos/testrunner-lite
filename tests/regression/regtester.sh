@@ -39,7 +39,7 @@ echo "Running $(basename $0) with ${INPUTXML}"
 
 # Run tests
 echo "---- testrunner-lite output begins ----"
-testrunner-lite -f ${INPUTXML} -o ${OUTPUTXML} -v
+testrunner-lite -s -f ${INPUTXML} -o ${OUTPUTXML} -v
 RETVAL=$?
 echo "---- testrunner-lite output ends ----"
 
