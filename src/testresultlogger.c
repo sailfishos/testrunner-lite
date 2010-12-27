@@ -562,6 +562,12 @@ LOCAL int xml_write_case (const void *data, const void *user)
 					     c->state) < 0)
 		goto err_out;
 
+	if (c->description)
+		if (xmlTextWriterWriteRaw (writer, c->description) < 0)
+//		if (xmlTextWriterWriteElement	(writer, 
+//						 BAD_CAST "description", 
+//						 c->description) < 0)
+			goto err_out;
 
 	if (c->gen.manual && c->comment)
 		if (xmlTextWriterWriteAttribute (writer, 

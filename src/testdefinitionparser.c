@@ -398,6 +398,14 @@ LOCAL int td_parse_case(td_set *s)
 		}
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, BAD_CAST "description")) {
+		    //	c->description = xmlTextReaderReadString(reader);
+		    c->description = xmlTextReaderReadOuterXml (reader);
+		    
+		}
+
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "step")) {
 		    step = td_parse_step (c->gen.manual);
 		    if (!step)
@@ -407,11 +415,6 @@ LOCAL int td_parse_case(td_set *s)
 				     PROGNAME);
 			    goto ERROUT;
 		    }
-		}
-		if (xmlTextReaderNodeType(reader) == 
-		    XML_READER_TYPE_ELEMENT && 
-		    !xmlStrcmp (name, BAD_CAST "description")) {
-			c->description = xmlTextReaderReadString(reader);
 		}
 
 	    
