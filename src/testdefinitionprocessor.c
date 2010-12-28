@@ -437,7 +437,7 @@ LOCAL int process_get (const void *data, const void *user)
 	execute((char*)command, &edata);
 
 	if (edata.result) {
-		LOG_MSG (LOG_ERR, "%s: %s failed: %s\n", PROGNAME, command,
+		LOG_MSG (LOG_INFO, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
@@ -459,7 +459,7 @@ LOCAL int process_get (const void *data, const void *user)
 		 (char*)command);
 	execute((char*)command, &edata);
 	if (edata.result) {
-		LOG_MSG (LOG_ERR, "%s: %s failed: %s\n", PROGNAME, command,
+		LOG_MSG (LOG_WARNING, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
@@ -509,7 +509,7 @@ LOCAL void process_hwiddetect ()
 		execute((char*)current_td->hw_detector, &edata);
 
 		if (edata.result != EXIT_SUCCESS) {
-			LOG_MSG (LOG_ERR, "Running HW ID detector "
+			LOG_MSG (LOG_WARNING, "Running HW ID detector "
 				 "failed with return value %d",
 				 edata.result);
 		} else if (edata.stdout_data.buffer) {
@@ -599,7 +599,7 @@ LOCAL void process_set (td_set *s)
 		LOG_MSG (LOG_INFO, "Executing pre steps");
 		xmlListWalk (s->pre_steps, prepost_steps_execute, &dummy);
 		if (dummy.case_res != CASE_PASS) {
-			LOG_MSG (LOG_ERR, "Pre steps failed. "
+			LOG_MSG (LOG_INFO, "Pre steps failed. "
 				 "Test set %s aborted.", s->gen.name); 
 			xmlListWalk (s->cases, case_result_fail, 
 				     global_failure ? global_failure :
@@ -618,7 +618,7 @@ LOCAL void process_set (td_set *s)
 		dummy.dummy = 1;
 		xmlListWalk (s->post_steps, prepost_steps_execute, &dummy);
 		if (dummy.case_res == CASE_FAIL)
-			LOG_MSG (LOG_ERR, 
+			LOG_MSG (LOG_INFO, 
 				 "Post steps failed for %s.", s->gen.name);
 	}
 	xmlListWalk (s->gets, process_get, s);
