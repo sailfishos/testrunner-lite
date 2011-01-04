@@ -419,7 +419,6 @@ LOCAL int td_parse_case(td_set *s)
 		if (!xmlStrcmp (name, BAD_CAST "get"))
 			if (td_parse_gets(c->gets))
 				goto ERROUT;
-		
 	    
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
