@@ -79,7 +79,8 @@ typedef struct {
 /** File element (for get tag) */
 typedef struct {
 	int        delete_after;  /**< Delete_after attribute */
-	xmlChar    *filename;     /**< File name */
+	int        measurement;   /**< Measurement attribute */
+        xmlChar    *filename;     /**< File name */
 } td_file;
 /* ------------------------------------------------------------------------- */
 /** Test set. */

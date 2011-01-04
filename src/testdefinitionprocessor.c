@@ -487,9 +487,10 @@ LOCAL int process_get_case (const void *data, const void *user)
 	
 	ret = process_get (data, NULL);
 	if (!ret)
-		LOG_MSG (LOG_WARN, "get file processing failed");
-
-
+		LOG_MSG (LOG_WARNING, "get file processing failed");
+	
+		
+		
 	return 1;
 }
 
