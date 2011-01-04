@@ -388,7 +388,7 @@ LOCAL int case_result_fail (const void *data, const void *user)
 }
 
 /* ------------------------------------------------------------------------- */
-/** Process get data. execute steps in case.
+/** Process get data. 
  *  @param data case data
  *  @param user set data
  *  @return 1 always
