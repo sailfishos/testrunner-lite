@@ -291,6 +291,7 @@ td_case *td_case_create()
 	}
 	memset (td_c, 0x0, sizeof (td_case));
 	td_c->steps = xmlListCreate (td_step_delete, list_dummy_compare);
+	td_c->gets = xmlListCreate (td_file_delete, NULL);
 
 	return td_c;
 }
@@ -335,6 +336,8 @@ void td_case_delete(xmlLinkPtr lk)
 {
 	td_case *td_c = xmlLinkGetData (lk);
 	xmlListDelete (td_c->steps);
+	xmlListDelete (td_c->gets);
+
 	xmlFree (td_c->comment);
 	xmlFree (td_c->failure_info);
 	xmlFree (td_c->tc_id);

@@ -388,9 +388,9 @@ LOCAL int case_result_fail (const void *data, const void *user)
 }
 
 /* ------------------------------------------------------------------------- */
-/** Process get data. 
- *  @param data case data
- *  @param user set data
+/** Process set get data. 
+ *  @param data get file data
+ *  @param user not used
  *  @return 1 always
  */
 LOCAL int process_get (const void *data, const void *user)
@@ -473,6 +473,26 @@ LOCAL int process_get (const void *data, const void *user)
 	free (fname);
 	return 1;
 }
+/* ------------------------------------------------------------------------- */
+/** Process case get data. 
+ *  @param data get file data
+ *  @param user case data
+ *  @return 1 always
+ */
+LOCAL int process_get_case (const void *data, const void *user)
+{
+	int ret = 0;
+	td_file *file = (td_file *)data;
+	td_case *c = (td_case *)user;
+	
+	ret = process_get (data, NULL);
+	if (!ret)
+		LOG_MSG (LOG_WARN, "get file processing failed");
+
+
+	return 1;
+}
+
 /* ------------------------------------------------------------------------- */
 /** Process test definition
  *  @param *td Test definition data
@@ -621,7 +641,7 @@ LOCAL void process_set (td_set *s)
 			LOG_MSG (LOG_INFO, 
 				 "Post steps failed for %s.", s->gen.name);
 	}
-	xmlListWalk (s->gets, process_get, s);
+	xmlListWalk (s->gets, process_get, NULL);
 
  short_circuit:
 	write_post_set (s);
