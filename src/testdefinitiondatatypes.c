@@ -129,7 +129,17 @@ LOCAL void td_file_delete (xmlLinkPtr lk)
 	free (file->filename);
 	free (file);
 }
-
+/* ------------------------------------------------------------------------- */
+/** Deallocator for list with td_measurement items
+ *  @param lk list item
+ */
+LOCAL void td_measurement_delete (xmlLinkPtr lk)
+{
+	td_measurement *meas = (td_measurement *)xmlLinkGetData (lk);
+	free (meas->name);
+	free (meas->unit);
+	free (meas);
+}
 /* ------------------------------------------------------------------------- */
 /** Deallocator for general attributes 
  *  @param gen general attributes 
@@ -292,6 +302,8 @@ td_case *td_case_create()
 	memset (td_c, 0x0, sizeof (td_case));
 	td_c->steps = xmlListCreate (td_step_delete, list_dummy_compare);
 	td_c->gets = xmlListCreate (td_file_delete, NULL);
+	td_c->measurements = xmlListCreate (td_measurement_delete, 
+					    list_dummy_compare);
 
 	return td_c;
 }
@@ -337,6 +349,7 @@ void td_case_delete(xmlLinkPtr lk)
 	td_case *td_c = xmlLinkGetData (lk);
 	xmlListDelete (td_c->steps);
 	xmlListDelete (td_c->gets);
+	xmlListDelete (td_c->measurements);
 
 	xmlFree (td_c->comment);
 	xmlFree (td_c->failure_info);

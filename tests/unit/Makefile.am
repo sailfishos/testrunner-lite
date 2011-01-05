@@ -29,6 +29,7 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/testdefinitionprocessor.o \
 			    $(top_builddir)/src/remote_executor.o \
 			    $(top_builddir)/src/manual_executor.o \
+			    $(top_builddir)/src/testmeasurement.o \
 			    $(top_builddir)/src/executor.o \
 			    $(top_builddir)/src/hwinfo.o \
 			    $(top_builddir)/src/log.o \

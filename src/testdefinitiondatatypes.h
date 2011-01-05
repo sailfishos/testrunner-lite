@@ -139,6 +139,7 @@ typedef struct {
 	xmlListPtr gets;         /**< Get commands */
 
 	/* Executor fills */
+	xmlListPtr measurements;         /**< measurements */
 	xmlChar   *comment;     /**< Manual test case comment */
 	case_result_t  case_res; /**< Case result */
 	xmlChar   *failure_info;   /**< optional failure info */
@@ -152,6 +153,16 @@ typedef struct {
 #define DEFAULT_PRE_STEP_TIMEOUT 180
 	unsigned long timeout;  /**< Timeout */
 } td_steps;
+/* ------------------------------------------------------------------------- */
+/** Test measurement */
+typedef struct {
+	xmlChar *name;              /**< E.g. bt.upload */
+	double   value;             /**< Value of measurement */
+	xmlChar *unit;              /**< E.g. Mb/s */
+	int      target_specified;  /**< Is target and failure specified ? */
+	double   target;            /**< Target value */
+	double   failure;           /**< Failure value */
+} td_measurement;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */

@@ -41,6 +41,7 @@
 #include "testdefinitionparser.h"
 #include "testresultlogger.h"
 #include "testfilters.h"
+#include "testmeasurement.h"
 #include "executor.h"
 #include "remote_executor.h"
 #include "manual_executor.h"
@@ -110,6 +111,8 @@ LOCAL int process_case (const void *, const void *);
 LOCAL int case_result_fail (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_get (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int process_get_case (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_execute (const void *, const void *);
 /* ------------------------------------------------------------------------- */
@@ -358,6 +361,8 @@ LOCAL int process_case (const void *data, const void *user)
 	
 	if (c->gen.manual && opts.run_manual)
 		post_manual (c);
+
+	xmlListWalk (c->gets, process_get_case, c);
 	
 	LOG_MSG (LOG_INFO, "Finished test case %s Result: %s",
 		 c->gen.name, case_result_str(c->case_res));
@@ -484,13 +489,39 @@ LOCAL int process_get_case (const void *data, const void *user)
 	int ret = 0;
 	td_file *file = (td_file *)data;
 	td_case *c = (td_case *)user;
-	
+	char *fname, *filename, *failure_str = NULL;
+	int measurement_verdict = CASE_PASS;
+
 	ret = process_get (data, NULL);
 	if (!ret)
 		LOG_MSG (LOG_WARNING, "get file processing failed");
 	
-		
-		
+	filename = malloc (strlen((char *)file->filename) + 2 + 
+			   strlen (opts.output_folder));
+	/* FIXME */
+	fname = malloc (strlen((char *)file->filename) + 1);
+	trim_string ((char *)file->filename, fname);
+	sprintf (filename, "%s/%s", opts.output_folder, fname);
+	ret = get_measurements (fname, c->measurements);
+	free (fname);
+	free (filename);					
+	/* TODO: commandline switch to disable verdict */
+	/* evaluate measurements only if case is otherwise passed */
+	if (c->case_res == CASE_PASS) {
+		ret = eval_measurements (c->measurements, &measurement_verdict,
+					 &failure_str);
+		if (ret)
+			return 1;
+		if (measurement_verdict == CASE_FAIL) {
+			LOG_MSG (LOG_INFO, "Failing case %s due to measurement"
+				 " data (%s)", failure_str ? failure_str : 
+				 "no info");
+			c->case_res = CASE_FAIL;
+			if (failure_str) 
+				c->failure_info = failure_str;
+		}
+			
+	}
 	return 1;
 }
 
