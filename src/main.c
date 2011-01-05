@@ -95,6 +95,14 @@ LOCAL void copyright();
 /* ------------------------------------------------------------------------- */
 LOCAL int create_output_folder ();
 /* ------------------------------------------------------------------------- */
+LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_target_address(char *address, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int test_chroot(char * folder);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -159,6 +167,10 @@ LOCAL void usage()
 		"test control PC (host) side. "
 		"ADDRESS is the ipv4 adress of the\n\t\t"
 		"system under test.\n");
+	printf ("  -C PATH, --chroot=PATH\n\t\t"
+		"Run tests inside a chroot environment. Note that this\n\t\t"
+		"doesn't change the root of the testrunner itself,\n\t\t"
+		"only the tests will have the new root folder set.\n");
     
 	return;
 }
@@ -263,6 +275,90 @@ LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) {
 }
 
 /* ------------------------------------------------------------------------- */
+/** Parse chroot option argument.
+ * @param folder path to change root envrionment
+ * @param opts Options struct containing field(s) to store path
+ * @return 0 in success, 1 on generic error, 2 if folder doesn't exist,
+ *    3 if folder isn't a directory, 4 if there is a problem with the chroot
+ */
+LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts) {
+	struct stat stat_buf;
+
+	if (folder) {
+		opts->chroot_folder = malloc(strlen(folder) + 1);
+		strcpy(opts->chroot_folder, folder);
+
+		// check that folder exists, is a directory and we can chroot into it
+		if (stat(folder, &stat_buf) == -1) {
+			fprintf(stderr, "%s: could not stat folder '%s'\n",
+				PROGNAME, folder);
+			return 2;
+		}
+		if (!S_ISDIR(stat_buf.st_mode)) {
+			fprintf(stderr, "%s: '%s' is not a directory\n",
+				PROGNAME, folder);
+			return 3;
+		}
+		if (test_chroot(folder) != 0) {
+			return 4;
+		}
+
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+/* ------------------------------------------------------------------------- */
+/** Test access to chroot.
+ * @param folder path to change root envrionment
+ * @return 0 in success, 1 on generic error, 2 if there is a problem with
+ *    the chroot
+ */
+LOCAL int test_chroot(char * folder) {
+	pid_t pid;
+	int status;
+
+	// make sure we can chroot to the folder
+	pid = fork();
+	if (pid > 0) {
+		waitpid(pid, &status, 0);
+		switch (WEXITSTATUS(status)) {
+			case 1:
+				fprintf(stderr, "%s: folder '%s' is inaccessible\n",
+					PROGNAME, folder);
+				return 2;
+			case 2:
+				fprintf(stderr, "%s: unable to chroot to folder '%s'\n",
+					PROGNAME, folder);
+				return 2;
+			case 3:
+				fprintf(stderr, "%s: failed to execute '/bin/sh' inside '%s'\n",
+					PROGNAME, folder);
+				return 2;
+			default:
+				break;
+		}
+	} else if (pid == 0) {
+		if (chdir(folder) == -1) {
+			exit(1);
+		}
+		if (chroot(".") == -1) {
+			exit(2);
+		}
+		if (WEXITSTATUS(system("exit")) != 0) {
+			exit(3);
+		}
+		exit(0);
+	} else {
+		fprintf(stderr, "Fork failed: %s\n", strerror(errno));
+		return 1;
+	}
+
+	return 0;
+}
+
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** main() for testrunnerlite - handle command line switches and call parser
@@ -297,6 +393,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"validate-only", no_argument, &A_flag},
 			{"no-hwinfo", no_argument, &opts.skip_hwinfo, 1},
 			{"target", required_argument, NULL, 't'},
+			{"chroot", required_argument, NULL, 'C'},
 			{"print-step-output", no_argument, 
 			 &opts.print_step_output, 1},
 			{0, 0, 0, 0}
@@ -321,7 +418,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSsmcPf:o:e:l:r:L:t:v::",
+					":hVaAHSsmcPC:f:o:e:l:r:L:t:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -423,7 +520,12 @@ int main (int argc, char *argv[], char *envp[])
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
-			break;    
+			break;
+		case 'C':
+			if (parse_chroot_folder(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
 		case 'P':
 			opts.print_step_output = 1;
 			break;
@@ -451,6 +553,14 @@ int main (int argc, char *argv[], char *envp[])
 	}
 	if (V_flag) {
 		version();
+		goto OUT;
+	}
+
+	if (opts.chroot_folder && opts.target_address) {
+		fprintf (stderr,
+			"%s: -C and -t are mutually exclusive\n",
+			PROGNAME);
+		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
 	}
 	
