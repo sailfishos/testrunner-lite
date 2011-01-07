@@ -75,6 +75,7 @@ typedef struct {
 	int   skip_hwinfo;     /**< flag for skipping hwinfo step */
 	int   log_level;       /**< logging level */
 	char *target_address;   /**< SUT address. */
+	int   no_measurement_verdicts; /**< flag for measurement verdicts */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

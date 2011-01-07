@@ -67,6 +67,9 @@ Do not try to obtain hardware information
 Enable host-based testing. If given, commands are executed from
 test control PC (host) side. ADDRESS is the ipv4 adress of the
 system under test.
+.TP
+\fB\-M\fR,  \fB\-\-disable\-measurement\-verdict\fR 
+Do not fail cases based on measurement data
 
 .SH EXIT STATUS
 .TP

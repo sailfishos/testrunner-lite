@@ -489,36 +489,40 @@ LOCAL int process_get_case (const void *data, const void *user)
 	int ret = 0;
 	td_file *file = (td_file *)data;
 	td_case *c = (td_case *)user;
-	char *fname, *filename, *failure_str = NULL;
+	char *trimmed_name, *fname, *filename, *failure_str = NULL;
 	int measurement_verdict = CASE_PASS;
 
 	ret = process_get (data, NULL);
 	if (!ret)
 		LOG_MSG (LOG_WARNING, "get file processing failed");
 	
-	filename = malloc (strlen((char *)file->filename) + 2 + 
+	trimmed_name = malloc (strlen ((char *)file->filename) + 1);
+	trim_string ((char *)file->filename, trimmed_name);
+	fname = strrchr (trimmed_name, '/');
+	if (!fname)
+		fname = trimmed_name;
+	else
+		fname ++;
+	filename = malloc (strlen((char *)fname) + 2 + 
 			   strlen (opts.output_folder));
-	/* FIXME */
-	fname = malloc (strlen((char *)file->filename) + 1);
-	trim_string ((char *)file->filename, fname);
-	sprintf (filename, "%s/%s", opts.output_folder, fname);
-	ret = get_measurements (fname, c->measurements);
-	free (fname);
+	sprintf (filename, "%s%s", opts.output_folder, fname);
+
+	ret = get_measurements (filename, c->measurements);
+	free (trimmed_name);
 	free (filename);					
-	/* TODO: commandline switch to disable verdict */
 	/* evaluate measurements only if case is otherwise passed */
-	if (c->case_res == CASE_PASS) {
+	if (c->case_res == CASE_PASS && !opts.no_measurement_verdicts) {
 		ret = eval_measurements (c->measurements, &measurement_verdict,
 					 &failure_str);
 		if (ret)
 			return 1;
 		if (measurement_verdict == CASE_FAIL) {
-			LOG_MSG (LOG_INFO, "Failing case %s due to measurement"
-				 " data (%s)", failure_str ? failure_str : 
+			LOG_MSG (LOG_INFO, "Failing test case %s (%s)", 
+				 c->gen.name, failure_str ? failure_str : 
 				 "no info");
 			c->case_res = CASE_FAIL;
 			if (failure_str) 
-				c->failure_info = failure_str;
+				c->failure_info = BAD_CAST failure_str;
 		}
 			
 	}

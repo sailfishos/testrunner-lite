@@ -99,6 +99,8 @@ LOCAL int xml_write_file_data (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_post_set (td_set *);
 /* ------------------------------------------------------------------------- */
+LOCAL int xml_write_measurement (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 LOCAL int txt_write_td_start (td_td *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_td_end (td_td *);
@@ -575,8 +577,8 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 c->comment) < 0)
 			goto err_out;
 
-
 	xmlListWalk (c->steps, xml_write_step, NULL);
+	xmlListWalk (c->measurements, xml_write_measurement, NULL);
 
 	return !xml_end_element ();
 
@@ -672,6 +674,45 @@ LOCAL int xml_write_post_set (td_set *set)
 
  err_out:
 	return 1;
+}
+/* ------------------------------------------------------------------------- */
+/** Write measurement data
+ * @param data measurement data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_measurement (const void *data, const void *user)
+{
+	td_measurement *meas = (td_measurement *)data;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "measurement") < 0)
+		goto err_out;
+	if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "name", 
+					 meas->name) < 0)
+		goto err_out;
+	if (xmlTextWriterWriteFormatAttribute	(writer, BAD_CAST "value", 
+						 "%f", meas->value) <0)
+		goto err_out;
+	if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "unit", 
+					 meas->unit) < 0)
+		goto err_out;
+
+	if (!meas->target_specified)
+		goto ok_out;
+
+	if (xmlTextWriterWriteFormatAttribute	(writer, BAD_CAST "target", 
+						 "%f", meas->target) <0)
+		goto err_out;
+	if (xmlTextWriterWriteFormatAttribute	(writer, BAD_CAST "failure", 
+						 "%f", meas->failure) <0)
+		goto err_out;
+ ok_out:
+	if (xmlTextWriterEndElement (writer) < 0)
+		goto err_out;
+	return 1;
+ err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	return 0;
 }
 /* ------------------------------------------------------------------------- */
 /************************* text output ***************************************/

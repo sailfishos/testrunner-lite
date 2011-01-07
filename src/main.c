@@ -159,7 +159,8 @@ LOCAL void usage()
 		"test control PC (host) side. "
 		"ADDRESS is the ipv4 adress of the\n\t\t"
 		"system under test.\n");
-    
+	printf ("  -M, --disable-measurement-verdict\n\t\t"
+		" Do not fail cases based on measurement data\n");
 	return;
 }
 /** Print version
@@ -299,6 +300,9 @@ int main (int argc, char *argv[], char *envp[])
 			{"target", required_argument, NULL, 't'},
 			{"print-step-output", no_argument, 
 			 &opts.print_step_output, 1},
+			{"disable-measurement-verdict", no_argument, 
+			 &opts.no_measurement_verdicts, 1},
+
 			{0, 0, 0, 0}
 		};
 
@@ -426,6 +430,9 @@ int main (int argc, char *argv[], char *envp[])
 			break;    
 		case 'P':
 			opts.print_step_output = 1;
+			break;
+		case 'M':
+			opts.no_measurement_verdicts = 1;
 			break;
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",

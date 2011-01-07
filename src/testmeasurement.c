@@ -176,6 +176,7 @@ LOCAL int parse_measurements (FILE *f, xmlListPtr list)
  */
 LOCAL int eval_meas (const void *data, const void *user)
 {
+	int retval = 1;
 	td_measurement *meas = (td_measurement *)data;
 	container *cont = (container *)user;
 
@@ -183,7 +184,40 @@ LOCAL int eval_meas (const void *data, const void *user)
 		 meas->name, meas->unit, meas->value, meas->target_specified,
 		 meas->target, meas->failure);
 
-	return 1;
+	if (!meas->target_specified)
+		return retval; /* No need to do further processing */
+
+	if (meas->target > meas->failure) {
+		if (meas->value <= meas->failure) {
+			cont->failure_string = malloc (strlen (meas->name) + 
+						       strlen ("measurement: "
+							       "fail target "
+							       "smaller than "
+							       "value")
+						       + 5); 
+			sprintf (cont->failure_string, "measurement fail: %s - "
+				 "target smaller than value", meas->name); 
+			cont->verdict = CASE_FAIL;
+			retval = 0;
+		}
+	} else if (meas->target < meas->failure) {
+		if (meas->value >= meas->failure) {
+			cont->verdict = CASE_FAIL;
+			cont->failure_string = malloc (strlen (meas->name) + 
+						       strlen ("measurement: "
+							       "fail target "
+							       "bigger than "
+							       "value") + 5); 
+			sprintf (cont->failure_string, "measurement fail: %s - "
+				 "target bigger than value", meas->name); 
+			retval = 0;
+		}
+	} else {
+		LOG_MSG (LOG_WARNING, "Invalid measurement data (%s) "
+			 "target and failure are the same (%f)", meas->name,
+			 meas->target);
+	}
+	return retval;
 }
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
