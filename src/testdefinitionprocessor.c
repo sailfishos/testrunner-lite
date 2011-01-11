@@ -104,6 +104,8 @@ LOCAL void process_hwiddetect();
 /* ------------------------------------------------------------------------- */
 LOCAL void process_suite(td_suite *);
 /* ------------------------------------------------------------------------- */
+LOCAL void end_suite ();
+/* ------------------------------------------------------------------------- */
 LOCAL void process_set(td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_case (const void *, const void *);
@@ -230,7 +232,6 @@ LOCAL int step_execute (const void *data, const void *user)
 	
 	return (res == CASE_PASS);
 }
-
 /* ------------------------------------------------------------------------- */
 /** Process pre/post steps.
  *  @param data steps data
@@ -250,7 +251,6 @@ LOCAL int prepost_steps_execute (const void *data, const void *user)
 	
 	return 1;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Set N/A result for test step
  *  @param data step data
@@ -304,7 +304,6 @@ LOCAL int step_post_process (const void *data, const void *user)
  out:
 	return 1;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Process case data. execute steps in case.
  *  @param data case data
@@ -391,7 +390,6 @@ LOCAL int case_result_fail (const void *data, const void *user)
 	
 	return 1;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Process set get data. 
  *  @param data get file data
@@ -509,23 +507,36 @@ LOCAL int process_get_case (const void *data, const void *user)
 
 	ret = get_measurements (filename, c->measurements);
 	free (trimmed_name);
-	free (filename);					
-	/* evaluate measurements only if case is otherwise passed */
-	if (c->case_res == CASE_PASS && !opts.no_measurement_verdicts) {
-		ret = eval_measurements (c->measurements, &measurement_verdict,
-					 &failure_str);
-		if (ret)
-			return 1;
-		if (measurement_verdict == CASE_FAIL) {
-			LOG_MSG (LOG_INFO, "Failing test case %s (%s)", 
-				 c->gen.name, failure_str ? failure_str : 
-				 "no info");
-			c->case_res = CASE_FAIL;
-			if (failure_str) 
-				c->failure_info = BAD_CAST failure_str;
-		}
-			
+	free (filename);
+	
+	/* Evaluate measurements only if case is otherwise passed ... */
+	if (c->case_res != CASE_PASS)
+		return 1;
+	/* ... and -M flag is not set */ 
+	if (opts.no_measurement_verdicts)
+		return 1;
+	
+	/* ... and measurement getting was succesfull */
+	if (ret) {
+		c->case_res = CASE_FAIL;
+		c->failure_info = xmlCharStrdup ("Failed to get "
+						 "measurement file");
+		return 1;
 	}
+	
+	ret = eval_measurements (c->measurements, &measurement_verdict,
+				 &failure_str);
+	if (ret)
+		return 1;
+	if (measurement_verdict == CASE_FAIL) {
+		LOG_MSG (LOG_INFO, "Failing test case %s (%s)", 
+			 c->gen.name, failure_str ? failure_str : 
+			 "no info");
+		c->case_res = CASE_FAIL;
+		if (failure_str) 
+			c->failure_info = BAD_CAST failure_str;
+	}
+			
 	return 1;
 }
 
