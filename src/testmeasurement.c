@@ -190,13 +190,11 @@ LOCAL int eval_meas (const void *data, const void *user)
 	if (meas->target > meas->failure) {
 		if (meas->value <= meas->failure) {
 			cont->failure_string = malloc (strlen (meas->name) + 
-						       strlen ("measurement: "
-							       "fail target "
-							       "smaller than "
-							       "value")
-						       + 5); 
-			sprintf (cont->failure_string, "measurement fail: %s - "
-				 "target smaller than value", meas->name); 
+						       strlen ("measured "
+							       "value too" 
+							       "small") + 5); 
+			sprintf (cont->failure_string, "%s - "
+				 "measured value too small", meas->name); 
 			cont->verdict = CASE_FAIL;
 			retval = 0;
 		}
@@ -204,12 +202,11 @@ LOCAL int eval_meas (const void *data, const void *user)
 		if (meas->value >= meas->failure) {
 			cont->verdict = CASE_FAIL;
 			cont->failure_string = malloc (strlen (meas->name) + 
-						       strlen ("measurement: "
-							       "fail target "
-							       "bigger than "
-							       "value") + 5); 
-			sprintf (cont->failure_string, "measurement fail: %s - "
-				 "target bigger than value", meas->name); 
+						       strlen ("measured "
+							       "value too" 
+							       "small") + 5); 
+			sprintf (cont->failure_string, "%s - "
+				 "measured value too big", meas->name); 
 			retval = 0;
 		}
 	} else {

@@ -54,6 +54,14 @@
 	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg14.xml</step>
       </case>
 
+      <case name="trlitereg15" feature="11039">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg15.xml</step>
+      </case>
+
+      <case name="trlitereg16" feature="11039">
+	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg16.xml -M</step>
+      </case>
+
       <environments>
 	<scratchbox>false</scratchbox>
 	<hardware>true</hardware>

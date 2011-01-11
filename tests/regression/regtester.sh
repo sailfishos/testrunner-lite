@@ -1,6 +1,7 @@
 #!/bin/sh
-
+set -x
 INPUTXML=$1
+TRLITEEXTRAFLAGS=$2
 OUTPUTXML=/tmp/$(basename ${INPUTXML} .xml).out.xml
 CASESIN=/tmp/trl_cases.in
 CASESOUT=/tmp/trl_cases.out
@@ -39,7 +40,7 @@ echo "Running $(basename $0) with ${INPUTXML}"
 
 # Run tests
 echo "---- testrunner-lite output begins ----"
-testrunner-lite -s -f ${INPUTXML} -o ${OUTPUTXML} -v
+testrunner-lite -s -f ${INPUTXML} -o ${OUTPUTXML} -v ${TRLITEEXTRAFLAGS}
 RETVAL=$?
 echo "---- testrunner-lite output ends ----"
 

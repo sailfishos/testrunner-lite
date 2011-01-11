@@ -559,16 +559,15 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 c->bugzilla_id) < 0)
 			goto err_out;
 	if (c->state)
-	    if (xmlTextWriterWriteAttribute (writer, 
-					     BAD_CAST "state", 
-					     c->state) < 0)
-		goto err_out;
-
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "state", 
+						 c->state) < 0)
+			goto err_out;
+	
 	if (c->description)
-		if (xmlTextWriterWriteRaw (writer, c->description) < 0)
-//		if (xmlTextWriterWriteElement	(writer, 
-//						 BAD_CAST "description", 
-//						 c->description) < 0)
+		if (xmlTextWriterWriteElement	(writer, 
+						 BAD_CAST "description", 
+						 c->description) < 0)
 			goto err_out;
 
 	if (c->gen.manual && c->comment)

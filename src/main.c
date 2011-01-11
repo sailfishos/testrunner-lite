@@ -325,7 +325,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSsmcPf:o:e:l:r:L:t:v::",
+					":hVaAHSMsmcPf:o:e:l:r:L:t:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
