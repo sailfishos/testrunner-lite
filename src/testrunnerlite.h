@@ -76,6 +76,7 @@ typedef struct {
 	int   log_level;       /**< logging level */
 	char *target_address;   /**< SUT address. */
 	int   no_measurement_verdicts; /**< flag for measurement verdicts */
+	char *chroot_folder;   /**< change root folder */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

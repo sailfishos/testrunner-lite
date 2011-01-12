@@ -172,11 +172,24 @@ static int exec_wrapper(const char *command)
 
 	if (options->target_address) {
 		ret = ssh_execute (options->target_address, command);
-	}
-	else
+	} else {
+		if (options->chroot_folder) {
+			if (chdir(options->chroot_folder) == -1) {
+				LOG_MSG(LOG_ERR, "Failed to chdir into chroot '%s'",
+					options->chroot_folder);
+				return -1;
+			}
+			if (chroot(".") == -1) {
+				LOG_MSG(LOG_ERR, "Failed to set chroot to '%s'",
+					options->chroot_folder);
+				return -1;
+			}
+		}
+
 		/* on success, execvp does not return */
-	  ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARGS,
+		ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARGS,
 			    command, (char*)NULL);
+	}
 
 	return ret;
 }
@@ -792,7 +805,7 @@ int execute(const char* command, exec_data* data) {
 		data->pid = fork_process(command);
 	}
 	current_data = data; 
-	
+
 	if (data->pid > 0) {
 		/* wait that child runs the setsid() */
 		ppgid = getpgid (0);
