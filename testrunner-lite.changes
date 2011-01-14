@@ -1,3 +1,6 @@
+* Fri Jan 14 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.3
+- Possibility to run tests inside chroot environment (--chroot option, Tobias Koch)
+- Support for obtaining and evaluating measurement data (BMC#11041)
 * Tue Dec 21 2010 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.2
 - Support new attributes to comply with wiki.meego.com/TestCaseTemplate (BMC#11475)
 * Fri Dec 10 2010 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.1

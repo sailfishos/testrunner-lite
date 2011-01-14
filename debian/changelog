@@ -1,3 +1,10 @@
+testrunner-lite (1.4.3) unstable; urgency=low
+
+  * Possibility to run tests inside chroot environment (--chroot option, Tobias Koch)
+  * Support for obtaining and evaluating measurement data (BMC#11041)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Fri, 14 Jan 2011 15:52:09 +0200
+
 testrunner-lite (1.4.2) unstable; urgency=low
 
   * Support new attributes to comply with wiki.meego.com/TestCaseTemplate (BMC#11475)
