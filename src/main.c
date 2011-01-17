@@ -222,13 +222,12 @@ LOCAL int create_output_folder ()
 			return 1;
 		}
 #endif
-		if (!getcwd (cmd, PATH_MAX)) {
+		if (!getcwd (pwd, PATH_MAX)) {
 			LOG_MSG (LOG_ERR, "%s: getcwd() failed %s\n",
 				 PROGNAME, strerror (errno));
 			return 1;
 
 		}
-
 		opts.output_folder = (char *)malloc (strlen (pwd) + 2);
 		strcpy (opts.output_folder, pwd);
 		opts.output_folder[strlen(pwd)] = '/';
