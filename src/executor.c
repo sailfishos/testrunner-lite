@@ -39,6 +39,8 @@
 #include <stdio.h>
 #include <sched.h>
 #include <libxml/xmlstring.h>
+#include <pty.h>
+#include <termios.h>
 
 #include "remote_executor.h"
 #include "executor.h"
@@ -185,7 +187,6 @@ static int exec_wrapper(const char *command)
 				return -1;
 			}
 		}
-
 		/* on success, execvp does not return */
 		ret = execl(SHELLCMD, SHELLCMD, SHELLCMD_ARGS,
 			    command, (char*)NULL);
@@ -203,23 +204,21 @@ static int exec_wrapper(const char *command)
  * @return PID of process on success, -1 in error
  */
 static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *command) {
-	int out_pipe[2];
+
 	int err_pipe[2];
 	pid_t pid;
-	
-	if (pipe(out_pipe) < 0)
-		goto error_out;
+	int amaster;
+	struct termios termios;
 
 	if (pipe(err_pipe) < 0)
 		goto error_err;
 
-	pid = fork();
+	pid = forkpty(&amaster, NULL, NULL, NULL);
 	if (pid > 0) { /* parent */
 		LOG_MSG(LOG_DEBUG, "Forked new process %d", pid);
-		/* close the write end of the pipes */
-		close(out_pipe[1]);
+		/* close the write end of the pipe */
 		close(err_pipe[1]);
-		*stdout_fd = out_pipe[0];
+		*stdout_fd = amaster;
 		*stderr_fd = err_pipe[0];
 		
 	} else if (pid == 0) { /* child */
@@ -228,21 +227,29 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		 * are set to PID (they were PPID) */
 		setsid();
 		/* close the read end of the pipes */
-		close(out_pipe[0]);
 		close(err_pipe[0]);
-
-		/* redirect stdout to the pipe */
-		close(1);
-		if (dup(out_pipe[1]) < 0) {
-			perror("dup(out_pipe[1]");
-		}
-		
 		/* redirect stderr to the pipe */
 		close(2);
 		if (dup(err_pipe[1]) < 0) {
 			perror("dup(err_pipe[1])");
 		}
+
+		/* Get the current terminal attributes */
+		if (tcgetattr (STDIN_FILENO, &termios) < 0) {
+			fprintf (stderr, "could not get terminal attributes");
+			goto error_err;
+		}
+		/* do not echo */
+		termios.c_lflag &= ~ECHO;
 		
+		/* got carriage returns to ouput, this seemed to help */
+		termios.c_oflag &= ~ONLCR;  
+
+		/* set the attributes for pseudo terminal */
+		if (tcsetattr (STDIN_FILENO, TCSANOW, &termios) < 0) {
+			fprintf (stderr, "could not set terminal attributes");
+			goto error_err;
+		}
 		exec_wrapper(command);
 		/* execution should never reach this point */
 		exit(1);
@@ -257,8 +264,6 @@ error_fork:
 	close(err_pipe[0]);
 	close(err_pipe[1]);
 error_err:
-	close(out_pipe[0]);
-	close(out_pipe[1]);
 error_out:
 	return -1;
 }
@@ -365,9 +370,10 @@ static int read_and_append(int fd, stream_data* data) {
 		if (ret > 0) {
 			/* read was successful, update stream_data */
 			data->buffer[data->length + ret] = '\0';
-			if (options->print_step_output)
+			if (options->print_step_output) {
 				printf ("%s", &data->buffer[data->length]);
-
+				fflush (stdout);
+			}
 			data->length += ret;
 
 		}
