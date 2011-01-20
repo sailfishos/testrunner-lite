@@ -81,6 +81,7 @@ struct _exec_data {
 	time_t start_time;
 	time_t end_time;
 	int result;
+	int signaled; /* In case step is terminated by signal */
 };
 
 typedef struct _exec_data exec_data;

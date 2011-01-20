@@ -120,7 +120,7 @@ LOCAL int step_execute (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int prepost_steps_execute (const void *, const void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int step_result_na (const void *, const void *);
+LOCAL int step_result_fail (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
@@ -205,21 +205,25 @@ LOCAL int step_execute (const void *data, const void *user)
 		step->return_code = edata.result;
 		step->start = edata.start_time;
 		step->end = edata.end_time;
+
 		/*
 		** Post and pre steps fail only if the expected result is 
 		*  specified
 		*/
-		if (c->dummy) {
-			if (step->has_expected_result &&
-			    (step->return_code != step->expected_result)) {
-				LOG_MSG (LOG_INFO, 
-					 "STEP: %s return %d expected %d\n",
-					 step->step, step->return_code, 
-					 step->expected_result);
-				res = CASE_FAIL;
-			}
+		if (c->dummy) 
+			if (!step->has_expected_result)
+				goto out;
+		/*
+		** Testrunner-lite may have killed the step command on timeout
+		** in this case we do not trust the return value.
+		*/
+		if (edata.signaled) { 
+			step->fail = 1;
+			LOG_MSG (LOG_INFO, "STEP: %s terminated by signal %d",
+				 step->step, edata.signaled);
+			res = CASE_FAIL;
 		} else if (step->return_code != step->expected_result) {
-			LOG_MSG (LOG_INFO, "STEP: %s return %d expected %d\n",
+			LOG_MSG (LOG_INFO, "STEP: %s return %d expected %d",
 				 step->step, step->return_code, 
 				 step->expected_result);
 			res = CASE_FAIL;
@@ -252,18 +256,18 @@ LOCAL int prepost_steps_execute (const void *data, const void *user)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
-/** Set N/A result for test step
+/** Set fail result for test step
  *  @param data step data
  *  @param user failure info string
  *  @return 1 always
  */
-LOCAL int step_result_na (const void *data, const void *user) 
+LOCAL int step_result_fail (const void *data, const void *user) 
 {
 	td_step *step = (td_step *)data;
 	char *failure_info = (char *)user;
 
 	step->has_result = 1;
-	step->return_code = step->expected_result + 255; 
+	step->fail = 1;
 	step->failure_info = xmlCharStrdup (failure_info);
 	
 	return 1;
@@ -386,7 +390,7 @@ LOCAL int case_result_fail (const void *data, const void *user)
 	c->case_res = CASE_FAIL;
 	c->failure_info = xmlCharStrdup (failure_info);
 
-	xmlListWalk (c->steps, step_result_na, user);
+	xmlListWalk (c->steps, step_result_fail, user);
 	
 	return 1;
 }

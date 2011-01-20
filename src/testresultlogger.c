@@ -345,6 +345,11 @@ LOCAL int xml_write_step (const void *data, const void *user)
 			goto err_out;
 
 
+	} else if (step->fail) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "result", 
+						 BAD_CAST "FAIL") < 0)
+			goto err_out;
 	} else if (xmlTextWriterWriteAttribute (writer, 
 						BAD_CAST "result", 
 						step->expected_result == 
