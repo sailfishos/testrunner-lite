@@ -91,6 +91,10 @@ LOCAL int xml_write_general_attributes (td_gen_attribs *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_step (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+LOCAL int xml_write_event (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_event_param (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 LOCAL int xml_write_pre_post_step (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_case (const void *, const void *);
@@ -324,6 +328,9 @@ LOCAL int xml_write_step (const void *data, const void *user)
 	td_step *step = (td_step *)data;
 	struct tm *tm;
 
+	if (step->event)
+		return xml_write_event(step->event, step);
+
 	if (xmlTextWriterStartElement (writer, BAD_CAST "step") < 0)
 		goto err_out;
 
@@ -418,6 +425,98 @@ LOCAL int xml_write_step (const void *data, const void *user)
 
 	return !xml_end_element();
 	
+err_out:
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Write event result xml
+ * @param data event data 
+ * @param user step data
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_event (const void *data, const void *user)
+{
+	td_event *event = (td_event *)data;
+	td_step *step = (td_step *)user;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "event") < 0)
+		goto err_out;
+
+	/* event specific attributes */
+	if (xmlTextWriterWriteFormatAttribute (writer,
+					       BAD_CAST "type",
+					       "%s",
+					       event_type_str(event->type)) < 0)
+		goto err_out;
+
+	if (event->resource) {
+		if (xmlTextWriterWriteAttribute (writer,
+						 BAD_CAST "resource",
+						 event->resource) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteFormatAttribute (writer,
+					       BAD_CAST "timeout",
+					       "%lu",
+					       event->timeout) < 0)
+		goto err_out;
+
+	/* attributes of step */
+	if (step->has_result == 0) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "result", 
+						 BAD_CAST "N/A") < 0)
+			goto err_out;
+
+
+	} else if (xmlTextWriterWriteAttribute (writer, 
+						BAD_CAST "result", 
+						step->expected_result == 
+						step->return_code ? 
+						BAD_CAST "PASS" :
+						BAD_CAST "FAIL") < 0)
+		goto err_out;
+
+	xmlListWalk (event->params, xml_write_event_param, NULL);
+
+	return !xml_end_element();
+	
+err_out:
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Write event result xml
+ * @param data event_param data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_event_param (const void *data, const void *user)
+{
+	td_event_param *param = (td_event_param *)data;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "param") < 0)
+		goto err_out;
+
+	if (param->type) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "type", 
+						 param->type) < 0)
+			goto err_out;
+	}
+
+	if (param->name) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "name", 
+						 param->name) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteString (writer, param->value) < 0)
+		goto err_out;
+
+	return !xml_end_element();
+
 err_out:
 	return 0;
 }

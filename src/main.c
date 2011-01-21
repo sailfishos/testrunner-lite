@@ -670,12 +670,15 @@ int main (int argc, char *argv[], char *envp[])
 		retval = TESTRUNNER_LITE_RESULT_LOGGING_FAIL;
 		goto OUT;
 	}
+	init_event_system();
+
 	/*
 	** Process test definition
 	*/
 	td_process();
 
 	executor_close();
+	cleanup_event_system();
 	td_reader_close();
 	close_result_logger();
 	LOG_MSG (LOG_INFO, "Results were written to: %s", opts.output_filename);

@@ -47,6 +47,7 @@
 #include "manual_executor.h"
 #include "utils.h"
 #include "log.h"
+#include "event.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -130,6 +131,27 @@ LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+/** Process event
+ *  @param data event data
+ *  @param user step data
+ *  @return 1 if event is successfully processed, 0 if not
+ */
+LOCAL int event_execute (const void *data, const void *user)
+{
+	td_event *event = (td_event *)data;
+	td_step *step = (td_step *)user;
+	int ret = 0;
+
+	if (event->type == EVENT_TYPE_SEND) {
+		ret = send_event(event);
+	}
+
+	if (event->type == EVENT_TYPE_WAIT) {
+		ret = wait_for_event(event);
+	}
+	
+	return ret;
+}
 /** Process step data. execute one step from case.
  *  @param data step data
  *  @param user case data
@@ -153,6 +175,18 @@ LOCAL int step_execute (const void *data, const void *user)
 			step->failure_info = xmlCharStrdup (global_failure);
 			c->failure_info = xmlCharStrdup (global_failure);
 		}
+		goto out;
+	}
+
+	if (step->event) {
+		/* just process the event */
+		if (!event_execute(step->event, step)) {
+			step->return_code = 1;
+			res = CASE_FAIL;
+			LOG_MSG (LOG_INFO, "EVENT: '%s' failed\n",
+					 step->event->resource);
+		}
+		step->has_result = 1;
 		goto out;
 	}
 	

@@ -34,8 +34,10 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/hwinfo.o \
 			    $(top_builddir)/src/log.o \
 			    $(top_builddir)/src/utils.o \
+			    $(top_builddir)/src/event.o \
                             -lcheck \
                             -lgcov \
                             -lxml2 \
-                            -lcurl
-
+                            -lcurl \
+                            $(JSON_LIBS) \
+                            -lcqpid

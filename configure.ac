@@ -4,6 +4,7 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AC_CONFIG_HEADERS([config.h])
 AM_PROG_LIBTOOL
+PKG_CHECK_MODULES([JSON], [json])
 AC_OUTPUT(\
 	Makefile \
 	src/Makefile \

@@ -27,6 +27,7 @@
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
 #include <sys/time.h>
+#include <sys/types.h>
 #include <libxml/xmlstring.h>
 #include <libxml/list.h>
 #include "testrunnerlite.h"
@@ -97,6 +98,28 @@ typedef struct {
 	xmlChar    *environment; /**< Current environment */
 } td_set;
 /* ------------------------------------------------------------------------- */
+/** Test event parameter. */
+typedef struct {
+	xmlChar      *type;        /**< Type of param */
+	xmlChar      *name;        /**< Name of param */
+	xmlChar      *value;       /**< Value of param as a string */
+} td_event_param;
+/* ------------------------------------------------------------------------- */
+/** Test event type. */
+typedef enum {
+	EVENT_TYPE_UNKNOWN = 0,
+	EVENT_TYPE_SEND,
+	EVENT_TYPE_WAIT
+} event_type_t;
+/* ------------------------------------------------------------------------- */
+/** Test event. */
+typedef struct {
+	event_type_t  type;        /**< Type of event */
+	xmlChar      *resource;        /**< Resource (address[/subject]) */
+	unsigned long timeout;     /**< Timeout of event */
+	xmlListPtr    params;      /**< Parameters of event */
+} td_event;
+/* ------------------------------------------------------------------------- */
 /** Test step. */
 typedef struct {
 	/* Parser fills */
@@ -107,6 +130,7 @@ typedef struct {
 	int      has_result;      /**< should we trust the return_code */
 	int      return_code;     /**< actual result of step */
 	int      manual;          /**< Manual flag (default from case) */
+	td_event*      event;     /**< event step */
 
 	/* Executor fills */
 	xmlChar *failure_info;    /**< optional failure info */
@@ -177,6 +201,8 @@ typedef struct {
 /* ------------------------------------------------------------------------- */
 const char *case_result_str (case_result_t);
 /* ------------------------------------------------------------------------- */
+const char *event_type_str (event_type_t);
+/* ------------------------------------------------------------------------- */
 td_td *td_td_create();
 /* ------------------------------------------------------------------------- */
 void td_td_delete(td_td *);
@@ -201,5 +227,14 @@ td_steps *td_steps_create();
 /* ------------------------------------------------------------------------- */
 void td_steps_delete(xmlLinkPtr);
 /* ------------------------------------------------------------------------- */
+td_event *td_event_create();
+/* ------------------------------------------------------------------------- */
+void td_event_delete(td_event *);
+/* ------------------------------------------------------------------------- */
+td_event_param *td_event_param_create();
+/* ------------------------------------------------------------------------- */
+void td_event_param_delete(xmlLinkPtr lk);
+/* ------------------------------------------------------------------------- */
+
 #endif                          /* TESTDEFINITIONDATATYPES_H */
 /* End of file */

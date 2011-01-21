@@ -101,6 +101,10 @@ LOCAL int td_parse_set ();
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_hwiddetect ();
 /* ------------------------------------------------------------------------- */
+LOCAL td_step *td_parse_event();
+/* ------------------------------------------------------------------------- */
+LOCAL td_event_param *td_parse_event_param();
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -345,6 +349,162 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+/** Parse event
+ *  @return td_step* on success, NULL on error
+ */
+LOCAL td_step *td_parse_event()
+{
+	const xmlChar *name;
+	const xmlChar *value;
+	td_step *step = NULL;
+	td_event *event = NULL;
+	td_event_param *param = NULL;
+	int ret;
+
+	step = td_step_create();
+	event = td_event_create();
+	step->event = event;
+
+	/* parse attributes */
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderConstName(reader);
+
+		if (!xmlStrcmp (name, BAD_CAST "type")) {
+			value = xmlTextReaderConstValue(reader);
+			if (!xmlStrcmp(value, BAD_CAST "send")) {
+				event->type = EVENT_TYPE_SEND;
+			}
+			else if (!xmlStrcmp(value, BAD_CAST "wait")) {
+				event->type = EVENT_TYPE_WAIT;
+			} else {
+				/* TODO: error */
+				event->type = EVENT_TYPE_UNKNOWN;
+			}
+			continue;
+		}
+
+		if (!xmlStrcmp (name, BAD_CAST "resource")) {
+			event->resource = xmlTextReaderValue(reader);
+			continue;
+		}
+
+		if (!xmlStrcmp (name, BAD_CAST "timeout")) {
+			event->timeout = 
+				strtoul((char *)xmlTextReaderConstValue(reader),
+					NULL, 10);
+			continue;
+		}
+	}
+
+	xmlTextReaderMoveToElement (reader);
+	if (xmlTextReaderIsEmptyElement (reader))
+		goto OK_OUT;
+
+	/* possible param elements */
+	do {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			LOG_MSG (LOG_ERR, "%s:%s: ReaderRead() fail\n",
+				 PROGNAME, __FUNCTION__);
+			
+			goto ERROUT;
+		}
+		name = xmlTextReaderConstName(reader);
+		if (!name) {
+			LOG_MSG (LOG_ERR, "%s: ReaderName() fail\n",
+				 PROGNAME);
+			goto ERROUT;
+		}
+
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, BAD_CAST "param")) {
+			param = td_parse_event_param ();
+			if (!param)
+				goto ERROUT;
+			if (xmlListAppend (event->params, param)) {
+				LOG_MSG (LOG_ERR, "%s: list insert failed\n",
+					 PROGNAME);
+				goto ERROUT;
+			}
+		}
+
+	} while  (!(xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_END_ELEMENT &&
+		    !xmlStrcmp (name, BAD_CAST "event")));
+	
+ OK_OUT:
+	return step;
+
+ ERROUT:
+	td_event_delete (event);
+	free (step);
+	return NULL;
+}
+/* ------------------------------------------------------------------------- */
+/** Parse event_param
+ *  @return td_event_param* on success, NULL on error
+ */
+LOCAL td_event_param *td_parse_event_param()
+{
+	const xmlChar *name;
+	td_event_param *param = NULL;
+	int ret;
+
+	param = td_event_param_create();
+
+	/* parse attributes */
+	while (xmlTextReaderMoveToNextAttribute(reader)) {
+		name = xmlTextReaderConstName(reader);
+
+		if (!xmlStrcmp (name, BAD_CAST "type")) {
+			param->type = xmlTextReaderValue(reader);
+			continue;
+		}
+
+		if (!xmlStrcmp (name, BAD_CAST "name")) {
+			param->name = xmlTextReaderValue(reader);
+			continue;
+		}
+	}
+
+	xmlTextReaderMoveToElement (reader);
+	if (xmlTextReaderIsEmptyElement (reader))
+		goto OK_OUT;
+
+	do {
+		ret = xmlTextReaderRead(reader);
+		if (!ret) {
+			LOG_MSG (LOG_ERR, "%s:%s: ReaderRead() fail\n",
+				 PROGNAME, __FUNCTION__);
+			
+			goto ERROUT;
+		}
+		name = xmlTextReaderConstName(reader);
+		if (!name) {
+			LOG_MSG (LOG_ERR, "%s: ReaderName() fail\n",
+				 PROGNAME);
+			goto ERROUT;
+		}
+
+		if (xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT) {
+			param->value = xmlTextReaderReadString (reader);
+		}
+
+	} while  (!(xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_END_ELEMENT &&
+		    !xmlStrcmp (name, BAD_CAST "param")));
+
+ OK_OUT:
+	return param;
+
+ ERROUT:
+	if (param->type) xmlFree(param->type);
+	if (param->name) xmlFree(param->name);
+	if (param->value) xmlFree(param->value);
+	return NULL;
+}
+/* ------------------------------------------------------------------------- */
 /** Parse test case and insert to set list of cases.
  *  @param *s td_set structure
  *  @return 0 on success, 1 on error 
@@ -416,6 +576,21 @@ LOCAL int td_parse_case(td_set *s)
 			    goto ERROUT;
 		    }
 		}
+
+		if (xmlTextReaderNodeType(reader) == 
+		    XML_READER_TYPE_ELEMENT && 
+		    !xmlStrcmp (name, BAD_CAST "event")) {
+		    /* event is special case of step */
+		    step = td_parse_event();
+		    if (!step)
+			    goto ERROUT;
+		    if (xmlListAppend (c->steps, step)) {
+			    LOG_MSG (LOG_ERR, "%s: list insert failed\n",
+				     PROGNAME);
+			    goto ERROUT;
+		    }
+		}
+
 		if (!xmlStrcmp (name, BAD_CAST "get"))
 			if (td_parse_gets(c->gets))
 				goto ERROUT;
