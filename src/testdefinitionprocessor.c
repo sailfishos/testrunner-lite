@@ -125,6 +125,8 @@ LOCAL int step_result_fail (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+LOCAL int event_execute (const void *data, const void *user);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 

@@ -1,15 +1,93 @@
-#include "event.h"
-#include "log.h"
+/*
+ * This file is part of testrunner-lite
+ *
+ * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ *
+ * Contact: Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ */
 
+/* ------------------------------------------------------------------------- */
+/* INCLUDE FILES */
 #include <cqpid/cqpid.h>
 #include <json.h>
 #include <libxml/list.h>
-
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
+#include "event.h"
+#include "log.h"
+
+/* ------------------------------------------------------------------------- */
+/* EXTERNAL DATA STRUCTURES */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* EXTERNAL GLOBAL VARIABLES */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* EXTERNAL FUNCTION PROTOTYPES */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* GLOBAL VARIABLES */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* CONSTANTS */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* MACROS */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* LOCAL GLOBAL VARIABLES */
 static Connection *connection = NULL;
 static Session *session = NULL;
+
+/* ------------------------------------------------------------------------- */
+/* LOCAL CONSTANTS AND MACROS */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* MODULE DATA STRUCTURES */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* LOCAL FUNCTION PROTOTYPES */
+/* ------------------------------------------------------------------------- */
+
+/* ------------------------------------------------------------------------- */
+/* FORWARD DECLARATIONS */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* ==================== LOCAL FUNCTIONS ==================================== */
+/* ------------------------------------------------------------------------- */
+static int types_match(json_object *obj, xmlChar *type);
+static int add_to_json_object(const void *data, const void *user);
+static void get_event_params(td_event *event, json_object *object);
+static Session *broker_session();
+/* ------------------------------------------------------------------------- */
+/* ======================== FUNCTIONS ====================================== */
+/* ------------------------------------------------------------------------- */
 
 /** 
  * Compares json_type of an object to an event param type string
@@ -159,10 +237,6 @@ static void get_event_params(td_event *event, json_object *object)
 	}
 }
 
-static void open_connection()
-{
-}
-
 /** 
  * Creates connection and session to AMQP broker if not yet connected. Returns
  * pointer to a session handle.
@@ -204,6 +278,10 @@ static Session *broker_session()
 
 	return session;
 }
+
+/* ------------------------------------------------------------------------- */
+/* ======================== FUNCTIONS ====================================== */
+/* ------------------------------------------------------------------------- */
 
 /** 
  * Initializes event system.
@@ -374,3 +452,9 @@ int send_event(td_event *event)
 
 	return ret;
 }
+
+/* ================= OTHER EXPORTED FUNCTIONS ============================== */
+/* None */
+
+/* ------------------------------------------------------------------------- */
+/* End of file */
