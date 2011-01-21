@@ -1,3 +1,11 @@
+testrunner-lite (1.4.4) unstable; urgency=low
+
+  * Never give PASS verdict for timeouting test step (BMC#12537)
+  * Fixed obtaining CWD (did not always work with sudo) (BMC#12519)
+  * Fixed --help output regarding filters (BMC#12585)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Fri, 21 Jan 2011 11:16:13 +0200
+
 testrunner-lite (1.4.3) unstable; urgency=low
 
   * Possibility to run tests inside chroot environment (--chroot option, Tobias Koch)

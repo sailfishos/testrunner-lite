@@ -1,3 +1,7 @@
+* Fri Jan 21 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.4
+- Never give PASS verdict for timeouting test step (BMC#12537)
+- Fixed obtaining CWD (did not always work with sudo) (BMC#12519)
+- Fixed --help output regarding filters (BMC#12585)
 * Fri Jan 14 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.3
 - Possibility to run tests inside chroot environment (--chroot option, Tobias Koch)
 - Support for obtaining and evaluating measurement data (BMC#11041)
