@@ -37,6 +37,5 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
                             -lcheck \
                             -lgcov \
                             -lxml2 \
-                            -lcurl \
-			    -lutil
+                            -lcurl
 
