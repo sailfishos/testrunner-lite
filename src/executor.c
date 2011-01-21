@@ -633,6 +633,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			pgroup = getpgid(data->pid);
 			kill_pgroup(pgroup, SIGTERM);
 
+			data->signaled = SIGTERM;
+
 			if (options->target_address && !bail_out) {
 				ssh_kill (options->target_address, data->pid);
 			}
@@ -649,7 +651,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 			pgroup = getpgid(data->pid);
 			kill_pgroup(pgroup, SIGKILL);
-
+			data->signaled = SIGKILL;
 			if (options->target_address && !bail_out) {
 				ssh_kill (options->target_address, data->pid);
 			}

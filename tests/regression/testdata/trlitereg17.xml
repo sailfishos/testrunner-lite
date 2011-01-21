@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1"> <!-- result="0" -->
+  <suite name="suite">
+    <set name="set">
+	<case name="timeout"  timeout="1"> <!-- result="FAIL" -->
+          <step expected_result="15">sleep 5</step> <!-- result="FAIL" -->
+      </case>
+    </set>
+  </suite>
+</testdefinition>   

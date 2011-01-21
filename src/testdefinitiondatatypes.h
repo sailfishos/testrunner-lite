@@ -116,6 +116,7 @@ typedef struct {
 	xmlChar *stderr_;         /**< step stderr printouts */
 	pid_t    pgid;            /**< step process group id */
 	pid_t    pid;             /**< step process id */
+	int      fail;            /**< step is failed, regardless of result */
 } td_step;
 /* ------------------------------------------------------------------------- */
 /** Test case result */

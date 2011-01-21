@@ -36,6 +36,7 @@
 #include <libxml/tree.h>
 #include <signal.h>
 #include <ctype.h>
+#include <limits.h>
 
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
@@ -204,7 +205,7 @@ LOCAL int create_output_folder ()
 {
 	int len;
 	char *p;
-	char *pwd, *cmd;
+	char pwd[PATH_MAX], *cmd;
 	
 	if ((p = strrchr (opts.output_filename, '/'))) {
 		len = p - opts.output_filename;
@@ -213,11 +214,19 @@ LOCAL int create_output_folder ()
 		strncpy (opts.output_folder, opts.output_filename, len + 1);
 
 	} else {
+#if 0
 		pwd = getenv ("PWD");
 		if (!pwd) {
 			LOG_MSG (LOG_ERR, "%s: getenv() failed %s\n",
 				 PROGNAME, strerror (errno));
 			return 1;
+		}
+#endif
+		if (!getcwd (pwd, PATH_MAX)) {
+			LOG_MSG (LOG_ERR, "%s: getcwd() failed %s\n",
+				 PROGNAME, strerror (errno));
+			return 1;
+
 		}
 		opts.output_folder = (char *)malloc (strlen (pwd) + 2);
 		strcpy (opts.output_folder, pwd);
