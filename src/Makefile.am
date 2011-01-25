@@ -22,9 +22,9 @@ testrunner_lite_SOURCES = main.c \
 			  log.c \
 			  event.c
 
-testrunner_lite_LDADD = -lxml2 -lcurl $(JSON_LIBS) -lcqpid
+testrunner_lite_LDADD = -lxml2 -lcurl $(JSON_LIBS) $(CQPID_LIBS)
 
-AM_CFLAGS =  -I/usr/include/libxml2 -D_GNU_SOURCE $(JSON_CFLAGS)
+AM_CFLAGS =  -I/usr/include/libxml2 -D_GNU_SOURCE $(JSON_CFLAGS) $(CQPID_FLAGS)
 
 noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \

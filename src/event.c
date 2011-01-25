@@ -23,7 +23,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
-#include <cqpid/cqpid.h>
+#include <libcqpid/cqpid.h>
 #include <json.h>
 #include <libxml/list.h>
 #include <string.h>

@@ -40,4 +40,4 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
                             -lxml2 \
                             -lcurl \
                             $(JSON_LIBS) \
-                            -lcqpid
+                            $(CQPID_LIBS)
