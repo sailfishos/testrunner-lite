@@ -34,10 +34,13 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/hwinfo.o \
 			    $(top_builddir)/src/log.o \
 			    $(top_builddir)/src/utils.o \
-			    $(top_builddir)/src/event.o \
                             -lcheck \
                             -lgcov \
                             -lxml2 \
-                            -lcurl \
-                            $(JSON_LIBS) \
-                            $(CQPID_LIBS)
+                            -lcurl
+
+if ENABLE_EVENTS
+testrunnerliteunittests_LDADD += $(top_builddir)/src/event.o \
+                                 $(JSON_LIBS) \
+                                 $(CQPID_LIBS)
+endif

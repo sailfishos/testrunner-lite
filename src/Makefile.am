@@ -19,12 +19,11 @@ testrunner_lite_SOURCES = main.c \
 			  manual_executor.c \
 			  hwinfo.c \
 			  utils.c \
-			  log.c \
-			  event.c
+			  log.c
 
-testrunner_lite_LDADD = -lxml2 -lcurl $(JSON_LIBS) $(CQPID_LIBS)
+testrunner_lite_LDADD = -lxml2 -lcurl
 
-AM_CFLAGS =  -I/usr/include/libxml2 -D_GNU_SOURCE $(JSON_CFLAGS) $(CQPID_FLAGS)
+AM_CFLAGS =  -I/usr/include/libxml2 -D_GNU_SOURCE
 
 noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \
@@ -38,5 +37,11 @@ noinst_HEADERS = testrunnerlite.h \
 		 manual_executor.h \
 		 hwinfo.h \
 		 utils.h \
-		 log.h \
-		 event.h
+		 log.h
+
+if ENABLE_EVENTS
+testrunner_lite_SOURCES += event.c
+noinst_HEADERS          += event.h
+testrunner_lite_LDADD   += $(JSON_LIBS) $(CQPID_LIBS)
+AM_CFLAGS               += $(JSON_CFLAGS) $(CQPID_FLAGS) -DENABLE_EVENTS
+endif

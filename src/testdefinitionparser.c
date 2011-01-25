@@ -101,10 +101,12 @@ LOCAL int td_parse_set ();
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_hwiddetect ();
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
 LOCAL td_step *td_parse_event();
 /* ------------------------------------------------------------------------- */
 LOCAL td_event_param *td_parse_event_param();
 /* ------------------------------------------------------------------------- */
+#endif
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -349,6 +351,7 @@ LOCAL int td_parse_steps(xmlListPtr list, const char *tag)
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
 /** Parse event
  *  @return td_step* on success, NULL on error
  */
@@ -505,6 +508,7 @@ LOCAL td_event_param *td_parse_event_param()
 	return NULL;
 }
 /* ------------------------------------------------------------------------- */
+#endif	/* ENABLE_EVENTS */
 /** Parse test case and insert to set list of cases.
  *  @param *s td_set structure
  *  @return 0 on success, 1 on error 
@@ -577,6 +581,7 @@ LOCAL int td_parse_case(td_set *s)
 		    }
 		}
 
+#ifdef ENABLE_EVENTS
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "event")) {
@@ -590,6 +595,7 @@ LOCAL int td_parse_case(td_set *s)
 			    goto ERROUT;
 		    }
 		}
+#endif
 
 		if (!xmlStrcmp (name, BAD_CAST "get"))
 			if (td_parse_gets(c->gets))

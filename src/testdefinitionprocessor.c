@@ -47,7 +47,9 @@
 #include "manual_executor.h"
 #include "utils.h"
 #include "log.h"
+#ifdef ENABLE_EVENTS
 #include "event.h"
+#endif
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -125,14 +127,17 @@ LOCAL int step_result_fail (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
 LOCAL int event_execute (const void *data, const void *user);
 /* ------------------------------------------------------------------------- */
+#endif
 /* FORWARD DECLARATIONS */
 /* None */
 
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
 /** Process event
  *  @param data event data
  *  @param user step data
@@ -154,6 +159,7 @@ LOCAL int event_execute (const void *data, const void *user)
 	
 	return ret;
 }
+#endif	/* ENABLE_EVENTS */
 /** Process step data. execute one step from case.
  *  @param data step data
  *  @param user case data
@@ -180,6 +186,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		goto out;
 	}
 
+#ifdef ENABLE_EVENTS
 	if (step->event) {
 		/* just process the event */
 		if (!event_execute(step->event, step)) {
@@ -191,6 +198,7 @@ LOCAL int step_execute (const void *data, const void *user)
 		step->has_result = 1;
 		goto out;
 	}
+#endif	/* ENABLE_EVENTS */
 	
 	if (step->manual) {
 		if (c->dummy) {

@@ -49,6 +49,9 @@
 #include "utils.h"
 #include "hwinfo.h"
 #include "log.h"
+#ifdef ENABLE_EVENTS
+#include "event.h"
+#endif
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -670,15 +673,18 @@ int main (int argc, char *argv[], char *envp[])
 		retval = TESTRUNNER_LITE_RESULT_LOGGING_FAIL;
 		goto OUT;
 	}
+#ifdef ENABLE_EVENTS
 	init_event_system();
-
+#endif
 	/*
 	** Process test definition
 	*/
 	td_process();
 
 	executor_close();
+#ifdef ENABLE_EVENTS
 	cleanup_event_system();
+#endif
 	td_reader_close();
 	close_result_logger();
 	LOG_MSG (LOG_INFO, "Results were written to: %s", opts.output_filename);

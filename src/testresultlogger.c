@@ -91,10 +91,12 @@ LOCAL int xml_write_general_attributes (td_gen_attribs *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_step (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
 LOCAL int xml_write_event (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_event_param (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+#endif
 LOCAL int xml_write_pre_post_step (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_case (const void *, const void *);
@@ -328,8 +330,10 @@ LOCAL int xml_write_step (const void *data, const void *user)
 	td_step *step = (td_step *)data;
 	struct tm *tm;
 
+#ifdef ENABLE_EVENTS
 	if (step->event)
 		return xml_write_event(step->event, step);
+#endif
 
 	if (xmlTextWriterStartElement (writer, BAD_CAST "step") < 0)
 		goto err_out;
@@ -429,6 +433,7 @@ err_out:
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
 /** Write event result xml
  * @param data event data 
  * @param user step data
@@ -521,6 +526,7 @@ err_out:
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+#endif	/* ENABLE_EVENTS */
 /** Write pre or post step result xml
  * @param data step data 
  * @param user not used

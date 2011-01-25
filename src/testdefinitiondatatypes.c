@@ -63,7 +63,9 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 LOCAL const char *case_res_str[] = {"FAIL", "PASS", "N/A"};
+#ifdef ENABLE_EVENTS
 LOCAL const char *event_type_string[] = {"unknown", "send", "wait"};
+#endif
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -170,6 +172,7 @@ const char *case_result_str (case_result_t cr)
 		return "INVALID";
 	return case_res_str[cr];
 }
+#ifdef ENABLE_EVENTS
 /* ------------------------------------------------------------------------- */
 /** Returns string matching the event type value
  *  @param  et event type value
@@ -181,6 +184,7 @@ const char *event_type_str (event_type_t et)
 		return "INVALID";
 	return event_type_string[et];
 }
+#endif	/* ENABLE_EVENTS */
 /* ------------------------------------------------------------------------- */
 /** Creates test definition data structure
  *  @return pointer to td_td or NULL in case of OOM
@@ -348,8 +352,10 @@ void td_step_delete(xmlLinkPtr lk)
 	if (step->step)
 		free (step->step);
 
+#ifdef ENABLE_EVENTS
 	if (step->event)
 		td_event_delete(step->event);
+#endif
 
 	free (step->stdout_);
 	free (step->stderr_);
@@ -387,6 +393,7 @@ void td_steps_delete(xmlLinkPtr lk)
 	xmlListDelete (steps->steps);
 	free (steps);
 }
+#ifdef ENABLE_EVENTS
 /* ------------------------------------------------------------------------- */
 /** Creates a td_event data structure
  *  @return pointer to td_event or NULL in case of OOM
@@ -454,6 +461,7 @@ void td_event_param_delete(xmlLinkPtr lk)
 		xmlFree (param->value);
 	free (param);
 }
+#endif	/* ENABLE_EVENTS */
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */
