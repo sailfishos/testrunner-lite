@@ -147,7 +147,6 @@ static int add_to_json_object(const void *data, const void *user)
 	const td_event_param *param = (const td_event_param *) data;
 	json_object *obj = (json_object *) user;
 	json_object *new_obj = NULL;
-	int type_error = 1;
 
 	if (param->type == NULL || param->name == NULL || 
 	    param->value == NULL) {
@@ -156,7 +155,7 @@ static int add_to_json_object(const void *data, const void *user)
 
 	if (xmlStrEqual(param->type, BAD_CAST "string")) {
 		/* We don't expect quotes for a string as json_tokener does */
-		new_obj = json_object_new_string(param->value);
+		new_obj = json_object_new_string((const char*)param->value);
 	} else {
 		new_obj = json_tokener_parse((const char*)param->value);
 	}
@@ -343,7 +342,8 @@ int wait_for_event(td_event *event)
 
 	LOG_MSG (LOG_INFO, "Waiting for event: %s", event->resource);
 
-	receiver = session_create_receiver_str(session, event->resource);
+	receiver = session_create_receiver_str(session,
+					       (const char*)event->resource);
 	if (!receiver) {
 		ret = 0;
 		goto out;
@@ -422,7 +422,8 @@ int send_event(td_event *event)
 
 	token = json_object_to_json_string(obj);
 
-	sender = session_create_sender_str(session, event->resource);
+	sender = session_create_sender_str(session,
+					   (const char*)event->resource);
 	if (!sender) {
 		ret = 0;
 		goto out;

@@ -146,7 +146,6 @@ LOCAL int event_execute (const void *data, const void *user);
 LOCAL int event_execute (const void *data, const void *user)
 {
 	td_event *event = (td_event *)data;
-	td_step *step = (td_step *)user;
 	int ret = 0;
 
 	if (event->type == EVENT_TYPE_SEND) {
