@@ -94,7 +94,7 @@ LOCAL int eval_meas (const void *data, const void *user);
  */
 LOCAL int parse_measurements (FILE *f, xmlListPtr list)
 {
-	int ret, present, c;
+	int present, c;
 	char line[4096], *p, *name, *unit;
 	char *value = "", *target = "", *failure = "";
 	td_measurement *meas;
@@ -189,7 +189,8 @@ LOCAL int eval_meas (const void *data, const void *user)
 
 	if (meas->target > meas->failure) {
 		if (meas->value <= meas->failure) {
-			cont->failure_string = malloc (strlen (meas->name) + 
+			cont->failure_string = malloc (strlen ((char *)
+							       meas->name) + 
 						       strlen ("measured "
 							       "value too" 
 							       "small") + 5); 
@@ -201,7 +202,8 @@ LOCAL int eval_meas (const void *data, const void *user)
 	} else if (meas->target < meas->failure) {
 		if (meas->value >= meas->failure) {
 			cont->verdict = CASE_FAIL;
-			cont->failure_string = malloc (strlen (meas->name) + 
+			cont->failure_string = malloc (strlen ((char *)
+							       meas->name) + 
 						       strlen ("measured "
 							       "value too" 
 							       "small") + 5); 
