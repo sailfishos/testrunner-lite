@@ -23,7 +23,7 @@ testrunner_lite_SOURCES = main.c \
 
 testrunner_lite_LDADD = -lxml2 -lcurl
 
-AM_CFLAGS =  -I/usr/include/libxml2 -D_GNU_SOURCE
+AM_CFLAGS =  -I/usr/include/libxml2 -D_GNU_SOURCE -Wall
 
 noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \
