@@ -21,7 +21,8 @@ AM_CFLAGS = -I. \
             -I/usr/include/libxml2 \
             -I$(top_builddir)/src \
             -fprofile-arcs \
-            -ftest-coverage
+            -ftest-coverage \
+            $(CHECK_CFLAGS)
 
 testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/testdefinitiondatatypes.o \
@@ -34,7 +35,7 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/hwinfo.o \
 			    $(top_builddir)/src/log.o \
 			    $(top_builddir)/src/utils.o \
-                            -lcheck \
+                            $(CHECK_LIBS) \
                             -lgcov \
                             -lxml2 \
                             -lcurl

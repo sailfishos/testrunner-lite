@@ -15,6 +15,7 @@ AC_ARG_ENABLE(
    esac],
   [events_feature=no]
 )
+PKG_CHECK_MODULES([CHECK],[check])
 AM_CONDITIONAL([ENABLE_EVENTS], [test "$events_feature" = "yes"])
 AM_COND_IF([ENABLE_EVENTS],
            [PKG_CHECK_MODULES([JSON], [json >= 0.9])])
