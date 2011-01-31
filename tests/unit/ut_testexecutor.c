@@ -326,7 +326,7 @@ START_TEST (test_executor_remote_command)
 	exec_data edata;
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
-#ifdef LIBSSH2
+#ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
 	executor_init (&opts);
@@ -360,7 +360,7 @@ END_TEST
 START_TEST (test_executor_remote_long_command)
 	exec_data edata;
 	testrunner_lite_options opts;
-#ifdef LIBSSH2
+#ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
 #define TEST_STRING_SIZE 5000
@@ -394,7 +394,7 @@ START_TEST (test_executor_remote_terminating_process)
 	exec_data edata;
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
-#ifdef LIBSSH2
+#ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
 	executor_init (&opts);
@@ -429,7 +429,7 @@ START_TEST (test_executor_remote_killing_process)
 	exec_data edata;
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
-#ifdef LIBSSH2
+#ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
 	executor_init (&opts);
