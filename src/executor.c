@@ -41,6 +41,9 @@
 #include <libxml/xmlstring.h>
 
 #include "remote_executor.h"
+#ifdef ENABLE_LIBSSH2
+#include "remote_executor_libssh2.h"
+#endif
 #include "executor.h"
 #include "log.h"
 
@@ -75,7 +78,9 @@ static volatile sig_atomic_t timer_value = 0;
 static struct sigaction default_alarm_action = { .sa_handler = NULL };
 static testrunner_lite_options *options;
 static exec_data *current_data; 
-
+#ifdef ENABLE_LIBSSH2
+static libssh2_conn *lssh2_conn;
+#endif
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -107,6 +112,10 @@ static void process_output_streams(int stdout_fd, int stderr_fd,
 static void communicate(int stdout_fd, int stderr_fd, exec_data* data);
 static void strip_ctrl_chars (stream_data* data);
 static void utf8_check (stream_data* data, const char *id, pid_t pid);
+#ifdef ENABLE_LIBSSH2
+static int executor_init_libssh2 (testrunner_lite_options *opts);
+static int execute_libssh2 (const char *command, exec_data *data);
+#endif
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -786,39 +795,45 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 /** Execute a test step command
  * @param command Command to execute
  * @param data Input and output data controlling execution
- * @return 0 in success
+ * @return 0 in success, -1 in error
  */
 int execute(const char* command, exec_data* data) {
 	int stdout_fd = -1;
 	int stderr_fd = -1;
 	pid_t ppgid;
-
-	data->start_time = time(NULL);
-
+	
 	if (command != NULL) {
 		LOG_MSG(LOG_DEBUG, "Executing command \'%s\'", command);
 	}
 
+#ifdef ENABLE_LIBSSH2
+	if (options->libssh2) {
+		return execute_libssh2(command, data);
+	}
+#endif
+
+	data->start_time = time(NULL);
+	
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		data->pid = fork_process_redirect(&stdout_fd, 
-						  &stderr_fd, 
-						  command);
+		                                  &stderr_fd, 
+		                                  command);
 	} else {
 		data->pid = fork_process(command);
 	}
 	current_data = data; 
-
+	
 	if (data->pid > 0) {
 		/* wait that child runs the setsid() */
 		ppgid = getpgid (0);
 		if (ppgid == -1)
 			LOG_MSG (LOG_ERR, "getpgid() failed %s",
-				 strerror (errno));
+			         strerror (errno));
 		else
 			while (ppgid == getpgid(data->pid)) sched_yield();
 		data->pgid = getpgid(data->pid);
 		LOG_MSG(LOG_DEBUG, "Process %d got process group %d",
-			data->pid, data->pgid);
+		        data->pid, data->pgid);
 		communicate(stdout_fd, stderr_fd, data);
 	}
 	current_data = NULL;
@@ -829,10 +844,47 @@ int execute(const char* command, exec_data* data) {
 						  data->pid);
 	if (data->stderr_data.length) utf8_check (&data->stderr_data, "stderr",
 						  data->pid);
-
-	
 	return 0;
 }
+
+#ifdef ENABLE_LIBSSH2
+/** Execute a test step command with libssh2
+ * @param command Command to execute
+ * @param data Input and output data controlling execution
+ * @return 0 in success, -1 in error
+ */
+static int execute_libssh2 (const char* command, exec_data* data) {
+
+	data->start_time = time(NULL);
+
+	if (options->libssh2) {
+		/* Session may have died, try reopening */
+		if (!lssh2_conn) {
+			if (executor_init_libssh2(options) < 0) {
+				LOG_MSG(LOG_ERR, "Reopening libssh2 session failed");
+				return -1;
+			}
+		}
+		if (lssh2_conn) {
+			if (lssh2_execute(lssh2_conn, command, data) < 0) {
+				return -1;
+			}
+		} else {
+			LOG_MSG(LOG_ERR, "Could not open libssh2 session");
+			return -1;
+		}
+	}
+
+	data->end_time = time(NULL);
+	if (data->stdout_data.length) strip_ctrl_chars (&data->stdout_data);
+	if (data->stderr_data.length) strip_ctrl_chars (&data->stderr_data);
+	if (data->stdout_data.length) utf8_check (&data->stdout_data, "stdout",
+						  data->pid);
+	if (data->stderr_data.length) utf8_check (&data->stderr_data, "stderr",
+						  data->pid);
+	return 0;
+}
+#endif
 
 /** Initialize exec_data structure
  * @param data Pointer to data
@@ -905,21 +957,53 @@ void kill_pgroup(int pgroup, int sig) {
 /** Sets the remote host for executor 
  * @param opts testrunner lite options
  */
-void executor_init(testrunner_lite_options *opts)
+int executor_init(testrunner_lite_options *opts)
 {
-	
 	options = opts;
-	if (options->target_address)
+	if (options->target_address) {
+#ifdef ENABLE_LIBSSH2
+		if (options->libssh2) {
+			return executor_init_libssh2(opts);
+		}
+#endif
 		ssh_executor_init(options->target_address);
+	}
+	return 0;
 }
+
+#ifdef ENABLE_LIBSSH2
+/** Sets the remote host for libssh2 executor 
+ * @param opts testrunner lite options
+ */
+static int executor_init_libssh2(testrunner_lite_options *opts)
+{
+	lssh2_conn = NULL;
+	options = opts;
+	lssh2_conn = lssh2_executor_init(options->username, 
+	                                 options->target_address,
+	                                 options->priv_key,
+	                                 options->pub_key); 
+	if (!lssh2_conn) {
+		LOG_MSG(LOG_ERR, "libssh2 executor init failed");
+		return -1;
+	}
+	return 0;
+}
+#endif
 
 /** Clean up for executor
  */
 void executor_close()
 {
-	
-	if (options->target_address && !bail_out)
+#ifdef ENABLE_LIBSSH2
+	if (options->libssh2) {
+		lssh2_executor_close(lssh2_conn);
+		return;
+	}
+#endif
+	if (options->target_address && !bail_out) {
 		ssh_executor_close(options->target_address);
+	}
 }
 /*
 ** handler for SIGINT
@@ -934,6 +1018,7 @@ void handle_sigint (int signum)
 		else
 			kill_pgroup(current_data->pgid, SIGKILL);
 	}
+
 }
 /*
 ** handler for SIGTERM

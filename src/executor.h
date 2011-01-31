@@ -97,7 +97,7 @@ typedef struct _exec_data exec_data;
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-void executor_init (testrunner_lite_options *opts);
+int executor_init (testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 int execute(const char* command, exec_data* data);
 /* ------------------------------------------------------------------------- */

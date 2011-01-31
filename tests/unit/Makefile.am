@@ -38,10 +38,17 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
                             $(CHECK_LIBS) \
                             -lgcov \
                             -lxml2 \
-                            -lcurl
+                            -lcurl \
+							-ldl
 
 if ENABLE_EVENTS
 testrunnerliteunittests_LDADD += $(top_builddir)/src/event.o \
                                  $(JSON_LIBS) \
                                  $(CQPID_LIBS)
+endif
+
+if ENABLE_LIBSSH2
+testrunnerliteunittests_LDADD += $(top_builddir)/src/remote_executor_libssh2.o \
+                                 $(LIBSSH2_LIBS)
+AM_CFLAGS        		      += -DENABLE_LIBSSH2
 endif

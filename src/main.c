@@ -172,6 +172,15 @@ LOCAL void usage()
 		"test control PC (host) side. "
 		"ADDRESS is the ipv4 adress of the\n\t\t"
 		"system under test.\n");
+#ifdef ENABLE_LIBSSH2
+	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
+	        "Run host based testing with native ssh (libssh2) "
+	        "EXPERIMENTAL\n");
+	printf ("  -k, --keypair private_key:public:key\n"
+	        "\t\tlibssh2 feature\n"
+	        "\t\tKeypair consists of private and public key file names\n"
+	        "\t\tThey are expected to be found under $HOME/.ssh\n");
+#endif
 	printf ("  -M, --disable-measurement-verdict\n\t\t"
 		" Do not fail cases based on measurement data\n");
 	printf ("  -C PATH, --chroot=PATH\n\t\t"
@@ -263,20 +272,109 @@ LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) {
 
 }
 
+#ifdef ENABLE_LIBSSH2
 /* ------------------------------------------------------------------------- */
-/** Parse target address option argument.
+/** Parse target address option argument for libssh2 option
+ * @param address SUT address.
+ * @param opts Options struct containing field(s) to store url
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_target_address_libssh2(char *address, 
+                                       testrunner_lite_options *opts) {
+	const char *token;
+	char *param;
+	char *param_ptr;
+	char *item;
+	char *username;
+	char *target_address;
+    if (address) {
+	    /* Parse username from address */
+	    item = NULL;
+	    param = malloc(strlen(address) + 1);
+	    strcpy(param, address);
+	    
+	    /* will be modified by strsep */
+	    param_ptr = param;
+	    token = "@";
+	    item = strsep(&param_ptr, token);
+	    
+	    /* No username provided, using the host username by default */
+	    if (!param_ptr) {
+		    item = getenv("LOGNAME");
+		    if (!item) {
+			    fprintf(stderr, "Error: could not get env for LOGNAME\n");
+			    return 1;
+		    }
+		    username = item;
+		    target_address = address;
+	    } else {
+		    username = item;
+		    target_address = param_ptr;
+	    }
+	    opts->username = malloc(strlen(username) + 1);
+	    strcpy(opts->username, username);
+	    opts->target_address = malloc(strlen(target_address) + 1);
+	    strcpy(opts->target_address, target_address);
+	    free(param);
+	    return 0;
+    } else {
+	    return 1;
+    }
+}
+
+
+/* ------------------------------------------------------------------------- */
+/** Parse keypair
+ * @param keypair full path to keypair in format: private_key:public_key
+ * @param opts Options struct containing field(s) to store key filenames
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_keypair(char *keypair, testrunner_lite_options *opts) {
+	char *param_ptr;
+	char *item;
+	char *param;
+	char *token;
+
+	item = NULL;
+	param = malloc(strlen(keypair) + 1);
+	strcpy(param, keypair);
+	
+	/* will be modified by strsep */
+	param_ptr = param;
+	token = ":";
+	item = strsep(&param_ptr, token);
+	if (!item || !strlen(item)) {
+		free(param);
+		return 1;
+	}
+	opts->priv_key = malloc(strlen(item) + 1);
+	strncpy(opts->priv_key, item, strlen(item) + 1);
+	item = strsep(&param_ptr, token);
+	if (!item || !strlen(item)) {
+		free(param);
+		return 1;
+	}
+	opts->pub_key = malloc(strlen(item) + 1);
+	strncpy(opts->pub_key, item, strlen(item));
+	return 0;
+}
+#endif
+
+/* ------------------------------------------------------------------------- */
+/** Parse target address option argument for ssh client option
  * @param address SUT address.
  * @param opts Options struct containing field(s) to store url
  * @return 0 in success, 1 on failure
  */
 LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) {
-    if (address) {
-        opts->target_address = malloc(strlen(address) + 1);
-        strcpy(opts->target_address, address);
-        return 0;
-    } else {
-        return 1;
-    }
+
+	if (address) {
+		opts->target_address = malloc(strlen(address) + 1);
+		strcpy(opts->target_address, address);
+		return 0;
+	} else {
+		return 1;
+	}
 
 }
 
@@ -377,6 +475,11 @@ int main (int argc, char *argv[], char *envp[])
 {
 	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0, V_flag = 0;
 	int opt_char, option_idx;
+#ifdef ENABLE_LIBSSH2
+	opts.priv_key = NULL;
+	opts.pub_key = NULL;
+	opts.libssh2 = 0;
+#endif
 	FILE *ifile = NULL;
 	testrunner_lite_return_code retval = TESTRUNNER_LITE_OK;
 	xmlChar *filter_string = NULL;
@@ -399,7 +502,10 @@ int main (int argc, char *argv[], char *envp[])
 			{"validate-only", no_argument, &A_flag},
 			{"no-hwinfo", no_argument, &opts.skip_hwinfo, 1},
 			{"target", required_argument, NULL, 't'},
-			{"chroot", required_argument, NULL, 'C'},
+#ifdef ENABLE_LIBSSH2
+			{"libssh2", required_argument, NULL, 'n'},
+			{"keypair", required_argument, NULL, 'k'},
+#endif
 			{"print-step-output", no_argument, 
 			 &opts.print_step_output, 1},
 			{"disable-measurement-verdict", no_argument, 
@@ -427,7 +533,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPC:f:o:e:l:r:L:t:v::",
+					":hVaAHSMsmcPC:f:o:e:l:r:L:t:n:k:v::",
 					testrunnerlite_options, &option_idx);
 		if (opt_char == -1)
 			break;
@@ -535,6 +641,23 @@ int main (int argc, char *argv[], char *envp[])
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
+			break;
+#ifdef ENABLE_LIBSSH2
+		case 'n':
+			opts.libssh2 = 1;
+			if (parse_target_address_libssh2(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
+		case 'k':
+			if (parse_keypair(optarg, &opts) != 0) {
+				fprintf(stderr, "Error parsing libssh2 keypair\n");
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
+#endif
 		case 'P':
 			opts.print_step_output = 1;
 			break;
@@ -622,7 +745,10 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	 * Set remote execution options.
 	 */
-	executor_init (&opts);
+	if (executor_init (&opts) < 0) {
+		LOG_MSG(LOG_ERR, "Executor init failed... exiting");
+		goto OUT;
+	}
 	/*
 	 * Validate the input xml
 	 */
@@ -699,6 +825,11 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
+#ifdef ENABLE_LIBSSH2
+	if (opts.username) free (opts.username);
+	if (opts.priv_key) free (opts.priv_key);
+	if (opts.pub_key) free (opts.pub_key);
+#endif
 	if (filter_string) free (filter_string);
 	if (bail_out == 255+SIGINT) {
 		signal (SIGINT, SIG_DFL);
