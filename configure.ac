@@ -27,6 +27,7 @@ AC_ARG_ENABLE(
   [libssh2_feature=no]
 )
 PKG_CHECK_MODULES([CHECK],[check])
+PKG_CHECK_MODULES([XML2],[libxml-2.0])
 AM_CONDITIONAL([ENABLE_EVENTS], [test "$events_feature" = "yes"])
 AM_COND_IF([ENABLE_EVENTS],
            [PKG_CHECK_MODULES([JSON], [json >= 0.9])])

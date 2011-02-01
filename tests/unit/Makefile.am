@@ -18,7 +18,7 @@ testrunnerliteunittests_SOURCES = main.c \
 
 AM_CFLAGS = -I. \
             -I/usr/include \
-            -I/usr/include/libxml2 \
+	    $(XML2_CFLAGS) \
             -I$(top_builddir)/src \
             -fprofile-arcs \
             -ftest-coverage \
@@ -37,9 +37,9 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
 			    $(top_builddir)/src/utils.o \
                             $(CHECK_LIBS) \
                             -lgcov \
-                            -lxml2 \
+			    $(XML2_LIBS) \
                             -lcurl \
-							-ldl
+			    -ldl
 
 if ENABLE_EVENTS
 testrunnerliteunittests_LDADD += $(top_builddir)/src/event.o \

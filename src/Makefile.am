@@ -21,9 +21,9 @@ testrunner_lite_SOURCES = main.c \
 			  utils.c \
 			  log.c
 
-testrunner_lite_LDADD = -lxml2 -lcurl -ldl
+testrunner_lite_LDADD = $(XML2_LIBS) -lcurl -ldl
 
-AM_CFLAGS =  -I/usr/include/libxml2 -D_GNU_SOURCE -Wall
+AM_CFLAGS = $(XML2_CFLAGS)-D_GNU_SOURCE -Wall
 
 noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \
