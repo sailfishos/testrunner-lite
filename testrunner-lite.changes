@@ -1,3 +1,7 @@
+* Tue Feb 01 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.0
+- Supports libssh2 for remote execution (BMC#6693)
+- Autoconf magic for xml2 library by Tero Koskinen (BMC#12336)
+- Autoconf magic for check library by Tero Koskinen (BMC#12988)
 * Fri Jan 21 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.4
 - Never give PASS verdict for timeouting test step (BMC#12537)
 - Fixed obtaining CWD (did not always work with sudo) (BMC#12519)

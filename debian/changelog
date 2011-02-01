@@ -1,3 +1,11 @@
+testrunner-lite (1.5.0) unstable; urgency=low
+
+  * Supports libssh2 for remote execution (BMC#6693)
+  * Autoconf magic for xml2 library by Tero Koskinen (BMC#12336)
+  * Autoconf magic for check library by Tero Koskinen (BMC#12988)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Tue, 01 Feb 2011 15:47:48 +0200
+
 testrunner-lite (1.4.4) unstable; urgency=low
 
   * Never give PASS verdict for timeouting test step (BMC#12537)
