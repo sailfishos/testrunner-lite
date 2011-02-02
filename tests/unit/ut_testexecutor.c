@@ -416,7 +416,7 @@ START_TEST (test_executor_remote_terminating_process)
 	/* sleep for a while such that remote killing has done its job */
 	sleep(2);
 	/* check that killing was succesfull */
-	fail_if (execute("pidof terminating", &edata));
+	fail_if (execute("/sbin/pidof terminating", &edata));
 	fail_unless (edata.result == 1);
 
 	/* Give time for either ssh_clean or ssh_kill called by execute.
@@ -452,12 +452,8 @@ START_TEST (test_executor_remote_killing_process)
 		     edata.stderr_data.buffer);
 	/* sleep for a while such that remote killing has done its job */
 	sleep(2);
-	fail_if (execute("pidof unterminating", &edata));
-	fail_unless (edata.result == 1);
-
-	/* Give time for either ssh_clean or ssh_kill called by execute.
-	   They have forked new ssh process to do cleanup */
-	sleep(1);
+	int ret = system("pidof unterminating");
+	fail_unless (ret);
 	executor_close();
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -470,7 +466,6 @@ START_TEST(test_executor_remote_test_bg_process_cleanup)
 	      TESTDATA_BG_XML,  out_file);
      ret = system (cmd);
      fail_if (ret != 0, cmd);
-
      ret = system("pidof unterminating");
      fail_unless (ret);
 END_TEST
@@ -521,14 +516,15 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_command)
 	exec_data edata;
 	testrunner_lite_options opts;
+	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
 	opts.log_level = LOG_LEVEL;
-	opts.username = getlogin();
+	opts.username = getenv("LOGNAME");
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
 	executor_init (&opts);
-
+	log_init(&opts);
 	init_exec_data (&edata);
 
 	fail_if (execute("echo testing", &edata));
@@ -558,17 +554,18 @@ START_TEST (test_executor_remote_libssh2_long_command)
 #define TEST_STRING_SIZE 5000
 	char test_string [TEST_STRING_SIZE];
 	char command [TEST_STRING_SIZE + 100];
-
+	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
 	opts.log_level = LOG_LEVEL;
-	opts.username = getlogin();
+	opts.username = getenv("LOGNAME");
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
 	executor_init (&opts);
+	log_init(&opts);
 	init_exec_data (&edata);
 	edata.soft_timeout = 5;
-	edata.hard_timeout = 4;
+	edata.hard_timeout = 5;
 
 	memset (test_string , 'c', TEST_STRING_SIZE);
 	test_string [TEST_STRING_SIZE - 1] = '\0';
@@ -586,26 +583,28 @@ END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_quotes_command)
-	exec_data edata;
-	testrunner_lite_options opts;
-	char *output = "i like pipes and quotes";
-	char *command = "[ \"|/bin/echo %s\" = \"$(cat /proc/cpuinfo)\" ];"
+    exec_data edata;
+    testrunner_lite_options opts;
+    memset (&opts, 0x0, sizeof (opts));
+    char *output = "i like pipes and quotes";
+    char *command = "[ \"|/bin/echo %s\" = \"$(cat /proc/cpuinfo)\" ];"
 	"echo i like pipes and quotes";
-	opts.libssh2 = 1;
-	opts.log_level = LOG_LEVEL;
-	opts.username = getlogin();
-	opts.priv_key = "myrsakey";
-	opts.pub_key = "myrsakey.pub";
-	opts.target_address = "localhost";
-	executor_init (&opts);
-	init_exec_data (&edata);
-	edata.soft_timeout = 5;
-	edata.hard_timeout = 4;
-	fail_if (execute(command, &edata));
-	fail_unless (strncmp((char*)edata.stdout_data.buffer, 
-	                     output,
-	                     strlen(output)) == 0);
-	executor_close();
+    opts.libssh2 = 1;
+    opts.log_level = LOG_LEVEL;
+    opts.username = getenv("LOGNAME");
+    opts.priv_key = "myrsakey";
+    opts.pub_key = "myrsakey.pub";
+    opts.target_address = "localhost";
+    log_init(&opts);
+    executor_init (&opts);
+    init_exec_data (&edata);
+    edata.soft_timeout = 5;
+    edata.hard_timeout = 5;
+    fail_if (execute(command, &edata));
+    fail_unless (strncmp((char*)edata.stdout_data.buffer, 
+                         output,
+                         strlen(output)) == 0);
+    executor_close();
 END_TEST
 
 
@@ -613,30 +612,35 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_terminating_process)
 	exec_data edata;
 	testrunner_lite_options opts;
+	
+	/* Clean hanging processes */
+	system("ssh localhost killall -9 terminating unterminating");
 
+	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
 	opts.libssh2 = 1;
 	opts.log_level = LOG_LEVEL;
-	opts.username = getlogin();
+	opts.username = getenv("LOGNAME");
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	executor_init (&opts);
 	log_init(&opts);
 	init_exec_data(&edata);
-	edata.soft_timeout = 2;
-	edata.hard_timeout = 1;
+	edata.soft_timeout = 5;
+	edata.hard_timeout = 5;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);
-	fail_if (strstr((char*)edata.stdout_data.buffer, "stdouttest") == 0, (char*)edata.stdout_data.buffer);
+	fail_if (strstr((char*)edata.stdout_data.buffer, "stdouttest") == 0, 
+	         (char*)edata.stdout_data.buffer);
 	fail_if (strstr((char*)edata.stderr_data.buffer, 
 			     "stderrtest") == 0,
 		     (char*)edata.stderr_data.buffer);
 
 	/* check that killing was succesfull */
-	fail_if (execute("pidof terminating", &edata));
+	fail_if (execute("/sbin/pidof terminating", &edata));
 	executor_close();
 	//fail_unless (edata.result == 1);
 END_TEST
@@ -646,17 +650,22 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_killing_process)
 	exec_data edata;
 	testrunner_lite_options opts;
+
+	/* Clean hanging processes */
+	system("ssh localhost killall -9 terminating unterminating");
+
+	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
 	opts.log_level = LOG_LEVEL;
-	opts.username = getlogin();
+	opts.username = getenv("LOGNAME");
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
 	executor_init (&opts);
 	init_exec_data(&edata);
 	log_init(&opts);
-	edata.soft_timeout = 2;
-	edata.hard_timeout = 1;
+	edata.soft_timeout = 5;
+	edata.hard_timeout = 5;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	/* 128 + SIGKILL or 255 depends on ssh */
@@ -673,8 +682,12 @@ START_TEST (test_executor_remote_libssh2_killing_process)
 	fail_if (strstr((char*)edata.stderr_data.buffer, 
 			     "stderrtest") == 0,
 		     edata.stderr_data.buffer);
-	
-	fail_if (execute("pidof unterminating", &edata));
+	executor_close();
+	/* Check that process doesn't exist anymore */
+	executor_init (&opts);
+	init_exec_data(&edata);
+	fail_if (execute("/sbin/pidof unterminating", &edata));
+	printf("edata.result %d\n", edata.result);
 	fail_unless (edata.result == 1);
 	executor_close();
 END_TEST
@@ -683,9 +696,14 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_bg_process)
 	exec_data edata;
 	testrunner_lite_options opts;
+
+	/* Clean hanging processes */
+	system("ssh localhost killall -9 terminating unterminating");
+
+	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
 	opts.log_level = LOG_LEVEL;
-	opts.username = getlogin();
+	opts.username = getenv("LOGNAME");
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
@@ -693,17 +711,18 @@ START_TEST (test_executor_remote_libssh2_bg_process)
 	init_exec_data(&edata);
 	log_init(&opts);
 	edata.soft_timeout = 20;
-	edata.hard_timeout = 1;
+	edata.hard_timeout = 5;
 	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating aa bb &"
 			 , &edata));
 	/* Check that the process stayed in bg */
-	fail_if (execute("pidof terminating", &edata));
+	fail_if (execute("/sbin/pidof terminating", &edata));
 	fail_if (edata.stdout_data.buffer == NULL);
 	executor_close();
 	/* Check that session closing actually terminates the bg process too */
 	executor_init (&opts);
 	init_exec_data(&edata);
-	fail_if (execute("pidof terminating", &edata));
+	fail_if (execute("/sbin/pidof terminating", &edata));
+	fail_unless (edata.result == 1);
 	executor_close();
 END_TEST
 
@@ -712,9 +731,14 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_daemon_process)
 	exec_data edata;
 	testrunner_lite_options opts;
+
+	/* Clean hanging processes */
+	system("ssh localhost killall -9 trlite-test-daemon");
+
+	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
 	opts.log_level = LOG_LEVEL;
-	opts.username = getlogin();
+	opts.username = getenv("LOGNAME");
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
@@ -726,13 +750,13 @@ START_TEST (test_executor_remote_libssh2_daemon_process)
 	fail_if (execute("/usr/lib/testrunner-lite-tests/trlite-test-daemon"
 			 , &edata));
 	/* Check that the process stayed in bg */
-	fail_if (execute("pidof trlite-test-daemon", &edata));
+	fail_if (execute("/sbin/pidof trlite-test-daemon", &edata));
 	fail_if (edata.stdout_data.buffer == NULL);
 	executor_close();
 	/* Check that session closing actually terminates the daemon process too */
 	executor_init (&opts);
 	init_exec_data(&edata);
-	fail_if (execute("pidof trlite-test-daemon", &edata));
+	fail_if (execute("/sbin/pidof trlite-test-daemon", &edata));
 	executor_close();
 END_TEST
 #endif /* ENABLE_LIBSSH2 */
@@ -806,17 +830,17 @@ Suite *make_testexecutor_suite (void)
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote terminating process.");
-    tcase_set_timeout (tc, 10);
+    tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_remote_terminating_process);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote killing process.");
-    tcase_set_timeout (tc, 10);
+    tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_remote_killing_process);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote bg process cleanup.");
-    tcase_set_timeout (tc, 10);
+    tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_remote_test_bg_process_cleanup);
     suite_add_tcase (s, tc);
 
