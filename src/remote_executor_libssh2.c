@@ -597,7 +597,7 @@ static int lssh2_select(libssh2_conn *conn)
 	           &conn->timeout, &blocked_signals);
 
 	if (n < 0) {
-		LOG_MSG(LOG_ERR, "select() failed: %s", strerror(errno));
+		LOG_MSG(LOG_DEBUG, "pselect() failed: %s", strerror(errno));
 	}
 	LOG_MSG(LOG_DEBUG, "select returned %d", n);
 
