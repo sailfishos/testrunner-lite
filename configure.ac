@@ -35,7 +35,7 @@ AM_COND_IF([ENABLE_EVENTS],
            [PKG_CHECK_MODULES([CQPID], [libcqpid])])
 AM_CONDITIONAL([ENABLE_LIBSSH2], [test "$libssh2_feature" = "yes"])
 AM_COND_IF([ENABLE_LIBSSH2],
-           [PKG_CHECK_MODULES([LIBSSH2], [libssh2 >= 1.2.4])])
+           [PKG_CHECK_MODULES([LIBSSH2], [libssh2 >= 1.2.2])])
 AC_OUTPUT(\
 	Makefile \
 	src/Makefile \
