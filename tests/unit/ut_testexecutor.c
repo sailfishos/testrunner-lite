@@ -416,7 +416,7 @@ START_TEST (test_executor_remote_terminating_process)
 	/* sleep for a while such that remote killing has done its job */
 	sleep(2);
 	/* check that killing was succesfull */
-	fail_if (execute("/sbin/pidof terminating", &edata));
+	fail_if (execute("PATH=$PATH:/sbin/ pidof terminating", &edata));
 	fail_unless (edata.result == 1);
 
 	/* Give time for either ssh_clean or ssh_kill called by execute.
@@ -614,7 +614,7 @@ START_TEST (test_executor_remote_libssh2_terminating_process)
 	testrunner_lite_options opts;
 	
 	/* Clean hanging processes */
-	system("ssh localhost killall -9 terminating unterminating");
+	system("killall -9 terminating unterminating");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
@@ -640,7 +640,7 @@ START_TEST (test_executor_remote_libssh2_terminating_process)
 		     (char*)edata.stderr_data.buffer);
 
 	/* check that killing was succesfull */
-	fail_if (execute("/sbin/pidof terminating", &edata));
+	fail_if (execute("PATH=$PATH:/sbin/ pidof terminating", &edata));
 	executor_close();
 	//fail_unless (edata.result == 1);
 END_TEST
@@ -652,7 +652,7 @@ START_TEST (test_executor_remote_libssh2_killing_process)
 	testrunner_lite_options opts;
 
 	/* Clean hanging processes */
-	system("ssh localhost killall -9 terminating unterminating");
+	system("killall -9 terminating unterminating");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
@@ -686,7 +686,7 @@ START_TEST (test_executor_remote_libssh2_killing_process)
 	/* Check that process doesn't exist anymore */
 	executor_init (&opts);
 	init_exec_data(&edata);
-	fail_if (execute("/sbin/pidof unterminating", &edata));
+	fail_if (execute("PATH=$PATH:/sbin/ pidof unterminating", &edata));
 	printf("edata.result %d\n", edata.result);
 	fail_unless (edata.result == 1);
 	executor_close();
@@ -698,7 +698,7 @@ START_TEST (test_executor_remote_libssh2_bg_process)
 	testrunner_lite_options opts;
 
 	/* Clean hanging processes */
-	system("ssh localhost killall -9 terminating unterminating");
+	system("killall -9 terminating unterminating");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
@@ -715,13 +715,13 @@ START_TEST (test_executor_remote_libssh2_bg_process)
 	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating aa bb &"
 			 , &edata));
 	/* Check that the process stayed in bg */
-	fail_if (execute("/sbin/pidof terminating", &edata));
+	fail_if (execute("PATH=$PATH:/sbin/ pidof terminating", &edata));
 	fail_if (edata.stdout_data.buffer == NULL);
 	executor_close();
 	/* Check that session closing actually terminates the bg process too */
 	executor_init (&opts);
 	init_exec_data(&edata);
-	fail_if (execute("/sbin/pidof terminating", &edata));
+	fail_if (execute("PATH=$PATH:/sbin/ pidof terminating", &edata));
 	fail_unless (edata.result == 1);
 	executor_close();
 END_TEST
@@ -733,7 +733,7 @@ START_TEST (test_executor_remote_libssh2_daemon_process)
 	testrunner_lite_options opts;
 
 	/* Clean hanging processes */
-	system("ssh localhost killall -9 trlite-test-daemon");
+	system("killall -9 trlite-test-daemon");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
@@ -750,13 +750,13 @@ START_TEST (test_executor_remote_libssh2_daemon_process)
 	fail_if (execute("/usr/lib/testrunner-lite-tests/trlite-test-daemon"
 			 , &edata));
 	/* Check that the process stayed in bg */
-	fail_if (execute("/sbin/pidof trlite-test-daemon", &edata));
+	fail_if (execute("PATH=$PATH:/sbin/ pidof trlite-test-daemon", &edata));
 	fail_if (edata.stdout_data.buffer == NULL);
 	executor_close();
 	/* Check that session closing actually terminates the daemon process too */
 	executor_init (&opts);
 	init_exec_data(&edata);
-	fail_if (execute("/sbin/pidof trlite-test-daemon", &edata));
+	fail_if (execute("PATH=$PATH:/sbin/ pidof trlite-test-daemon", &edata));
 	executor_close();
 END_TEST
 #endif /* ENABLE_LIBSSH2 */
