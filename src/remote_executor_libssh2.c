@@ -84,21 +84,20 @@
 /* A shell script deployed to remote end that executes a test step,
    handles freezing ssh sessions by a horrible brute force hack
    and writes down background jobs */
-#define REMOTE_RUN_SCRIPT "sh -c \"echo '#!/bin/bash\n\
-echo \\$BASHPID > /var/tmp/testrunner-lite-shell.pid\n\
+#define REMOTE_RUN_SCRIPT "echo '#!/bin/bash\n\
+echo $$ > /var/tmp/testrunner-lite-shell.pid\n\
 bgjobs=0\n\
-eval \\$@\n\
-ret=\\$?\n\
-for bgjob in \\`jobs -p\\`\n\
+eval $@\n\
+ret=$?\n\
+for bgjob in `jobs -p`\n\
 do\n\
-echo -n \\$bgjob \\' '  >> /var/tmp/testrunner-lite-children.pid\n\
+echo -n $bgjob ' '  >> /var/tmp/testrunner-lite-children.pid\n\
 bgjobs=1\n\
 done\n\
-if [ \\$bgjobs -eq 1 ]; then\n\
-kill -9 \\$PPID\n\
+if [ $bgjobs -eq 1 ]; then\n\
+kill -9 $PPID\n\
 fi\n\
-exit \\$ret\n' > /var/tmp/testrunner-lite.sh\";\
-chmod u+x /var/tmp/testrunner-lite.sh"
+exit $ret\n' > /var/tmp/testrunner-lite.sh"
 
 typedef enum {
 	NO_TIMEOUT = 1,

@@ -59,7 +59,7 @@ Library for obtaining hardware information in meego environment
 %build
 CFLAGS=-DVERSIONSTR=%{version}
 autoreconf --install
-%configure
+%configure --enable-libssh2
 make %{?_smp_mflags}
 make html %{?_smp_mflags}
 
