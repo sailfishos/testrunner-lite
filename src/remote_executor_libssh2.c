@@ -70,7 +70,7 @@
 #define DEFAULT_PRIVATE_KEY "id_eat_dsa"
 #define KEY_FMT "%s/.ssh/%s"
 /* A command to be run in the remote end while executing a test step */
-#define TRLITE_RUN_CMD "sh -c '/var/tmp/testrunner-lite.sh %s'"
+#define TRLITE_RUN_CMD "sh /var/tmp/testrunner-lite.sh '%s'"
 /* Kills the children of the jammed shell session */
 #define TRLITE_KILL_SHELL_CMD "sh -c 'kill -%d $(ps --ppid $(cat\
  /var/tmp/testrunner-lite-shell.pid) -o pid=)'"
