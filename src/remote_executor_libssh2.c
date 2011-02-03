@@ -72,14 +72,14 @@
 /* A command to be run in the remote end while executing a test step */
 #define TRLITE_RUN_CMD "sh /var/tmp/testrunner-lite.sh '%s'"
 /* Kills the children of the jammed shell session */
-#define TRLITE_KILL_SHELL_CMD "sh -c 'kill -%d $(ps --ppid $(cat\
- /var/tmp/testrunner-lite-shell.pid) -o pid=)'"
+#define TRLITE_KILL_SHELL_CMD "kill -%d $(ps --ppid $(cat\
+ /var/tmp/testrunner-lite-shell.pid) -o pid=)"
 /* Kills stored background process PIDs from remote end */
-#define TRLITE_KILL_BG_PIDS_CMD "sh -c 'kill -9\
-  $(cat /var/tmp/testrunner-lite-children.pid)'"
+#define TRLITE_KILL_BG_PIDS_CMD "kill -9\
+  $(cat /var/tmp/testrunner-lite-children.pid)"
 /* Cleans up helper shell scripts from remote end */
-#define TRLITE_CLEAN_CMD "sh -c 'rm /var/tmp/testrunner-lite-children.pid\
- /var/tmp/testrunner-lite.sh /var/tmp/testrunner-lite-shell.pid'"
+#define TRLITE_CLEAN_CMD "rm /var/tmp/testrunner-lite-children.pid\
+ /var/tmp/testrunner-lite.sh /var/tmp/testrunner-lite-shell.pid"
 
 /* A shell script deployed to remote end that executes a test step,
    handles freezing ssh sessions by a horrible brute force hack
@@ -861,7 +861,7 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	if (!log_cmd) {
 		return ret;
 	}
-	snprintf (log_cmd, log_cmd_size, "sh -c logger set:%s-case:%s-step:%d",
+	snprintf (log_cmd, log_cmd_size, "logger set:%s-case:%s-step:%d",
 	          setname, casename, stepnum);
 		
 	exec_data logger_data;
