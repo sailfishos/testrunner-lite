@@ -674,16 +674,17 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 c->state) < 0)
 			goto err_out;
 	
-	if (c->description)
-		if (xmlTextWriterWriteElement	(writer, 
-						 BAD_CAST "description", 
-						 c->description) < 0)
-			goto err_out;
 
 	if (c->gen.manual && c->comment)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "comment", 
 						 c->comment) < 0)
+			goto err_out;
+
+	if (c->description)
+		if (xmlTextWriterWriteElement	(writer, 
+						 BAD_CAST "description", 
+						 c->description) < 0)
 			goto err_out;
 
 	xmlListWalk (c->steps, xml_write_step, NULL);
@@ -1040,7 +1041,27 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 			     PROGNAME, __FUNCTION__);
 		    return 1;
 	    }
+	    
+	    if (opts->vcsurl && xmlTextWriterWriteElement (writer, 
+							   BAD_CAST "vcsurl", 
+							   BAD_CAST 
+							   opts->vcsurl) < 0) {
 		    
+		    LOG_MSG (LOG_ERR, "%s:%s:failed to write vcsurl\n",
+			     PROGNAME, __FUNCTION__);
+		    return 1;
+	    }
+
+
+	    if (opts->packageurl && 
+		xmlTextWriterWriteElement (writer, BAD_CAST  "packageurl", 
+					   BAD_CAST opts->packageurl) < 0) {
+			    
+			    LOG_MSG (LOG_ERR, "%s:%s:failed to write "
+				     "packageurl\n", PROGNAME, __FUNCTION__);
+			    return 1;
+	    }
+	    
 	    if (xmlTextWriterStartElement (writer, BAD_CAST "testresults") 
 		< 0) {
 		    LOG_MSG (LOG_ERR, "%s:%s:failed to write "
