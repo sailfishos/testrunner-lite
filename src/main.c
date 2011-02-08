@@ -187,6 +187,15 @@ LOCAL void usage()
 		"Run tests inside a chroot environment. Note that this\n\t\t"
 		"doesn't change the root of the testrunner itself,\n\t\t"
 		"only the tests will have the new root folder set.\n");
+	printf ("  -u URL, --vcs-url=URL\n\t\t"
+		"Causes testrunner-lite to write the given VCS URL to "
+		"results.\n\t\t\n"
+		);
+	printf ("  -U URL, --package-url=URL\n\t\t"
+		"Causes testrunner-lite to write the given package URL to "
+		"results.\n\t\t\n"
+		);
+
 	return;
 }
 /** Print version
@@ -497,6 +506,8 @@ int main (int argc, char *argv[], char *envp[])
 			{"manual", no_argument, &m_flag, 1},
 			{"filter", required_argument, NULL, 'l'},
 			{"logger", required_argument, NULL, 'L'},
+			{"vcs-url", required_argument, NULL, 'u'},
+			{"package-url", required_argument, NULL, 'U'},
 			{"ci", no_argument, &opts.disable_schema},
 			{"semantic", no_argument, &opts.semantic_schema},
 			{"validate-only", no_argument, &A_flag},
@@ -533,8 +544,9 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPC:f:o:e:l:r:L:t:n:k:v::",
-					testrunnerlite_options, &option_idx);
+					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:n:k:v"
+					"::", testrunnerlite_options, 
+					&option_idx);
 		if (opt_char == -1)
 			break;
 		
@@ -663,6 +675,13 @@ int main (int argc, char *argv[], char *envp[])
 			break;
 		case 'M':
 			opts.no_measurement_verdicts = 1;
+			break;
+
+		case 'u':
+			opts.vcsurl = strdup (optarg);
+			break;
+		case 'U':
+			opts.packageurl = strdup (optarg);
 			break;
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
@@ -825,6 +844,8 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
+	if (opts.packageurl) free (opts.packageurl);
+	if (opts.vcsurl) free (opts.vcsurl);
 #ifdef ENABLE_LIBSSH2
 	if (opts.username) free (opts.username);
 	if (opts.priv_key) free (opts.priv_key);

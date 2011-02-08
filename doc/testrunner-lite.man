@@ -75,6 +75,12 @@ Do not fail cases based on measurement data
 Run tests inside a chroot environment. Note that this doesn't change the root 
 of the testrunner itself, only the tests will have the new root folder set.
 .TP
+\fB\-u \fIURL\fR,  \fB\-\-vcs\-url\fR\=\fIURL\fR
+Causes testrunner-lite to write the given VCS URL to results.
+.TP
+\fB\-U \fIURL\fR,  \fB\-\-package\-url\fR\=\fIURL\fR
+Causes testrunner-lite to write the given packge URL to results.
+.TP
 
 .SH EXIT STATUS
 .TP

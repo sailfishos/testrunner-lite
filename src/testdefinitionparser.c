@@ -563,8 +563,7 @@ LOCAL int td_parse_case(td_set *s)
 		if (xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_ELEMENT && 
 		    !xmlStrcmp (name, BAD_CAST "description")) {
-		    //	c->description = xmlTextReaderReadString(reader);
-		    c->description = xmlTextReaderReadOuterXml (reader);
+		    c->description = xmlTextReaderReadString(reader);
 		    
 		}
 
