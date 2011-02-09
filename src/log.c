@@ -133,53 +133,10 @@ LOCAL char *create_msg (const char *fmt, ...)
 
 	   return NULL;
 }
-/* ------------------------------------------------------------------------- */
-/** Allocate buffer and print to message to it 
- *  @param fmt format as in printf
- *  @param ap argument list
- *  @return buffer with message or NULL in case of too big message
- */
-LOCAL char *vcreate_msg (const char *fmt, va_list ap)
-{
-           int written, size = 128;
-           char *buff, *new_buff;
-
-           if ((buff = malloc(size)) == NULL) {
-		   fprintf (stderr, "%s: %s: malloc() failed can not log %s\n",
-			    PROGNAME, __FUNCTION__, strerror (errno));
-		   return NULL;
-	   }
-           while (1) {
-               written = vsnprintf(buff, size, fmt, ap);
-               if (written > -1 && written < size)
-		       return buff;
-	       size = size * 2;
-	       if (size > LOG_MSG_MAX_SIZE) {
-		       fprintf (stderr, 
-				"%s: %s: log msg max size exceeded, "
-				"msg omitted\n",
-				PROGNAME, __FUNCTION__);
-		       free(buff);
-		       return NULL;
-	       }
-               if ((new_buff = realloc (buff, size)) == NULL) {
-		       fprintf (stderr, 
-				"%s: %s: realloc() failed can not log %s\n",
-				PROGNAME, __FUNCTION__, strerror (errno));
-		       free(buff);
-		       return NULL;
-               } else {
-		       buff = new_buff;
-               }
-           }
-
-	   return NULL;
-}
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */ 
-
 /** Prints a log message to stdout in format "[LOG_TYPE] HH:MM:SS message"
  *  Usage is the same as in regular printf(), except the first parameter
  *  Example: log_msg (LOG_ERR, "Error message %s\n", "Failure");
@@ -195,12 +152,14 @@ void log_msg(int type, const char *file, const char *function,
 	
 	const char *stream_name;
 	char timestamp[10];
-	char *msg, *post_msg, *url_enc_msg,*module, *p;
+	char *msg, *post_msg, *url_enc_msg,*module, *p, *new_buff;
 	CURLcode res;
 	struct tm *tm;
 	time_t current_time;
 	struct timeval now, diff;
 	va_list args;
+	int written, size = 128;
+
 	/* Syslog:
 	   LOG_EMERG	0
 	   LOG_ALERT	1
@@ -248,9 +207,38 @@ void log_msg(int type, const char *file, const char *function,
 		fprintf (stdout, "%s %s() %d ", file, function, lineno);
 
 	/* Print given arguments */
-	va_start(args, format);
-	msg = vcreate_msg (format, args);
-	va_end(args);
+	if ((msg = malloc(size)) == NULL) {
+		fprintf (stderr, "%s: %s: malloc() failed can not log %s\n",
+			 PROGNAME, __FUNCTION__, strerror (errno));
+		return;
+	}
+
+	while (1) {
+		va_start(args, format);
+		written = vsnprintf (msg, size, format, args);
+		va_end(args);
+
+		if (written > -1 && written < size)
+			break; 
+		size = size * 2;
+		if (size > LOG_MSG_MAX_SIZE) {
+			fprintf (stderr, 
+				 "%s: %s: log msg max size exceeded, "
+				 "msg omitted\n",
+				 PROGNAME, __FUNCTION__);
+			free(msg);
+			return;
+	       }
+		if ((new_buff = realloc (msg, size)) == NULL) {
+			fprintf (stderr, 
+				 "%s: %s: realloc() failed can not log %s\n",
+				 PROGNAME, __FUNCTION__, strerror (errno));
+			free(msg);
+			return;
+		} else {
+			msg = new_buff;
+		}
+	}
 
 	if (!msg)
 		return;
@@ -336,7 +324,6 @@ void log_msg(int type, const char *file, const char *function,
 	
 	return;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Sets the verbosity level
  * @param opts testrunner lite options
@@ -370,7 +357,6 @@ void log_init (testrunner_lite_options *opts) {
 		do_syslog = 1;
 	}
 }
-
 /* ------------------------------------------------------------------------- */
 /** Closes the log, flush stdout and cleanup curl if it's in use
  */
