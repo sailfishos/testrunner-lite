@@ -1,3 +1,7 @@
+* Wed Feb 09 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.1
+- Fixed: invalid use of va_list caused problems on 64 bit system (BMC#13322)
+- Fixed: writing manual test case comment to results (BMC#13314)
+- Support for VCS and package urls (-u and -U options) (BMC#11409)
 * Tue Feb 01 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.0
 - Supports libssh2 for remote execution (BMC#6693)
 - Autoconf magic for xml2 library by Tero Koskinen (BMC#12336)
