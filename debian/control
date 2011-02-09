@@ -15,20 +15,20 @@ Section: doc
 Architecture: all
 Description: Doxygen documentation in html format
 
-Package: testrunner-lite-hwinfo-maemo
-Provides: testrunner-lite-hwinfo
-Depends: sysinfo-tool [armel]
-Conflicts: testrunner-lite-hwinfo-meego
-Section: utils
-Architecture: any
-Description: Library for obtaining hardware information in maemo environment
-
-#Package: testrunner-lite-hwinfo-meego
+#Package: testrunner-lite-hwinfo-maemo
 #Provides: testrunner-lite-hwinfo
-#Conflicts: testrunner-lite-hwinfo-maemo
+#Depends: sysinfo-tool [armel]
+#Conflicts: testrunner-lite-hwinfo-meego
 #Section: utils
 #Architecture: any
-#Description: Library for obtaining hardware information in meego environment
+#Description: Library for obtaining hardware information in maemo environment
+
+Package: testrunner-lite-hwinfo-meego
+Provides: testrunner-lite-hwinfo
+Conflicts: testrunner-lite-hwinfo-maemo
+Section: utils
+Architecture: any
+Description: Library for obtaining hardware information in meego environment
 
 Package: testrunner-lite-tests
 Section: tests
