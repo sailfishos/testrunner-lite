@@ -217,7 +217,7 @@ LOCAL void copyright () {
         printf ("testrunner-lite, © Nokia 2010 All rights reserved,\n"
                 "licensed under the Gnu Lesser General Public License "
 		"version 2.1,\n"
-                "Contact: Ville Ilvonen <ville.p.ilvonen@nokia.com>\n");
+                "Contact: MeeGo QA <meego-qa@lists.meego.com>\n");
 }
 /* ------------------------------------------------------------------------- */
 /** Create output folder based on the argument for -o

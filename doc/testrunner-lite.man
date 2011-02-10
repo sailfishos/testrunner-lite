@@ -127,7 +127,7 @@ All filter types are not supported. Currently supporting filters of type 'testca
 Report bugs to http://bugs.meego.com
 
 .SH COPYRIGHT
-testrunner-lite, © Nokia 2010, licensed under the GNU Lesser General Public License version 2.1, Contact: Ville Ilvonen, ville.p.ilvonen@nokia.com
+testrunner-lite, © Nokia 2010, licensed under the GNU Lesser General Public License version 2.1, Contact: MeeGo Quality Assurance, meego-qa@lists.meego.com
 
 .SH "SEE ALSO"
 .BR test-definition (5)
