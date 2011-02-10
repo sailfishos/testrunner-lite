@@ -470,7 +470,7 @@ LOCAL int process_get (const void *data, const void *user)
 #ifdef ENABLE_LIBSSH2
 		if (opts.libssh2) {
 			command_len = strlen ("scp ") + 
-				strlen (opts.username) +
+				strlen (opts.username) + 1 +
 				strlen (fname) +
 				strlen (opts.output_folder) +
 				strlen (remote) + 10;
