@@ -513,6 +513,7 @@ START_TEST (test_remote_get)
 END_TEST
 
 #ifdef ENABLE_LIBSSH2
+/* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_command)
 	exec_data edata;
 	testrunner_lite_options opts;
@@ -548,6 +549,7 @@ START_TEST (test_executor_remote_libssh2_command)
 	executor_close();
 END_TEST
 
+/* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_long_command)
 	exec_data edata;
 	testrunner_lite_options opts;
@@ -759,6 +761,90 @@ START_TEST (test_executor_remote_libssh2_daemon_process)
 	fail_if (execute("PATH=$PATH:/sbin/ pidof trlite-test-daemon", &edata));
 	executor_close();
 END_TEST
+
+/* ------------------------------------------------------------------------- */
+START_TEST (test_remote_libssh2_get)
+
+     int ret;
+     char cmd[1024];
+     
+     /* get doesn't use libssh2, but username parsing differs with -t option */
+
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	      "-n localhost -k myrsakey:myrsakey.pub", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_GET_XML_1);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+    
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+END_TEST
+
+/* ------------------------------------------------------------------------- */
+START_TEST (test_remote_libssh2_get_username)
+
+     int ret;
+     char cmd[1024];
+
+     char *username = getenv("LOGNAME");
+
+     /* get doesn't use libssh2, but username parsing differs with -t option */
+
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	      "-n %s@localhost -k myrsakey:myrsakey.pub", 
+              TESTRUNNERLITE_BIN, 
+              TESTDATA_GET_XML_1,
+              username);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+    
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+END_TEST
+
 #endif /* ENABLE_LIBSSH2 */
 
 /* ------------------------------------------------------------------------- */
@@ -888,6 +974,16 @@ Suite *make_testexecutor_suite (void)
 	tc = tcase_create ("Test executor remote libssh2 daemon process.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_remote_libssh2_daemon_process);
+    suite_add_tcase (s, tc);
+
+	tc = tcase_create ("Test remote libssh2 get.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_libssh2_get);
+    suite_add_tcase (s, tc);
+
+	tc = tcase_create ("Test remote libssh2 get username.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_libssh2_get_username);
     suite_add_tcase (s, tc);
 #endif /* ENABLE_LIBSSH2 */
 
