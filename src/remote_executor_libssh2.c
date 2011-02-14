@@ -774,8 +774,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
  * @return session instance on success, NULL if fails
  */
  libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
-                                   unsigned port, const char *priv_key, 
-				   const char *pub_key) 
+                                   const char *priv_key, const char *pub_key) 
 {
 
 	char *home_dir;
