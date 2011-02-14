@@ -72,6 +72,7 @@ typedef struct libssh2_conn {
 	char *priv_key; 
 	char *pub_key;
 	unsigned long hostaddr;
+	in_port_t port;
 	int sock;
 	fd_set nfd;
 	fd_set *writefd;
@@ -83,7 +84,8 @@ typedef struct libssh2_conn {
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
 libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
-                                  const char *priv_key, const char *pub_key);
+                                  in_port_t port, const char *priv_key, 
+				  const char *pub_key);
 /* ------------------------------------------------------------------------- */
 int lssh2_execute(libssh2_conn *conn, const char *command, 
 		  exec_data *data);

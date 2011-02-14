@@ -63,7 +63,7 @@ Do only input xml validation, do not execute tests
 \fB\-H\fR,  \fB\-\-no\-hwinfo\fR 
 Do not try to obtain hardware information
 .TP
-\fB\-t\fR [\fIUSER\fR@]\fIADDRESS\fR, \fB\-\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR
+\fB\-t\fR [\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]\fR, \fB\-\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]
 Enable host-based testing. If given, commands are executed from
 test control PC (host) side. ADDRESS is the ipv4 adress of the
 system under test.

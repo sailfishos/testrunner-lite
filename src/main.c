@@ -294,7 +294,7 @@ LOCAL int parse_target_address_libssh2(char *address,
                                        testrunner_lite_options *opts) 
 {
 	const char *token;
-	char *param;
+	char *param, *p;
 	char *param_ptr;
 	char *item;
 	char *username;
@@ -317,6 +317,7 @@ LOCAL int parse_target_address_libssh2(char *address,
 			if (!item) {
 				fprintf(stderr, "Error: could not get "
 					"env for LOGNAME\n");
+				free (param);
 				return 1;
 			}
 			username = item;
@@ -329,6 +330,19 @@ LOCAL int parse_target_address_libssh2(char *address,
 		strcpy(opts->username, username);
 		opts->target_address = malloc(strlen(target_address) + 1);
 		strcpy(opts->target_address, target_address);
+		p = strchr (opts->target_address, ':');
+		if (p) {
+			*p = '\0';
+			p++;
+			opts->target_port = atoi (p);
+			if (opts->target_port < 0 || 
+			    opts->target_port > USHRT_MAX) {
+				fprintf (stderr, "Invalid port %d\n", 
+					 opts->target_port);
+				free(param);
+				return 1;
+			}
+		}
 		free(param);
 		return 0;
 	} else {
@@ -394,7 +408,6 @@ LOCAL int parse_target_address(char *address, testrunner_lite_options *opts)
 					 opts->target_port);
 				return 1;
 			}
-				
 		}
 		return 0;
 	} else {

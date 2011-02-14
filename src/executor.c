@@ -988,6 +988,7 @@ static int executor_init_libssh2(testrunner_lite_options *opts)
 	options = opts;
 	lssh2_conn = lssh2_executor_init(options->username, 
 	                                 options->target_address,
+					 options->target_port,
 	                                 options->priv_key,
 	                                 options->pub_key); 
 	if (!lssh2_conn) {

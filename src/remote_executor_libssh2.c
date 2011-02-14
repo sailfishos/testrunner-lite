@@ -305,7 +305,8 @@ static int lssh2_session_connect(libssh2_conn *conn)
 	int type;  
 	size_t len;
 
-	LOG_MSG(LOG_DEBUG, "connecting to %s", conn->hostname);
+	LOG_MSG(LOG_DEBUG, "connecting to %s port %u", conn->hostname,
+		conn->port ? conn->port : 22);
 
 	/* Create socket */
 	if (lssh2_setup_socket(conn) < 0) {
@@ -319,7 +320,6 @@ static int lssh2_session_connect(libssh2_conn *conn)
 		LOG_MSG(LOG_ERR, "libssh2 session init failed");
 		return -1;
 	}
-	
 
 	/* Set non-blocking mode */
 	libssh2_session_set_blocking(conn->ssh2_session, 0);
@@ -558,7 +558,10 @@ static int lssh2_setup_socket(libssh2_conn *conn)
 	}
 
 	conn->sin.sin_family = AF_INET;
-	conn->sin.sin_port = htons(22);
+	if (conn->port)
+		conn->sin.sin_port = htons(conn->port);
+	else
+		conn->sin.sin_port = htons(22);
 	conn->sin.sin_addr.s_addr = conn->hostaddr;
 
 	host = gethostbyname(conn->hostname);
@@ -774,9 +777,9 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
  * @return session instance on success, NULL if fails
  */
  libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
-                                   const char *priv_key, const char *pub_key) 
+                                   in_port_t port, const char *priv_key, 
+				   const char *pub_key) 
 {
-
 	char *home_dir;
 	char *private_key_file;
 	char *public_key_file;
@@ -788,6 +791,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	conn = malloc(sizeof(libssh2_conn));
 	conn->hostname = hostname;
 	conn->username = username;
+	conn->port = port;
 	conn->password = "";
 	conn->writefd = NULL;
 	conn->readfd = NULL;

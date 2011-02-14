@@ -591,7 +591,42 @@ START_TEST (test_executor_remote_libssh2_command)
 	fail_unless (edata.stderr_data.buffer == NULL);
 	executor_close();
 END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_remote_libssh2_command_port)
+	exec_data edata;
+	testrunner_lite_options opts;
+	memset (&opts, 0x0, sizeof (opts));
+	opts.libssh2 = 1;
+	opts.log_level = LOG_LEVEL;
+	opts.username = getenv("LOGNAME");
+	opts.priv_key = "myrsakey";
+	opts.pub_key = "myrsakey.pub";
+	opts.target_address = "localhost";
+	opts.target_port = 22;
+	executor_init (&opts);
+	log_init(&opts);
+	init_exec_data (&edata);
 
+	fail_if (execute("echo testing", &edata));
+	fail_unless (edata.result == 0);
+	fail_unless (edata.stdout_data.length == strlen("testing\n"));
+	fail_unless (strcmp((char*)edata.stdout_data.buffer, "testing\n") == 0);
+
+	clean_exec_data(&edata);
+	fail_unless (edata.stdout_data.buffer == NULL);
+	fail_unless (edata.stderr_data.buffer == NULL);
+
+	init_exec_data(&edata);
+	fail_if (execute("cat unexisting_foobar_file", &edata));
+	fail_if (edata.result == 0);
+	fail_if (edata.stderr_data.length == 0);
+	fail_unless (strlen((char*)edata.stderr_data.buffer) > 0);
+
+	clean_exec_data(&edata);
+	fail_unless (edata.stdout_data.buffer == NULL);
+	fail_unless (edata.stderr_data.buffer == NULL);
+	executor_close();
+END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_long_command)
 	exec_data edata;
@@ -1000,6 +1035,11 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test executor remote libssh2 command.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_remote_libssh2_command);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor remote libssh2 command with port.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_executor_remote_libssh2_command_port);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote libssh2 long command.");
