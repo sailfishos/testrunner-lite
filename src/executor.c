@@ -180,7 +180,8 @@ static int exec_wrapper(const char *command)
 	int ret = 0;
 
 	if (options->target_address) {
-		ret = ssh_execute (options->target_address, command);
+		ret = ssh_execute (options->target_address, 
+				   options->target_port, command);
 	} else {
 		if (options->chroot_folder) {
 			if (chdir(options->chroot_folder) == -1) {
@@ -510,7 +511,9 @@ static int execution_terminated(exec_data* data) {
 					/* suspicious return value - 
 					   do connection check */
 					if (ssh_check_conn (options->
-							    target_address)) {
+							    target_address,
+							    options->
+							    target_port)) {
 						bail_out = TESTRUNNER_LITE_SSH_FAIL;
 						global_failure = "connection "
 							"fail";
@@ -538,7 +541,8 @@ static int execution_terminated(exec_data* data) {
 			 * remote execution
 			 */
 			if (options->target_address && 
-			    (ret = ssh_check_conn (options->target_address))) {
+			    (ret = ssh_check_conn (options->target_address,
+						   options->target_port))) {
 				LOG_MSG(LOG_ERR, "ssh connection failure "
 					"(%d)", ret);
 				bail_out = TESTRUNNER_LITE_SSH_FAIL;
@@ -645,7 +649,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			data->signaled = SIGTERM;
 
 			if (options->target_address && !bail_out) {
-				ssh_kill (options->target_address, data->pid);
+				ssh_kill (options->target_address, 
+					  options->target_port, data->pid);
 			}
 			stream_data_append(&data->failure_info,
 					   FAILURE_INFO_TIMEOUT);
@@ -662,7 +667,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			kill_pgroup(pgroup, SIGKILL);
 			data->signaled = SIGKILL;
 			if (options->target_address && !bail_out) {
-				ssh_kill (options->target_address, data->pid);
+				ssh_kill (options->target_address, 
+					  options->target_port, data->pid);
 			}
 
 			killed = 1;
@@ -966,7 +972,8 @@ int executor_init(testrunner_lite_options *opts)
 			return executor_init_libssh2(opts);
 		}
 #endif
-		ssh_executor_init(options->target_address);
+		ssh_executor_init (options->target_address, 
+				   options->target_port);
 	}
 	return 0;
 }
@@ -1014,7 +1021,9 @@ void handle_sigint (int signum)
 	bail_out = 255+SIGINT;
 	if (current_data) {
 		if (options->target_address)
-			ssh_kill (options->target_address, current_data->pid);
+			ssh_kill (options->target_address, 
+				  options->target_port,
+				  current_data->pid);
 		else
 			kill_pgroup(current_data->pgid, SIGKILL);
 	}
@@ -1029,7 +1038,8 @@ void handle_sigterm (int signum)
 	bail_out = 255+SIGTERM;
 	if (current_data) {
 		if (options->target_address)
-			ssh_kill (options->target_address, current_data->pid);
+			ssh_kill (options->target_address, 
+				  options->target_port, current_data->pid);
 		else
 			kill_pgroup(current_data->pgid, SIGKILL);
 	}

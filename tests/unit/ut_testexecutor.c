@@ -326,6 +326,44 @@ START_TEST (test_executor_remote_command)
 	exec_data edata;
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
+	opts.target_port = 0;
+#ifdef ENABLE_LIBSSH2
+	opts.libssh2 = 0;
+#endif
+	executor_init (&opts);
+	init_exec_data (&edata);
+	
+	fail_if (execute("echo testing", &edata));
+	fail_unless (edata.result == 0);
+	fail_unless (edata.stdout_data.length == strlen("testing\n"));
+	fail_unless (strcmp((char*)edata.stdout_data.buffer, "testing\n") == 0);
+
+	clean_exec_data(&edata);
+	fail_unless (edata.stdout_data.buffer == NULL);
+	fail_unless (edata.stderr_data.buffer == NULL);
+
+	init_exec_data(&edata);
+	fail_if (execute("cat unexisting_foobar_file", &edata));
+	fail_if (edata.result == 0);
+	fail_if (edata.stderr_data.length == 0);
+	fail_unless (strlen((char*)edata.stderr_data.buffer) > 0);
+
+	clean_exec_data(&edata);
+	fail_unless (edata.stdout_data.buffer == NULL);
+	fail_unless (edata.stderr_data.buffer == NULL);
+
+	/* Give time for either ssh_clean or ssh_kill called by execute.
+	   They have forked new ssh process to do cleanup */
+	sleep(1);
+	executor_close();
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_remote_command_port)
+	exec_data edata;
+	testrunner_lite_options opts;
+	opts.target_address = "localhost";
+	opts.target_port = 22;
+
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
@@ -367,6 +405,8 @@ START_TEST (test_executor_remote_long_command)
 	char test_string [TEST_STRING_SIZE];
 	char command [TEST_STRING_SIZE + 100];
 	opts.target_address = "localhost";
+	opts.target_port = 0;
+
 	executor_init (&opts);
 	init_exec_data (&edata);
 	edata.soft_timeout = 5;
@@ -394,6 +434,7 @@ START_TEST (test_executor_remote_terminating_process)
 	exec_data edata;
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
+	opts.target_port = 0;
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
@@ -429,6 +470,7 @@ START_TEST (test_executor_remote_killing_process)
 	exec_data edata;
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
+	opts.target_port = 0;
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
@@ -471,7 +513,7 @@ START_TEST(test_executor_remote_test_bg_process_cleanup)
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_ssh_conn_check)
-	int ret = ssh_check_conn ("localhost");
+        int ret = ssh_check_conn ("localhost", 0);
 	fail_if (ret, "ret=%d", ret);
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -524,6 +566,7 @@ START_TEST (test_executor_remote_libssh2_command)
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
+	opts.target_port = 0;
 	executor_init (&opts);
 	log_init(&opts);
 	init_exec_data (&edata);
@@ -563,6 +606,7 @@ START_TEST (test_executor_remote_libssh2_long_command)
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
+	opts.target_port = 0;
 	executor_init (&opts);
 	log_init(&opts);
 	init_exec_data (&edata);
@@ -597,6 +641,7 @@ START_TEST (test_executor_remote_libssh2_quotes_command)
     opts.priv_key = "myrsakey";
     opts.pub_key = "myrsakey.pub";
     opts.target_address = "localhost";
+    opts.target_port = 0;
     log_init(&opts);
     executor_init (&opts);
     init_exec_data (&edata);
@@ -620,6 +665,7 @@ START_TEST (test_executor_remote_libssh2_terminating_process)
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
+	opts.target_port = 0;
 	opts.libssh2 = 1;
 	opts.log_level = LOG_LEVEL;
 	opts.username = getenv("LOGNAME");
@@ -663,6 +709,7 @@ START_TEST (test_executor_remote_libssh2_killing_process)
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
+	opts.target_port = 0;
 	executor_init (&opts);
 	init_exec_data(&edata);
 	log_init(&opts);
@@ -709,6 +756,7 @@ START_TEST (test_executor_remote_libssh2_bg_process)
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
+	opts.target_port = 0;
 	executor_init (&opts);
 	init_exec_data(&edata);
 	log_init(&opts);
@@ -744,6 +792,7 @@ START_TEST (test_executor_remote_libssh2_daemon_process)
 	opts.priv_key = "myrsakey";
 	opts.pub_key = "myrsakey.pub";
 	opts.target_address = "localhost";
+	opts.target_port = 0;
 	executor_init (&opts);
 	init_exec_data(&edata);
 	log_init(&opts);
@@ -908,6 +957,10 @@ Suite *make_testexecutor_suite (void)
 
     tc = tcase_create ("Test executor remote command.");
     tcase_add_test (tc, test_executor_remote_command);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor remote command with port.");
+    tcase_add_test (tc, test_executor_remote_command_port);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote long command.");

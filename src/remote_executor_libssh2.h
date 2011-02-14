@@ -56,7 +56,6 @@
 
 /* ------------------------------------------------------------------------- */
 /* STRUCTURES */
-
 typedef enum {
 	SESSION_OK = 1,
 	SESSION_GIVE_UP
@@ -80,18 +79,15 @@ typedef struct libssh2_conn {
 	LIBSSH2_SESSION *ssh2_session;
 	connection_status status;
 } libssh2_conn;
-
-
-
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-
 libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
-                                  const char *priv_key, const char *pub_key);
+                                  unsigned port, const char *priv_key, 
+				  const char *pub_key);
 /* ------------------------------------------------------------------------- */
 int lssh2_execute(libssh2_conn *conn, const char *command, 
-                                    exec_data *data);
+		  exec_data *data);
 /* ------------------------------------------------------------------------- */
 int lssh2_executor_close(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */

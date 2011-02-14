@@ -124,25 +124,34 @@ volatile trlite_timeout last_timeout = NO_TIMEOUT;
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-
 static int lssh2_set_timer(unsigned long soft_timeout, 
                            unsigned long hard_timeout);
+/* ------------------------------------------------------------------------- */
 static void lssh2_stop_timer();
+/* ------------------------------------------------------------------------- */
 static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data);
+/* ------------------------------------------------------------------------- */
 static int lssh2_check_timeouts(libssh2_conn *conn);
+/* ------------------------------------------------------------------------- */
 static int lssh2_setup_socket(libssh2_conn *conn);
+/* ------------------------------------------------------------------------- */
 static int lssh2_select(libssh2_conn *conn);
+/* ------------------------------------------------------------------------- */
 static int lssh2_read_output(libssh2_conn *conn, 
                              LIBSSH2_CHANNEL *channel, exec_data *data);
+/* ------------------------------------------------------------------------- */
 static int lssh2_session_connect(libssh2_conn *conn);
+/* ------------------------------------------------------------------------- */
 static int lssh2_session_reconnect(libssh2_conn *conn);
+/* ------------------------------------------------------------------------- */
 static int lssh2_session_free(libssh2_conn *conn);
+/* ------------------------------------------------------------------------- */
 static int lssh2_channel_close(LIBSSH2_CHANNEL *channel, int *exitcode);
+/* ------------------------------------------------------------------------- */
 static int lssh2_execute_command(libssh2_conn *conn, char *command, 
                                  exec_data *data);
+/* ------------------------------------------------------------------------- */
 static int lssh2_create_shell_scripts(libssh2_conn *conn);
-
-
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -150,15 +159,14 @@ static int lssh2_create_shell_scripts(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-
 /** Initialize timer and set signal action for SIGALRM
  * @param timeout Value in seconds after which global variable timer_value
  * will be set
  * @return 0 in success, -1 in error
  */
 static int lssh2_set_timer(unsigned long soft_timeout, 
-                           unsigned long hard_timeout) {
-
+                           unsigned long hard_timeout) 
+{
 	struct sigaction act;
 	struct itimerval timer;
 	
@@ -193,11 +201,11 @@ static int lssh2_set_timer(unsigned long soft_timeout,
  erraction:
 	return -1;
 }
-
-
+/* ------------------------------------------------------------------------- */
 /** Reset timer and restore signal action of SIGALRM
  */
-static void lssh2_stop_timer() {
+static void lssh2_stop_timer() 
+{
 	struct itimerval timer;
 	timer.it_interval.tv_sec = 0;
 	timer.it_interval.tv_usec = 0;
@@ -210,13 +218,12 @@ static void lssh2_stop_timer() {
 	last_timeout = NO_TIMEOUT;
 	LOG_MSG(LOG_DEBUG, "Timer stopped");
 }
-
-
 /* ------------------------------------------------------------------------- */
 /** Signal handler that tries to resolve a soft timeout in a polite manner. 
     And a hard timeout with brute force.
  */
-static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data) {
+static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data) 
+{
 	if (signal == SIGALRM) {
 		switch(last_timeout) {
 		case NO_TIMEOUT:
@@ -230,13 +237,12 @@ static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data) {
 		}
 	}
 }
-
 /* ------------------------------------------------------------------------- */
 /** Checks during reading if the timeout timer has expired. Kills processes
  *  accordingly.
  */
-static int lssh2_check_timeouts(libssh2_conn *conn) {
-
+static int lssh2_check_timeouts(libssh2_conn *conn) 
+{
 	if (!conn) {
 		LOG_MSG(LOG_ERR, "No connection");
 		return -1;
@@ -267,36 +273,32 @@ static int lssh2_check_timeouts(libssh2_conn *conn) {
 	}
 	return 0;
 }
-
-
-
 /* ------------------------------------------------------------------------- */
 /** Creates helper shell script to remote end
  * @param session SSH session
  * @return 0 on succes, -1 if fails
  */
-static int lssh2_create_shell_scripts(libssh2_conn *conn) {
+static int lssh2_create_shell_scripts(libssh2_conn *conn) 
+{
 	/* Create shell script to target */
-  exec_data data;
-  data.stdout_data.buffer = NULL;
-  data.stderr_data.buffer = NULL;
-  data.result = -1;
-
-  if (lssh2_execute_command(conn, REMOTE_RUN_SCRIPT, &data) < 0) {
-	  LOG_MSG(LOG_ERR, "Creating remote run script failed");
-	  return -1;
+	exec_data data;
+	data.stdout_data.buffer = NULL;
+	data.stderr_data.buffer = NULL;
+	data.result = -1;
+	
+	if (lssh2_execute_command(conn, REMOTE_RUN_SCRIPT, &data) < 0) {
+		LOG_MSG(LOG_ERR, "Creating remote run script failed");
+		return -1;
 	}
 	return 0;
 }
-
-
 /* ------------------------------------------------------------------------- */
 /** Connects to remote end
  * @param conn SSH session
  * @return 0 on succes, -1 if fails
  */
-static int lssh2_session_connect(libssh2_conn *conn) {
-
+static int lssh2_session_connect(libssh2_conn *conn) 
+{
 	LIBSSH2_KNOWNHOSTS *hosts;
 	int check;
 	int n;
@@ -317,7 +319,7 @@ static int lssh2_session_connect(libssh2_conn *conn) {
 		LOG_MSG(LOG_ERR, "libssh2 session init failed");
 		return -1;
 	}
-
+	
 
 	/* Set non-blocking mode */
 	libssh2_session_set_blocking(conn->ssh2_session, 0);
@@ -348,7 +350,8 @@ static int lssh2_session_connect(libssh2_conn *conn) {
 	libssh2_knownhost_readfile(hosts, "known_hosts",
 	                           LIBSSH2_KNOWNHOST_FILE_OPENSSH);
 
-	conn->fingerprint = libssh2_session_hostkey(conn->ssh2_session, &len, &type);
+	conn->fingerprint = libssh2_session_hostkey(conn->ssh2_session, &len, 
+						    &type);
 	if(conn->fingerprint) {
 		check = libssh2_knownhost_check(hosts, (char *)conn->hostname,
 		                                (char *)conn->fingerprint, len,
@@ -391,33 +394,34 @@ static int lssh2_session_connect(libssh2_conn *conn) {
 	       LIBSSH2_ERROR_EAGAIN);
 	if (n) {
 		/* Won't be fixed via connection retries, so giving up */
-		LOG_MSG(LOG_ERR, "Authentication by public key failed, giving up\n");
+		LOG_MSG(LOG_ERR, "Authentication by public key failed, "
+			"giving up\n");
 		conn->status = SESSION_GIVE_UP;
 		libssh2_knownhost_free(hosts);
 		return -1;
 	}
-
+	
 	libssh2_knownhost_free(hosts);
 	return 0;
 }
-
-
 /* ------------------------------------------------------------------------- */
 /** Cleans up an SSH channel
  * @param channel SSH channel
  * @param exitcode pointer to store return value from command
  * @return 0 on succes, -1 if fails
  */
-static int lssh2_channel_close(LIBSSH2_CHANNEL *channel, int *exitcode) {
+static int lssh2_channel_close(LIBSSH2_CHANNEL *channel, int *exitcode) 
+{
 	int n;
 	*exitcode = -127;
-
+	
 	if (channel) {
 		do {
 			n = libssh2_channel_close(channel);
 		} while (n == LIBSSH2_ERROR_EAGAIN);
 		if (n < 0) {
-			LOG_MSG(LOG_ERR, "Closing SSH channel failed, error %d", n);
+			LOG_MSG(LOG_ERR, 
+				"Closing SSH channel failed, error %d", n);
 			/* Continue to channel freeing, though */
 		}
 		/* success */
@@ -425,10 +429,11 @@ static int lssh2_channel_close(LIBSSH2_CHANNEL *channel, int *exitcode) {
 			*exitcode = libssh2_channel_get_exit_status(channel);
 			LOG_MSG(LOG_DEBUG, "Got exit code %d", *exitcode);
 		} else {
-			LOG_MSG(LOG_ERR, "Failed to get exit code, error %d", n);
+			LOG_MSG(LOG_ERR, 
+				"Failed to get exit code, error %d", n);
 		}
 		
-
+		
 		do {
 			n = libssh2_channel_free(channel);
 		} while (n == LIBSSH2_ERROR_EAGAIN);
@@ -448,7 +453,9 @@ static int lssh2_channel_close(LIBSSH2_CHANNEL *channel, int *exitcode) {
  * @param session SSH session
  * @return 0 on succes, -1 if fails
  */
-static int lssh2_session_free(libssh2_conn *conn) {
+static int lssh2_session_free(libssh2_conn *conn) 
+{
+
   	LOG_MSG(LOG_DEBUG, "");
 	if (!conn) {
 		LOG_MSG(LOG_DEBUG, "No SSH session");
@@ -462,7 +469,8 @@ static int lssh2_session_free(libssh2_conn *conn) {
 	
 	if (conn->ssh2_session) {
 		LOG_MSG(LOG_DEBUG, "%s", TRLITE_KILL_BG_PIDS_CMD);
-		if (lssh2_execute_command(conn, TRLITE_KILL_BG_PIDS_CMD, &data) < 0) {
+		if (lssh2_execute_command(conn, 
+					  TRLITE_KILL_BG_PIDS_CMD, &data) < 0) {
 			LOG_MSG(LOG_ERR, "Killing remote PID:s failed");
 		}
 	}
@@ -492,52 +500,54 @@ static int lssh2_session_free(libssh2_conn *conn) {
 
 	if (conn->priv_key) free(conn->priv_key);
 	if (conn->pub_key) free(conn->pub_key);
-
+	
 	if (conn) {
 		free(conn);
 		conn = NULL;
 	}
 	return 0;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Reconnects SSH session
  * @param conn SSH session
  * @return 0 on succes, -1 if fails
  */
-static int lssh2_session_reconnect(libssh2_conn *conn) {
+static int lssh2_session_reconnect(libssh2_conn *conn) 
+{
 
 	if (conn->ssh2_session) {
 		if (libssh2_session_disconnect(conn->ssh2_session, NULL) < 0) {
 			/* Ignore */
-			LOG_MSG(LOG_ERR, "Reconnect: disconnecting old session failed");			
+			LOG_MSG(LOG_ERR, "Reconnect: "
+				"disconnecting old session failed");	
 		}
 		if (libssh2_session_free(conn->ssh2_session) < 0) {
 			/* Ignore */
-			LOG_MSG(LOG_ERR, "Reconnect: disconnecting old session failed");			
+			LOG_MSG(LOG_ERR, "Reconnect: "
+				"disconnecting old session failed");
 		}
 	}
-
+	
 	close(conn->sock);
 	
 	if (lssh2_setup_socket(conn) < 0) {
-		LOG_MSG(LOG_ERR, "Reconnect: setup socket failed");			
+		LOG_MSG(LOG_ERR, "Reconnect: setup socket failed");
 		return -1;
 	}
-
+	
 	if (lssh2_session_connect(conn) < 0) {
-		LOG_MSG(LOG_ERR, "Reconnect: session connect failed");			
+		LOG_MSG(LOG_ERR, "Reconnect: session connect failed");
 		return -1;
 	}
 	return 0;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Creates socket and connects to remote end
  * @param conn SSH session
  * @return 0 on succes, -1 if fails
  */
-static int lssh2_setup_socket(libssh2_conn *conn) {
+static int lssh2_setup_socket(libssh2_conn *conn) 
+{
 
 	struct hostent *host;
 	conn->hostaddr = inet_addr(conn->hostname);
@@ -553,7 +563,8 @@ static int lssh2_setup_socket(libssh2_conn *conn) {
 
 	host = gethostbyname(conn->hostname);
 	if (!host) {
-		LOG_MSG(LOG_ERR, "Target addess '%s' not found", conn->hostname); 
+		LOG_MSG(LOG_ERR, "Target addess '%s' not found", 
+			conn->hostname); 
 		return -1;
 	}
 
@@ -561,14 +572,14 @@ static int lssh2_setup_socket(libssh2_conn *conn) {
 
 	if (connect(conn->sock, (struct sockaddr*)(&conn->sin),
 	            sizeof(struct sockaddr_in)) != 0) {
-		LOG_MSG(LOG_ERR, "Connecting to remote end failed %s", strerror(errno));
+		LOG_MSG(LOG_ERR, "Connecting to remote end failed %s", 
+			strerror(errno));
 		close(conn->sock);
 		return -1;
 	}
 
 	return 0;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Waits for response with select
  * @param conn SSH session
@@ -603,7 +614,6 @@ static int lssh2_select(libssh2_conn *conn)
 
 	return n;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Reads output after a command
  * @param conn SSH session
@@ -612,11 +622,10 @@ static int lssh2_select(libssh2_conn *conn)
  * @return 0 on succes, -1 if fails
  */
 static int lssh2_read_output(libssh2_conn *conn, 
-                           LIBSSH2_CHANNEL *channel, exec_data *data) {
-	LOG_MSG(LOG_DEBUG, "");
-
+			     LIBSSH2_CHANNEL *channel, exec_data *data) 
+{
+	
 	int alloc_size;
-
 	int n_stdout = 0;
 	char *stdout_buffer = (char*)data->stdout_data.buffer;
 	int *stdout_length = &data->stdout_data.length;
@@ -626,6 +635,8 @@ static int lssh2_read_output(libssh2_conn *conn,
 	char *stderr_buffer = (char*)data->stderr_data.buffer;
 	int *stderr_length = &data->stderr_data.length;
 	int *stderr_size = &data->stderr_data.size;
+	
+	LOG_MSG(LOG_DEBUG, "");
 
 	while (1) {	
 		do {
@@ -634,39 +645,50 @@ static int lssh2_read_output(libssh2_conn *conn,
 				- *stdout_size;
 			if (alloc_size > 0) {
 				*stdout_size += alloc_size;
-				stdout_buffer = realloc(stdout_buffer, *stdout_size);
+				stdout_buffer = realloc(stdout_buffer, 
+							*stdout_size);
 				if (!stdout_buffer) {
-					LOG_MSG(LOG_ERR, "realloc() for stdout buffer failed");
+					LOG_MSG(LOG_ERR, "realloc() for "
+						"stdout buffer failed");
 					return -1;
 				}
-				data->stdout_data.buffer = (unsigned char*)stdout_buffer;
+				data->stdout_data.buffer = 
+					(unsigned char*)stdout_buffer;
 			}
 			n_stdout = libssh2_channel_read(channel, 
-			                                &stdout_buffer[*stdout_length], 
+			                                &stdout_buffer
+							[*stdout_length], 
 			                                CHANNEL_BUFFER_SIZE );
 			if (n_stdout > 0) {
 				*stdout_length += n_stdout;
 				stdout_buffer[*stdout_length] = '\0'; 
-				LOG_MSG(LOG_DEBUG, "got %d bytes from stdout\n", n_stdout);
+				LOG_MSG(LOG_DEBUG, 
+					"got %d bytes from stdout\n", n_stdout);
 			}
 			alloc_size = *stderr_length + CHANNEL_BUFFER_SIZE + 1 
 				- *stderr_size;
 			if (alloc_size > 0) {
 				*stderr_size += alloc_size;
-				stderr_buffer = realloc(stderr_buffer, *stderr_size);
+				stderr_buffer = realloc(stderr_buffer, 
+							*stderr_size);
 				if (!stderr_buffer) {
-					LOG_MSG(LOG_ERR, "realloc() for stderr buffer failed");
+					LOG_MSG(LOG_ERR, "realloc() "
+						"for stderr buffer failed");
 					return -1;
 				}
-				data->stderr_data.buffer = (unsigned char*)stderr_buffer;
+				data->stderr_data.buffer = 
+					(unsigned char*)stderr_buffer;
 			}
-			n_stderr = libssh2_channel_read_stderr(channel, 
-			                                       &stderr_buffer[*stderr_length], 
-			                                       CHANNEL_BUFFER_SIZE );
+			n_stderr = libssh2_channel_read_stderr
+				(channel, 
+				 &stderr_buffer
+				 [*stderr_length], 
+				 CHANNEL_BUFFER_SIZE);
 			if (n_stderr > 0) {
 				*stderr_length += n_stderr;
 				stderr_buffer[*stderr_length] = '\0'; 
-				LOG_MSG(LOG_DEBUG, "got %d bytes from stderr\n", n_stderr);
+				LOG_MSG(LOG_DEBUG, "got %d bytes "
+					"from stderr\n", n_stderr);
 			}
 		} while (n_stdout > 0 || n_stderr > 0);
 		if (n_stdout == LIBSSH2_ERROR_EAGAIN ||
@@ -679,8 +701,6 @@ static int lssh2_read_output(libssh2_conn *conn,
 	}
 	return 0;
 }
-
-
 /* ------------------------------------------------------------------------- */
 /** Creates an SSH channel and executes a command at remote end
  * @param conn SSH session
@@ -688,12 +708,12 @@ static int lssh2_read_output(libssh2_conn *conn,
  * @return 0 on succes, -1 if fails
  */
 static int lssh2_execute_command(libssh2_conn *conn, char *command, 
-                               exec_data *data) {
-
+                               exec_data *data) 
+{
 	LIBSSH2_CHANNEL *channel = NULL;
 	int n;
 	int retries = 0;
-
+	
 	if (!conn || !conn->ssh2_session || conn->status == SESSION_GIVE_UP) {
 		LOG_MSG(LOG_DEBUG, "Cannot create SSH channel: no SSH session");
 		return -1;
@@ -702,8 +722,10 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	/* Open session channel */
 	do {
 		while( (channel = 
-		        libssh2_channel_open_session(conn->ssh2_session)) == NULL &&
-		       libssh2_session_last_error(conn->ssh2_session, NULL, NULL, 0) 
+		        libssh2_channel_open_session(conn->ssh2_session)) 
+		       == NULL &&
+		       libssh2_session_last_error(conn->ssh2_session, 
+						  NULL, NULL, 0) 
 		       == LIBSSH2_ERROR_EAGAIN ) {
 			lssh2_select(conn);
 		} 
@@ -723,7 +745,8 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 		retries++;
 	} while (!channel);
   
-	while ((n = libssh2_channel_exec(channel, command)) == LIBSSH2_ERROR_EAGAIN) {
+	while ((n = libssh2_channel_exec(channel, command)) == 
+	       LIBSSH2_ERROR_EAGAIN) {
 		lssh2_select(conn);
 	}
 
@@ -739,28 +762,30 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	return 0;
 
 }
-
-
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
-/* ------------------------------------------------------------------------- */
-
-
 /* ------------------------------------------------------------------------- */
 /** Creates an instance of SSH session
  * @param username User name 
  * @param hostname Host name
+ * @param port Host port (0 defaults to 22)
+ * @param priv_key private key
+ * @param pub_key public key
  * @return session instance on success, NULL if fails
  */
  libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
-                                   const char *priv_key, const char *pub_key) {
+                                   unsigned port, const char *priv_key, 
+				   const char *pub_key) 
+{
 
-	LOG_MSG(LOG_DEBUG, "");
 	char *home_dir;
 	char *private_key_file;
 	char *public_key_file;
 	int key_size;
 	libssh2_conn *conn;	
+
+	LOG_MSG(LOG_DEBUG, "");
+
 	conn = malloc(sizeof(libssh2_conn));
 	conn->hostname = hostname;
 	conn->username = username;
@@ -820,8 +845,6 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 
 	return conn;
 }
-
-
 /* ------------------------------------------------------------------------- */
 /** Builds a test command out of test step and executes it in remote end
  * @param conn SSH session
@@ -892,7 +915,6 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	free(test_cmd);
 	return ret;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Clean up
  * returns 0 on success, -1 if fails
@@ -902,42 +924,40 @@ int lssh2_executor_close (libssh2_conn *conn)
 	LOG_MSG(LOG_DEBUG, "");
 	return lssh2_session_free(conn);
 }
-
 /* ------------------------------------------------------------------------- */
 /** Kills remote shell
  * returns 0 on success, -1 if fails
  */
 int lssh2_kill (libssh2_conn *conn, int signal)
 {
-	LOG_MSG(LOG_DEBUG, "");
-	
 	char *kill_cmd;
 	int kill_cmd_size;
 	exec_data data;
+
+	LOG_MSG(LOG_DEBUG, "");
 
 	if (!conn) {
 		LOG_MSG(LOG_DEBUG, "No session");
 		return -1;
 	}
-
+	
 	kill_cmd_size = strlen(TRLITE_KILL_SHELL_CMD) + 5; /* Max PID size */
 	kill_cmd = malloc(kill_cmd_size);
 	snprintf (kill_cmd, kill_cmd_size, TRLITE_KILL_SHELL_CMD,
 	          signal);
-
+	
 	data.stdout_data.buffer = NULL;
 	data.stderr_data.buffer = NULL;
 	data.result = -1;
-
+	
 	LOG_MSG(LOG_DEBUG, "%s", kill_cmd);
 	if (lssh2_execute_command(conn, kill_cmd, &data) < 0) {
 		LOG_MSG(LOG_ERR, "Killing remote shell failed");
 	}
-
+	
 	free(kill_cmd);
 	return 0;
 }
-
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */
 

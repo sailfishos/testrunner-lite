@@ -344,7 +344,7 @@ LOCAL int step_post_process (const void *data, const void *user)
 		goto out;
 
 	if (opts.target_address) {
-		ssh_kill (opts.target_address, step->pid);
+		ssh_kill (opts.target_address, opts.target_port, step->pid);
 	} 
 	kill_pgroup(step->pgid, SIGKILL);
 	

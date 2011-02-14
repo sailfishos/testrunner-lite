@@ -75,6 +75,7 @@ typedef struct {
 	int   skip_hwinfo;     /**< flag for skipping hwinfo step */
 	int   log_level;       /**< logging level */
 	char *target_address;  /**< SUT address. */
+	unsigned target_port;  /**< optional SUT port. */
 	char *vcsurl;          /**< URL of VCS containing the test plan */ 
 	char *packageurl;      /**< URL package containing the test plan */
 #ifdef ENABLE_LIBSSH2

@@ -52,15 +52,15 @@
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-void ssh_executor_init (const char *hostname);
+void ssh_executor_init (const char *hostname, unsigned port);
 /* ------------------------------------------------------------------------- */
-int ssh_execute (const char *hostname, const char *command);
+int ssh_execute (const char *hostname, unsigned port, const char *command);
 /* ------------------------------------------------------------------------- */
-int ssh_kill (const char *hostname, pid_t id);
+int ssh_kill (const char *hostname, unsigned port, pid_t id);
 /* ------------------------------------------------------------------------- */
-int ssh_check_conn (const char *hostname);
+int ssh_check_conn (const char *hostname, unsigned port);
 /* ------------------------------------------------------------------------- */
-void ssh_clean (const char *hostname, pid_t id);
+void ssh_clean (const char *hostname, unsigned port, pid_t id);
 /* ------------------------------------------------------------------------- */
 void ssh_executor_close (const char *hostname);
 /* ------------------------------------------------------------------------- */

@@ -213,7 +213,8 @@ LOCAL void version()
 /* ------------------------------------------------------------------------- */
 /** Display license information.
  */
-LOCAL void copyright () {
+LOCAL void copyright () 
+{
         printf ("testrunner-lite, © Nokia 2010 All rights reserved,\n"
                 "licensed under the Gnu Lesser General Public License "
 		"version 2.1,\n"
@@ -270,7 +271,8 @@ LOCAL int create_output_folder ()
  * @param opts Options struct containing field(s) to store url
  * @return 0 in success, 1 on failure
  */
-LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) {
+LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) 
+{
 	if (url) {
 		opts->remote_logger = malloc(strlen(url) + 1);
 		strcpy(opts->remote_logger, url);
@@ -289,49 +291,50 @@ LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) {
  * @return 0 in success, 1 on failure
  */
 LOCAL int parse_target_address_libssh2(char *address, 
-                                       testrunner_lite_options *opts) {
+                                       testrunner_lite_options *opts) 
+{
 	const char *token;
 	char *param;
 	char *param_ptr;
 	char *item;
 	char *username;
 	char *target_address;
-    if (address) {
-	    /* Parse username from address */
-	    item = NULL;
-	    param = malloc(strlen(address) + 1);
-	    strcpy(param, address);
-	    
-	    /* will be modified by strsep */
-	    param_ptr = param;
-	    token = "@";
-	    item = strsep(&param_ptr, token);
-	    
-	    /* No username provided, using the host username by default */
-	    if (!param_ptr) {
-		    item = getenv("LOGNAME");
-		    if (!item) {
-			    fprintf(stderr, "Error: could not get env for LOGNAME\n");
-			    return 1;
-		    }
-		    username = item;
-		    target_address = address;
-	    } else {
-		    username = item;
-		    target_address = param_ptr;
-	    }
-	    opts->username = malloc(strlen(username) + 1);
-	    strcpy(opts->username, username);
-	    opts->target_address = malloc(strlen(target_address) + 1);
-	    strcpy(opts->target_address, target_address);
-	    free(param);
-	    return 0;
-    } else {
-	    return 1;
-    }
+	
+	if (address) {
+		/* Parse username from address */
+		item = NULL;
+		param = malloc(strlen(address) + 1);
+		strcpy(param, address);
+		
+		/* will be modified by strsep */
+		param_ptr = param;
+		token = "@";
+		item = strsep(&param_ptr, token);
+		
+		/* No username provided, using the host username by default */
+		if (!param_ptr) {
+			item = getenv("LOGNAME");
+			if (!item) {
+				fprintf(stderr, "Error: could not get "
+					"env for LOGNAME\n");
+				return 1;
+			}
+			username = item;
+			target_address = address;
+		} else {
+			username = item;
+			target_address = param_ptr;
+		}
+		opts->username = malloc(strlen(username) + 1);
+		strcpy(opts->username, username);
+		opts->target_address = malloc(strlen(target_address) + 1);
+		strcpy(opts->target_address, target_address);
+		free(param);
+		return 0;
+	} else {
+		return 1;
+	}
 }
-
-
 /* ------------------------------------------------------------------------- */
 /** Parse keypair
  * @param keypair full path to keypair in format: private_key:public_key
@@ -368,18 +371,31 @@ LOCAL int parse_keypair(char *keypair, testrunner_lite_options *opts) {
 	return 0;
 }
 #endif
-
 /* ------------------------------------------------------------------------- */
 /** Parse target address option argument for ssh client option
  * @param address SUT address.
  * @param opts Options struct containing field(s) to store url
  * @return 0 in success, 1 on failure
  */
-LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) {
+LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) 
+{
+	char *p; 
 
 	if (address) {
-		opts->target_address = malloc(strlen(address) + 1);
-		strcpy(opts->target_address, address);
+		opts->target_address = strdup(address);
+		p = strchr (opts->target_address, ':');
+		if (p) {
+			*p = '\0';
+			p++;
+			opts->target_port = atoi (p);
+			if (opts->target_port < 0 || 
+			    opts->target_port > USHRT_MAX) {
+				fprintf (stderr, "Invalid port %d\n", 
+					 opts->target_port);
+				return 1;
+			}
+				
+		}
 		return 0;
 	} else {
 		return 1;
