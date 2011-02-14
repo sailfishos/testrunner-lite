@@ -884,9 +884,20 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	} else {
 		ret = 0;
 	}
-	lssh2_stop_timer();
 
-	LOG_MSG(LOG_DEBUG, "Test case return value %d", data->result);
+	/* Check if the remote process was signaled */
+	if (last_timeout >= SOFT_TIMEOUT_KILLED && 
+	    last_timeout < HARD_TIMEOUT_KILLED) {
+		data->signaled = SIGTERM;
+		LOG_MSG(LOG_DEBUG, "Test step was signaled with SIGTERM");
+	} 
+	else if (last_timeout == HARD_TIMEOUT_KILLED) {
+		data->signaled = SIGKILL;
+		LOG_MSG(LOG_DEBUG, "Test step was signaled with SIGKILL");
+	}		
+
+	lssh2_stop_timer();
+	LOG_MSG(LOG_DEBUG, "Test step return value %d", data->result);
 
 	free(log_cmd);
 	free(test_cmd);
