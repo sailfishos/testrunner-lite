@@ -813,7 +813,7 @@ int execute(const char* command, exec_data* data) {
 	}
 
 #ifdef ENABLE_LIBSSH2
-	if (options->libssh2) {
+	if (options->libssh2 && options->target_address) {
 		return execute_libssh2(command, data);
 	}
 #endif
