@@ -32,10 +32,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <signal.h>
 #include <ctype.h>
+#include <limits.h>
 
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
@@ -48,6 +50,9 @@
 #include "utils.h"
 #include "hwinfo.h"
 #include "log.h"
+#ifdef ENABLE_EVENTS
+#include "event.h"
+#endif
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -94,6 +99,14 @@ LOCAL void version();
 LOCAL void copyright();
 /* ------------------------------------------------------------------------- */
 LOCAL int create_output_folder ();
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_target_address(char *address, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int test_chroot(char * folder);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -142,7 +155,7 @@ LOCAL void usage()
 		"test case named as bad_test. Next, all tests with type\n\t\t"
 		"unknown are disabled. The remaining tests will be\n\t\t"
 		"executed. (Currently supported filter type are: \n\t\t"
-		"testset,requirement,feature and type)\n");
+		"testset,testcase,requirement,feature and type)\n");
 	printf ("  -c, --ci\tDisable validation of test "
 		"definition against schema.\n");
 	printf ("  -s, --semantic\n\t\tEnable validation of test "
@@ -159,7 +172,30 @@ LOCAL void usage()
 		"test control PC (host) side. "
 		"ADDRESS is the ipv4 adress of the\n\t\t"
 		"system under test.\n");
-    
+#ifdef ENABLE_LIBSSH2
+	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
+	        "Run host based testing with native ssh (libssh2) "
+	        "EXPERIMENTAL\n");
+	printf ("  -k, --keypair private_key:public:key\n"
+	        "\t\tlibssh2 feature\n"
+	        "\t\tKeypair consists of private and public key file names\n"
+	        "\t\tThey are expected to be found under $HOME/.ssh\n");
+#endif
+	printf ("  -M, --disable-measurement-verdict\n\t\t"
+		" Do not fail cases based on measurement data\n");
+	printf ("  -C PATH, --chroot=PATH\n\t\t"
+		"Run tests inside a chroot environment. Note that this\n\t\t"
+		"doesn't change the root of the testrunner itself,\n\t\t"
+		"only the tests will have the new root folder set.\n");
+	printf ("  -u URL, --vcs-url=URL\n\t\t"
+		"Causes testrunner-lite to write the given VCS URL to "
+		"results.\n\t\t\n"
+		);
+	printf ("  -U URL, --package-url=URL\n\t\t"
+		"Causes testrunner-lite to write the given package URL to "
+		"results.\n\t\t\n"
+		);
+
 	return;
 }
 /** Print version
@@ -177,11 +213,12 @@ LOCAL void version()
 /* ------------------------------------------------------------------------- */
 /** Display license information.
  */
-LOCAL void copyright () {
+LOCAL void copyright () 
+{
         printf ("testrunner-lite, © Nokia 2010 All rights reserved,\n"
                 "licensed under the Gnu Lesser General Public License "
 		"version 2.1,\n"
-                "Contact: Ville Ilvonen <ville.p.ilvonen@nokia.com>\n");
+                "Contact: MeeGo QA <meego-qa@lists.meego.com>\n");
 }
 /* ------------------------------------------------------------------------- */
 /** Create output folder based on the argument for -o
@@ -191,7 +228,7 @@ LOCAL int create_output_folder ()
 {
 	int len;
 	char *p;
-	char *pwd, *cmd;
+	char pwd[PATH_MAX], *cmd;
 	
 	if ((p = strrchr (opts.output_filename, '/'))) {
 		len = p - opts.output_filename;
@@ -200,11 +237,11 @@ LOCAL int create_output_folder ()
 		strncpy (opts.output_folder, opts.output_filename, len + 1);
 
 	} else {
-		pwd = getenv ("PWD");
-		if (!pwd) {
-			LOG_MSG (LOG_ERR, "%s: getenv() failed %s\n",
+		if (!getcwd (pwd, PATH_MAX)) {
+			LOG_MSG (LOG_ERR, "%s: getcwd() failed %s\n",
 				 PROGNAME, strerror (errno));
 			return 1;
+
 		}
 		opts.output_folder = (char *)malloc (strlen (pwd) + 2);
 		strcpy (opts.output_folder, pwd);
@@ -234,7 +271,8 @@ LOCAL int create_output_folder ()
  * @param opts Options struct containing field(s) to store url
  * @return 0 in success, 1 on failure
  */
-LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) {
+LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) 
+{
 	if (url) {
 		opts->remote_logger = malloc(strlen(url) + 1);
 		strcpy(opts->remote_logger, url);
@@ -245,21 +283,221 @@ LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) {
 
 }
 
+#ifdef ENABLE_LIBSSH2
 /* ------------------------------------------------------------------------- */
-/** Parse target address option argument.
+/** Parse target address option argument for libssh2 option
  * @param address SUT address.
  * @param opts Options struct containing field(s) to store url
  * @return 0 in success, 1 on failure
  */
-LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) {
-    if (address) {
-        opts->target_address = malloc(strlen(address) + 1);
-        strcpy(opts->target_address, address);
-        return 0;
-    } else {
-        return 1;
-    }
+LOCAL int parse_target_address_libssh2(char *address, 
+                                       testrunner_lite_options *opts) 
+{
+	const char *token;
+	char *param, *p;
+	char *param_ptr;
+	char *item;
+	char *username;
+	char *target_address;
+	
+	if (address) {
+		/* Parse username from address */
+		item = NULL;
+		param = malloc(strlen(address) + 1);
+		strcpy(param, address);
+		
+		/* will be modified by strsep */
+		param_ptr = param;
+		token = "@";
+		item = strsep(&param_ptr, token);
+		
+		/* No username provided, using the host username by default */
+		if (!param_ptr) {
+			item = getenv("LOGNAME");
+			if (!item) {
+				fprintf(stderr, "Error: could not get "
+					"env for LOGNAME\n");
+				free (param);
+				return 1;
+			}
+			username = item;
+			target_address = address;
+		} else {
+			username = item;
+			target_address = param_ptr;
+		}
+		opts->username = malloc(strlen(username) + 1);
+		strcpy(opts->username, username);
+		opts->target_address = malloc(strlen(target_address) + 1);
+		strcpy(opts->target_address, target_address);
+		p = strchr (opts->target_address, ':');
+		if (p) {
+			*p = '\0';
+			p++;
+			opts->target_port = atoi (p);
+			if (opts->target_port < 0 || 
+			    opts->target_port > USHRT_MAX) {
+				fprintf (stderr, "Invalid port %d\n", 
+					 opts->target_port);
+				free(param);
+				return 1;
+			}
+		}
+		free(param);
+		return 0;
+	} else {
+		return 1;
+	}
+}
+/* ------------------------------------------------------------------------- */
+/** Parse keypair
+ * @param keypair full path to keypair in format: private_key:public_key
+ * @param opts Options struct containing field(s) to store key filenames
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_keypair(char *keypair, testrunner_lite_options *opts) {
+	char *param_ptr;
+	char *item;
+	char *param;
+	char *token;
 
+	item = NULL;
+	param = malloc(strlen(keypair) + 1);
+	strcpy(param, keypair);
+	
+	/* will be modified by strsep */
+	param_ptr = param;
+	token = ":";
+	item = strsep(&param_ptr, token);
+	if (!item || !strlen(item)) {
+		free(param);
+		return 1;
+	}
+	opts->priv_key = malloc(strlen(item) + 1);
+	strncpy(opts->priv_key, item, strlen(item) + 1);
+	item = strsep(&param_ptr, token);
+	if (!item || !strlen(item)) {
+		free(param);
+		return 1;
+	}
+	opts->pub_key = malloc(strlen(item) + 1);
+	strncpy(opts->pub_key, item, strlen(item));
+	return 0;
+}
+#endif
+/* ------------------------------------------------------------------------- */
+/** Parse target address option argument for ssh client option
+ * @param address SUT address.
+ * @param opts Options struct containing field(s) to store url
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_target_address(char *address, testrunner_lite_options *opts) 
+{
+	char *p; 
+
+	if (address) {
+		opts->target_address = strdup(address);
+		p = strchr (opts->target_address, ':');
+		if (p) {
+			*p = '\0';
+			p++;
+			opts->target_port = atoi (p);
+			if (opts->target_port < 0 || 
+			    opts->target_port > USHRT_MAX) {
+				fprintf (stderr, "Invalid port %d\n", 
+					 opts->target_port);
+				return 1;
+			}
+		}
+		return 0;
+	} else {
+		return 1;
+	}
+
+}
+
+/* ------------------------------------------------------------------------- */
+/** Parse chroot option argument.
+ * @param folder path to change root envrionment
+ * @param opts Options struct containing field(s) to store path
+ * @return 0 in success, 1 on generic error, 2 if folder doesn't exist,
+ *    3 if folder isn't a directory, 4 if there is a problem with the chroot
+ */
+LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts) {
+	struct stat stat_buf;
+
+	if (folder) {
+		opts->chroot_folder = malloc(strlen(folder) + 1);
+		strcpy(opts->chroot_folder, folder);
+
+		// check that folder exists, is a directory and we can chroot into it
+		if (stat(folder, &stat_buf) == -1) {
+			fprintf(stderr, "%s: could not stat folder '%s'\n",
+				PROGNAME, folder);
+			return 2;
+		}
+		if (!S_ISDIR(stat_buf.st_mode)) {
+			fprintf(stderr, "%s: '%s' is not a directory\n",
+				PROGNAME, folder);
+			return 3;
+		}
+		if (test_chroot(folder) != 0) {
+			return 4;
+		}
+
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+/* ------------------------------------------------------------------------- */
+/** Test access to chroot.
+ * @param folder path to change root envrionment
+ * @return 0 in success, 1 on generic error, 2 if there is a problem with
+ *    the chroot
+ */
+LOCAL int test_chroot(char * folder) {
+	pid_t pid;
+	int status;
+
+	// make sure we can chroot to the folder
+	pid = fork();
+	if (pid > 0) {
+		waitpid(pid, &status, 0);
+		switch (WEXITSTATUS(status)) {
+			case 1:
+				fprintf(stderr, "%s: folder '%s' is inaccessible\n",
+					PROGNAME, folder);
+				return 2;
+			case 2:
+				fprintf(stderr, "%s: unable to chroot to folder '%s'\n",
+					PROGNAME, folder);
+				return 2;
+			case 3:
+				fprintf(stderr, "%s: failed to execute '/bin/sh' inside '%s'\n",
+					PROGNAME, folder);
+				return 2;
+			default:
+				break;
+		}
+	} else if (pid == 0) {
+		if (chdir(folder) == -1) {
+			exit(1);
+		}
+		if (chroot(".") == -1) {
+			exit(2);
+		}
+		if (WEXITSTATUS(system("exit")) != 0) {
+			exit(3);
+		}
+		exit(0);
+	} else {
+		fprintf(stderr, "Fork failed: %s\n", strerror(errno));
+		return 1;
+	}
+
+	return 0;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -275,6 +513,11 @@ int main (int argc, char *argv[], char *envp[])
 {
 	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0, V_flag = 0;
 	int opt_char, option_idx;
+#ifdef ENABLE_LIBSSH2
+	opts.priv_key = NULL;
+	opts.pub_key = NULL;
+	opts.libssh2 = 0;
+#endif
 	FILE *ifile = NULL;
 	testrunner_lite_return_code retval = TESTRUNNER_LITE_OK;
 	xmlChar *filter_string = NULL;
@@ -292,13 +535,22 @@ int main (int argc, char *argv[], char *envp[])
 			{"manual", no_argument, &m_flag, 1},
 			{"filter", required_argument, NULL, 'l'},
 			{"logger", required_argument, NULL, 'L'},
+			{"vcs-url", required_argument, NULL, 'u'},
+			{"package-url", required_argument, NULL, 'U'},
 			{"ci", no_argument, &opts.disable_schema},
 			{"semantic", no_argument, &opts.semantic_schema},
 			{"validate-only", no_argument, &A_flag},
 			{"no-hwinfo", no_argument, &opts.skip_hwinfo, 1},
 			{"target", required_argument, NULL, 't'},
+#ifdef ENABLE_LIBSSH2
+			{"libssh2", required_argument, NULL, 'n'},
+			{"keypair", required_argument, NULL, 'k'},
+#endif
 			{"print-step-output", no_argument, 
 			 &opts.print_step_output, 1},
+			{"disable-measurement-verdict", no_argument, 
+			 &opts.no_measurement_verdicts, 1},
+
 			{0, 0, 0, 0}
 		};
 
@@ -321,8 +573,9 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSsmcPf:o:e:l:r:L:t:v::",
-					testrunnerlite_options, &option_idx);
+					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:n:k:v"
+					"::", testrunnerlite_options, 
+					&option_idx);
 		if (opt_char == -1)
 			break;
 		
@@ -423,9 +676,41 @@ int main (int argc, char *argv[], char *envp[])
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
-			break;    
+			break;
+		case 'C':
+			if (parse_chroot_folder(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
+#ifdef ENABLE_LIBSSH2
+		case 'n':
+			opts.libssh2 = 1;
+			if (parse_target_address_libssh2(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
+		case 'k':
+			if (parse_keypair(optarg, &opts) != 0) {
+				fprintf(stderr, "Error parsing libssh2 keypair\n");
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
+#endif
 		case 'P':
 			opts.print_step_output = 1;
+			break;
+		case 'M':
+			opts.no_measurement_verdicts = 1;
+			break;
+
+		case 'u':
+			opts.vcsurl = strdup (optarg);
+			break;
+		case 'U':
+			opts.packageurl = strdup (optarg);
 			break;
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
@@ -451,6 +736,14 @@ int main (int argc, char *argv[], char *envp[])
 	}
 	if (V_flag) {
 		version();
+		goto OUT;
+	}
+
+	if (opts.chroot_folder && opts.target_address) {
+		fprintf (stderr,
+			"%s: -C and -t are mutually exclusive\n",
+			PROGNAME);
+		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
 	}
 	
@@ -500,7 +793,10 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	 * Set remote execution options.
 	 */
-	executor_init (&opts);
+	if (executor_init (&opts) < 0) {
+		LOG_MSG(LOG_ERR, "Executor init failed... exiting");
+		goto OUT;
+	}
 	/*
 	 * Validate the input xml
 	 */
@@ -552,12 +848,18 @@ int main (int argc, char *argv[], char *envp[])
 		retval = TESTRUNNER_LITE_RESULT_LOGGING_FAIL;
 		goto OUT;
 	}
+#ifdef ENABLE_EVENTS
+	init_event_system();
+#endif
 	/*
 	** Process test definition
 	*/
 	td_process();
 
 	executor_close();
+#ifdef ENABLE_EVENTS
+	cleanup_event_system();
+#endif
 	td_reader_close();
 	close_result_logger();
 	LOG_MSG (LOG_INFO, "Results were written to: %s", opts.output_filename);
@@ -571,6 +873,13 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
+	if (opts.packageurl) free (opts.packageurl);
+	if (opts.vcsurl) free (opts.vcsurl);
+#ifdef ENABLE_LIBSSH2
+	if (opts.username) free (opts.username);
+	if (opts.priv_key) free (opts.priv_key);
+	if (opts.pub_key) free (opts.pub_key);
+#endif
 	if (filter_string) free (filter_string);
 	if (bail_out == 255+SIGINT) {
 		signal (SIGINT, SIG_DFL);

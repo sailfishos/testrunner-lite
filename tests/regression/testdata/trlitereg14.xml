@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testdefinition version="1.0"> <!-- result="0" -->
+ <hwiddetect>/usr/bin/hwidetect_executable</hwiddetect>
+ <description>This is the description</description>
+ <suite name="suite#1">
+  <set name="set#1.1">
+   <case name="case#1.1.1"/> <!-- result="N/A" -->
+   <case name="case#1.1.2">  <!-- result="PASS" -->
+    <step>ls</step> <!-- result="PASS" -->
+   </case>
+   <case name="case#1.1.3" state="Design">  <!-- result="N/A" -->
+    <step>ls</step> <!-- result="N/A" -->
+   </case>
+  </set>
+ </suite>
+</testdefinition>

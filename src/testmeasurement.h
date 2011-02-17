@@ -21,11 +21,14 @@
  *
  */
 
-#ifndef REMOTE_EXECUTOR_H
-#define REMOTE_EXECUTOR_H
+#ifndef TESTMEASUREMENT_H
+#define TESTMEASUREMENT_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
+#include <sys/time.h>
+#include <libxml/xmlstring.h>
+#include <libxml/list.h>
 #include "testrunnerlite.h"
 
 /* ------------------------------------------------------------------------- */
@@ -34,7 +37,6 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-/* None */
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
@@ -52,17 +54,10 @@
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-void ssh_executor_init (const char *hostname, unsigned port);
+int get_measurements (const char *file, xmlListPtr measurements);
 /* ------------------------------------------------------------------------- */
-int ssh_execute (const char *hostname, unsigned port, const char *command);
+int eval_measurements (xmlListPtr measurements, int *verdict, 
+		       char **fail_string);
 /* ------------------------------------------------------------------------- */
-int ssh_kill (const char *hostname, unsigned port, pid_t id);
-/* ------------------------------------------------------------------------- */
-int ssh_check_conn (const char *hostname, unsigned port);
-/* ------------------------------------------------------------------------- */
-void ssh_clean (const char *hostname, unsigned port, pid_t id);
-/* ------------------------------------------------------------------------- */
-void ssh_executor_close (const char *hostname);
-/* ------------------------------------------------------------------------- */
-#endif                          /* REMOTE_EXECUTOR_H */
+#endif                          /* TESTMEASUREMENT_H */
 /* End of file */

@@ -26,7 +26,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
-/* None */
+#include <netinet/in.h>
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -74,7 +74,18 @@ typedef struct {
 	int   run_manual;      /**< flag for manual tests */
 	int   skip_hwinfo;     /**< flag for skipping hwinfo step */
 	int   log_level;       /**< logging level */
-	char *target_address;   /**< SUT address. */
+	char *target_address;  /**< SUT address. */
+	in_port_t target_port;  /**< optional SUT port. */
+	char *vcsurl;          /**< URL of VCS containing the test plan */ 
+	char *packageurl;      /**< URL package containing the test plan */
+#ifdef ENABLE_LIBSSH2
+	char *username;         /**< Remote user name for libssh2 */
+	int   libssh2;          /**< flag for libssh2 usage */
+	char *priv_key;  /**< private key file with full path (libssh2) */
+	char *pub_key;  /**< public key file with full path (libssh2) */
+#endif
+	int   no_measurement_verdicts; /**< flag for measurement verdicts */
+	char *chroot_folder;   /**< change root folder */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

@@ -145,7 +145,7 @@ unsigned int trim_string (char *ins, char *outs)
 
 	return outs_i;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Check if a string list contains certain value
  * @param *list List of values delimited by a character defined in delim
  * @param *value The value searched from the list

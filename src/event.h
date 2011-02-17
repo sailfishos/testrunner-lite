@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
  *
- * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
+ * Contact: Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -21,12 +21,12 @@
  *
  */
 
-#ifndef REMOTE_EXECUTOR_H
-#define REMOTE_EXECUTOR_H
+#ifndef TESTEVENT_H
+#define TESTEVENT_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
-#include "testrunnerlite.h"
+#include "testdefinitiondatatypes.h"
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -38,7 +38,6 @@
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
-/* ------------------------------------------------------------------------- */
 /* None */
 
 /* ------------------------------------------------------------------------- */
@@ -52,17 +51,14 @@
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-void ssh_executor_init (const char *hostname, unsigned port);
+int init_event_system();
 /* ------------------------------------------------------------------------- */
-int ssh_execute (const char *hostname, unsigned port, const char *command);
+void cleanup_event_system();
 /* ------------------------------------------------------------------------- */
-int ssh_kill (const char *hostname, unsigned port, pid_t id);
+int wait_for_event(td_event *event);
 /* ------------------------------------------------------------------------- */
-int ssh_check_conn (const char *hostname, unsigned port);
+int send_event(td_event *event);
 /* ------------------------------------------------------------------------- */
-void ssh_clean (const char *hostname, unsigned port, pid_t id);
-/* ------------------------------------------------------------------------- */
-void ssh_executor_close (const char *hostname);
-/* ------------------------------------------------------------------------- */
-#endif                          /* REMOTE_EXECUTOR_H */
+
+#endif
 /* End of file */

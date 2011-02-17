@@ -41,11 +41,15 @@
 #include "testdefinitionparser.h"
 #include "testresultlogger.h"
 #include "testfilters.h"
+#include "testmeasurement.h"
 #include "executor.h"
 #include "remote_executor.h"
 #include "manual_executor.h"
 #include "utils.h"
 #include "log.h"
+#ifdef ENABLE_EVENTS
+#include "event.h"
+#endif
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
@@ -103,6 +107,8 @@ LOCAL void process_hwiddetect();
 /* ------------------------------------------------------------------------- */
 LOCAL void process_suite(td_suite *);
 /* ------------------------------------------------------------------------- */
+LOCAL void end_suite ();
+/* ------------------------------------------------------------------------- */
 LOCAL void process_set(td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_case (const void *, const void *);
@@ -111,20 +117,48 @@ LOCAL int case_result_fail (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int process_get (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+LOCAL int process_get_case (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 LOCAL int step_execute (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int prepost_steps_execute (const void *, const void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int step_result_na (const void *, const void *);
+LOCAL int step_result_fail (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int step_post_process (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
+LOCAL int event_execute (const void *data, const void *user);
+/* ------------------------------------------------------------------------- */
+#endif
 /* FORWARD DECLARATIONS */
 /* None */
 
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
+/** Process event
+ *  @param data event data
+ *  @param user step data
+ *  @return 1 if event is successfully processed, 0 if not
+ */
+LOCAL int event_execute (const void *data, const void *user)
+{
+	td_event *event = (td_event *)data;
+	int ret = 0;
+
+	if (event->type == EVENT_TYPE_SEND) {
+		ret = send_event(event);
+	}
+
+	if (event->type == EVENT_TYPE_WAIT) {
+		ret = wait_for_event(event);
+	}
+	
+	return ret;
+}
+#endif	/* ENABLE_EVENTS */
 /** Process step data. execute one step from case.
  *  @param data step data
  *  @param user case data
@@ -150,6 +184,20 @@ LOCAL int step_execute (const void *data, const void *user)
 		}
 		goto out;
 	}
+
+#ifdef ENABLE_EVENTS
+	if (step->event) {
+		/* just process the event */
+		if (!event_execute(step->event, step)) {
+			step->return_code = 1;
+			res = CASE_FAIL;
+			LOG_MSG (LOG_INFO, "EVENT: '%s' failed\n",
+					 step->event->resource);
+		}
+		step->has_result = 1;
+		goto out;
+	}
+#endif	/* ENABLE_EVENTS */
 	
 	if (step->manual) {
 		if (c->dummy) {
@@ -200,21 +248,25 @@ LOCAL int step_execute (const void *data, const void *user)
 		step->return_code = edata.result;
 		step->start = edata.start_time;
 		step->end = edata.end_time;
+
 		/*
 		** Post and pre steps fail only if the expected result is 
 		*  specified
 		*/
-		if (c->dummy) {
-			if (step->has_expected_result &&
-			    (step->return_code != step->expected_result)) {
-				LOG_MSG (LOG_INFO, 
-					 "STEP: %s return %d expected %d\n",
-					 step->step, step->return_code, 
-					 step->expected_result);
-				res = CASE_FAIL;
-			}
+		if (c->dummy) 
+			if (!step->has_expected_result)
+				goto out;
+		/*
+		** Testrunner-lite may have killed the step command on timeout
+		** in this case we do not trust the return value.
+		*/
+		if (edata.signaled) { 
+			step->fail = 1;
+			LOG_MSG (LOG_INFO, "STEP: %s terminated by signal %d",
+				 step->step, edata.signaled);
+			res = CASE_FAIL;
 		} else if (step->return_code != step->expected_result) {
-			LOG_MSG (LOG_INFO, "STEP: %s return %d expected %d\n",
+			LOG_MSG (LOG_INFO, "STEP: %s return %d expected %d",
 				 step->step, step->return_code, 
 				 step->expected_result);
 			res = CASE_FAIL;
@@ -227,7 +279,6 @@ LOCAL int step_execute (const void *data, const void *user)
 	
 	return (res == CASE_PASS);
 }
-
 /* ------------------------------------------------------------------------- */
 /** Process pre/post steps.
  *  @param data steps data
@@ -247,20 +298,19 @@ LOCAL int prepost_steps_execute (const void *data, const void *user)
 	
 	return 1;
 }
-
 /* ------------------------------------------------------------------------- */
-/** Set N/A result for test step
+/** Set fail result for test step
  *  @param data step data
  *  @param user failure info string
  *  @return 1 always
  */
-LOCAL int step_result_na (const void *data, const void *user) 
+LOCAL int step_result_fail (const void *data, const void *user) 
 {
 	td_step *step = (td_step *)data;
 	char *failure_info = (char *)user;
 
 	step->has_result = 1;
-	step->return_code = step->expected_result + 255; 
+	step->fail = 1;
 	step->failure_info = xmlCharStrdup (failure_info);
 	
 	return 1;
@@ -294,14 +344,13 @@ LOCAL int step_post_process (const void *data, const void *user)
 		goto out;
 
 	if (opts.target_address) {
-		ssh_kill (opts.target_address, step->pid);
+		ssh_kill (opts.target_address, opts.target_port, step->pid);
 	} 
 	kill_pgroup(step->pgid, SIGKILL);
 	
  out:
 	return 1;
 }
-
 /* ------------------------------------------------------------------------- */
 /** Process case data. execute steps in case.
  *  @param data case data
@@ -329,6 +378,12 @@ LOCAL int process_case (const void *data, const void *user)
 		LOG_MSG (LOG_INFO, "Test case %s is filtered", c->gen.name);
 		return 1;
 	}
+	if (c->state && !xmlStrcmp (c->state, BAD_CAST "Design")) {
+		LOG_MSG (LOG_INFO, "Skipping case in Design state (%s)",
+			 c->gen.name);
+		c->case_res = CASE_NA;
+		return 1;
+	}
 
 	cur_case_name = c->gen.name;
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
@@ -340,18 +395,20 @@ LOCAL int process_case (const void *data, const void *user)
 	
 	if (c->gen.manual && opts.run_manual)
 		pre_manual (c);
-	cur_step_num = 0;
 	if (xmlListSize (c->steps) == 0) {
 		LOG_MSG (LOG_WARNING, "Case with no steps (%s).",
 			 c->gen.name);
 		c->case_res = CASE_NA;
 	}
-
+	cur_step_num = 0;
+	
 	xmlListWalk (c->steps, step_execute, data);
 	xmlListWalk (c->steps, step_post_process, data);
 	
 	if (c->gen.manual && opts.run_manual)
 		post_manual (c);
+
+	xmlListWalk (c->gets, process_get_case, c);
 	
 	LOG_MSG (LOG_INFO, "Finished test case %s Result: %s",
 		 c->gen.name, case_result_str(c->case_res));
@@ -376,15 +433,14 @@ LOCAL int case_result_fail (const void *data, const void *user)
 	c->case_res = CASE_FAIL;
 	c->failure_info = xmlCharStrdup (failure_info);
 
-	xmlListWalk (c->steps, step_result_na, user);
+	xmlListWalk (c->steps, step_result_fail, user);
 	
 	return 1;
 }
-
 /* ------------------------------------------------------------------------- */
-/** Process get data. execute steps in case.
- *  @param data case data
- *  @param user set data
+/** Process set get data. 
+ *  @param data get file data
+ *  @param user not used
  *  @return 1 always
  */
 LOCAL int process_get (const void *data, const void *user)
@@ -394,7 +450,8 @@ LOCAL int process_get (const void *data, const void *user)
 	xmlChar *command;
 	char *fname;
 	exec_data edata;
-	char    *remote = opts.target_address;
+	int command_len;
+	char *remote = opts.target_address;
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data(&edata);
@@ -409,12 +466,38 @@ LOCAL int process_get (const void *data, const void *user)
 	*/
 	if (remote) {
 		opts.target_address = NULL; /* execute locally */
-		command = (xmlChar *)malloc (strlen ("scp ") + 
-					     strlen (fname) +
-					     strlen (opts.output_folder) +
-					     strlen (remote) + 10);
+
+#ifdef ENABLE_LIBSSH2
+		if (opts.libssh2) {
+			command_len = strlen ("scp ") + 
+				strlen (opts.username) + 1 +
+				strlen (fname) +
+				strlen (opts.output_folder) +
+				strlen (remote) + 10;
+		} else {
+#endif
+			command_len = strlen ("scp ") + 
+				strlen (fname) +
+				strlen (opts.output_folder) +
+				strlen (remote) + 10;
+#ifdef ENABLE_LIBSSH2
+		}
+#endif
+			   
+		command = (xmlChar *)malloc (command_len);
+
+#ifdef ENABLE_LIBSSH2
+		if (opts.libssh2) {
+			sprintf ((char *)command, "scp %s@%s:\'%s\' %s", opts.username,
+			         remote, fname, opts.output_folder);
+		} else {
+#endif
 		sprintf ((char *)command, "scp %s:\'%s\' %s", remote, fname,
 			 opts.output_folder);
+#ifdef ENABLE_LIBSSH2
+		}
+#endif
+
 
 	} else {
 		command = (xmlChar *)malloc (strlen ("cp ") + 
@@ -431,7 +514,7 @@ LOCAL int process_get (const void *data, const void *user)
 	execute((char*)command, &edata);
 
 	if (edata.result) {
-		LOG_MSG (LOG_ERR, "%s: %s failed: %s\n", PROGNAME, command,
+		LOG_MSG (LOG_INFO, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
@@ -453,7 +536,7 @@ LOCAL int process_get (const void *data, const void *user)
 		 (char*)command);
 	execute((char*)command, &edata);
 	if (edata.result) {
-		LOG_MSG (LOG_ERR, "%s: %s failed: %s\n", PROGNAME, command,
+		LOG_MSG (LOG_WARNING, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
@@ -467,6 +550,70 @@ LOCAL int process_get (const void *data, const void *user)
 	free (fname);
 	return 1;
 }
+/* ------------------------------------------------------------------------- */
+/** Process case get data. 
+ *  @param data get file data
+ *  @param user case data
+ *  @return 1 always
+ */
+LOCAL int process_get_case (const void *data, const void *user)
+{
+	int ret = 0;
+	td_file *file = (td_file *)data;
+	td_case *c = (td_case *)user;
+	char *trimmed_name, *fname, *filename, *failure_str = NULL;
+	int measurement_verdict = CASE_PASS;
+
+	ret = process_get (data, NULL);
+	if (!ret)
+		LOG_MSG (LOG_WARNING, "get file processing failed");
+	
+	trimmed_name = malloc (strlen ((char *)file->filename) + 1);
+	trim_string ((char *)file->filename, trimmed_name);
+	fname = strrchr (trimmed_name, '/');
+	if (!fname)
+		fname = trimmed_name;
+	else
+		fname ++;
+	filename = malloc (strlen((char *)fname) + 2 + 
+			   strlen (opts.output_folder));
+	sprintf (filename, "%s%s", opts.output_folder, fname);
+
+	ret = get_measurements (filename, c->measurements);
+	free (trimmed_name);
+	free (filename);
+	
+	/* Evaluate measurements only if case is otherwise passed ... */
+	if (c->case_res != CASE_PASS)
+		return 1;
+	/* ... and -M flag is not set */ 
+	if (opts.no_measurement_verdicts)
+		return 1;
+	
+	/* ... and measurement getting was succesfull */
+	if (ret) {
+		c->case_res = CASE_FAIL;
+		c->failure_info = xmlCharStrdup ("Failed to get "
+						 "measurement file");
+		return 1;
+	}
+	
+	ret = eval_measurements (c->measurements, &measurement_verdict,
+				 &failure_str);
+	if (ret)
+		return 1;
+	if (measurement_verdict == CASE_FAIL) {
+		LOG_MSG (LOG_INFO, "Failing test case %s (%s)", 
+			 c->gen.name, failure_str ? failure_str : 
+			 "no info");
+		c->case_res = CASE_FAIL;
+		if (failure_str) 
+			c->failure_info = BAD_CAST failure_str;
+	}
+			
+	return 1;
+}
+
 /* ------------------------------------------------------------------------- */
 /** Process test definition
  *  @param *td Test definition data
@@ -503,7 +650,7 @@ LOCAL void process_hwiddetect ()
 		execute((char*)current_td->hw_detector, &edata);
 
 		if (edata.result != EXIT_SUCCESS) {
-			LOG_MSG (LOG_ERR, "Running HW ID detector "
+			LOG_MSG (LOG_WARNING, "Running HW ID detector "
 				 "failed with return value %d",
 				 edata.result);
 		} else if (edata.stdout_data.buffer) {
@@ -593,7 +740,7 @@ LOCAL void process_set (td_set *s)
 		LOG_MSG (LOG_INFO, "Executing pre steps");
 		xmlListWalk (s->pre_steps, prepost_steps_execute, &dummy);
 		if (dummy.case_res != CASE_PASS) {
-			LOG_MSG (LOG_ERR, "Pre steps failed. "
+			LOG_MSG (LOG_INFO, "Pre steps failed. "
 				 "Test set %s aborted.", s->gen.name); 
 			xmlListWalk (s->cases, case_result_fail, 
 				     global_failure ? global_failure :
@@ -612,10 +759,10 @@ LOCAL void process_set (td_set *s)
 		dummy.dummy = 1;
 		xmlListWalk (s->post_steps, prepost_steps_execute, &dummy);
 		if (dummy.case_res == CASE_FAIL)
-			LOG_MSG (LOG_ERR, 
+			LOG_MSG (LOG_INFO, 
 				 "Post steps failed for %s.", s->gen.name);
 	}
-	xmlListWalk (s->gets, process_get, s);
+	xmlListWalk (s->gets, process_get, NULL);
 
  short_circuit:
 	write_post_set (s);

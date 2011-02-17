@@ -260,7 +260,7 @@ START_TEST (test_execute_manual_step_na)
     t_step = td_step_create();
     t_step->step = (xmlChar*)"This is manual test step.";
     
-    /* Make test case fail. */
+    /* Make test case N/A. */
     written = write(pipefd[1], "N\n", 2);
     fail_if (written < 2);
     execute_manual (t_step);
@@ -298,8 +298,9 @@ START_TEST (test_execute_manual_set)
      f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
 		 "testrunner-tests-manual-set.xml -o /tmp/res.xml", "w");
      fail_if (f == NULL, "popen() failed");
-     ret = fwrite ("P\nP\n\n", 1, 5, f);
-     fail_if (ret != 5, "fwrite() returned : %d", ret);
+     ret = fwrite ("P\nP\ntestcomment\n", 1, strlen("P\nP\ntestcomment\n"), f);
+     fail_if (ret != strlen("P\nP\ntestcomment\n"), 
+	      "fwrite() returned : %d", ret);
      fclose (f);
      
      ret = system ("grep -q PASS /tmp/res.xml");
@@ -307,6 +308,9 @@ START_TEST (test_execute_manual_set)
 
      ret = system ("grep -q FAIL /tmp/res.xml");
      fail_unless (ret, "/tmp/res.xml contains FAIL");
+
+     ret = system ("grep -q testcomment /tmp/res.xml");
+     fail_if (ret, "comment not found from result");
 
 END_TEST
 /* ------------------------------------------------------------------------- */

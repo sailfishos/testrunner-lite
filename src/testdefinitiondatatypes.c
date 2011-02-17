@@ -63,6 +63,9 @@
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 LOCAL const char *case_res_str[] = {"FAIL", "PASS", "N/A"};
+#ifdef ENABLE_EVENTS
+LOCAL const char *event_type_string[] = {"unknown", "send", "wait"};
+#endif
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -129,7 +132,17 @@ LOCAL void td_file_delete (xmlLinkPtr lk)
 	free (file->filename);
 	free (file);
 }
-
+/* ------------------------------------------------------------------------- */
+/** Deallocator for list with td_measurement items
+ *  @param lk list item
+ */
+LOCAL void td_measurement_delete (xmlLinkPtr lk)
+{
+	td_measurement *meas = (td_measurement *)xmlLinkGetData (lk);
+	free (meas->name);
+	free (meas->unit);
+	free (meas);
+}
 /* ------------------------------------------------------------------------- */
 /** Deallocator for general attributes 
  *  @param gen general attributes 
@@ -159,6 +172,20 @@ const char *case_result_str (case_result_t cr)
 		return "INVALID";
 	return case_res_str[cr];
 }
+#ifdef ENABLE_EVENTS
+/* ------------------------------------------------------------------------- */
+/** Returns string matching the event type value
+ *  @param  et event type value
+ *  @return const string matching the value
+ */
+const char *event_type_str (event_type_t et)
+{
+	if (et < EVENT_TYPE_UNKNOWN || et > EVENT_TYPE_WAIT)
+		return "INVALID";
+	return event_type_string[et];
+}
+#endif	/* ENABLE_EVENTS */
+/* ------------------------------------------------------------------------- */
 /** Creates test definition data structure
  *  @return pointer to td_td or NULL in case of OOM
  */
@@ -291,6 +318,9 @@ td_case *td_case_create()
 	}
 	memset (td_c, 0x0, sizeof (td_case));
 	td_c->steps = xmlListCreate (td_step_delete, list_dummy_compare);
+	td_c->gets = xmlListCreate (td_file_delete, NULL);
+	td_c->measurements = xmlListCreate (td_measurement_delete, 
+					    list_dummy_compare);
 
 	return td_c;
 }
@@ -322,6 +352,11 @@ void td_step_delete(xmlLinkPtr lk)
 	if (step->step)
 		free (step->step);
 
+#ifdef ENABLE_EVENTS
+	if (step->event)
+		td_event_delete(step->event);
+#endif
+
 	free (step->stdout_);
 	free (step->stderr_);
 	free (step->failure_info);
@@ -335,9 +370,12 @@ void td_case_delete(xmlLinkPtr lk)
 {
 	td_case *td_c = xmlLinkGetData (lk);
 	xmlListDelete (td_c->steps);
+	xmlListDelete (td_c->gets);
+	xmlListDelete (td_c->measurements);
+
 	xmlFree (td_c->comment);
 	xmlFree (td_c->failure_info);
-	xmlFree (td_c->tc_title);
+	xmlFree (td_c->tc_id);
 	xmlFree (td_c->state);
 	xmlFree (td_c->subfeature);
 	xmlFree (td_c->bugzilla_id);
@@ -355,6 +393,75 @@ void td_steps_delete(xmlLinkPtr lk)
 	xmlListDelete (steps->steps);
 	free (steps);
 }
+#ifdef ENABLE_EVENTS
+/* ------------------------------------------------------------------------- */
+/** Creates a td_event data structure
+ *  @return pointer to td_event or NULL in case of OOM
+ */
+td_event *td_event_create()
+{
+	td_event *event;
+
+	event = (td_event *) malloc (sizeof (td_event));
+	if (event == NULL) {
+		LOG_MSG (LOG_ERR, "%s: FATAL : OOM", PROGNAME);
+		return NULL;
+	}
+
+	event->type = EVENT_TYPE_UNKNOWN;
+	event->resource = NULL;
+	event->timeout = DEFAULT_TIMEOUT;
+	event->params = xmlListCreate (td_event_param_delete,
+				       list_dummy_compare);
+
+	return event;
+}
+/* ------------------------------------------------------------------------- */
+/** Deallocator for td_event
+ */
+void td_event_delete(td_event *event)
+{
+	if (event->resource)
+		xmlFree (event->resource);
+	xmlListDelete (event->params);
+	free (event);
+}
+/* ------------------------------------------------------------------------- */
+/** Creates a td_event_param data structure
+ *  @return pointer to td_event_param or NULL in case of OOM
+ */
+td_event_param *td_event_param_create()
+{
+	td_event_param *param;
+
+	param = (td_event_param *) malloc (sizeof (td_event_param));
+	if (param == NULL) {
+		LOG_MSG (LOG_ERR, "%s: FATAL : OOM", PROGNAME);
+		return NULL;
+	}
+
+	param->type = NULL;
+	param->name = NULL;
+	param->value = NULL;
+
+	return param;
+}
+/* ------------------------------------------------------------------------- */
+/** Deallocator for td_event_param
+ */
+void td_event_param_delete(xmlLinkPtr lk)
+{
+	td_event_param *param = xmlLinkGetData (lk);
+
+	if (param->type)
+		xmlFree (param->type);
+	if (param->name)
+		xmlFree (param->name);
+	if (param->value)
+		xmlFree (param->value);
+	free (param);
+}
+#endif	/* ENABLE_EVENTS */
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */

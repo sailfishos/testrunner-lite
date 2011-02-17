@@ -81,6 +81,7 @@ LOCAL char *unique_id = NULL;
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
+LOCAL int _execute (const char *hostname, unsigned port, const char *command);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -88,13 +89,35 @@ LOCAL char *unique_id = NULL;
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+/** Execute the given command with ssh
+ * @param hostname host name or ip of dut
+ * @param port optional port 
+ * @command command to execute
+ */
+LOCAL int _execute (const char *hostname, unsigned port, const char *command)
+{
+	int ret;
+	char portarg [3 + 5 + 1]; /* "-p" + USHRT_MAX + '\0' */ 
 
+	if (port) {
+		sprintf (portarg, "-p %u", port);
+		ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, portarg, hostname, 
+			    command, (char*)NULL);
+	}
+	else
+		ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, command, 
+			    (char*)NULL);
+	
+	return ret; /* not reached */
+}
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** Init the ssh executor
+ * @param hostname ip or hostname of dut
+ * @param port optional port
  */
-void ssh_executor_init (const char *hostname)
+void ssh_executor_init (const char *hostname, unsigned port)
 {
 	int ret, status;
 	pid_t pid;
@@ -119,18 +142,16 @@ void ssh_executor_init (const char *hostname)
 	if (pid < 0)
 		return;
 	
-
-	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-		    cmd, (char*)NULL);
 	
 }
 /* ------------------------------------------------------------------------- */
 /** Executes a command using ssh 
  * @param hostname SUT address 
+ * @param port optional port
  * @param command Command to execute
  * @return Does not return in success, error code from exec in case of error
  */
-int ssh_execute (const char *hostname, const char *command)
+int ssh_execute (const char *hostname, unsigned port, const char *command)
 {
 	int   ret;
         char *cmd; 
@@ -164,33 +185,37 @@ int ssh_execute (const char *hostname, const char *command)
 			 ";source .profile > /dev/null; %s",
 			 unique_id, getpid(), command);
 
-        /* cmd can not be freed since execl does not return here */
-        ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-                    cmd, (char*)NULL);
-
-
+	ret = _execute (hostname, port, cmd);
         return ret;
 }
 /* ------------------------------------------------------------------------- */
 /** Tries to check if ssh connections are still working
  * @param hostname SUT address 
+ * @param port optional port
  * @return 0 or ssh error code
  */
-int ssh_check_conn (const char *hostname)
+int ssh_check_conn (const char *hostname, unsigned port)
 {
 	int ret;
 	char cmd[1024];
-	
-	sprintf (cmd, "%s %s %s echo foo", SSHCMD, SSHCMDARGS_STR, hostname);
+
+	if (port)
+		sprintf (cmd, "%s %s -p %u %s echo foo", SSHCMD, 
+			 SSHCMDARGS_STR, port, hostname);
+	else
+		sprintf (cmd, "%s %s %s echo foo", SSHCMD, 
+			 SSHCMDARGS_STR, hostname);
+		
 	ret = system (cmd);
 	return ret;
 }
 /* ------------------------------------------------------------------------- */
 /** Tries to kill program started by ssh and removes temporary file
  *  @param hostname SUT address 
+ *  @param port optional port
  *  @param id PID of the test step
  */
-int ssh_kill (const char *hostname, pid_t id)
+int ssh_kill (const char *hostname, unsigned port, pid_t id)
 {
 	int ret;
 	pid_t pid;
@@ -210,17 +235,17 @@ int ssh_kill (const char *hostname, pid_t id)
 	sprintf (cmd, "[ -f %1$s ] && pkill -9 -P $(cat %1$s); rm -f %1$s", 
 		 file);
 
-	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-		    cmd, (char*)NULL);
+	ret = _execute (hostname, port, cmd);
 
 	return ret;
 }
 /* ------------------------------------------------------------------------- */
 /** Clean temporary file from target machine
  *  @param hostname SUT address 
+ *  @param port optional port
  *  @param id PID of the test step
  */
-void ssh_clean (const char *hostname, pid_t id)
+void ssh_clean (const char *hostname, unsigned port, pid_t id)
 {
 	int ret, status;
 	pid_t pid;
@@ -236,8 +261,7 @@ void ssh_clean (const char *hostname, pid_t id)
 	}
 
 	/* child: clean up target */
-	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-		    cmd, (char*)NULL);
+	ret = _execute (hostname, port, cmd);
 
 	return;
 }
@@ -247,7 +271,9 @@ void ssh_clean (const char *hostname, pid_t id)
  */
 void ssh_executor_close (const char *hostname)
 {
+
 	free (unique_id);
+
 	return;
 }
 
