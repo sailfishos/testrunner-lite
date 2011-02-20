@@ -1,3 +1,7 @@
+* Sun Feb 20 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.2
+- Possibility to provide ssh port with -t and -n options (BMC#13472)
+- Fixed: <get><file> does not work with -n (BMC#13415)
+- Fixed: testrunner-lite occasionally hangs with -n (BMC#13416)
 * Wed Feb 09 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.1
 - Fixed: invalid use of va_list caused problems on 64 bit system (BMC#13322)
 - Fixed: writing manual test case comment to results (BMC#13314)
