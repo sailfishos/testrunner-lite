@@ -142,7 +142,7 @@ void ssh_executor_init (const char *hostname, unsigned port)
 	if (pid < 0)
 		return;
 	
-	
+	ret = _execute (hostname, port, cmd);
 }
 /* ------------------------------------------------------------------------- */
 /** Executes a command using ssh 

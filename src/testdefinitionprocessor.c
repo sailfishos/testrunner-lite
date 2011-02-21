@@ -451,7 +451,7 @@ LOCAL int process_get (const void *data, const void *user)
 	char *fname;
 	exec_data edata;
 	int command_len;
-	char *remote = opts.target_address;
+	char *p, *remote = opts.target_address;
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data(&edata);
@@ -473,26 +473,31 @@ LOCAL int process_get (const void *data, const void *user)
 				strlen (opts.username) + 1 +
 				strlen (fname) +
 				strlen (opts.output_folder) +
-				strlen (remote) + 10;
+				strlen (remote) + 30;
 		} else {
 #endif
 			command_len = strlen ("scp ") + 
 				strlen (fname) +
 				strlen (opts.output_folder) +
-				strlen (remote) + 10;
+				strlen (remote) + 30;
 #ifdef ENABLE_LIBSSH2
 		}
 #endif
 			   
 		command = (xmlChar *)malloc (command_len);
-
+		if (opts.target_port) 
+			sprintf (command, "scp -P %u ", opts.target_port);
+		else 
+			sprintf (command, "scp ");
+		p = (char *)(command + (strlen (command)));
+		
 #ifdef ENABLE_LIBSSH2
 		if (opts.libssh2) {
-			sprintf ((char *)command, "scp %s@%s:\'%s\' %s", opts.username,
-			         remote, fname, opts.output_folder);
+			sprintf (p, "%s@%s:\'%s\' %s", opts.username, remote, 
+				 fname, opts.output_folder);
 		} else {
 #endif
-		sprintf ((char *)command, "scp %s:\'%s\' %s", remote, fname,
+		sprintf (p, "%s:\'%s\' %s", remote, fname,
 			 opts.output_folder);
 #ifdef ENABLE_LIBSSH2
 		}
