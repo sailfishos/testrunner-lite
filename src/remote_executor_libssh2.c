@@ -87,6 +87,7 @@
 #define REMOTE_RUN_SCRIPT "echo '#!/bin/bash\n\
 echo $$ > /var/tmp/testrunner-lite-shell.pid\n\
 bgjobs=0\n\
+if [ -e /root/.profile ]; then source /root/.profile; fi\n\
 eval $@\n\
 ret=$?\n\
 for bgjob in `jobs -p`\n\
