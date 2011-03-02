@@ -144,6 +144,7 @@ LOCAL int xml_write_td_start (td_td *td)
 	
 	return 0; 
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -170,6 +171,7 @@ LOCAL int xml_write_td_end (td_td *td)
 	while (!xml_end_element());
 	return  0;
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -189,6 +191,7 @@ LOCAL int xml_write_pre_suite (td_suite *suite)
 
 	return 0;
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -206,6 +209,7 @@ LOCAL int xml_write_post_suite (td_suite *suite)
 
 	return xml_end_element();
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -229,6 +233,7 @@ LOCAL int xml_write_pre_set (td_set *set)
 			goto err_out;
 	return 0;
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -316,6 +321,7 @@ LOCAL int xml_write_general_attributes (td_gen_attribs *gen)
 	
 	return 0;
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 
@@ -344,9 +350,9 @@ LOCAL int xml_write_step (const void *data, const void *user)
 						   "false")) < 0)
 		goto err_out;
 
-	if (xmlTextWriterWriteAttribute (writer, 
-					 BAD_CAST "command", 
-					 step->step) < 0)
+	if (step->step && xmlTextWriterWriteAttribute (writer, 
+						       BAD_CAST "command", 
+						       step->step) < 0)
 		goto err_out;
 	
 	if (step->has_result == 0) {
@@ -430,6 +436,7 @@ LOCAL int xml_write_step (const void *data, const void *user)
 	return !xml_end_element();
 	
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -488,6 +495,7 @@ LOCAL int xml_write_event (const void *data, const void *user)
 	return !xml_end_element();
 	
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -523,6 +531,7 @@ LOCAL int xml_write_event_param (const void *data, const void *user)
 	return !xml_end_element();
 
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -621,6 +630,7 @@ LOCAL int xml_write_pre_post_step (const void *data, const void *user)
 	
 	return !xml_end_element();
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -718,6 +728,7 @@ LOCAL int xml_write_file_data (const void *data, const void *user)
 		goto err_out;
 	return !xml_end_element();
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -783,6 +794,7 @@ LOCAL int xml_write_post_set (td_set *set)
 	return 0;
 
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -1218,6 +1230,7 @@ int xml_end_element ()
 		goto err_out;
 	return 0;
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
