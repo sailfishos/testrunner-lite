@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
@@ -343,8 +344,8 @@ LOCAL int step_post_process (const void *data, const void *user)
 	if (!step->pgid)
 		goto out;
 
-	if (opts.target_address) {
-		ssh_kill (opts.target_address, opts.target_port, step->pid);
+	if (opts.remote_executor) {
+		remote_kill (opts.remote_executor, step->pid);
 	} 
 	kill_pgroup(step->pgid, SIGKILL);
 	
@@ -465,7 +466,7 @@ LOCAL int process_get (const void *data, const void *user)
 	** Compose command 
 	*/
 	if (remote) {
-		opts.target_address = NULL; /* execute locally */
+		opts.remote_executor = NULL; /* execute locally */
 
 #ifdef ENABLE_LIBSSH2
 		if (opts.libssh2) {

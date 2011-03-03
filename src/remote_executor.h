@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
@@ -52,17 +53,17 @@
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-void ssh_executor_init (const char *hostname, unsigned port);
+int remote_executor_init (const char *executor);
 /* ------------------------------------------------------------------------- */
-int ssh_execute (const char *hostname, unsigned port, const char *command);
+int remote_execute (const char *executor, const char *command);
 /* ------------------------------------------------------------------------- */
-int ssh_kill (const char *hostname, unsigned port, pid_t id);
+int remote_kill (const char *executor, pid_t id);
 /* ------------------------------------------------------------------------- */
-int ssh_check_conn (const char *hostname, unsigned port);
+int remote_check_conn (const char *executor);
 /* ------------------------------------------------------------------------- */
-void ssh_clean (const char *hostname, unsigned port, pid_t id);
+int remote_clean (const char *executor, pid_t id);
 /* ------------------------------------------------------------------------- */
-void ssh_executor_close (const char *hostname);
+int remote_executor_close (void);
 /* ------------------------------------------------------------------------- */
 #endif                          /* REMOTE_EXECUTOR_H */
 /* End of file */

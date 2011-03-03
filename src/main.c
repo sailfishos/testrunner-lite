@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
@@ -83,7 +84,8 @@ testrunner_lite_options opts;
 LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
-/* None */
+#define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
+		"-o PasswordAuthentication=no %s %s"
 
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
@@ -103,6 +105,8 @@ LOCAL int create_output_folder ();
 LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int parse_target_address(char *address, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
@@ -417,6 +421,39 @@ LOCAL int parse_target_address(char *address, testrunner_lite_options *opts)
 }
 
 /* ------------------------------------------------------------------------- */
+/** Parse target options to create remote executor string using SSH
+ * @param opts Options struct
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
+{
+	char portarg [3 + 5 + 1]; /* "-p " + max port size + '\0' */
+	size_t len;
+
+	if (opts->target_address == NULL) {
+		fprintf (stderr, "Missing target address\n");
+		return 1;
+	}
+
+	portarg[0] = '\0';
+	if (opts->target_port)
+		sprintf (portarg, "-p %u", opts->target_port);
+
+	len = strlen(SSH_REMOTE_EXECUTOR) + strlen(portarg) +
+		strlen(opts->target_address) + 1;
+	opts->remote_executor = malloc(len);
+	if (opts->remote_executor == NULL) {
+		fprintf (stderr, "Malloc failed\n");
+		return 1;
+	}
+
+	sprintf(opts->remote_executor, SSH_REMOTE_EXECUTOR, portarg,
+		opts->target_address);
+
+	return 0;
+}
+
+/* ------------------------------------------------------------------------- */
 /** Parse chroot option argument.
  * @param folder path to change root envrionment
  * @param opts Options struct containing field(s) to store path
@@ -513,6 +550,7 @@ int main (int argc, char *argv[], char *envp[])
 {
 	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0, V_flag = 0;
 	int opt_char, option_idx;
+	opts.remote_executor = NULL;
 #ifdef ENABLE_LIBSSH2
 	opts.priv_key = NULL;
 	opts.pub_key = NULL;
@@ -728,6 +766,25 @@ int main (int argc, char *argv[], char *envp[])
 	}
 
 	/*
+	 * Convert target address to remote executor
+	 */
+#ifdef ENABLE_LIBSSH2
+	if (!opts.libssh2) {
+#endif
+	if (opts.target_address) {
+		if (parse_default_ssh_executor(&opts) != 0) {
+			fprintf (stderr,
+				"%s: Failed to parse SSH executor\n",
+				PROGNAME);
+			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+			goto OUT;
+		}
+	}
+#ifdef ENABLE_LIBSSH2
+	}
+#endif
+
+	/*
 	 * Do some post-validation for the options
 	 */
 	if (h_flag) {
@@ -739,9 +796,19 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	}
 
-	if (opts.chroot_folder && opts.target_address) {
+#ifdef ENABLE_LIBSSH2
+	if (opts.chroot_folder && opts.libssh2) {
 		fprintf (stderr,
-			"%s: -C and -t are mutually exclusive\n",
+			"%s: -C and -n are mutually exclusive\n",
+			PROGNAME);
+		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+		goto OUT;
+	}
+#endif
+
+	if (opts.chroot_folder && opts.remote_executor) {
+		fprintf (stderr,
+			"%s: -C and remote execution are mutually exclusive\n",
 			PROGNAME);
 		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
@@ -873,6 +940,7 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
+	if (opts.remote_executor) free (opts.remote_executor);
 	if (opts.packageurl) free (opts.packageurl);
 	if (opts.vcsurl) free (opts.vcsurl);
 #ifdef ENABLE_LIBSSH2
@@ -887,7 +955,7 @@ int main (int argc, char *argv[], char *envp[])
 	} else if (bail_out == 255+SIGTERM) {
 		signal (SIGTERM, SIG_DFL);
 		raise (SIGTERM);
-	} else if (bail_out) retval = TESTRUNNER_LITE_SSH_FAIL;
+	} else if (bail_out) retval = TESTRUNNER_LITE_REMOTE_FAIL;
 
 	return retval; 
 }	

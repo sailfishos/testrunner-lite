@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
@@ -49,7 +50,7 @@ typedef enum {
 typedef enum {
 	TESTRUNNER_LITE_OK = 0,
 	TESTRUNNER_LITE_INVALID_ARGUMENTS,
-	TESTRUNNER_LITE_SSH_FAIL,
+	TESTRUNNER_LITE_REMOTE_FAIL,
 	TESTRUNNER_LITE_XML_PARSE_FAIL,
 	TESTRUNNER_LITE_XML_VALIDATION_FAIL,
 	TESTRUNNER_LITE_OUTPUT_FOLDER_CREATE_FAIL,
@@ -76,6 +77,7 @@ typedef struct {
 	int   log_level;       /**< logging level */
 	char *target_address;  /**< SUT address. */
 	in_port_t target_port;  /**< optional SUT port. */
+	char *remote_executor;  /**< command prefix for remote execution */
 	char *vcsurl;          /**< URL of VCS containing the test plan */ 
 	char *packageurl;      /**< URL package containing the test plan */
 #ifdef ENABLE_LIBSSH2
