@@ -86,6 +86,7 @@ LOCAL hw_info hwinfo;
 /* LOCAL CONSTANTS AND MACROS */
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
 		"-o PasswordAuthentication=no %s %s"
+#define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
 
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
@@ -106,7 +107,11 @@ LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int parse_target_address(char *address, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
+LOCAL int parse_remote_getter(char *getter, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
 LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_default_scp_getter(testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
@@ -421,6 +426,28 @@ LOCAL int parse_target_address(char *address, testrunner_lite_options *opts)
 }
 
 /* ------------------------------------------------------------------------- */
+/** Parse remote getter argument.
+ * @param getter Remote getter.
+ * @param opts Options struct
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_remote_getter(char *getter, testrunner_lite_options *opts) 
+{
+	size_t size;
+
+	size = strlen(getter) + strlen(" <FILE> <DEST>") + 1;
+	opts->remote_getter = malloc(size);
+
+	strcpy(opts->remote_getter, getter);
+	if (strstr(getter, "<FILE>") == NULL)
+		strcat(opts->remote_getter, " <FILE>");
+	if (strstr(getter, "<DEST>") == NULL)
+		strcat(opts->remote_getter, " <DEST>");
+
+	return 0;
+}
+
+/* ------------------------------------------------------------------------- */
 /** Parse target options to create remote executor string using SSH
  * @param opts Options struct
  * @return 0 in success, 1 on failure
@@ -448,6 +475,34 @@ LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 	}
 
 	sprintf(opts->remote_executor, SSH_REMOTE_EXECUTOR, portarg,
+		opts->target_address);
+
+	return 0;
+}
+
+/* ------------------------------------------------------------------------- */
+/** Parse target options to create remote getter string using SCP
+ * @param opts Options struct
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_default_scp_getter(testrunner_lite_options *opts)
+{
+	char portarg [3 + 5 + 1]; /* "-P " + max port size + '\0' */
+	size_t len;
+
+	portarg[0] = '\0';
+	if (opts->target_port)
+		sprintf (portarg, "-P %u", opts->target_port);
+
+	len = strlen(SCP_REMOTE_GETTER) + strlen(portarg) +
+		strlen(opts->target_address) + 1;
+	opts->remote_getter = malloc(len);
+	if (opts->remote_getter == NULL) {
+		fprintf (stderr, "Malloc failed\n");
+		return 1;
+	}
+
+	sprintf(opts->remote_getter, SCP_REMOTE_GETTER, portarg,
 		opts->target_address);
 
 	return 0;
@@ -551,6 +606,7 @@ int main (int argc, char *argv[], char *envp[])
 	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0, V_flag = 0;
 	int opt_char, option_idx;
 	opts.remote_executor = NULL;
+	opts.remote_getter = NULL;
 #ifdef ENABLE_LIBSSH2
 	opts.priv_key = NULL;
 	opts.pub_key = NULL;
@@ -766,15 +822,16 @@ int main (int argc, char *argv[], char *envp[])
 	}
 
 	/*
-	 * Convert target address to remote executor
+	 * Convert target address to remote executor/getter using SSH/SCP
 	 */
 #ifdef ENABLE_LIBSSH2
 	if (!opts.libssh2) {
 #endif
 	if (opts.target_address) {
-		if (parse_default_ssh_executor(&opts) != 0) {
+		if ((parse_default_ssh_executor(&opts) != 0) ||
+		    (parse_default_scp_getter(&opts) != 0)) {
 			fprintf (stderr,
-				"%s: Failed to parse SSH executor\n",
+				"%s: Failed to parse SSH/SCP executor/getter\n",
 				PROGNAME);
 			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 			goto OUT;
@@ -941,6 +998,7 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
 	if (opts.remote_executor) free (opts.remote_executor);
+	if (opts.remote_getter) free (opts.remote_getter);
 	if (opts.packageurl) free (opts.packageurl);
 	if (opts.vcsurl) free (opts.vcsurl);
 #ifdef ENABLE_LIBSSH2

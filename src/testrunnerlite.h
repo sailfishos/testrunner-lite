@@ -78,6 +78,7 @@ typedef struct {
 	char *target_address;  /**< SUT address. */
 	in_port_t target_port;  /**< optional SUT port. */
 	char *remote_executor;  /**< command prefix for remote execution */
+	char *remote_getter;    /**< command to get a remote file */
 	char *vcsurl;          /**< URL of VCS containing the test plan */ 
 	char *packageurl;      /**< URL package containing the test plan */
 #ifdef ENABLE_LIBSSH2

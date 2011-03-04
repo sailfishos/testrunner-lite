@@ -448,11 +448,15 @@ LOCAL int process_get (const void *data, const void *user)
 {
 
 	td_file *file = (td_file *)data;
-	xmlChar *command;
+	char *command;
 	char *fname;
 	exec_data edata;
 	int command_len;
-	char *p, *remote = opts.target_address;
+	char *p;
+	char *executor = opts.remote_executor;
+#ifdef ENABLE_LIBSSH2
+	char *remote = opts.target_address;
+#endif
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data(&edata);
@@ -465,59 +469,43 @@ LOCAL int process_get (const void *data, const void *user)
 	/*
 	** Compose command 
 	*/
-	if (remote) {
-		opts.remote_executor = NULL; /* execute locally */
-
 #ifdef ENABLE_LIBSSH2
-		if (opts.libssh2) {
-			command_len = strlen ("scp ") + 
-				strlen (opts.username) + 1 +
-				strlen (fname) +
-				strlen (opts.output_folder) +
-				strlen (remote) + 30;
-		} else {
-#endif
-			command_len = strlen ("scp ") + 
-				strlen (fname) +
-				strlen (opts.output_folder) +
-				strlen (remote) + 30;
-#ifdef ENABLE_LIBSSH2
-		}
-#endif
-			   
-		command = (xmlChar *)malloc (command_len);
-		if (opts.target_port) 
+	if (opts.libssh2) {
+		opts.target_address = NULL; /* execute locally */
+		command_len = strlen ("scp ") +
+			strlen (opts.username) + 1 +
+			strlen (fname) +
+			strlen (opts.output_folder) +
+			strlen (remote) + 30;
+		command = (char *)malloc (command_len);
+		if (opts.target_port)
 			sprintf (command, "scp -P %u ", opts.target_port);
-		else 
+		else
 			sprintf (command, "scp ");
 		p = (char *)(command + (strlen (command)));
-		
-#ifdef ENABLE_LIBSSH2
-		if (opts.libssh2) {
-			sprintf (p, "%s@%s:\'%s\' %s", opts.username, remote, 
-				 fname, opts.output_folder);
-		} else {
+			sprintf (p, "%s@%s:\'%s\' %s", opts.username, remote,
+			 fname, opts.output_folder);
+	} else
 #endif
-		sprintf (p, "%s:\'%s\' %s", remote, fname,
-			 opts.output_folder);
-#ifdef ENABLE_LIBSSH2
-		}
-#endif
-
-
+	if (executor) {
+		opts.remote_executor = NULL; /* execute locally */
+		command = replace_string (opts.remote_getter, "<FILE>", fname);
+		p = command;
+		command = replace_string (command, "<DEST>", opts.output_folder);
+		free(p);
 	} else {
-		command = (xmlChar *)malloc (strlen ("cp ") + 
+		command = (char *)malloc (strlen ("cp ") + 
 					     strlen (fname) +
 					     strlen (opts.output_folder) + 2);
-		sprintf ((char *)command, "cp %s %s", fname,
+		sprintf (command, "cp %s %s", fname,
 			 opts.output_folder);
 	}
-	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
-		 (char*)command);
+
+	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
 	/*
 	** Execute it
 	*/
-	execute((char*)command, &edata);
+	execute(command, &edata);
 
 	if (edata.result) {
 		LOG_MSG (LOG_INFO, "%s: %s failed: %s\n", PROGNAME, command,
@@ -525,7 +513,10 @@ LOCAL int process_get (const void *data, const void *user)
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
 	}
+#ifdef ENABLE_LIBSSH2
 	opts.target_address = remote;
+#endif
+	opts.remote_executor = executor;
 	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
 	if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
 	if (edata.failure_info.buffer) free (edata.failure_info.buffer);
@@ -537,10 +528,9 @@ LOCAL int process_get (const void *data, const void *user)
 	init_exec_data(&edata);
 	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	sprintf ((char *)command, "rm -f %s", fname);
-	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
-		 (char*)command);
-	execute((char*)command, &edata);
+	sprintf (command, "rm -f %s", fname);
+	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
+	execute(command, &edata);
 	if (edata.result) {
 		LOG_MSG (LOG_WARNING, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?

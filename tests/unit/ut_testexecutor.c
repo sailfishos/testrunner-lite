@@ -62,6 +62,7 @@
 		"-o PasswordAuthentication=no localhost"
 #define DEFAULT_REMOTE_EXECUTOR_PORT "/usr/bin/ssh -o StrictHostKeyChecking=no " \
 		"-o PasswordAuthentication=no -p 22 localhost"
+#define DEFAULT_REMOTE_GETTER "/usr/bin/scp localhost:'<FILE>' '<DEST>'"
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
@@ -333,6 +334,7 @@ START_TEST (test_executor_remote_command)
 	opts.target_address = "localhost";
 	opts.target_port = 0;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
@@ -370,6 +372,7 @@ START_TEST (test_executor_remote_command_port)
 	opts.target_address = "localhost";
 	opts.target_port = 22;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR_PORT;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
@@ -414,6 +417,7 @@ START_TEST (test_executor_remote_long_command)
 	opts.target_address = "localhost";
 	opts.target_port = 0;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 
 	executor_init (&opts);
 	init_exec_data (&edata);
@@ -444,6 +448,7 @@ START_TEST (test_executor_remote_terminating_process)
 	opts.target_address = "localhost";
 	opts.target_port = 0;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
@@ -481,6 +486,7 @@ START_TEST (test_executor_remote_killing_process)
 	opts.target_address = "localhost";
 	opts.target_port = 0;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
