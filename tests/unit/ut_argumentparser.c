@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Riku Halonen <riku.halonen@nokia.com>
  *
@@ -112,6 +113,12 @@ START_TEST (test_parse_cmd_line_arguments)
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
+    /* Test -E and -G */
+    sprintf (cmd, "%s -a -f %s -o %s -E true -G true",
+             TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_if (ret != 0, cmd);
+
     /* Test -r text */
     sprintf (cmd, "%s -a -f %s -o %s -r text", TESTRUNNERLITE_BIN, 
 	     TESTDATA_VALID_XML_1, out_file);
@@ -127,7 +134,7 @@ START_TEST (test_parse_cmd_line_invalid_arguments)
 
     /* Test parsing command line arguments. */
     int ret;
-    char cmd[128];
+    char cmd[256];
     char *out_file = "/tmp/out.xml";
 
     /* Test -f flag without argument. */
@@ -163,6 +170,36 @@ START_TEST (test_parse_cmd_line_invalid_arguments)
     /* Test invalid -e without argument. */
     sprintf (cmd, "%s -f %s -o %s -e", TESTRUNNERLITE_BIN, 
 	     TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test -C with mutually exclusive -t. */
+    sprintf (cmd, "%s -f %s -o %s -C /tmp -t localhost",
+             TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test -C with mutually exclusive -E/-G. */
+    sprintf (cmd, "%s -f %s -o %s -C /tmp -E true -G true",
+             TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test -t with mutually exclusive -E/-G. */
+    sprintf (cmd, "%s -f %s -o %s -t localhost -E true -G true",
+             TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test -E without -G. */
+    sprintf (cmd, "%s -f %s -o %s -E true",
+             TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    ret = system (cmd);
+    fail_unless (ret != 0, cmd);
+
+    /* Test -G without -E. */
+    sprintf (cmd, "%s -f %s -o %s -G true",
+             TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 

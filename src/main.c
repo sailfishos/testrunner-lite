@@ -175,13 +175,32 @@ LOCAL void usage()
 	printf ("  -P, --print-step-output\n\t\tOutput standard streams from"
 		" programs started in steps\n");
 	printf ("  -S, --syslog\n\t\tWrite log messages also to syslog.\n");
-	printf ("  -t [USER@]ADDRESS, --target=[USER@]ADDRESS\n\t\t"
-		"Enable host-based testing. "
-		"If given, commands are executed from\n\t\t"
-		"test control PC (host) side. "
-		"ADDRESS is the ipv4 adress of the\n\t\t"
-		"system under test.\n");
+	printf ("  -M, --disable-measurement-verdict\n\t\t"
+		" Do not fail cases based on measurement data\n");
+	printf ("  -u URL, --vcs-url=URL\n\t\t"
+		"Causes testrunner-lite to write the given VCS URL to "
+		"results.\n"
+		);
+	printf ("  -U URL, --package-url=URL\n\t\t"
+		"Causes testrunner-lite to write the given package URL to "
+		"results.\n"
+		);
+	printf ("\nTest commands are executed locally by default.  Alternatively, one\n"
+		"of the following executors can be used:\n");
+	printf ("\nChroot Execution:\n");
+	printf ("  -C PATH, --chroot=PATH\n\t\t"
+		"Run tests inside a chroot environment. Note that this\n\t\t"
+		"doesn't change the root of the testrunner itself,\n\t\t"
+		"only the tests will have the new root folder set.\n");
+	printf ("\nHost-based SSH Execution:\n");
+	printf ("  -t [USER@]ADDRESS[:PORT], --target=[USER@]ADDRESS[:PORT]\n\t\t"
+		"Enable host-based testing. If given, commands are executed\n\t\t"
+		"from test control PC (host) side. ADDRESS is the ipv4 address\n\t\t"
+		"of the system under test. Behind the scenes, host-based\n\t\t"
+		"testing uses the external execution described below with SSH\n\t\t"
+		"and SCP.\n");
 #ifdef ENABLE_LIBSSH2
+	printf ("\nLibssh2 Execution:\n");
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
 	        "Run host based testing with native ssh (libssh2) "
 	        "EXPERIMENTAL\n");
@@ -190,20 +209,23 @@ LOCAL void usage()
 	        "\t\tKeypair consists of private and public key file names\n"
 	        "\t\tThey are expected to be found under $HOME/.ssh\n");
 #endif
-	printf ("  -M, --disable-measurement-verdict\n\t\t"
-		" Do not fail cases based on measurement data\n");
-	printf ("  -C PATH, --chroot=PATH\n\t\t"
-		"Run tests inside a chroot environment. Note that this\n\t\t"
-		"doesn't change the root of the testrunner itself,\n\t\t"
-		"only the tests will have the new root folder set.\n");
-	printf ("  -u URL, --vcs-url=URL\n\t\t"
-		"Causes testrunner-lite to write the given VCS URL to "
-		"results.\n\t\t\n"
-		);
-	printf ("  -U URL, --package-url=URL\n\t\t"
-		"Causes testrunner-lite to write the given package URL to "
-		"results.\n\t\t\n"
-		);
+	printf ("\nExternal Execution:\n");
+	printf ("  -E EXECUTOR, --executor=EXECUTOR\n\t\t"
+		"Use an external command to execute test commands on the\n\t\t"
+		"system under test. The external command must accept a test\n\t\t"
+		"command as a single additional argument and exit with the\n\t\t"
+		"status of the test command. For example, an external executor\n\t\t"
+		"that uses SSH to execute test commands could be\n\t\t"
+		"\"/usr/bin/ssh user@target\".\n");
+	printf ("  -G GETTER, --getter=GETTER\n\t\t"
+		"Use an external command to get files from the system under\n\t\t"
+		"test. The external getter should contain <FILE> and <DEST>\n\t\t"
+		"(with the brackets) where <FILE> will be replaced with the\n\t\t"
+		"path to the file on the system under test and <DEST> will be\n\t\t"
+		"replaced with the destination directory on the host. If\n\t\t"
+		"<FILE> and <DEST> are not specified, they will be appended\n\t\t"
+		"automatically. For example, an external getter that uses SCP\n\t\t"
+		"to retrieve files could be \"/usr/bin/scp target:'<FILE>' '<DEST>'\".\n");
 
 	return;
 }
@@ -636,6 +658,8 @@ int main (int argc, char *argv[], char *envp[])
 			{"validate-only", no_argument, &A_flag},
 			{"no-hwinfo", no_argument, &opts.skip_hwinfo, 1},
 			{"target", required_argument, NULL, 't'},
+			{"executor", required_argument, NULL, 'E'},
+			{"getter", required_argument, NULL, 'G'},
 #ifdef ENABLE_LIBSSH2
 			{"libssh2", required_argument, NULL, 'n'},
 			{"keypair", required_argument, NULL, 'k'},
@@ -667,7 +691,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:n:k:v"
+					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:E:G:n:k:v"
 					"::", testrunnerlite_options, 
 					&option_idx);
 		if (opt_char == -1)
@@ -771,6 +795,16 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			break;
+		case 'E':
+			opts.remote_executor = malloc (strlen (optarg) + 1);
+			strcpy (opts.remote_executor, optarg);
+			break;
+		case 'G':
+			if (parse_remote_getter(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
 		case 'C':
 			if (parse_chroot_folder(optarg, &opts) != 0) {
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
@@ -828,6 +862,14 @@ int main (int argc, char *argv[], char *envp[])
 	if (!opts.libssh2) {
 #endif
 	if (opts.target_address) {
+		if (opts.remote_executor || opts.remote_getter) {
+			fprintf (stderr,
+				"%s: -t and -E/-G are mutually exclusive\n",
+				PROGNAME);
+			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+			goto OUT;
+		}
+
 		if ((parse_default_ssh_executor(&opts) != 0) ||
 		    (parse_default_scp_getter(&opts) != 0)) {
 			fprintf (stderr,
@@ -854,18 +896,29 @@ int main (int argc, char *argv[], char *envp[])
 	}
 
 #ifdef ENABLE_LIBSSH2
-	if (opts.chroot_folder && opts.libssh2) {
+	if (opts.libssh2) {
+		if (opts.chroot_folder || opts.remote_executor || opts.remote_getter) {
+			fprintf (stderr,
+				"%s: -n is mutually exclusive with -C/-E/-G\n",
+				PROGNAME);
+			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+			goto OUT;
+		}
+	}
+#endif
+
+	if (opts.chroot_folder && (opts.remote_executor || opts.remote_getter)) {
 		fprintf (stderr,
-			"%s: -C and -n are mutually exclusive\n",
+			"%s: -C and remote execution (-t or -E/-G) are mutually exclusive\n",
 			PROGNAME);
 		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
 	}
-#endif
 
-	if (opts.chroot_folder && opts.remote_executor) {
+	if ((opts.remote_executor && !opts.remote_getter) ||
+	    (!opts.remote_executor && opts.remote_getter)) {
 		fprintf (stderr,
-			"%s: -C and remote execution are mutually exclusive\n",
+			"%s: If either -E or -G is given, both must be given\n",
 			PROGNAME);
 		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
