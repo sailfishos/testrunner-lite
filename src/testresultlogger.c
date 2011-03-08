@@ -1221,16 +1221,15 @@ int write_post_set (td_set *set)
 }
 /* ------------------------------------------------------------------------- */
 /** Write end element tag
- * @return 0 on success, 1 on error.
+ * @return 0 on success, 1 no element to close
  */
 int xml_end_element ()
 {
 
 	if (xmlTextWriterFullEndElement (writer) < 0)
-		goto err_out;
+		goto last_element;
 	return 0;
-err_out:
-	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+last_element:
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
