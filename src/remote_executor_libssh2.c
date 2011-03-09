@@ -87,6 +87,7 @@
 #define REMOTE_RUN_SCRIPT "echo '#!/bin/bash\n\
 echo $$ > /var/tmp/testrunner-lite-shell.pid\n\
 bgjobs=0\n\
+if [ -e /root/.profile ]; then source /root/.profile > /dev/null; fi\n\
 eval $@\n\
 ret=$?\n\
 for bgjob in `jobs -p`\n\
@@ -152,6 +153,9 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
                                  exec_data *data);
 /* ------------------------------------------------------------------------- */
 static int lssh2_create_shell_scripts(libssh2_conn *conn);
+/* ------------------------------------------------------------------------- */
+static char *replace(char const *const cmd, char const *const pat, 
+               char const *const rep);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -302,8 +306,9 @@ static int lssh2_session_connect(libssh2_conn *conn)
 	LIBSSH2_KNOWNHOSTS *hosts;
 	int check;
 	int n;
-	int type;  
+    int type;  
 	size_t len;
+    int i;
 
 	LOG_MSG(LOG_DEBUG, "connecting to %s port %u", conn->hostname,
 		conn->port ? conn->port : 22);
@@ -361,16 +366,16 @@ static int lssh2_session_connect(libssh2_conn *conn)
 		switch(check) {
 			/* Ignoring errors currently */
 		case LIBSSH2_KNOWNHOST_CHECK_FAILURE:
-			LOG_MSG(LOG_ERR, "libssh2 knownhost check failure");
+			LOG_MSG(LOG_DEBUG, "libssh2 knownhost check failure");
 			break;
 		case LIBSSH2_KNOWNHOST_CHECK_NOTFOUND:
-			LOG_MSG(LOG_ERR, "libssh2 knownhost check not found");
+			LOG_MSG(LOG_DEBUG, "libssh2 knownhost check not found");
 			break;
 		case LIBSSH2_KNOWNHOST_CHECK_MATCH:
 			LOG_MSG(LOG_DEBUG, "libssh2 knownhost check match");
 			break;
 		case LIBSSH2_KNOWNHOST_CHECK_MISMATCH:
-			LOG_MSG(LOG_ERR, "libssh2 knownhost check mitchmatch");
+			LOG_MSG(LOG_DEBUG, "libssh2 knownhost check mitchmatch");
 			break;
 		default:
 			break;
@@ -386,12 +391,19 @@ static int lssh2_session_connect(libssh2_conn *conn)
 
 	LOG_MSG(LOG_DEBUG, "Authenticating with private key: %s, "
 	        "public key: %s", conn->priv_key, conn->pub_key);
-	while ((n = libssh2_userauth_publickey_fromfile(conn->ssh2_session, 
+    n = -1;
+    i = 0;
+    while (i < 5 && n) {
+	    while ((n = libssh2_userauth_publickey_fromfile(conn->ssh2_session, 
 	                                                conn->username,
 	                                                conn->pub_key,
 	                                                conn->priv_key,
 	                                                conn->password)) ==
-	       LIBSSH2_ERROR_EAGAIN);
+	            LIBSSH2_ERROR_EAGAIN);
+        i++;
+        sleep(1);
+    }
+
 	if (n) {
 		/* Won't be fixed via connection retries, so giving up */
 		LOG_MSG(LOG_ERR, "Authentication by public key failed, "
@@ -766,6 +778,60 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 
 }
 /* ------------------------------------------------------------------------- */
+/** Replaces pat in cmd with rep. Used to escape ' chars in commands to be executed
+ * @param cmd original command
+ * @param pat pattern to replace
+ * @param rep replacement string for pattern
+ * @return new string with patterns replaced
+ */
+char *replace(char const *const cmd, char const *const pat, 
+               char const *const rep) 
+{
+    int replen = strlen(rep);
+    int patlen = strlen(pat);
+    int cmdlen = strlen(cmd);
+    int count = 0;
+    const char *cmdptr;
+    const char *patloc;
+
+    // Count the strings to be replaces in cmd
+    cmdptr = cmd;
+    patloc = strstr(cmdptr, pat);
+    while(patloc) {
+        count++;
+        cmdptr = patloc + patlen;
+        patloc = strstr(cmdptr, pat);
+    }
+
+    {
+        // Allocate the new string
+        int newlen = cmdlen + count * (replen - patlen);
+        char *const newcmd = (char *) malloc(sizeof(char) * (newlen + 1));
+
+        if (newcmd != NULL)
+        {
+          // Replace the strings
+          char *newptr = newcmd;
+          cmdptr = cmd;
+          patloc = strstr(cmdptr, pat);
+          while(patloc) {
+            int skiplen = patloc - cmdptr;
+            // Section without replacement
+            strncpy(newptr, cmdptr, skiplen);
+            newptr += skiplen;
+            // Copy replacement
+            strncpy(newptr, rep, replen);
+            newptr += replen;
+            cmdptr = patloc + patlen;
+            patloc = strstr(cmdptr, pat);
+          }
+          // Copy what is left
+          strcpy(newptr, cmdptr);
+        }
+        return newcmd;
+    }
+}
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** Creates an instance of SSH session
@@ -861,6 +927,7 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	char *log_cmd;
 	char *casename;
 	char *setname;
+    char *old_cmd;
 	int stepnum;
 	int log_cmd_size;
 	int ret = -1;
@@ -878,6 +945,11 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	casename = (char*)current_case_name();
 	stepnum  = current_step_num();
 	setname  = (char*)current_set_name();
+
+    /* Escape ' chars from command */
+    old_cmd = command;
+    command = replace(command, "\'", "\'\\\'\'");
+    free(old_cmd);
 
 	log_cmd_size = strlen(command) + strlen(casename) +
 		strlen(setname) + 130;
