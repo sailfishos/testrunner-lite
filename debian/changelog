@@ -1,3 +1,14 @@
+testrunner-lite (1.5.3) unstable; urgency=low
+
+  * Fixed: libssh2 implementation does not source environment variables (BMC#13888)
+  * Fixed: libssh2 implementation prints unnecessary errors to log (BMC#13890)
+  * testrunner-lite unit tests can now be executed per suite (BMC#13550)
+  * Fixed: empty manual step handling (BMC#13996)
+  * Libssh2 implementation quote usage fixed
+  * Output of soucing .profile during ssh execution directed to /dev/null
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Wed, 09 Mar 2011 12:46:35 +0200
+
 testrunner-lite (1.5.2) unstable; urgency=low
 
   * Possibility to provide ssh port with -t and -n options (BMC#13472)
