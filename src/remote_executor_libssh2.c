@@ -155,7 +155,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 static int lssh2_create_shell_scripts(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
 static char *replace(char const *const cmd, char const *const pat, 
-               char const *const rep);
+		     char const *const rep);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -784,8 +784,8 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
  * @param rep replacement string for pattern
  * @return new string with patterns replaced
  */
-char *replace(char const *const cmd, char const *const pat, 
-               char const *const rep) 
+static char *replace(char const *const cmd, char const *const pat, 
+		     char const *const rep) 
 {
     int replen = strlen(rep);
     int patlen = strlen(pat);
@@ -794,41 +794,40 @@ char *replace(char const *const cmd, char const *const pat,
     const char *cmdptr;
     const char *patloc;
 
-    // Count the strings to be replaces in cmd
+    /* Count the strings to be replaces in cmd */
     cmdptr = cmd;
     patloc = strstr(cmdptr, pat);
     while(patloc) {
-        count++;
-        cmdptr = patloc + patlen;
-        patloc = strstr(cmdptr, pat);
+	    count++;
+	    cmdptr = patloc + patlen;
+	    patloc = strstr(cmdptr, pat);
     }
-
+    
     {
-        // Allocate the new string
-        int newlen = cmdlen + count * (replen - patlen);
-        char *const newcmd = (char *) malloc(sizeof(char) * (newlen + 1));
-
-        if (newcmd != NULL)
-        {
-          // Replace the strings
-          char *newptr = newcmd;
-          cmdptr = cmd;
-          patloc = strstr(cmdptr, pat);
-          while(patloc) {
-            int skiplen = patloc - cmdptr;
-            // Section without replacement
-            strncpy(newptr, cmdptr, skiplen);
-            newptr += skiplen;
-            // Copy replacement
-            strncpy(newptr, rep, replen);
-            newptr += replen;
-            cmdptr = patloc + patlen;
-            patloc = strstr(cmdptr, pat);
-          }
-          // Copy what is left
-          strcpy(newptr, cmdptr);
-        }
-        return newcmd;
+	    /* Allocate the new string */
+	    int newlen = cmdlen + count * (replen - patlen);
+	    char *const newcmd = (char *) malloc(sizeof(char) * (newlen + 1));
+	    
+	    if (newcmd != NULL) {
+		    /* Replace the strings */
+		    char *newptr = newcmd;
+		    cmdptr = cmd;
+		    patloc = strstr(cmdptr, pat);
+		    while(patloc) {
+			    int skiplen = patloc - cmdptr;
+			    /* Section without replacement */
+			    strncpy(newptr, cmdptr, skiplen);
+			    newptr += skiplen;
+			    /* Copy replacement */
+			    strncpy(newptr, rep, replen);
+			    newptr += replen;
+			    cmdptr = patloc + patlen;
+			    patloc = strstr(cmdptr, pat);
+		    }
+		    /* Copy what is left */
+		    strcpy(newptr, cmdptr);
+	    }
+	    return newcmd;
     }
 }
 /* ------------------------------------------------------------------------- */
@@ -927,10 +926,11 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	char *log_cmd;
 	char *casename;
 	char *setname;
-    char *old_cmd;
+	char *old_cmd;
 	int stepnum;
 	int log_cmd_size;
 	int ret = -1;
+	exec_data logger_data;
 
 	if (conn->status == SESSION_GIVE_UP) {
 		LOG_MSG(LOG_ERR, "Fatal error, can't (re)connect");
@@ -946,10 +946,9 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	stepnum  = current_step_num();
 	setname  = (char*)current_set_name();
 
-    /* Escape ' chars from command */
-    old_cmd = command;
-    command = replace(command, "\'", "\'\\\'\'");
-    free(old_cmd);
+	/* Escape ' chars from command */
+	old_cmd = command;
+	command = replace(command, "\'", "\'\\\'\'");
 
 	log_cmd_size = strlen(command) + strlen(casename) +
 		strlen(setname) + 130;
@@ -962,7 +961,6 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	snprintf (log_cmd, log_cmd_size, "logger set:%s-case:%s-step:%d",
 	          setname, casename, stepnum);
 		
-	exec_data logger_data;
 	logger_data.stdout_data.buffer = NULL;
 	logger_data.stderr_data.buffer = NULL;
 	logger_data.result = -1;
