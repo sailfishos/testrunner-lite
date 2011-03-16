@@ -358,12 +358,15 @@ START_TEST (test_execute_manual_empty_steps)
      f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
 		 "testrunner-tests-manual-emptysteps.xml -o /tmp/res.xml -v", "w");
      fail_if (f == NULL, "popen() failed");
-     ret = fwrite ("P\n\n", 1, 5, f);
-     fail_if (ret != 5, "fwrite() returned : %d", ret);
-     ret = fwrite ("P\n\n", 1, 5, f);
-     fail_if (ret != 5, "fwrite() returned : %d", ret);
-     ret = fwrite ("C\n\n", 1, 5, f);
-     fail_if (ret != 5, "fwrite() returned : %d", ret);
+     sleep (1);
+     ret = fwrite ("P\n", 1, 3 , f);
+     fail_if (ret != 3, "fwrite() returned : %d", ret);
+     sleep (1);
+     ret = fwrite ("\nP\n", 1, 4, f);
+     fail_if (ret != 4, "fwrite() returned : %d", ret);
+     sleep (1);
+     ret = fwrite ("\nC\n", 1, 4, f);
+     fail_if (ret != 4, "fwrite() returned : %d", ret);
      fclose (f);
      
      ret = system ("grep -q PASS /tmp/res.xml");
@@ -411,7 +414,7 @@ Suite *make_manualtestexecutor_suite (void)
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executing manual case with empty steps.");
-    tcase_add_test (tc, test_execute_manual_case_no_steps);
+    tcase_add_test (tc, test_execute_manual_empty_steps);
     suite_add_tcase (s, tc);
 
     return s;
