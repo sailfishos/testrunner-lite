@@ -128,8 +128,7 @@ LOCAL int test_chroot(char * folder);
 LOCAL void usage()
 {
 	printf ("\nUsage: testrunner-lite [options]\n");
-	printf ("Example: testrunner-lite -f tests.xml -o ~/results.xml "
-		"-e hardware\n");
+	printf ("Example: testrunner-lite -f tests.xml -o ~/results.xml -v\n");
 	printf ("\nOptions:\n");
 	printf ("  -h, --help\tShow this help message and exit.\n");
 	printf ("  -V, --version\tDisplay version and exit.\n");
@@ -204,7 +203,7 @@ LOCAL void usage()
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
 	        "Run host based testing with native ssh (libssh2) "
 	        "EXPERIMENTAL\n");
-	printf ("  -k, --keypair private_key:public:key\n"
+	printf ("  -k private_key:public_key, --keypair private_key:public_key\n"
 	        "\t\tlibssh2 feature\n"
 	        "\t\tKeypair consists of private and public key file names\n"
 	        "\t\tThey are expected to be found under $HOME/.ssh\n");
