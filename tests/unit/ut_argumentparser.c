@@ -304,7 +304,7 @@ END_TEST
 
 START_TEST (test_remote_logger_flag)
     int ret;
-    char cmd[128];
+    char cmd[1024];
     char *out_file = "/tmp/out.xml";
 
     /* Test -L without required argument */
