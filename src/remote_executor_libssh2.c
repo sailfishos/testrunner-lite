@@ -947,7 +947,7 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	setname  = (char*)current_set_name();
 
 	/* Escape ' chars from command */
-	old_cmd = command;
+	old_cmd = (char *)command;
 	command = replace(command, "\'", "\'\\\'\'");
 
 	log_cmd_size = strlen(command) + strlen(casename) +

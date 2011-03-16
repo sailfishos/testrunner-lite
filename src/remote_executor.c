@@ -119,7 +119,7 @@ LOCAL int _execute (const char *executor, const char *command)
 	}
 	for (i = 0; i < we.we_wordc; i++)
 		argv[i] = we.we_wordv[i];
-	argv[i] = command;
+	argv[i] = (char *)command;
 	argv[i + 1] = NULL;
 
 	ret = execvp(argv[0], argv);

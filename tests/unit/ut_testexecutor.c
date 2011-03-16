@@ -710,9 +710,9 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_terminating_process)
 	exec_data edata;
 	testrunner_lite_options opts;
-	
+	int ret;
 	/* Clean hanging processes */
-	system("killall -9 terminating unterminating");
+	ret = system("killall -9 terminating unterminating");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
@@ -751,9 +751,9 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_killing_process)
 	exec_data edata;
 	testrunner_lite_options opts;
-
+	int ret;
 	/* Clean hanging processes */
-	system("killall -9 terminating unterminating");
+	ret = system("killall -9 terminating unterminating");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
@@ -799,9 +799,9 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_bg_process)
 	exec_data edata;
 	testrunner_lite_options opts;
-
+	int ret;
 	/* Clean hanging processes */
-	system("killall -9 terminating unterminating");
+	ret = system("killall -9 terminating unterminating");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
@@ -835,9 +835,9 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_daemon_process)
 	exec_data edata;
 	testrunner_lite_options opts;
-
+	int ret;
 	/* Clean hanging processes */
-	system("killall -9 trlite-test-daemon");
+	ret = system("killall -9 trlite-test-daemon");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
