@@ -176,6 +176,9 @@ LOCAL void usage()
 	printf ("  -S, --syslog\n\t\tWrite log messages also to syslog.\n");
 	printf ("  -M, --disable-measurement-verdict\n\t\t"
 		" Do not fail cases based on measurement data\n");
+	printf ("  --measure-power\n\t\t"
+		"Perform current measurement with hat_ctrl tool during execution\n\t\t"
+		"of test cases\n");
 	printf ("  -u URL, --vcs-url=URL\n\t\t"
 		"Causes testrunner-lite to write the given VCS URL to "
 		"results.\n"
@@ -625,6 +628,7 @@ LOCAL int test_chroot(char * folder) {
 int main (int argc, char *argv[], char *envp[])
 {
 	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0, V_flag = 0;
+	int power_flag = 0;
 	int opt_char, option_idx;
 	opts.remote_executor = NULL;
 	opts.remote_getter = NULL;
@@ -667,6 +671,7 @@ int main (int argc, char *argv[], char *envp[])
 			 &opts.print_step_output, 1},
 			{"disable-measurement-verdict", no_argument, 
 			 &opts.no_measurement_verdicts, 1},
+			{"measure-power", no_argument, &power_flag, 1},
 
 			{0, 0, 0, 0}
 		};
@@ -935,6 +940,9 @@ int main (int argc, char *argv[], char *envp[])
 		opts.run_automatic = 0;
 	if (a_flag)
 		opts.run_manual = 0;
+
+	if (power_flag)
+		opts.measure_power = 1;
 
 	if (!ifile) {
 		fprintf (stderr, 

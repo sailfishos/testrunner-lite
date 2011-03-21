@@ -37,6 +37,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
+#define MEASUREMENT_FILE "/tmp/current_measurement"
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
@@ -54,10 +55,12 @@
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-int get_measurements (const char *file, xmlListPtr measurements);
+int get_measurements (const char *file, td_case *c, int series);
 /* ------------------------------------------------------------------------- */
-int eval_measurements (xmlListPtr measurements, int *verdict, 
-		       char **fail_string);
+int eval_measurements (td_case *c, int *verdict,
+		       char **fail_string, int series);
+/* ------------------------------------------------------------------------- */
+int process_current_measurement(const char *filename, td_case *c);
 /* ------------------------------------------------------------------------- */
 #endif                          /* TESTMEASUREMENT_H */
 /* End of file */

@@ -358,11 +358,12 @@ LOCAL int step_post_process (const void *data, const void *user)
  *  @param user set data
  *  @return 1 always
  */
+
 LOCAL int process_case (const void *data, const void *user) 
 {
 
 	td_case *c = (td_case *)data;
-	
+
 	if (c->gen.manual && !opts.run_manual) {
 		LOG_MSG(LOG_DEBUG, "Skipping manual case %s",
 			c->gen.name);
@@ -389,6 +390,13 @@ LOCAL int process_case (const void *data, const void *user)
 	cur_case_name = c->gen.name;
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
+
+	if (opts.measure_power) {
+		if (system("hat_ctrl -stream:5:s1-2:f" MEASUREMENT_FILE
+			   ":0 > /dev/null 2>&1") != 0) {
+			LOG_MSG (LOG_WARNING, "Failure in power measurement initialization");
+		}
+	}
 	
 	c->case_res = CASE_PASS;
 	if (c->gen.timeout == 0)
@@ -408,6 +416,13 @@ LOCAL int process_case (const void *data, const void *user)
 	
 	if (c->gen.manual && opts.run_manual)
 		post_manual (c);
+
+	if (opts.measure_power) {
+		if (system("hat_ctrl -stream:0 > /dev/null 2>&1")) {
+			LOG_MSG (LOG_WARNING, "Failure in stopping power measurement");
+		}
+		process_current_measurement(MEASUREMENT_FILE, c);
+	}
 
 	xmlListWalk (c->gets, process_get_case, c);
 	
@@ -563,6 +578,10 @@ LOCAL int process_get_case (const void *data, const void *user)
 	ret = process_get (data, NULL);
 	if (!ret)
 		LOG_MSG (LOG_WARNING, "get file processing failed");
+
+	/* return if file not specified to contain measurement data */
+	if (!file->measurement)
+		return 1;
 	
 	trimmed_name = malloc (strlen ((char *)file->filename) + 1);
 	trim_string ((char *)file->filename, trimmed_name);
@@ -575,7 +594,7 @@ LOCAL int process_get_case (const void *data, const void *user)
 			   strlen (opts.output_folder));
 	sprintf (filename, "%s%s", opts.output_folder, fname);
 
-	ret = get_measurements (filename, c->measurements);
+	ret = get_measurements (filename, c, file->series);
 	free (trimmed_name);
 	free (filename);
 	
@@ -589,13 +608,13 @@ LOCAL int process_get_case (const void *data, const void *user)
 	/* ... and measurement getting was succesfull */
 	if (ret) {
 		c->case_res = CASE_FAIL;
-		c->failure_info = xmlCharStrdup ("Failed to get "
+		c->failure_info = xmlCharStrdup ("Failed to process "
 						 "measurement file");
 		return 1;
 	}
 	
-	ret = eval_measurements (c->measurements, &measurement_verdict,
-				 &failure_str);
+	ret = eval_measurements (c, &measurement_verdict,
+				 &failure_str, file->series);
 	if (ret)
 		return 1;
 	if (measurement_verdict == CASE_FAIL) {

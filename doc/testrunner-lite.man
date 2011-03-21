@@ -67,6 +67,10 @@ Do not try to obtain hardware information
 \fB\-M\fR,  \fB\-\-disable\-measurement\-verdict\fR 
 Do not fail cases based on measurement data
 .TP
+\fB\-\-measure\-power\fR
+Perform current measurement with hat_ctrl tool during execution
+of test cases.
+.TP
 \fB\-C \fIPATH\fR,  \fB\-\-chroot\fR\=\fIPATH\fR
 Run tests inside a chroot environment. Note that this doesn't change the root 
 of the testrunner itself, only the tests will have the new root folder set.

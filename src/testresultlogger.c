@@ -107,6 +107,10 @@ LOCAL int xml_write_post_set (td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_measurement (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+LOCAL int xml_write_series (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_measurement_item (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 LOCAL int txt_write_td_start (td_td *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_td_end (td_td *);
@@ -699,6 +703,7 @@ LOCAL int xml_write_case (const void *data, const void *user)
 
 	xmlListWalk (c->steps, xml_write_step, NULL);
 	xmlListWalk (c->measurements, xml_write_measurement, NULL);
+	xmlListWalk (c->series, xml_write_series, NULL);
 
 	return !xml_end_element ();
 
@@ -812,6 +817,11 @@ LOCAL int xml_write_measurement (const void *data, const void *user)
 	if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "name", 
 					 meas->name) < 0)
 		goto err_out;
+	if (meas->group) {
+		if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "group", 
+						 meas->group) < 0)
+			goto err_out;
+	}
 	if (xmlTextWriterWriteFormatAttribute	(writer, BAD_CAST "value", 
 						 "%f", meas->value) <0)
 		goto err_out;
@@ -830,6 +840,107 @@ LOCAL int xml_write_measurement (const void *data, const void *user)
 		goto err_out;
  ok_out:
 	if (xmlTextWriterEndElement (writer) < 0)
+		goto err_out;
+	return 1;
+ err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Write measurement series data
+ * @param data measurement series data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_series (const void *data, const void *user)
+{
+	td_measurement_series *series = (td_measurement_series *)data;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "series") < 0)
+		goto err_out;
+
+	if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "name", 
+					 series->name) < 0)
+		goto err_out;
+
+	if (series->group) {
+		if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "group",
+						 series->group) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "unit", 
+					 series->unit) < 0)
+		goto err_out;
+
+	if (series->target_specified) {
+		if (xmlTextWriterWriteFormatAttribute (writer,
+						       BAD_CAST "target",
+						       "%f",
+						       series->target) < 0)
+			goto err_out;
+
+		if (xmlTextWriterWriteFormatAttribute (writer,
+						       BAD_CAST "failure",
+						       "%f",
+						       series->failure) < 0)
+			goto err_out;
+	}
+
+	if (series->has_interval && series->interval_unit) {
+		if (xmlTextWriterWriteFormatAttribute (writer,
+						       BAD_CAST "interval",
+						       "%d",
+						       series->interval) < 0)
+			goto err_out;
+
+		if (xmlTextWriterWriteAttribute	(writer,
+						 BAD_CAST "interval_unit",
+						 series->interval_unit) < 0)
+			goto err_out;
+	}
+
+	xmlListWalk (series->items, xml_write_measurement_item, NULL);
+
+ 	if (xmlTextWriterEndElement (writer) < 0)
+		goto err_out;
+	return 1;
+ err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Write measurement item data
+ * @param data measurement item data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_measurement_item (const void *data, const void *user)
+{
+	td_measurement_item *item = (td_measurement_item *)data;
+	char timestamp[64];
+	struct tm tm;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "measurement") < 0)
+		goto err_out;
+
+	if (item->has_timestamp) {
+		if (gmtime_r(&item->timestamp.tv_sec, &tm) == NULL)
+			goto err_out;
+
+		if (strftime(timestamp, sizeof(timestamp), "%FT%T", &tm) == 0)
+			goto err_out;
+
+		if (xmlTextWriterWriteFormatAttribute (writer, BAD_CAST "timestamp", 
+						       "%s.%06ld", timestamp, item->timestamp.tv_nsec/1000) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteFormatAttribute (writer, BAD_CAST "value", 
+					       "%f", item->value) < 0)
+		goto err_out;
+
+ 	if (xmlTextWriterEndElement (writer) < 0)
 		goto err_out;
 	return 1;
  err_out:

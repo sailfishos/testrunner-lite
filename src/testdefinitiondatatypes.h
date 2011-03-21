@@ -81,6 +81,7 @@ typedef struct {
 typedef struct {
 	int        delete_after;  /**< Delete_after attribute */
 	int        measurement;   /**< Measurement attribute */
+	int        series;        /**< Is measurement series */
         xmlChar    *filename;     /**< File name */
 } td_file;
 /* ------------------------------------------------------------------------- */
@@ -169,6 +170,7 @@ typedef struct {
 
 	/* Executor fills */
 	xmlListPtr measurements;         /**< measurements */
+	xmlListPtr series;         /**< measurement series */
 	xmlChar   *comment;     /**< Manual test case comment */
 	case_result_t  case_res; /**< Case result */
 	xmlChar   *failure_info;   /**< optional failure info */
@@ -186,12 +188,34 @@ typedef struct {
 /** Test measurement */
 typedef struct {
 	xmlChar *name;              /**< E.g. bt.upload */
+	xmlChar *group;             /**< E.g. bt_measurements */
 	double   value;             /**< Value of measurement */
 	xmlChar *unit;              /**< E.g. Mb/s */
 	int      target_specified;  /**< Is target and failure specified ? */
 	double   target;            /**< Target value */
 	double   failure;           /**< Failure value */
 } td_measurement;
+/* ------------------------------------------------------------------------- */
+/** Test measurement item */
+typedef struct {
+	double   value;             /**< Value of measurement */
+	int      has_timestamp;     /**< 1 if timestamp set, otherwise 0 */
+	struct timespec timestamp;  /**< Timestamp of the measurement */
+} td_measurement_item;
+/* ------------------------------------------------------------------------- */
+/** Test measurement series */
+typedef struct {
+	xmlChar *name;              /**< Name of series */
+	xmlChar *group;             /**< Measurement group */
+	xmlChar *unit;              /**< Unit of series */
+	xmlListPtr items;           /**< measurement item series */
+	int      target_specified;  /**< Is target and failure specified ? */
+	double   target;            /**< Target value */
+	double   failure;           /**< Failure value */
+	int      has_interval;	    /**< 1 if interval set, otherwise 0 */
+	int      interval;	    /**< Interval value */
+	xmlChar *interval_unit;	    /**< Interval unit */
+} td_measurement_series;
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -232,6 +256,14 @@ void td_case_delete(xmlLinkPtr);
 td_steps *td_steps_create();
 /* ------------------------------------------------------------------------- */
 void td_steps_delete(xmlLinkPtr);
+/* ------------------------------------------------------------------------- */
+td_measurement_series *td_measurement_series_create();
+/* ------------------------------------------------------------------------- */
+void td_measurement_series_delete(xmlLinkPtr);
+/* ------------------------------------------------------------------------- */
+td_measurement_item *td_measurement_item_create();
+/* ------------------------------------------------------------------------- */
+void td_measurement_item_delete(xmlLinkPtr);
 /* ------------------------------------------------------------------------- */
 #ifdef ENABLE_EVENTS
 td_event *td_event_create();

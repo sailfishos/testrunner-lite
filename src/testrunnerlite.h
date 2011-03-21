@@ -89,6 +89,7 @@ typedef struct {
 #endif
 	int   no_measurement_verdicts; /**< flag for measurement verdicts */
 	char *chroot_folder;   /**< change root folder */
+	int measure_power;
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
