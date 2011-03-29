@@ -82,6 +82,7 @@ struct _exec_data {
 	time_t end_time;
 	int result;
 	int signaled; /* In case step is terminated by signal */
+	int waited;   /* flag for that pid has been returned by waitpid */
 };
 
 typedef struct _exec_data exec_data;
@@ -109,7 +110,9 @@ void init_stream_data(stream_data* data, int allocate);
 /* ------------------------------------------------------------------------- */
 void clean_stream_data(stream_data* data);
 /* ------------------------------------------------------------------------- */
-void kill_pgroup(int pgroup, int sig);
+int kill_pgroup(pid_t pgroup, int sig);
+/* ------------------------------------------------------------------------- */
+void kill_step(pid_t pid, int sig);
 /* ------------------------------------------------------------------------- */
 void executor_close ();
 /* ------------------------------------------------------------------------- */

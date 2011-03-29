@@ -97,6 +97,7 @@ static libssh2_conn *lssh2_conn;
 static void parse_command_args(const char* command, char* argv[], int max_args);
 static void free_args(char* argv[]);
 #endif
+static void set_child_signal_handlers();
 static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, 
 				   const char *command);
 static pid_t fork_process(const char *command);
@@ -172,6 +173,16 @@ static void free_args(char* argv[]) {
 	}
 }
 #endif
+
+/** Resets signal handlers set by parent process
+ * 
+ */
+static void set_child_signal_handlers()
+{
+	signal(SIGINT, SIG_DFL);
+	signal(SIGTERM, SIG_DFL);
+}
+
 /** Executes a command on local or remote host
  * @param command Command to execute
  * @return Does not return in success, error code from exec in case of error
@@ -233,6 +244,8 @@ static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *c
 		*stderr_fd = err_pipe[0];
 		
 	} else if (pid == 0) { /* child */
+		set_child_signal_handlers();
+
 		/* Create new session id.
 		 * Process group ID and session ID
 		 * are set to PID (they were PPID) */
@@ -283,6 +296,8 @@ static pid_t fork_process(const char *command) {
 	if (pid > 0) {		/* parent */
 		LOG_MSG(LOG_DEBUG, "Forked new process %d", pid);
 	} else if (pid == 0) {	/* child */
+		set_child_signal_handlers();
+
 		/* Create new session id.
 		 * Process group ID and session ID
 		 * are set to PID (they were PPID) */
@@ -472,16 +487,28 @@ static void reset_timer() {
  */
 static int execution_terminated(exec_data* data) {
 	pid_t pid = 0;
-	pid_t pgroup = getpgid(data->pid);
+	pid_t pgroup = 0;
 	int ret = 0;
 	int status = 0;
 	char fail_str [100];
+
+	pgroup = getpgid(data->pid);
+	if (pgroup > 1 && pgroup != data->pgid) {
+		/* store process group id for further use */
+		data->pgid = pgroup;
+		LOG_MSG(LOG_DEBUG, "Process group of process %d is %d",
+			data->pid, data->pgid);
+	}
 
 	pid = waitpid(-pgroup, &status, WNOHANG);
 
 	switch (pid) {
 	case -1:
 		if (errno == ECHILD) {
+			if (!data->waited) {
+				/* data->pid has not been terminated */
+				break;
+			}
 			/* no more children */
 			LOG_MSG(LOG_DEBUG, "waitpid reported no more children");
 			ret = 1;
@@ -499,6 +526,9 @@ static int execution_terminated(exec_data* data) {
 		if (pid != data->pid) {
 			break;
 		}
+
+		/* set flag that process has been terminated */
+		data->waited = 1;
 
 		if (WIFEXITED(status)) {
 			/* child exited normally */
@@ -609,7 +639,6 @@ static void process_output_streams(int stdout_fd, int stderr_fd,
  * @param data Input and output data controlling execution
  */
 static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
-	pid_t pgroup = 0;
 	int terminated = 0;
 	int killed = 0;
 	int ready = 0;
@@ -639,8 +668,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, terminating process %d", 
 				data->pid);
 
-			pgroup = getpgid(data->pid);
-			kill_pgroup(pgroup, SIGTERM);
+			kill_step(data->pid, SIGTERM);
 
 			data->signaled = SIGTERM;
 
@@ -658,8 +686,7 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, killing process %d", 
 				data->pid);
 
-			pgroup = getpgid(data->pid);
-			kill_pgroup(pgroup, SIGKILL);
+			kill_step(data->pid, SIGKILL);
 			data->signaled = SIGKILL;
 			if (options->remote_executor && !bail_out) {
 				remote_kill (options->remote_executor, data->pid);
@@ -671,8 +698,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 	/* ensure that test process' children which have not terminated by
 	   SIGTERM are terminated now. */
-	if (pgroup > 0) {
-		kill_pgroup(pgroup, SIGKILL);
+	if (data->pgid > 0) {
+		kill_pgroup(data->pgid, SIGKILL);
 	}
 
 	reset_timer();
@@ -800,7 +827,6 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 int execute(const char* command, exec_data* data) {
 	int stdout_fd = -1;
 	int stderr_fd = -1;
-	pid_t ppgid;
 	
 	if (command != NULL) {
 		LOG_MSG(LOG_DEBUG, "Executing command \'%s\'", command);
@@ -824,16 +850,7 @@ int execute(const char* command, exec_data* data) {
 	current_data = data; 
 	
 	if (data->pid > 0) {
-		/* wait that child runs the setsid() */
-		ppgid = getpgid (0);
-		if (ppgid == -1)
-			LOG_MSG (LOG_ERR, "getpgid() failed %s",
-			         strerror (errno));
-		else
-			while (ppgid == getpgid(data->pid)) sched_yield();
-		data->pgid = getpgid(data->pid);
-		LOG_MSG(LOG_DEBUG, "Process %d got process group %d",
-		        data->pid, data->pgid);
+		/* start communicating with test process */
 		communicate(stdout_fd, stderr_fd, data);
 	}
 	current_data = NULL;
@@ -899,6 +916,7 @@ void init_exec_data(exec_data* data) {
 	init_stream_data(&data->stdout_data, 1024);
 	init_stream_data(&data->stderr_data, 1024);
 	init_stream_data(&data->failure_info, 0);
+	data->waited = 0;
 }
 
 void clean_exec_data(exec_data* data) {
@@ -931,19 +949,20 @@ void clean_stream_data(stream_data* data) {
 }
 
 /** Send signal to process group of a test process
- * @param pgroup Process group ID for signal
+ * @param pid pgroup Process group ID for signal
  * @param sig Signal number
+ * @return 0 in succeess, 1 in failure
  */
-void kill_pgroup(int pgroup, int sig) {
+int kill_pgroup(pid_t pgroup, int sig) {
 	if (pgroup <= 1) {
 		LOG_MSG(LOG_ERR, "Invalid pgid %d", pgroup);
-		return;
+		return 1;
 	}
 
 	/* pgroup must be different than the pgid of testrunner-lite */
 	if (pgroup == getpgid(0)) {
 		LOG_MSG(LOG_ERR, "Pgid equals the pgid of testrunner-lite");
-		return;
+		return 1;
 	}
 
 	LOG_MSG(LOG_DEBUG, "Sending signal %d to process group %d",
@@ -951,6 +970,27 @@ void kill_pgroup(int pgroup, int sig) {
 
 	if (killpg(pgroup, sig) < 0 && errno != ESRCH) {
 		LOG_MSG(LOG_ERR, "killpg failed: %s", strerror(errno));
+		return 1;
+	}
+
+	return 0;
+}
+
+/** Send signal to a process group of test step
+ * 
+ * @param pid Process ID of test step
+ * @param sig Signal to send
+ */
+void kill_step(pid_t pid, int sig)
+{
+	pid_t pgroup = getpgid(pid);
+
+	if (kill_pgroup(pgroup, sig)) {
+		/* sending signal to the group failed, just send to the pid */
+		LOG_MSG(LOG_DEBUG, "Sending signal %d to process %d", sig, pid);
+		if (kill(pid, sig) < 0 && errno != ESRCH) {
+			LOG_MSG(LOG_ERR, "kill failed: %s", strerror(errno));
+		}
 	}
 }
 
@@ -1015,7 +1055,7 @@ void handle_sigint (int signum)
 		if (options->remote_executor)
 			remote_kill (options->remote_executor, current_data->pid);
 		else
-			kill_pgroup(current_data->pgid, SIGKILL);
+			kill_step(current_data->pid, SIGKILL);
 	}
 
 }
@@ -1030,7 +1070,7 @@ void handle_sigterm (int signum)
 		if (options->remote_executor)
 			remote_kill (options->remote_executor, current_data->pid);
 		else
-			kill_pgroup(current_data->pgid, SIGKILL);
+			kill_step(current_data->pid, SIGKILL);
 	}
 }
 
