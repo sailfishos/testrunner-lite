@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Raimo Gratseff <ext-raimo.gratseff@nokia.com>
  *
@@ -84,6 +85,55 @@
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */ 
+/** Replace a substring with another string.
+ * Given a string, replace up to one occurrence of a substring with another
+ * string.
+ * @param orig The original string
+ * @param from The substring to replace
+ * @param to The substring to substitute in place of the old substring
+ */
+char *replace_string (const char *orig, const char *from, const char *to)
+{
+	char *from_pos;
+	char *p;
+	char *result;
+	size_t len_before;
+	size_t result_size;
+
+	if (orig == NULL || from == NULL || to == NULL)
+		return NULL;
+
+	result_size = strlen(orig) + 1;
+	from_pos = strstr(orig, from);
+	if (from_pos != NULL)
+		result_size = result_size - strlen(from) + strlen(to);
+
+	result = (char *)malloc (result_size);
+	if (result == NULL) {
+		fprintf (stderr, "malloc failed");
+		return NULL;
+	}
+
+	if (from_pos == NULL) {
+		/* nothing to replace */
+		strcpy(result, orig);
+		return result;
+	}
+
+	len_before = from_pos - orig;
+
+	/* copy original string before match */
+	p = strncpy(result, orig, len_before);
+
+	/* insert new string */
+	p = strcpy(p + len_before, to);
+
+	/* append original string after match */
+	strcpy(p + strlen(to), from_pos + strlen(from));
+
+	return result;
+}
+
 /** Trim string of whitespace and control characters.
  * Remove unwanted whitespace, linefeeds etc. (using isspace()) from the
  * beginning and end of the string (until the first/last non-whitespace
@@ -145,7 +195,7 @@ unsigned int trim_string (char *ins, char *outs)
 
 	return outs_i;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Check if a string list contains certain value
  * @param *list List of values delimited by a character defined in delim
  * @param *value The value searched from the list

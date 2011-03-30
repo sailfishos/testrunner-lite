@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
@@ -29,6 +30,7 @@
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
+#include <wordexp.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -60,11 +62,8 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-#define SSHCMD      "/usr/bin/ssh"
-#define SSHCMDARGS  "-o StrictHostKeyChecking=no",\
-                    "-o PasswordAuthentication=no"
-#define SSHCMDARGS_STR  "-o StrictHostKeyChecking=no " \
-                        "-o PasswordAuthentication=no"
+/* None */
+
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 LOCAL char *unique_id = NULL;
@@ -81,6 +80,7 @@ LOCAL char *unique_id = NULL;
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
+LOCAL int _execute (const char *executor, const char *command);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -88,13 +88,60 @@ LOCAL char *unique_id = NULL;
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+/** Execute the given command with executor
+ * @param executor prepended to command to execute on DUT
+ * @command command to execute
+ * @return non-zero on failure, no return on success
+ */
+LOCAL int _execute (const char *executor, const char *command)
+{
+	int ret = 0;
+	wordexp_t we;
+	char **argv = NULL;
+	size_t argv_size;
+	size_t i;
 
+	/* expand executor string to array of words */
+	ret = wordexp(executor, &we, 0);
+	if (ret) {
+		LOG_MSG(LOG_ERR, "Executor word expansion failed (%d): %s",
+				ret, executor);
+		goto out_no_wordfree;
+	}
+
+	/* create argv from executor + command */
+	argv_size = we.we_wordc + 2; /* +2 for command and NULL */
+	argv = malloc(argv_size * sizeof(char *));
+	if (argv == NULL) {
+		fprintf(stderr, "malloc failed");
+		ret = -1;
+		goto out;
+	}
+	for (i = 0; i < we.we_wordc; i++)
+		argv[i] = we.we_wordv[i];
+	argv[i] = (char *)command;
+	argv[i + 1] = NULL;
+
+	ret = execvp(argv[0], argv);
+
+	/* only reached if exec fails */
+	fprintf(stderr, "Failed to exec executor: %s", executor);
+
+out:
+	wordfree(&we);
+out_no_wordfree:
+	if (argv)
+		free(argv);
+	return ret;
+}
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-/** Init the ssh executor
+/** Init the remote executor
+ * @param executor prepended to command to execute on DUT
+ * @return 0 on success
  */
-void ssh_executor_init (const char *hostname)
+int remote_executor_init (const char *executor)
 {
 	int ret, status;
 	pid_t pid;
@@ -114,23 +161,22 @@ void ssh_executor_init (const char *hostname)
 	pid = fork();
 	if (pid > 0) { 
 		waitpid(pid, &status, 0);
-		return;
+		if (WIFEXITED(status))
+			return WEXITSTATUS(status);
+		return status;
 	}
 	if (pid < 0)
-		return;
+		return pid;
 	
-
-	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-		    cmd, (char*)NULL);
-	
+	return _execute (executor, cmd);
 }
 /* ------------------------------------------------------------------------- */
-/** Executes a command using ssh 
- * @param hostname SUT address 
+/** Executes a command using a remote executor
+ * @param executor prepended to command to execute on DUT
  * @param command Command to execute
  * @return Does not return in success, error code from exec in case of error
  */
-int ssh_execute (const char *hostname, const char *command)
+int remote_execute (const char *executor, const char *command)
 {
 	int   ret;
         char *cmd; 
@@ -164,33 +210,29 @@ int ssh_execute (const char *hostname, const char *command)
 			 ";source .profile > /dev/null; %s",
 			 unique_id, getpid(), command);
 
-        /* cmd can not be freed since execl does not return here */
-        ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-                    cmd, (char*)NULL);
-
-
+	ret = _execute (executor, cmd);
         return ret;
 }
 /* ------------------------------------------------------------------------- */
-/** Tries to check if ssh connections are still working
- * @param hostname SUT address 
- * @return 0 or ssh error code
+/** Tries to check if remote connections are still working
+ * @param executor prepended to command to execute on DUT
+ * @return 0 or executor error code
  */
-int ssh_check_conn (const char *hostname)
+int remote_check_conn (const char *executor)
 {
 	int ret;
 	char cmd[1024];
-	
-	sprintf (cmd, "%s %s %s echo foo", SSHCMD, SSHCMDARGS_STR, hostname);
+
+	sprintf (cmd, "%s \"echo foo\"", executor);
 	ret = system (cmd);
 	return ret;
 }
 /* ------------------------------------------------------------------------- */
-/** Tries to kill program started by ssh and removes temporary file
- *  @param hostname SUT address 
+/** Tries to kill program started by remote executor and removes temporary file
+ *  @param executor prepended to command to execute on DUT
  *  @param id PID of the test step
  */
-int ssh_kill (const char *hostname, pid_t id)
+int remote_kill (const char *executor, pid_t id)
 {
 	int ret;
 	pid_t pid;
@@ -210,19 +252,19 @@ int ssh_kill (const char *hostname, pid_t id)
 	sprintf (cmd, "[ -f %1$s ] && pkill -9 -P $(cat %1$s); rm -f %1$s", 
 		 file);
 
-	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-		    cmd, (char*)NULL);
+	ret = _execute (executor, cmd);
 
 	return ret;
 }
 /* ------------------------------------------------------------------------- */
 /** Clean temporary file from target machine
- *  @param hostname SUT address 
+ *  @param executor prepended to command to execute on DUT
  *  @param id PID of the test step
+ *  @return 0 on success
  */
-void ssh_clean (const char *hostname, pid_t id)
+int remote_clean (const char *executor, pid_t id)
 {
-	int ret, status;
+	int status;
 	pid_t pid;
 	char cmd [PID_FILE_MAX_LEN + 80];
 
@@ -230,25 +272,28 @@ void ssh_clean (const char *hostname, pid_t id)
 
 	pid = fork();
 
-	if (pid) {
+	if (pid > 0) {
 		waitpid(pid, &status, 0);
-		return;
+		if (WIFEXITED(status))
+			return WEXITSTATUS(status);
+		return status;
 	}
+	if (pid < 0)
+		return pid;
 
 	/* child: clean up target */
-	ret = execl(SSHCMD, SSHCMD, SSHCMDARGS, hostname, 
-		    cmd, (char*)NULL);
-
-	return;
+	return _execute (executor, cmd);
 }
 /* ------------------------------------------------------------------------- */
 /** Clean up
- *  @param hostname SUT address 
+ *  @return 0 on success
  */
-void ssh_executor_close (const char *hostname)
+int remote_executor_close (void)
 {
+
 	free (unique_id);
-	return;
+
+	return 0;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */

@@ -1,10 +1,74 @@
+testrunner-lite (1.6.0) unstable; urgency=low
+
+  * Support for measurement timestamps and series (BMC#13915)
+  * Support for generic executor (-E and -G) by Nick Wilson
+  * Too small char array in unit test by Tero Koskinen (BMC#13886)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Thu, 24 Mar 2011 10:55:24 +0200
+
+testrunner-lite (1.5.3) unstable; urgency=low
+
+  * Fixed: libssh2 implementation does not source environment variables (BMC#13888)
+  * Fixed: libssh2 implementation prints unnecessary errors to log (BMC#13890)
+  * testrunner-lite unit tests can now be executed per suite (BMC#13550)
+  * Fixed: empty manual step handling (BMC#13996)
+  * Libssh2 implementation quote usage fixed
+  * Output of soucing .profile during ssh execution directed to /dev/null
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Wed, 09 Mar 2011 12:46:35 +0200
+
+testrunner-lite (1.5.2) unstable; urgency=low
+
+  * Possibility to provide ssh port with -t and -n options (BMC#13472)
+  * Fixed: <get><file> does not work with -n (BMC#13415)
+  * Fixed: testrunner-lite occasionally hangs with -n (BMC#13416)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Sun, 20 Feb 2011 16:59:56 +0200
+
+testrunner-lite (1.5.1) unstable; urgency=low
+
+  * Fixed: invalid use of va_list caused problems on 64 bit system (BMC#13322)
+  * Fixed: writing manual test case comment to results (BMC#13314)
+  * Support for VCS and package urls (-u and -U options) (BMC#11409)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Wed, 09 Feb 2011 15:28:02 +0200
+
+testrunner-lite (1.5.0) unstable; urgency=low
+
+  * Supports libssh2 for remote execution (BMC#6693)
+  * Autoconf magic for xml2 library by Tero Koskinen (BMC#12336)
+  * Autoconf magic for check library by Tero Koskinen (BMC#12988)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Tue, 01 Feb 2011 15:47:48 +0200
+
+testrunner-lite (1.4.4) unstable; urgency=low
+
+  * Never give PASS verdict for timeouting test step (BMC#12537)
+  * Fixed obtaining CWD (did not always work with sudo) (BMC#12519)
+  * Fixed --help output regarding filters (BMC#12585)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Fri, 21 Jan 2011 11:16:13 +0200
+
+testrunner-lite (1.4.3) unstable; urgency=low
+
+  * Possibility to run tests inside chroot environment (--chroot option, Tobias Koch)
+  * Support for obtaining and evaluating measurement data (BMC#11041)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Fri, 14 Jan 2011 15:52:09 +0200
+
+testrunner-lite (1.4.2) unstable; urgency=low
+
+  * Support new attributes to comply with wiki.meego.com/TestCaseTemplate (BMC#11475)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Tue, 21 Dec 2010 13:50:31 +0200
+
 testrunner-lite (1.4.1) unstable; urgency=low
 
   * Pre and post steps are written to results (BMC#7563)
   * Transfers all the data from test definition to results (BMC#10726)
   * Fixed testrunner-lite reports step results under wrong case (BMC#11032)
   * Fixed compilation warnings
-	
+
  -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Fri, 10 Dec 2010 12:50:33 +0200
 
 testrunner-lite (1.4.0) unstable; urgency=low

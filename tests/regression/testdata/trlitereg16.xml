@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1"> <!-- result="0" -->
+  <suite name="measurementsuite">
+    <set name="measurementset" description="measurement test">
+	<case name="measurements"> <!-- result="PASS" -->
+          <step>echo foo</step> <!-- result="PASS" -->
+	<get>
+	  <file measurement="true">/usr/share/testrunner-lite-regression-tests/testdata/measurement.txt</file>
+	</get>
+      </case>
+    </set>
+  </suite>
+</testdefinition>   

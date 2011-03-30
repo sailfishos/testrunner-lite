@@ -2,9 +2,8 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
- * Contains changes by Wind River Systems, 2011-03-09
  *
- * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
+ * Contact: Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -22,12 +21,12 @@
  *
  */
 
-#ifndef REMOTE_EXECUTOR_H
-#define REMOTE_EXECUTOR_H
+#ifndef TESTEVENT_H
+#define TESTEVENT_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
-#include "testrunnerlite.h"
+#include "testdefinitiondatatypes.h"
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -39,7 +38,6 @@
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
-/* ------------------------------------------------------------------------- */
 /* None */
 
 /* ------------------------------------------------------------------------- */
@@ -53,17 +51,14 @@
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-int remote_executor_init (const char *executor);
+int init_event_system();
 /* ------------------------------------------------------------------------- */
-int remote_execute (const char *executor, const char *command);
+void cleanup_event_system();
 /* ------------------------------------------------------------------------- */
-int remote_kill (const char *executor, pid_t id);
+int wait_for_event(td_event *event);
 /* ------------------------------------------------------------------------- */
-int remote_check_conn (const char *executor);
+int send_event(td_event *event);
 /* ------------------------------------------------------------------------- */
-int remote_clean (const char *executor, pid_t id);
-/* ------------------------------------------------------------------------- */
-int remote_executor_close (void);
-/* ------------------------------------------------------------------------- */
-#endif                          /* REMOTE_EXECUTOR_H */
+
+#endif
 /* End of file */

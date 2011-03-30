@@ -2,9 +2,8 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
- * Contains changes by Wind River Systems, 2011-03-09
  *
- * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
+ * Contact: Timo Makimattila <timo.makimattila@digia.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -22,12 +21,21 @@
  *
  */
 
-#ifndef REMOTE_EXECUTOR_H
-#define REMOTE_EXECUTOR_H
+#ifndef REMOTE_EXECUTOR_LIBSSH2_H
+#define REMOTE_EXECUTOR_LIBSSH2_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <libssh2.h>
 #include "testrunnerlite.h"
+#include "executor.h"
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -48,22 +56,44 @@
 
 /* ------------------------------------------------------------------------- */
 /* STRUCTURES */
-/* None */
+typedef enum {
+	SESSION_OK = 1,
+	SESSION_GIVE_UP
+} connection_status;
 
+typedef struct libssh2_conn {
+	struct libssh2_knownhost *host;
+	struct timespec timeout;
+	struct sockaddr_in sin;
+	const char *hostname;
+	const char *username;
+	const char *password;
+	const char *fingerprint;
+	char *priv_key; 
+	char *pub_key;
+	unsigned long hostaddr;
+	in_port_t port;
+	int sock;
+	fd_set nfd;
+	fd_set *writefd;
+	fd_set *readfd;
+	LIBSSH2_SESSION *ssh2_session;
+	connection_status status;
+} libssh2_conn;
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-int remote_executor_init (const char *executor);
+libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
+                                  in_port_t port, const char *priv_key, 
+				  const char *pub_key);
 /* ------------------------------------------------------------------------- */
-int remote_execute (const char *executor, const char *command);
+int lssh2_execute(libssh2_conn *conn, const char *command, 
+		  exec_data *data);
 /* ------------------------------------------------------------------------- */
-int remote_kill (const char *executor, pid_t id);
+int lssh2_executor_close(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
-int remote_check_conn (const char *executor);
+int lssh2_kill (libssh2_conn *conn, int signal);
 /* ------------------------------------------------------------------------- */
-int remote_clean (const char *executor, pid_t id);
-/* ------------------------------------------------------------------------- */
-int remote_executor_close (void);
-/* ------------------------------------------------------------------------- */
-#endif                          /* REMOTE_EXECUTOR_H */
+
+#endif                          /* REMOTE_EXECUTOR_LIBSSH2_H */
 /* End of file */

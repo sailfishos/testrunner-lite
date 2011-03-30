@@ -2,12 +2,12 @@ Source: testrunner-lite
 Section: misc
 Priority: optional
 Maintainer: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
-Build-Depends: debhelper (>= 5), libtool, autoconf, libxml2-dev, doxygen, check, libcurl3-dev, libtool
+Build-Depends: debhelper (>= 5), libtool, autoconf, libxml2-dev, doxygen, check, libcurl3-dev, libtool, libssh2-1-dev
 Standards-Version: 3.8.0
 
 Package: testrunner-lite
 Architecture: any
-Depends: libxml2, test-definition, libcurl3, openssh | ssh, testrunner-lite-hwinfo
+Depends: libxml2, test-definition, libcurl3, openssh | ssh, testrunner-lite-hwinfo, libssh2-1
 Description: generic test executor tool
 
 Package: testrunner-lite-doc
@@ -15,20 +15,20 @@ Section: doc
 Architecture: all
 Description: Doxygen documentation in html format
 
-Package: testrunner-lite-hwinfo-maemo
-Provides: testrunner-lite-hwinfo
-Depends: sysinfo-tool [armel]
-Conflicts: testrunner-lite-hwinfo-meego
-Section: utils
-Architecture: any
-Description: Library for obtaining hardware information in maemo environment
-
-#Package: testrunner-lite-hwinfo-meego
+#Package: testrunner-lite-hwinfo-maemo
 #Provides: testrunner-lite-hwinfo
-#Conflicts: testrunner-lite-hwinfo-maemo
+#Depends: sysinfo-tool [armel]
+#Conflicts: testrunner-lite-hwinfo-meego
 #Section: utils
 #Architecture: any
-#Description: Library for obtaining hardware information in meego environment
+#Description: Library for obtaining hardware information in maemo environment
+
+Package: testrunner-lite-hwinfo-meego
+Provides: testrunner-lite-hwinfo
+Conflicts: testrunner-lite-hwinfo-maemo
+Section: utils
+Architecture: any
+Description: Library for obtaining hardware information in meego environment
 
 Package: testrunner-lite-tests
 Section: tests

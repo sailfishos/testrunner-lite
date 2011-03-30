@@ -260,7 +260,7 @@ START_TEST (test_execute_manual_step_na)
     t_step = td_step_create();
     t_step->step = (xmlChar*)"This is manual test step.";
     
-    /* Make test case fail. */
+    /* Make test case N/A. */
     written = write(pipefd[1], "N\n", 2);
     fail_if (written < 2);
     execute_manual (t_step);
@@ -298,8 +298,9 @@ START_TEST (test_execute_manual_set)
      f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
 		 "testrunner-tests-manual-set.xml -o /tmp/res.xml", "w");
      fail_if (f == NULL, "popen() failed");
-     ret = fwrite ("P\nP\n\n", 1, 5, f);
-     fail_if (ret != 5, "fwrite() returned : %d", ret);
+     ret = fwrite ("P\nP\ntestcomment\n", 1, strlen("P\nP\ntestcomment\n"), f);
+     fail_if (ret != strlen("P\nP\ntestcomment\n"), 
+	      "fwrite() returned : %d", ret);
      fclose (f);
      
      ret = system ("grep -q PASS /tmp/res.xml");
@@ -307,6 +308,9 @@ START_TEST (test_execute_manual_set)
 
      ret = system ("grep -q FAIL /tmp/res.xml");
      fail_unless (ret, "/tmp/res.xml contains FAIL");
+
+     ret = system ("grep -q testcomment /tmp/res.xml");
+     fail_if (ret, "comment not found from result");
 
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -347,6 +351,33 @@ START_TEST (test_execute_manual_case_no_steps)
      fail_unless (ret, "/tmp/res.xml contains FAIL");
     
 END_TEST
+START_TEST (test_execute_manual_empty_steps)
+     int ret;
+     FILE *f;
+
+     f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
+		 "testrunner-tests-manual-emptysteps.xml -o /tmp/res.xml -v", "w");
+     fail_if (f == NULL, "popen() failed");
+     sleep (1);
+     ret = fwrite ("P\n", 1, 3 , f);
+     fail_if (ret != 3, "fwrite() returned : %d", ret);
+     sleep (1);
+     ret = fwrite ("\nP\n", 1, 4, f);
+     fail_if (ret != 4, "fwrite() returned : %d", ret);
+     sleep (1);
+     ret = fwrite ("\nC\n", 1, 4, f);
+     fail_if (ret != 4, "fwrite() returned : %d", ret);
+     fclose (f);
+     
+     ret = system ("grep -q PASS /tmp/res.xml");
+     fail_if (ret, "/tmp/res.xml does not contain PASS");
+
+     ret = system ("grep -q FAIL /tmp/res.xml");
+     fail_unless (ret, "/tmp/res.xml contains FAIL");
+
+     
+    
+END_TEST
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -380,6 +411,10 @@ Suite *make_manualtestexecutor_suite (void)
 
     tc = tcase_create ("Test executing manual case with no steps.");
     tcase_add_test (tc, test_execute_manual_case_no_steps);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executing manual case with empty steps.");
+    tcase_add_test (tc, test_execute_manual_empty_steps);
     suite_add_tcase (s, tc);
 
     return s;

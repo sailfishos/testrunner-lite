@@ -91,6 +91,12 @@ LOCAL int xml_write_general_attributes (td_gen_attribs *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_step (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
+LOCAL int xml_write_event (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_event_param (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+#endif
 LOCAL int xml_write_pre_post_step (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_case (const void *, const void *);
@@ -98,6 +104,12 @@ LOCAL int xml_write_case (const void *, const void *);
 LOCAL int xml_write_file_data (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_post_set (td_set *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_measurement (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_series (const void *, const void *);
+/* ------------------------------------------------------------------------- */
+LOCAL int xml_write_measurement_item (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_td_start (td_td *);
 /* ------------------------------------------------------------------------- */
@@ -136,6 +148,7 @@ LOCAL int xml_write_td_start (td_td *td)
 	
 	return 0; 
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -162,6 +175,7 @@ LOCAL int xml_write_td_end (td_td *td)
 	while (!xml_end_element());
 	return  0;
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -178,15 +192,10 @@ LOCAL int xml_write_pre_suite (td_suite *suite)
 	if (xml_write_general_attributes (&suite->gen))
 		goto err_out;
 
-	if (suite->gen.domain 
-	    && xmlTextWriterWriteAttribute (writer,  
-					    BAD_CAST 
-					    "domain", 
-					    suite->gen.domain) < 0)
-		goto err_out;
 
 	return 0;
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -204,6 +213,7 @@ LOCAL int xml_write_post_suite (td_suite *suite)
 
 	return xml_end_element();
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -219,11 +229,6 @@ LOCAL int xml_write_pre_set (td_set *set)
 	if (xml_write_general_attributes (&set->gen))
 		goto err_out;
 
-	if (set->gen.feature)
-		if (xmlTextWriterWriteAttribute (writer, 
-						 BAD_CAST "feature", 
-						 set->gen.feature) < 0)
-			goto err_out;
 
 	if (set->environment)
 		if (xmlTextWriterWriteAttribute (writer, 
@@ -232,6 +237,7 @@ LOCAL int xml_write_pre_set (td_set *set)
 			goto err_out;
 	return 0;
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 /* ------------------------------------------------------------------------- */
@@ -290,7 +296,27 @@ LOCAL int xml_write_general_attributes (td_gen_attribs *gen)
 						   "true" :
 						   "false")) < 0)
 		goto err_out;
-	
+
+
+	if (gen->domain) 
+	    if (xmlTextWriterWriteAttribute (writer,  
+					     BAD_CAST 
+					     "domain", 
+					     gen->domain) < 0)
+		goto err_out;
+
+	if (gen->feature)
+	    if (xmlTextWriterWriteAttribute (writer, 
+					     BAD_CAST "feature", 
+					     gen->feature) < 0)
+		goto err_out;
+
+	if (gen->component)
+	    if (xmlTextWriterWriteAttribute (writer, 
+					     BAD_CAST "component", 
+					     gen->component) < 0)
+		goto err_out;
+
 	if (gen->hwid)
 		if (xmlTextWriterWriteAttribute (writer, 
 						 BAD_CAST "hwid", 
@@ -299,6 +325,7 @@ LOCAL int xml_write_general_attributes (td_gen_attribs *gen)
 	
 	return 0;
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
 }
 
@@ -313,6 +340,11 @@ LOCAL int xml_write_step (const void *data, const void *user)
 	td_step *step = (td_step *)data;
 	struct tm *tm;
 
+#ifdef ENABLE_EVENTS
+	if (step->event)
+		return xml_write_event(step->event, step);
+#endif
+
 	if (xmlTextWriterStartElement (writer, BAD_CAST "step") < 0)
 		goto err_out;
 
@@ -322,9 +354,9 @@ LOCAL int xml_write_step (const void *data, const void *user)
 						   "false")) < 0)
 		goto err_out;
 
-	if (xmlTextWriterWriteAttribute (writer, 
-					 BAD_CAST "command", 
-					 step->step) < 0)
+	if (step->step && xmlTextWriterWriteAttribute (writer, 
+						       BAD_CAST "command", 
+						       step->step) < 0)
 		goto err_out;
 	
 	if (step->has_result == 0) {
@@ -334,6 +366,11 @@ LOCAL int xml_write_step (const void *data, const void *user)
 			goto err_out;
 
 
+	} else if (step->fail) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "result", 
+						 BAD_CAST "FAIL") < 0)
+			goto err_out;
 	} else if (xmlTextWriterWriteAttribute (writer, 
 						BAD_CAST "result", 
 						step->expected_result == 
@@ -403,9 +440,106 @@ LOCAL int xml_write_step (const void *data, const void *user)
 	return !xml_end_element();
 	
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
+/** Write event result xml
+ * @param data event data 
+ * @param user step data
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_event (const void *data, const void *user)
+{
+	td_event *event = (td_event *)data;
+	td_step *step = (td_step *)user;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "event") < 0)
+		goto err_out;
+
+	/* event specific attributes */
+	if (xmlTextWriterWriteFormatAttribute (writer,
+					       BAD_CAST "type",
+					       "%s",
+					       event_type_str(event->type)) < 0)
+		goto err_out;
+
+	if (event->resource) {
+		if (xmlTextWriterWriteAttribute (writer,
+						 BAD_CAST "resource",
+						 event->resource) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteFormatAttribute (writer,
+					       BAD_CAST "timeout",
+					       "%lu",
+					       event->timeout) < 0)
+		goto err_out;
+
+	/* attributes of step */
+	if (step->has_result == 0) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "result", 
+						 BAD_CAST "N/A") < 0)
+			goto err_out;
+
+
+	} else if (xmlTextWriterWriteAttribute (writer, 
+						BAD_CAST "result", 
+						step->expected_result == 
+						step->return_code ? 
+						BAD_CAST "PASS" :
+						BAD_CAST "FAIL") < 0)
+		goto err_out;
+
+	xmlListWalk (event->params, xml_write_event_param, NULL);
+
+	return !xml_end_element();
+	
+err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Write event result xml
+ * @param data event_param data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_event_param (const void *data, const void *user)
+{
+	td_event_param *param = (td_event_param *)data;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "param") < 0)
+		goto err_out;
+
+	if (param->type) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "type", 
+						 param->type) < 0)
+			goto err_out;
+	}
+
+	if (param->name) {
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "name", 
+						 param->name) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteString (writer, param->value) < 0)
+		goto err_out;
+
+	return !xml_end_element();
+
+err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+#endif	/* ENABLE_EVENTS */
 /** Write pre or post step result xml
  * @param data step data 
  * @param user not used
@@ -500,6 +634,7 @@ LOCAL int xml_write_pre_post_step (const void *data, const void *user)
 	
 	return !xml_end_element();
 err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -547,6 +682,12 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 BAD_CAST "bugzilla_id", 
 						 c->bugzilla_id) < 0)
 			goto err_out;
+	if (c->state)
+		if (xmlTextWriterWriteAttribute (writer, 
+						 BAD_CAST "state", 
+						 c->state) < 0)
+			goto err_out;
+	
 
 	if (c->gen.manual && c->comment)
 		if (xmlTextWriterWriteAttribute (writer, 
@@ -554,8 +695,15 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 c->comment) < 0)
 			goto err_out;
 
+	if (c->description)
+		if (xmlTextWriterWriteElement	(writer, 
+						 BAD_CAST "description", 
+						 c->description) < 0)
+			goto err_out;
 
 	xmlListWalk (c->steps, xml_write_step, NULL);
+	xmlListWalk (c->measurements, xml_write_measurement, NULL);
+	xmlListWalk (c->series, xml_write_series, NULL);
 
 	return !xml_end_element ();
 
@@ -585,6 +733,7 @@ LOCAL int xml_write_file_data (const void *data, const void *user)
 		goto err_out;
 	return !xml_end_element();
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
@@ -650,7 +799,153 @@ LOCAL int xml_write_post_set (td_set *set)
 	return 0;
 
  err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 1;
+}
+/* ------------------------------------------------------------------------- */
+/** Write measurement data
+ * @param data measurement data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_measurement (const void *data, const void *user)
+{
+	td_measurement *meas = (td_measurement *)data;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "measurement") < 0)
+		goto err_out;
+	if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "name", 
+					 meas->name) < 0)
+		goto err_out;
+	if (meas->group) {
+		if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "group", 
+						 meas->group) < 0)
+			goto err_out;
+	}
+	if (xmlTextWriterWriteFormatAttribute	(writer, BAD_CAST "value", 
+						 "%f", meas->value) <0)
+		goto err_out;
+	if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "unit", 
+					 meas->unit) < 0)
+		goto err_out;
+
+	if (!meas->target_specified)
+		goto ok_out;
+
+	if (xmlTextWriterWriteFormatAttribute	(writer, BAD_CAST "target", 
+						 "%f", meas->target) <0)
+		goto err_out;
+	if (xmlTextWriterWriteFormatAttribute	(writer, BAD_CAST "failure", 
+						 "%f", meas->failure) <0)
+		goto err_out;
+ ok_out:
+	if (xmlTextWriterEndElement (writer) < 0)
+		goto err_out;
+	return 1;
+ err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Write measurement series data
+ * @param data measurement series data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_series (const void *data, const void *user)
+{
+	td_measurement_series *series = (td_measurement_series *)data;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "series") < 0)
+		goto err_out;
+
+	if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "name", 
+					 series->name) < 0)
+		goto err_out;
+
+	if (series->group) {
+		if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "group",
+						 series->group) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteAttribute	(writer, BAD_CAST "unit", 
+					 series->unit) < 0)
+		goto err_out;
+
+	if (series->target_specified) {
+		if (xmlTextWriterWriteFormatAttribute (writer,
+						       BAD_CAST "target",
+						       "%f",
+						       series->target) < 0)
+			goto err_out;
+
+		if (xmlTextWriterWriteFormatAttribute (writer,
+						       BAD_CAST "failure",
+						       "%f",
+						       series->failure) < 0)
+			goto err_out;
+	}
+
+	if (series->has_interval && series->interval_unit) {
+		if (xmlTextWriterWriteFormatAttribute (writer,
+						       BAD_CAST "interval",
+						       "%d",
+						       series->interval) < 0)
+			goto err_out;
+
+		if (xmlTextWriterWriteAttribute	(writer,
+						 BAD_CAST "interval_unit",
+						 series->interval_unit) < 0)
+			goto err_out;
+	}
+
+	xmlListWalk (series->items, xml_write_measurement_item, NULL);
+
+ 	if (xmlTextWriterEndElement (writer) < 0)
+		goto err_out;
+	return 1;
+ err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	return 0;
+}
+/* ------------------------------------------------------------------------- */
+/** Write measurement item data
+ * @param data measurement item data 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_measurement_item (const void *data, const void *user)
+{
+	td_measurement_item *item = (td_measurement_item *)data;
+	char timestamp[64];
+	struct tm tm;
+
+	if (xmlTextWriterStartElement (writer, BAD_CAST "measurement") < 0)
+		goto err_out;
+
+	if (item->has_timestamp) {
+		if (gmtime_r(&item->timestamp.tv_sec, &tm) == NULL)
+			goto err_out;
+
+		if (strftime(timestamp, sizeof(timestamp), "%FT%T", &tm) == 0)
+			goto err_out;
+
+		if (xmlTextWriterWriteFormatAttribute (writer, BAD_CAST "timestamp", 
+						       "%s.%06ld", timestamp, item->timestamp.tv_nsec/1000) < 0)
+			goto err_out;
+	}
+
+	if (xmlTextWriterWriteFormatAttribute (writer, BAD_CAST "value", 
+					       "%f", item->value) < 0)
+		goto err_out;
+
+ 	if (xmlTextWriterEndElement (writer) < 0)
+		goto err_out;
+	return 1;
+ err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	return 0;
 }
 /* ------------------------------------------------------------------------- */
 /************************* text output ***************************************/
@@ -869,7 +1164,27 @@ int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 			     PROGNAME, __FUNCTION__);
 		    return 1;
 	    }
+	    
+	    if (opts->vcsurl && xmlTextWriterWriteElement (writer, 
+							   BAD_CAST "vcsurl", 
+							   BAD_CAST 
+							   opts->vcsurl) < 0) {
 		    
+		    LOG_MSG (LOG_ERR, "%s:%s:failed to write vcsurl\n",
+			     PROGNAME, __FUNCTION__);
+		    return 1;
+	    }
+
+
+	    if (opts->packageurl && 
+		xmlTextWriterWriteElement (writer, BAD_CAST  "packageurl", 
+					   BAD_CAST opts->packageurl) < 0) {
+			    
+			    LOG_MSG (LOG_ERR, "%s:%s:failed to write "
+				     "packageurl\n", PROGNAME, __FUNCTION__);
+			    return 1;
+	    }
+	    
 	    if (xmlTextWriterStartElement (writer, BAD_CAST "testresults") 
 		< 0) {
 		    LOG_MSG (LOG_ERR, "%s:%s:failed to write "
@@ -1017,15 +1332,15 @@ int write_post_set (td_set *set)
 }
 /* ------------------------------------------------------------------------- */
 /** Write end element tag
- * @return 0 on success, 1 on error.
+ * @return 0 on success, 1 no element to close
  */
 int xml_end_element ()
 {
 
 	if (xmlTextWriterFullEndElement (writer) < 0)
-		goto err_out;
+		goto last_element;
 	return 0;
-err_out:
+last_element:
 	return 1;
 }
 /* ------------------------------------------------------------------------- */

@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.4.1
+Version: 1.6.0
 # build.meego.com proposed patch > Release:7.1
 Release:7.1
 Summary: Generic test executor tool
@@ -9,9 +9,9 @@ URL: http://meego.com
 Source0: testrunner-lite.tar.gz  
 BuildRoot: %{_tmppath}/testrunner-lite-root  
    
-BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel, libtool
+BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel, libtool, libssh2-devel
 # libxml2 and libcurl are implicit dependencies  
-Requires: test-definition, openssh, testrunner-lite-hwinfo
+Requires: test-definition, openssh, testrunner-lite-hwinfo, libssh2
 
 %package tests
 Summary: Unit tests for testrunner-lite
@@ -59,7 +59,7 @@ Library for obtaining hardware information in meego environment
 %build
 CFLAGS=-DVERSIONSTR=%{version}
 autoreconf --install
-%configure
+%configure --enable-libssh2
 make %{?_smp_mflags}
 make html %{?_smp_mflags}
 

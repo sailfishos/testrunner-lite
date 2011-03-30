@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
@@ -26,7 +27,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
-/* None */
+#include <netinet/in.h>
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -49,7 +50,7 @@ typedef enum {
 typedef enum {
 	TESTRUNNER_LITE_OK = 0,
 	TESTRUNNER_LITE_INVALID_ARGUMENTS,
-	TESTRUNNER_LITE_SSH_FAIL,
+	TESTRUNNER_LITE_REMOTE_FAIL,
 	TESTRUNNER_LITE_XML_PARSE_FAIL,
 	TESTRUNNER_LITE_XML_VALIDATION_FAIL,
 	TESTRUNNER_LITE_OUTPUT_FOLDER_CREATE_FAIL,
@@ -74,7 +75,21 @@ typedef struct {
 	int   run_manual;      /**< flag for manual tests */
 	int   skip_hwinfo;     /**< flag for skipping hwinfo step */
 	int   log_level;       /**< logging level */
-	char *target_address;   /**< SUT address. */
+	char *target_address;  /**< SUT address. */
+	in_port_t target_port;  /**< optional SUT port. */
+	char *remote_executor;  /**< command prefix for remote execution */
+	char *remote_getter;    /**< command to get a remote file */
+	char *vcsurl;          /**< URL of VCS containing the test plan */ 
+	char *packageurl;      /**< URL package containing the test plan */
+#ifdef ENABLE_LIBSSH2
+	char *username;         /**< Remote user name for libssh2 */
+	int   libssh2;          /**< flag for libssh2 usage */
+	char *priv_key;  /**< private key file with full path (libssh2) */
+	char *pub_key;  /**< public key file with full path (libssh2) */
+#endif
+	int   no_measurement_verdicts; /**< flag for measurement verdicts */
+	char *chroot_folder;   /**< change root folder */
+	int measure_power;
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

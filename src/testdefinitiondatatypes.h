@@ -27,6 +27,7 @@
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
 #include <sys/time.h>
+#include <sys/types.h>
 #include <libxml/xmlstring.h>
 #include <libxml/list.h>
 #include "testrunnerlite.h"
@@ -79,7 +80,9 @@ typedef struct {
 /** File element (for get tag) */
 typedef struct {
 	int        delete_after;  /**< Delete_after attribute */
-	xmlChar    *filename;     /**< File name */
+	int        measurement;   /**< Measurement attribute */
+	int        series;        /**< Is measurement series */
+        xmlChar    *filename;     /**< File name */
 } td_file;
 /* ------------------------------------------------------------------------- */
 /** Test set. */
@@ -96,6 +99,30 @@ typedef struct {
 	xmlChar    *environment; /**< Current environment */
 } td_set;
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
+/** Test event parameter. */
+typedef struct {
+	xmlChar      *type;        /**< Type of param */
+	xmlChar      *name;        /**< Name of param */
+	xmlChar      *value;       /**< Value of param as a string */
+} td_event_param;
+/* ------------------------------------------------------------------------- */
+/** Test event type. */
+typedef enum {
+	EVENT_TYPE_UNKNOWN = 0,
+	EVENT_TYPE_SEND,
+	EVENT_TYPE_WAIT
+} event_type_t;
+/* ------------------------------------------------------------------------- */
+/** Test event. */
+typedef struct {
+	event_type_t  type;        /**< Type of event */
+	xmlChar      *resource;        /**< Resource (address[/subject]) */
+	unsigned long timeout;     /**< Timeout of event */
+	xmlListPtr    params;      /**< Parameters of event */
+} td_event;
+/* ------------------------------------------------------------------------- */
+#endif	/* ENABLE_EVENTS */
 /** Test step. */
 typedef struct {
 	/* Parser fills */
@@ -106,6 +133,9 @@ typedef struct {
 	int      has_result;      /**< should we trust the return_code */
 	int      return_code;     /**< actual result of step */
 	int      manual;          /**< Manual flag (default from case) */
+#ifdef ENABLE_EVENTS
+	td_event*      event;     /**< event step */
+#endif
 
 	/* Executor fills */
 	xmlChar *failure_info;    /**< optional failure info */
@@ -115,6 +145,7 @@ typedef struct {
 	xmlChar *stderr_;         /**< step stderr printouts */
 	pid_t    pgid;            /**< step process group id */
 	pid_t    pid;             /**< step process id */
+	int      fail;            /**< step is failed, regardless of result */
 } td_step;
 /* ------------------------------------------------------------------------- */
 /** Test case result */
@@ -130,12 +161,16 @@ typedef struct {
 	td_gen_attribs gen;     /**< General attributes */
 	xmlChar   *subfeature;  /**< Sub feature attribute */
 	xmlListPtr steps;       /**< Steps in this test case */
-	xmlChar   *tc_title;    /**< TC_Title */
+	xmlChar   *tc_id;       /**< TC_ID */
 	xmlChar   *state;       /**< State attribute */
 	xmlChar   *bugzilla_id;  /**< Id mapping the case to bug or 
 				    feature number in bugs.meego.com */
-	xmlChar   *description;
+        xmlChar   *description;  /**< Description element */
+	xmlListPtr gets;         /**< Get commands */
+
 	/* Executor fills */
+	xmlListPtr measurements;         /**< measurements */
+	xmlListPtr series;         /**< measurement series */
 	xmlChar   *comment;     /**< Manual test case comment */
 	case_result_t  case_res; /**< Case result */
 	xmlChar   *failure_info;   /**< optional failure info */
@@ -150,6 +185,38 @@ typedef struct {
 	unsigned long timeout;  /**< Timeout */
 } td_steps;
 /* ------------------------------------------------------------------------- */
+/** Test measurement */
+typedef struct {
+	xmlChar *name;              /**< E.g. bt.upload */
+	xmlChar *group;             /**< E.g. bt_measurements */
+	double   value;             /**< Value of measurement */
+	xmlChar *unit;              /**< E.g. Mb/s */
+	int      target_specified;  /**< Is target and failure specified ? */
+	double   target;            /**< Target value */
+	double   failure;           /**< Failure value */
+} td_measurement;
+/* ------------------------------------------------------------------------- */
+/** Test measurement item */
+typedef struct {
+	double   value;             /**< Value of measurement */
+	int      has_timestamp;     /**< 1 if timestamp set, otherwise 0 */
+	struct timespec timestamp;  /**< Timestamp of the measurement */
+} td_measurement_item;
+/* ------------------------------------------------------------------------- */
+/** Test measurement series */
+typedef struct {
+	xmlChar *name;              /**< Name of series */
+	xmlChar *group;             /**< Measurement group */
+	xmlChar *unit;              /**< Unit of series */
+	xmlListPtr items;           /**< measurement item series */
+	int      target_specified;  /**< Is target and failure specified ? */
+	double   target;            /**< Target value */
+	double   failure;           /**< Failure value */
+	int      has_interval;	    /**< 1 if interval set, otherwise 0 */
+	int      interval;	    /**< Interval value */
+	xmlChar *interval_unit;	    /**< Interval unit */
+} td_measurement_series;
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -162,6 +229,10 @@ typedef struct {
 /* ------------------------------------------------------------------------- */
 const char *case_result_str (case_result_t);
 /* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
+const char *event_type_str (event_type_t);
+/* ------------------------------------------------------------------------- */
+#endif
 td_td *td_td_create();
 /* ------------------------------------------------------------------------- */
 void td_td_delete(td_td *);
@@ -186,5 +257,23 @@ td_steps *td_steps_create();
 /* ------------------------------------------------------------------------- */
 void td_steps_delete(xmlLinkPtr);
 /* ------------------------------------------------------------------------- */
+td_measurement_series *td_measurement_series_create();
+/* ------------------------------------------------------------------------- */
+void td_measurement_series_delete(xmlLinkPtr);
+/* ------------------------------------------------------------------------- */
+td_measurement_item *td_measurement_item_create();
+/* ------------------------------------------------------------------------- */
+void td_measurement_item_delete(xmlLinkPtr);
+/* ------------------------------------------------------------------------- */
+#ifdef ENABLE_EVENTS
+td_event *td_event_create();
+/* ------------------------------------------------------------------------- */
+void td_event_delete(td_event *);
+/* ------------------------------------------------------------------------- */
+td_event_param *td_event_param_create();
+/* ------------------------------------------------------------------------- */
+void td_event_param_delete(xmlLinkPtr lk);
+/* ------------------------------------------------------------------------- */
+#endif	/* ENABLE_EVENTS */
 #endif                          /* TESTDEFINITIONDATATYPES_H */
 /* End of file */

@@ -1,3 +1,35 @@
+* Thu Mar 24 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.6.0
+- Support for measurement timestamps and series (BMC#13915)
+- Support for generic executor (-E and -G) by Nick Wilson
+- Too small char array in unit test by Tero Koskinen (BMC#13886)
+* Wed Mar 09 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.3
+- Fixed: libssh2 implementation does not source environment variables (BMC#13888)
+- Fixed: libssh2 implementation prints unnecessary errors to log (BMC#13890)
+- testrunner-lite unit tests can now be executed per suite (BMC#13550)
+- Fixed: empty manual step handling (BMC#13996)
+- Libssh2 implementation quote usage fixed
+- Output of soucing .profile during ssh execution directed to /dev/null
+* Sun Feb 20 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.2
+- Possibility to provide ssh port with -t and -n options (BMC#13472)
+- Fixed: <get><file> does not work with -n (BMC#13415)
+- Fixed: testrunner-lite occasionally hangs with -n (BMC#13416)
+* Wed Feb 09 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.1
+- Fixed: invalid use of va_list caused problems on 64 bit system (BMC#13322)
+- Fixed: writing manual test case comment to results (BMC#13314)
+- Support for VCS and package urls (-u and -U options) (BMC#11409)
+* Tue Feb 01 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.0
+- Supports libssh2 for remote execution (BMC#6693)
+- Autoconf magic for xml2 library by Tero Koskinen (BMC#12336)
+- Autoconf magic for check library by Tero Koskinen (BMC#12988)
+* Fri Jan 21 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.4
+- Never give PASS verdict for timeouting test step (BMC#12537)
+- Fixed obtaining CWD (did not always work with sudo) (BMC#12519)
+- Fixed --help output regarding filters (BMC#12585)
+* Fri Jan 14 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.3
+- Possibility to run tests inside chroot environment (--chroot option, Tobias Koch)
+- Support for obtaining and evaluating measurement data (BMC#11041)
+* Tue Dec 21 2010 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.2
+- Support new attributes to comply with wiki.meego.com/TestCaseTemplate (BMC#11475)
 * Fri Dec 10 2010 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.4.1
 - Pre and post steps are written to results (BMC#7563)
 - Transfers all the data from test definition to results (BMC#10726)

@@ -12,6 +12,7 @@ testrunner_lite_SOURCES = main.c \
 	                  testdefinitiondatatypes.c \
 			  testresultlogger.c \
 			  testdefinitionprocessor.c \
+			  testmeasurement.c \
 			  testfilters.c \
 	                  executor.c \
 			  remote_executor.c \
@@ -20,15 +21,16 @@ testrunner_lite_SOURCES = main.c \
 			  utils.c \
 			  log.c
 
-testrunner_lite_LDADD = -lxml2 -lcurl
+testrunner_lite_LDADD = $(XML2_LIBS) -lcurl -ldl
 
-AM_CFLAGS =  -I/usr/include/libxml2 -D_GNU_SOURCE
+AM_CFLAGS = $(XML2_CFLAGS)-D_GNU_SOURCE -Wall
 
 noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \
 	         testdefinitiondatatypes.h \
 		 testresultlogger.h \
 	         testdefinitionprocessor.h \
+		 testmeasurement.h \
 		 testfilters.h \
 	         executor.h \
 		 remote_executor.h \
@@ -36,3 +38,17 @@ noinst_HEADERS = testrunnerlite.h \
 		 hwinfo.h \
 		 utils.h \
 		 log.h
+
+if ENABLE_EVENTS
+testrunner_lite_SOURCES += event.c
+noinst_HEADERS          += event.h
+testrunner_lite_LDADD   += $(JSON_LIBS) $(CQPID_LIBS)
+AM_CFLAGS               += $(JSON_CFLAGS) $(CQPID_FLAGS) -DENABLE_EVENTS
+endif
+
+if ENABLE_LIBSSH2
+testrunner_lite_SOURCES += remote_executor_libssh2.c
+noinst_HEADERS          += remote_executor_libssh2.h
+testrunner_lite_LDADD   += $(LIBSSH2_LIBS)
+AM_CFLAGS               += $(LIBSSH2_CFLAGS) -DENABLE_LIBSSH2
+endif

@@ -2,7 +2,6 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
- * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
@@ -22,11 +21,14 @@
  *
  */
 
-#ifndef REMOTE_EXECUTOR_H
-#define REMOTE_EXECUTOR_H
+#ifndef TESTMEASUREMENT_H
+#define TESTMEASUREMENT_H
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDES */
+#include <sys/time.h>
+#include <libxml/xmlstring.h>
+#include <libxml/list.h>
 #include "testrunnerlite.h"
 
 /* ------------------------------------------------------------------------- */
@@ -35,7 +37,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-/* None */
+#define MEASUREMENT_FILE "/tmp/current_measurement"
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */
@@ -53,17 +55,12 @@
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-int remote_executor_init (const char *executor);
+int get_measurements (const char *file, td_case *c, int series);
 /* ------------------------------------------------------------------------- */
-int remote_execute (const char *executor, const char *command);
+int eval_measurements (td_case *c, int *verdict,
+		       char **fail_string, int series);
 /* ------------------------------------------------------------------------- */
-int remote_kill (const char *executor, pid_t id);
+int process_current_measurement(const char *filename, td_case *c);
 /* ------------------------------------------------------------------------- */
-int remote_check_conn (const char *executor);
-/* ------------------------------------------------------------------------- */
-int remote_clean (const char *executor, pid_t id);
-/* ------------------------------------------------------------------------- */
-int remote_executor_close (void);
-/* ------------------------------------------------------------------------- */
-#endif                          /* REMOTE_EXECUTOR_H */
+#endif                          /* TESTMEASUREMENT_H */
 /* End of file */

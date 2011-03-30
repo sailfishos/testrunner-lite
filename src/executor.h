@@ -81,6 +81,7 @@ struct _exec_data {
 	time_t start_time;
 	time_t end_time;
 	int result;
+	int signaled; /* In case step is terminated by signal */
 };
 
 typedef struct _exec_data exec_data;
@@ -96,7 +97,7 @@ typedef struct _exec_data exec_data;
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-void executor_init (testrunner_lite_options *opts);
+int executor_init (testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 int execute(const char* command, exec_data* data);
 /* ------------------------------------------------------------------------- */

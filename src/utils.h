@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Raimo Gratseff <ext-raimo.gratseff@nokia.com>
  *
@@ -52,6 +53,7 @@
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
+char *replace_string (const char *orig, const char *from, const char *to);
 unsigned int trim_string (char *ins, char *outs);
 int list_contains(const char *list, const char *value, const char* delim);
 /* ------------------------------------------------------------------------- */
