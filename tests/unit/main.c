@@ -59,7 +59,23 @@ struct timeval created;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
-/* None */
+
+typedef Suite *(make_suite(void));
+
+typedef struct {
+	char* name;
+	make_suite *func;
+} suite_functions_t;
+
+suite_functions_t suite_functions[] = {
+	{ "argumentparser", make_argumentparser_suite },
+	{ "features", make_features_suite },
+	{ "filters", make_testfilter_suite },
+	{ "manual_executor", make_manualtestexecutor_suite },
+	{ "testdefinitionparser", make_testdefinitionparser_suite },
+	{ "testexecutor", make_testexecutor_suite },
+	{ "testresultlogger", make_testresultlogger_suite }
+};
 
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
@@ -82,20 +98,29 @@ struct timeval created;
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-int main (void)
+int main (int argc, char **argv)
 {
 	int number_failed;
+	int i;
 	Suite *s = suite_create ("master");
 	SRunner *sr = srunner_create (s);
 	gettimeofday (&created, NULL);
 
-	srunner_add_suite (sr, make_testdefinitionparser_suite ());
-	srunner_add_suite (sr, make_argumentparser_suite ());
-	srunner_add_suite (sr, make_testresultlogger_suite ());
-	srunner_add_suite (sr, make_testexecutor_suite ());
-	srunner_add_suite (sr, make_features_suite ());
-	srunner_add_suite (sr, make_manualtestexecutor_suite ());
-	srunner_add_suite (sr, make_testfilter_suite ());
+	if (argc > 1) {
+		for (i = 0;i < sizeof(suite_functions)/
+				sizeof(suite_functions_t);i++) {
+			if (strcmp(suite_functions[i].name, argv[1]) == 0) {
+
+				srunner_add_suite
+					(sr, suite_functions[i].func());
+			}
+		}
+	} else {
+		for (i = 0;i < sizeof(suite_functions)/
+				sizeof(suite_functions_t);i++) {
+			srunner_add_suite(sr, suite_functions[i].func());
+		}
+	}
 
 	srunner_run_all (sr, CK_VERBOSE);
 	number_failed = srunner_ntests_failed (sr);

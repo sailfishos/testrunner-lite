@@ -237,6 +237,9 @@ LOCAL td_step *td_parse_step(int manual_default)
 		}
 	}
 	
+	if (xmlTextReaderIsEmptyElement (reader))
+		goto OK_OUT;
+
 	do {
 		ret = xmlTextReaderRead(reader);
 		if (!ret) {
@@ -271,11 +274,11 @@ LOCAL td_step *td_parse_step(int manual_default)
 				step->step = xmlStrdup(node->content);
 		
 		}
-
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
 		    !xmlStrcmp (name, BAD_CAST "step")));
 
+ OK_OUT:
 	return step;
  ERROUT:
 	LOG_MSG (LOG_ERR, "%s:%s: Exiting with error\n", 
