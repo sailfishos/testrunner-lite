@@ -167,22 +167,24 @@ int ssh_execute (const char *hostname, unsigned port, const char *command)
 	stepnum  = current_step_num();
 	setname  = current_set_name();
 
-        cmd = (char *)malloc (PID_FILE_MAX_LEN + 130 + strlen (command)
+        cmd = (char *)malloc (PID_FILE_MAX_LEN + 256 + strlen (command)
 			      + strlen (casename) + strlen (setname));
         if (!cmd) {
                 fprintf (stderr, "%s: could not allocate memory for "
                          "command %s\n", __FUNCTION__, command);
         }
 	if (strlen (casename) && strlen (setname)) 
-		sprintf (cmd, "logger set:%s-case:%s-step:%d;"
+		sprintf (cmd, "logger set:%s-case:%s-step:%d || true;"
 			 "sh < /tmp/mypid.sh > " 
 			 PID_FILE_FMT 
-			 ";source .profile > /dev/null; %s",
+			 "; if [ -e .profile ]; then source .profile >"
+			 " /dev/null; fi; %s",
 			 setname, casename, stepnum, unique_id, getpid(), command);
 	else
 		sprintf (cmd, "sh < /tmp/mypid.sh > " 
 			 PID_FILE_FMT 
-			 ";source .profile > /dev/null; %s",
+			 "; if [ -e .profile ]; then source .profile >"
+			 " /dev/null; fi; %s",
 			 unique_id, getpid(), command);
 
 	ret = _execute (hostname, port, cmd);
