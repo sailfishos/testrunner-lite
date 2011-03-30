@@ -36,6 +36,7 @@ AM_COND_IF([ENABLE_EVENTS],
 AM_CONDITIONAL([ENABLE_LIBSSH2], [test "$libssh2_feature" = "yes"])
 AM_COND_IF([ENABLE_LIBSSH2],
            [PKG_CHECK_MODULES([LIBSSH2], [libssh2 >= 1.2.2])])
+AM_CONDITIONAL([GENERATE_DOCS], [test "$GENERATE_DOCS" != "no"])
 AC_OUTPUT(\
 	Makefile \
 	src/Makefile \
