@@ -1,3 +1,11 @@
+testrunner-lite (1.5.3-1) unstable; urgency=low
+
+  * Fixes: NB#224880 - Don't generate docs when nodocs is given in DEB_BUILD_OPTIONS
+  * Fixes: NB#225071 - Don't expect .profile file on target device
+  * Fixes: NB#238385 - Removed getpgid loop which may stuck and consume CPU time in some cases
+
+ -- Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>  Thu, 31 Mar 2011 08:32:46 +0300
+
 testrunner-lite (1.5.3) unstable; urgency=low
 
   * Fixed: libssh2 implementation does not source environment variables (BMC#13888)
