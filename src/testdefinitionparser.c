@@ -675,7 +675,7 @@ LOCAL int td_parse_environments(xmlListPtr list)
 LOCAL int td_parse_gets(xmlListPtr list)
 {
 	int ret;
-	int delete_after = 0, measurement = 0;
+	int delete_after = 0, measurement = 0, series = 0;
 	td_file *file;
 
 	do {
@@ -706,6 +706,15 @@ LOCAL int td_parse_gets(xmlListPtr list)
 					 (reader), 
 					 BAD_CAST "true");
 			}
+
+			if (xmlTextReaderMoveToAttribute
+			    (reader,
+			     BAD_CAST "series") == 1) {
+				 series = !xmlStrcmp (
+					 xmlTextReaderConstValue
+					 (reader),
+					 BAD_CAST "true");
+			}
 		} 
 
 		/* add to list get files */
@@ -714,6 +723,7 @@ LOCAL int td_parse_gets(xmlListPtr list)
 			file->filename = xmlTextReaderReadString (reader);
 			file->delete_after = delete_after;
 			file->measurement = measurement;
+			file->series = series;
 			delete_after = 0;
 			if (xmlListAppend (list, file)) {
 				LOG_MSG (LOG_ERR, 

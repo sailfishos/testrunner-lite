@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="1.0">  <!-- result="0" -->
+  <suite name="trlitereg18_suite1">
+    <set name="set1_1">
+      <case name="case1_1_1">                          <!-- result="FAIL" -->
+	<step>echo testing measurement series</step>   <!-- result="PASS" -->
+	<get>
+	  <!-- series contains data exceeding failure limit -->
+	  <file measurement="true" series="true">/usr/share/testrunner-lite-regression-tests/testdata/series.txt</file>
+	</get>
+      </case>
+
+      <case name="case1_1_2">                          <!-- result="PASS" -->
+	<step>echo testing measurement series</step>   <!-- result="PASS" -->
+	<get>
+	  <!-- without measurement attribute case should pass -->
+	  <file>/usr/share/testrunner-lite-regression-tests/testdata/series.txt</file>
+	</get>
+      </case>
+    </set>
+  </suite>
+</testdefinition>

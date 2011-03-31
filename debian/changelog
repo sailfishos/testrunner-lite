@@ -1,3 +1,11 @@
+testrunner-lite (1.6.0) unstable; urgency=low
+
+  * Support for measurement timestamps and series (BMC#13915)
+  * Support for generic executor (-E and -G) by Nick Wilson
+  * Too small char array in unit test by Tero Koskinen (BMC#13886)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Thu, 24 Mar 2011 10:55:24 +0200
+
 testrunner-lite (1.5.3-1) unstable; urgency=low
 
   * Fixes: NB#224880 - Don't generate docs when nodocs is given in DEB_BUILD_OPTIONS

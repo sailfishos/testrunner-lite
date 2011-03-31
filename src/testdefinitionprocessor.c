@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
@@ -343,8 +344,8 @@ LOCAL int step_post_process (const void *data, const void *user)
 	if (!step->pgid)
 		goto out;
 
-	if (opts.target_address) {
-		ssh_kill (opts.target_address, opts.target_port, step->pid);
+	if (opts.remote_executor) {
+		remote_kill (opts.remote_executor, step->pid);
 	} 
 	kill_pgroup(step->pgid, SIGKILL);
 	
@@ -357,11 +358,12 @@ LOCAL int step_post_process (const void *data, const void *user)
  *  @param user set data
  *  @return 1 always
  */
+
 LOCAL int process_case (const void *data, const void *user) 
 {
 
 	td_case *c = (td_case *)data;
-	
+
 	if (c->gen.manual && !opts.run_manual) {
 		LOG_MSG(LOG_DEBUG, "Skipping manual case %s",
 			c->gen.name);
@@ -388,6 +390,13 @@ LOCAL int process_case (const void *data, const void *user)
 	cur_case_name = c->gen.name;
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
+
+	if (opts.measure_power) {
+		if (system("hat_ctrl -stream:5:s1-2:f" MEASUREMENT_FILE
+			   ":0 > /dev/null 2>&1") != 0) {
+			LOG_MSG (LOG_WARNING, "Failure in power measurement initialization");
+		}
+	}
 	
 	c->case_res = CASE_PASS;
 	if (c->gen.timeout == 0)
@@ -407,6 +416,13 @@ LOCAL int process_case (const void *data, const void *user)
 	
 	if (c->gen.manual && opts.run_manual)
 		post_manual (c);
+
+	if (opts.measure_power) {
+		if (system("hat_ctrl -stream:0 > /dev/null 2>&1")) {
+			LOG_MSG (LOG_WARNING, "Failure in stopping power measurement");
+		}
+		process_current_measurement(MEASUREMENT_FILE, c);
+	}
 
 	xmlListWalk (c->gets, process_get_case, c);
 	
@@ -447,11 +463,15 @@ LOCAL int process_get (const void *data, const void *user)
 {
 
 	td_file *file = (td_file *)data;
-	xmlChar *command;
+	char *command;
 	char *fname;
 	exec_data edata;
 	int command_len;
-	char *p, *remote = opts.target_address;
+	char *p;
+	char *executor = opts.remote_executor;
+#ifdef ENABLE_LIBSSH2
+	char *remote = opts.target_address;
+#endif
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data(&edata);
@@ -464,59 +484,43 @@ LOCAL int process_get (const void *data, const void *user)
 	/*
 	** Compose command 
 	*/
-	if (remote) {
+#ifdef ENABLE_LIBSSH2
+	if (opts.libssh2) {
 		opts.target_address = NULL; /* execute locally */
-
-#ifdef ENABLE_LIBSSH2
-		if (opts.libssh2) {
-			command_len = strlen ("scp ") + 
-				strlen (opts.username) + 1 +
-				strlen (fname) +
-				strlen (opts.output_folder) +
-				strlen (remote) + 30;
-		} else {
-#endif
-			command_len = strlen ("scp ") + 
-				strlen (fname) +
-				strlen (opts.output_folder) +
-				strlen (remote) + 30;
-#ifdef ENABLE_LIBSSH2
-		}
-#endif
-			   
-		command = (xmlChar *)malloc (command_len);
-		if (opts.target_port) 
+		command_len = strlen ("scp ") +
+			strlen (opts.username) + 1 +
+			strlen (fname) +
+			strlen (opts.output_folder) +
+			strlen (remote) + 30;
+		command = (char *)malloc (command_len);
+		if (opts.target_port)
 			sprintf (command, "scp -P %u ", opts.target_port);
-		else 
+		else
 			sprintf (command, "scp ");
 		p = (char *)(command + (strlen (command)));
-		
-#ifdef ENABLE_LIBSSH2
-		if (opts.libssh2) {
-			sprintf (p, "%s@%s:\'%s\' %s", opts.username, remote, 
-				 fname, opts.output_folder);
-		} else {
+			sprintf (p, "%s@%s:\'%s\' %s", opts.username, remote,
+			 fname, opts.output_folder);
+	} else
 #endif
-		sprintf (p, "%s:\'%s\' %s", remote, fname,
-			 opts.output_folder);
-#ifdef ENABLE_LIBSSH2
-		}
-#endif
-
-
+	if (executor) {
+		opts.remote_executor = NULL; /* execute locally */
+		command = replace_string (opts.remote_getter, "<FILE>", fname);
+		p = command;
+		command = replace_string (command, "<DEST>", opts.output_folder);
+		free(p);
 	} else {
-		command = (xmlChar *)malloc (strlen ("cp ") + 
+		command = (char *)malloc (strlen ("cp ") + 
 					     strlen (fname) +
 					     strlen (opts.output_folder) + 2);
-		sprintf ((char *)command, "cp %s %s", fname,
+		sprintf (command, "cp %s %s", fname,
 			 opts.output_folder);
 	}
-	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
-		 (char*)command);
+
+	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
 	/*
 	** Execute it
 	*/
-	execute((char*)command, &edata);
+	execute(command, &edata);
 
 	if (edata.result) {
 		LOG_MSG (LOG_INFO, "%s: %s failed: %s\n", PROGNAME, command,
@@ -524,7 +528,10 @@ LOCAL int process_get (const void *data, const void *user)
 				  edata.stderr_data.buffer : 
 				  BAD_CAST "no info available"));
 	}
+#ifdef ENABLE_LIBSSH2
 	opts.target_address = remote;
+#endif
+	opts.remote_executor = executor;
 	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
 	if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
 	if (edata.failure_info.buffer) free (edata.failure_info.buffer);
@@ -536,10 +543,9 @@ LOCAL int process_get (const void *data, const void *user)
 	init_exec_data(&edata);
 	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	sprintf ((char *)command, "rm -f %s", fname);
-	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, 
-		 (char*)command);
-	execute((char*)command, &edata);
+	sprintf (command, "rm -f %s", fname);
+	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
+	execute(command, &edata);
 	if (edata.result) {
 		LOG_MSG (LOG_WARNING, "%s: %s failed: %s\n", PROGNAME, command,
 			 (char *)(edata.stderr_data.buffer ?
@@ -572,6 +578,10 @@ LOCAL int process_get_case (const void *data, const void *user)
 	ret = process_get (data, NULL);
 	if (!ret)
 		LOG_MSG (LOG_WARNING, "get file processing failed");
+
+	/* return if file not specified to contain measurement data */
+	if (!file->measurement)
+		return 1;
 	
 	trimmed_name = malloc (strlen ((char *)file->filename) + 1);
 	trim_string ((char *)file->filename, trimmed_name);
@@ -584,7 +594,7 @@ LOCAL int process_get_case (const void *data, const void *user)
 			   strlen (opts.output_folder));
 	sprintf (filename, "%s%s", opts.output_folder, fname);
 
-	ret = get_measurements (filename, c->measurements);
+	ret = get_measurements (filename, c, file->series);
 	free (trimmed_name);
 	free (filename);
 	
@@ -598,13 +608,13 @@ LOCAL int process_get_case (const void *data, const void *user)
 	/* ... and measurement getting was succesfull */
 	if (ret) {
 		c->case_res = CASE_FAIL;
-		c->failure_info = xmlCharStrdup ("Failed to get "
+		c->failure_info = xmlCharStrdup ("Failed to process "
 						 "measurement file");
 		return 1;
 	}
 	
-	ret = eval_measurements (c->measurements, &measurement_verdict,
-				 &failure_str);
+	ret = eval_measurements (c, &measurement_verdict,
+				 &failure_str, file->series);
 	if (ret)
 		return 1;
 	if (measurement_verdict == CASE_FAIL) {

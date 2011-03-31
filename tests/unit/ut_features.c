@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>
  *
@@ -415,6 +416,51 @@ START_TEST (test_hwinfo)
     
 END_TEST
 
+START_TEST (test_replace_string)
+{
+	char *result, *orig, *from, *to;
+	fail_unless(replace_string(NULL, NULL, NULL) == NULL);
+	fail_unless(replace_string("a", "b", NULL) == NULL);
+	fail_unless(replace_string("a", NULL, "c") == NULL);
+	fail_unless(replace_string(NULL, "b", "c") == NULL);
+
+	orig = "abcdefg";
+
+	from = "XXX";
+	to = "YYY";
+	result = replace_string(orig, from, to);
+	fail_if(result == orig);
+	fail_if(strcmp(result, orig) != 0);
+
+	from = "abc";
+	to = "xyz";
+	result = replace_string(orig, from, to);
+	fail_if(strcmp(result, "xyzdefg") != 0);
+
+	from = "fg";
+	to = "xyz";
+	result = replace_string(orig, from, to);
+	fail_if(strcmp(result, "abcdexyz") != 0);
+
+	from = "cde";
+	to = "yz";
+	result = replace_string(orig, from, to);
+	fail_if(strcmp(result, "abyzfg") != 0);
+
+	orig = "replace <ME> but not <ME>";
+	from = "<ME>";
+	to = "OK";
+	result = replace_string(orig, from, to);
+	fail_if(strcmp(result, "replace OK but not <ME>") != 0);
+
+	orig = "erase <ME>";
+	from = "<ME>";
+	to = "";
+	result = replace_string(orig, from, to);
+	fail_if(strcmp(result, "erase ") != 0);
+}
+END_TEST
+
 START_TEST (test_list_contains)
 {
 	fail_unless(list_contains("foo","foo",","));
@@ -468,6 +514,10 @@ Suite *make_features_suite (void)
 
     tc = tcase_create ("Test hw info.");
     tcase_add_test (tc, test_hwinfo);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test replace_string function.");
+    tcase_add_test (tc, test_replace_string);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test list_contains function.");

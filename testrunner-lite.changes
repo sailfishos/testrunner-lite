@@ -1,3 +1,7 @@
+* Thu Mar 24 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.6.0
+- Support for measurement timestamps and series (BMC#13915)
+- Support for generic executor (-E and -G) by Nick Wilson
+- Too small char array in unit test by Tero Koskinen (BMC#13886)
 * Wed Mar 09 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.5.3
 - Fixed: libssh2 implementation does not source environment variables (BMC#13888)
 - Fixed: libssh2 implementation prints unnecessary errors to log (BMC#13890)

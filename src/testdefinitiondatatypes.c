@@ -141,6 +141,7 @@ LOCAL void td_measurement_delete (xmlLinkPtr lk)
 	td_measurement *meas = (td_measurement *)xmlLinkGetData (lk);
 	free (meas->name);
 	free (meas->unit);
+	free (meas->group);
 	free (meas);
 }
 /* ------------------------------------------------------------------------- */
@@ -321,6 +322,8 @@ td_case *td_case_create()
 	td_c->gets = xmlListCreate (td_file_delete, NULL);
 	td_c->measurements = xmlListCreate (td_measurement_delete, 
 					    list_dummy_compare);
+	td_c->series = xmlListCreate (td_measurement_series_delete,
+				      list_dummy_compare);
 
 	return td_c;
 }
@@ -364,7 +367,7 @@ void td_step_delete(xmlLinkPtr lk)
 	free (step);
 }
 /* ------------------------------------------------------------------------- */
-/** Deallocator for  td_case data structure
+/** Deallocator for td_case data structure
  */
 void td_case_delete(xmlLinkPtr lk)
 {
@@ -372,6 +375,7 @@ void td_case_delete(xmlLinkPtr lk)
 	xmlListDelete (td_c->steps);
 	xmlListDelete (td_c->gets);
 	xmlListDelete (td_c->measurements);
+	xmlListDelete (td_c->series);
 
 	xmlFree (td_c->comment);
 	xmlFree (td_c->failure_info);
@@ -392,6 +396,73 @@ void td_steps_delete(xmlLinkPtr lk)
 	td_steps *steps = xmlLinkGetData (lk);
 	xmlListDelete (steps->steps);
 	free (steps);
+}
+/* ------------------------------------------------------------------------- */
+/** Create td_measurement_series
+ *  @return pointer to td_measurement_series or NULL in case of OOM
+ */
+td_measurement_series *td_measurement_series_create()
+{
+	td_measurement_series *s;
+
+	s = (td_measurement_series *) malloc (sizeof (td_measurement_series));
+
+	if (s == NULL) {
+		LOG_MSG (LOG_ERR, "%s: FATAL : OOM", PROGNAME);
+		return NULL;
+	}
+
+	s->name = NULL;
+	s->group = NULL;
+	s->unit = NULL;
+	s->items = xmlListCreate (td_measurement_item_delete,
+				  list_dummy_compare);
+	s->target_specified = 0;
+	s->has_interval = 0;
+	s->interval_unit = NULL;
+
+	return s;
+}
+/* ------------------------------------------------------------------------- */
+/** Deallocator for td_measurement_series
+ */
+void td_measurement_series_delete(xmlLinkPtr lk)
+{
+	td_measurement_series *s = xmlLinkGetData (lk);
+	xmlFree (s->name);
+	xmlFree (s->group);
+	xmlFree (s->unit);
+	xmlFree (s->interval_unit);
+	xmlListDelete (s->items);
+	free (s);
+}
+/* ------------------------------------------------------------------------- */
+/** Create td_measurement_item
+ *  @return pointer to td_measurement_item or NULL in case of OOM
+ */
+td_measurement_item *td_measurement_item_create()
+{
+	td_measurement_item *i;
+
+	i = (td_measurement_item *) malloc (sizeof (td_measurement_item));
+
+	if (i == NULL) {
+		LOG_MSG (LOG_ERR, "%s: FATAL : OOM", PROGNAME);
+		return NULL;
+	}
+
+	i->value = 0.0;
+	i->has_timestamp = 0;
+
+	return i;
+}
+/* ------------------------------------------------------------------------- */
+/** Deallocator for td_measurement_item
+ */
+void td_measurement_item_delete(xmlLinkPtr lk)
+{
+	td_measurement_item *i = xmlLinkGetData (lk);
+	free (i);
 }
 #ifdef ENABLE_EVENTS
 /* ------------------------------------------------------------------------- */

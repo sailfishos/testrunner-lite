@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 int main() {
 	int errnum;

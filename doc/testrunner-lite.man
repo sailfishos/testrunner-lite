@@ -63,13 +63,13 @@ Do only input xml validation, do not execute tests
 \fB\-H\fR,  \fB\-\-no\-hwinfo\fR 
 Do not try to obtain hardware information
 .TP
-\fB\-t\fR [\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]\fR, \fB\-\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]
-Enable host-based testing. If given, commands are executed from
-test control PC (host) side. ADDRESS is the ipv4 adress of the
-system under test.
 .TP
 \fB\-M\fR,  \fB\-\-disable\-measurement\-verdict\fR 
 Do not fail cases based on measurement data
+.TP
+\fB\-\-measure\-power\fR
+Perform current measurement with hat_ctrl tool during execution
+of test cases.
 .TP
 \fB\-C \fIPATH\fR,  \fB\-\-chroot\fR\=\fIPATH\fR
 Run tests inside a chroot environment. Note that this doesn't change the root 
@@ -80,6 +80,35 @@ Causes testrunner-lite to write the given VCS URL to results.
 .TP
 \fB\-U \fIURL\fR,  \fB\-\-package\-url\fR\=\fIURL\fR
 Causes testrunner-lite to write the given packge URL to results.
+.TP
+Test commands are executed locally by default.  Alternatively, one of the following executors can be used:
+.TP
+\fIChroot Execution:\fI
+.TP
+\fB\-C \fIPATH\fR,  \fB\-\-chroot\fR\=\fIPATH\fR
+Run tests inside a chroot environment. Note that this doesn't change the root 
+of the testrunner itself, only the tests will have the new root folder set.
+.TP
+\fIHost-based SSH Execution:\fR
+.TP
+\fB\-t\fR [\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]\fR, \fB\-\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]
+Enable host-based testing. If given, commands are executed from test control PC (host) side. ADDRESS is the ipv4 address of the system under test. Behind the scenes, host-based testing uses the external execution described below with SSH and SCP.
+.TP
+\fILibssh2 Execution:\fR
+.TP
+\fB\-n\fR [\FIUSER@\fR]\fIADDRESS\fR, \fB\-\-libssh2\fR=[\fIUSER@\fR]\fIADDRESS\fR
+Run host based testing with native ssh (libssh2) \fIEXPERIMENTAL\fR
+.TP 
+\fB\-k \fIprivate_key\fR:\fIpublic_key\fR, \fB\-\-keypair \fIprivate_key\fR:\fIpublic_key\fR
+libssh2 featureKeypair consists of private and public key file names They are expected to be found under \fI$HOME/.ssh\fR
+.TP
+\fIExternal Execution:\fR
+.TP 
+\fB\-E \fIEXECUTOR\fR, \fB\-\-executor\fR=\fIEXECUTOR\fR
+Use an external command to execute test commands on the system under test. The external command must accept a test command as a single additional argument and exit with thestatus of the test command. For example, an external executor that uses SSH to execute test commands could be "/usr/bin/ssh user@target".
+.TP
+\fB\-G\fR \fIGETTER\fR, \fB\-\-getter\fR=\fIGETTER\fR
+Use an external command to get files from the system under test. The external getter should contain <FILE> and <DEST> (with the brackets) where <FILE> will be replaced with the path to the file on the system under test and <DEST> will be replaced with the destination directory on the host. If <FILE> and <DEST> are not specified, they will be appended automatically. For example, an external getter that uses SCP to retrieve files could be "/usr/bin/scp target:'<FILE>' '<DEST>'".
 .TP
 
 .SH EXIT STATUS

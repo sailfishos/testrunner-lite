@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>
  *
@@ -57,6 +58,11 @@
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
 #define LOG_LEVEL 0
+#define DEFAULT_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
+		"-o PasswordAuthentication=no localhost"
+#define DEFAULT_REMOTE_EXECUTOR_PORT "/usr/bin/ssh -o StrictHostKeyChecking=no " \
+		"-o PasswordAuthentication=no -p 22 localhost"
+#define DEFAULT_REMOTE_GETTER "/usr/bin/scp localhost:'<FILE>' '<DEST>'"
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
@@ -327,6 +333,8 @@ START_TEST (test_executor_remote_command)
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
 	opts.target_port = 0;
+	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
@@ -352,8 +360,8 @@ START_TEST (test_executor_remote_command)
 	fail_unless (edata.stdout_data.buffer == NULL);
 	fail_unless (edata.stderr_data.buffer == NULL);
 
-	/* Give time for either ssh_clean or ssh_kill called by execute.
-	   They have forked new ssh process to do cleanup */
+	/* Give time for either remote_clean or remote_kill called by execute.
+	   They have forked new process to do cleanup */
 	sleep(1);
 	executor_close();
 END_TEST
@@ -363,6 +371,8 @@ START_TEST (test_executor_remote_command_port)
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
 	opts.target_port = 22;
+	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR_PORT;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
@@ -389,7 +399,7 @@ START_TEST (test_executor_remote_command_port)
 	fail_unless (edata.stdout_data.buffer == NULL);
 	fail_unless (edata.stderr_data.buffer == NULL);
 
-	/* Give time for either ssh_clean or ssh_kill called by execute.
+	/* Give time for either remote_clean or remote_kill called by execute.
 	   They have forked new ssh process to do cleanup */
 	sleep(1);
 	executor_close();
@@ -406,6 +416,8 @@ START_TEST (test_executor_remote_long_command)
 	char command [TEST_STRING_SIZE + 100];
 	opts.target_address = "localhost";
 	opts.target_port = 0;
+	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 
 	executor_init (&opts);
 	init_exec_data (&edata);
@@ -424,7 +436,7 @@ START_TEST (test_executor_remote_long_command)
 			     TEST_STRING_SIZE -1) == 0,
 		     edata.stdout_data.buffer);
 
-	/* Give time for either ssh_clean or ssh_kill called by execute.
+	/* Give time for either remote_clean or remote_kill called by execute.
 	   They have forked new ssh process to do cleanup */
 	sleep(1);
 	executor_close();
@@ -435,6 +447,8 @@ START_TEST (test_executor_remote_terminating_process)
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
 	opts.target_port = 0;
+	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
@@ -460,7 +474,7 @@ START_TEST (test_executor_remote_terminating_process)
 	fail_if (execute("PATH=$PATH:/sbin/ pidof terminating", &edata));
 	fail_unless (edata.result == 1);
 
-	/* Give time for either ssh_clean or ssh_kill called by execute.
+	/* Give time for either remote_clean or remote_kill called by execute.
 	   They have forked new ssh process to do cleanup */
 	sleep(1);
 	executor_close();
@@ -471,6 +485,8 @@ START_TEST (test_executor_remote_killing_process)
 	testrunner_lite_options opts;
 	opts.target_address = "localhost";
 	opts.target_port = 0;
+	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
+	opts.remote_getter = DEFAULT_REMOTE_GETTER;
 #ifdef ENABLE_LIBSSH2
 	opts.libssh2 = 0;
 #endif
@@ -512,8 +528,8 @@ START_TEST(test_executor_remote_test_bg_process_cleanup)
      fail_unless (ret);
 END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_executor_ssh_conn_check)
-        int ret = ssh_check_conn ("localhost", 0);
+START_TEST (test_executor_remote_conn_check)
+        int ret = remote_check_conn (DEFAULT_REMOTE_EXECUTOR);
 	fail_if (ret, "ret=%d", ret);
 END_TEST
 /* ------------------------------------------------------------------------- */
@@ -694,9 +710,9 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_terminating_process)
 	exec_data edata;
 	testrunner_lite_options opts;
-	
+	int ret;
 	/* Clean hanging processes */
-	system("killall -9 terminating unterminating");
+	ret = system("killall -9 terminating unterminating");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
@@ -735,9 +751,9 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_killing_process)
 	exec_data edata;
 	testrunner_lite_options opts;
-
+	int ret;
 	/* Clean hanging processes */
-	system("killall -9 terminating unterminating");
+	ret = system("killall -9 terminating unterminating");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
@@ -783,9 +799,9 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_bg_process)
 	exec_data edata;
 	testrunner_lite_options opts;
-
+	int ret;
 	/* Clean hanging processes */
-	system("killall -9 terminating unterminating");
+	ret = system("killall -9 terminating unterminating");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
@@ -819,9 +835,9 @@ END_TEST
 START_TEST (test_executor_remote_libssh2_daemon_process)
 	exec_data edata;
 	testrunner_lite_options opts;
-
+	int ret;
 	/* Clean hanging processes */
-	system("killall -9 trlite-test-daemon");
+	ret = system("killall -9 trlite-test-daemon");
 
 	memset (&opts, 0x0, sizeof (opts));
 	opts.libssh2 = 1;
@@ -1028,7 +1044,7 @@ Suite *make_testexecutor_suite (void)
     
     tc = tcase_create ("Test ssh connection check routine.");
     tcase_set_timeout (tc, 20);
-    tcase_add_test (tc, test_executor_ssh_conn_check);
+    tcase_add_test (tc, test_executor_remote_conn_check);
     suite_add_tcase (s, tc);
 
 #ifdef ENABLE_LIBSSH2

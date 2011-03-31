@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
@@ -83,7 +84,9 @@ testrunner_lite_options opts;
 LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
-/* None */
+#define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
+		"-o PasswordAuthentication=no %s %s"
+#define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
 
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
@@ -104,6 +107,12 @@ LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int parse_target_address(char *address, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
+LOCAL int parse_remote_getter(char *getter, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_default_scp_getter(testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
 LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_chroot(char * folder);
@@ -119,8 +128,7 @@ LOCAL int test_chroot(char * folder);
 LOCAL void usage()
 {
 	printf ("\nUsage: testrunner-lite [options]\n");
-	printf ("Example: testrunner-lite -f tests.xml -o ~/results.xml "
-		"-e hardware\n");
+	printf ("Example: testrunner-lite -f tests.xml -o ~/results.xml -v\n");
 	printf ("\nOptions:\n");
 	printf ("  -h, --help\tShow this help message and exit.\n");
 	printf ("  -V, --version\tDisplay version and exit.\n");
@@ -166,35 +174,60 @@ LOCAL void usage()
 	printf ("  -P, --print-step-output\n\t\tOutput standard streams from"
 		" programs started in steps\n");
 	printf ("  -S, --syslog\n\t\tWrite log messages also to syslog.\n");
-	printf ("  -t [USER@]ADDRESS, --target=[USER@]ADDRESS\n\t\t"
-		"Enable host-based testing. "
-		"If given, commands are executed from\n\t\t"
-		"test control PC (host) side. "
-		"ADDRESS is the ipv4 adress of the\n\t\t"
-		"system under test.\n");
-#ifdef ENABLE_LIBSSH2
-	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
-	        "Run host based testing with native ssh (libssh2) "
-	        "EXPERIMENTAL\n");
-	printf ("  -k, --keypair private_key:public:key\n"
-	        "\t\tlibssh2 feature\n"
-	        "\t\tKeypair consists of private and public key file names\n"
-	        "\t\tThey are expected to be found under $HOME/.ssh\n");
-#endif
 	printf ("  -M, --disable-measurement-verdict\n\t\t"
 		" Do not fail cases based on measurement data\n");
+	printf ("  --measure-power\n\t\t"
+		"Perform current measurement with hat_ctrl tool during execution\n\t\t"
+		"of test cases\n");
+	printf ("  -u URL, --vcs-url=URL\n\t\t"
+		"Causes testrunner-lite to write the given VCS URL to "
+		"results.\n"
+		);
+	printf ("  -U URL, --package-url=URL\n\t\t"
+		"Causes testrunner-lite to write the given package URL to "
+		"results.\n"
+		);
+	printf ("\nTest commands are executed locally by default.  Alternatively, one\n"
+		"of the following executors can be used:\n");
+	printf ("\nChroot Execution:\n");
 	printf ("  -C PATH, --chroot=PATH\n\t\t"
 		"Run tests inside a chroot environment. Note that this\n\t\t"
 		"doesn't change the root of the testrunner itself,\n\t\t"
 		"only the tests will have the new root folder set.\n");
-	printf ("  -u URL, --vcs-url=URL\n\t\t"
-		"Causes testrunner-lite to write the given VCS URL to "
-		"results.\n\t\t\n"
-		);
-	printf ("  -U URL, --package-url=URL\n\t\t"
-		"Causes testrunner-lite to write the given package URL to "
-		"results.\n\t\t\n"
-		);
+	printf ("\nHost-based SSH Execution:\n");
+	printf ("  -t [USER@]ADDRESS[:PORT], --target=[USER@]ADDRESS[:PORT]\n\t\t"
+		"Enable host-based testing. If given, commands are executed\n\t\t"
+		"from test control PC (host) side. ADDRESS is the ipv4 address\n\t\t"
+		"of the system under test. Behind the scenes, host-based\n\t\t"
+		"testing uses the external execution described below with SSH\n\t\t"
+		"and SCP.\n");
+#ifdef ENABLE_LIBSSH2
+	printf ("\nLibssh2 Execution:\n");
+	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
+	        "Run host based testing with native ssh (libssh2) "
+	        "EXPERIMENTAL\n");
+	printf ("  -k private_key:public_key, --keypair private_key:public_key\n"
+	        "\t\tlibssh2 feature\n"
+	        "\t\tKeypair consists of private and public key file names\n"
+	        "\t\tThey are expected to be found under $HOME/.ssh\n");
+#endif
+	printf ("\nExternal Execution:\n");
+	printf ("  -E EXECUTOR, --executor=EXECUTOR\n\t\t"
+		"Use an external command to execute test commands on the\n\t\t"
+		"system under test. The external command must accept a test\n\t\t"
+		"command as a single additional argument and exit with the\n\t\t"
+		"status of the test command. For example, an external executor\n\t\t"
+		"that uses SSH to execute test commands could be\n\t\t"
+		"\"/usr/bin/ssh user@target\".\n");
+	printf ("  -G GETTER, --getter=GETTER\n\t\t"
+		"Use an external command to get files from the system under\n\t\t"
+		"test. The external getter should contain <FILE> and <DEST>\n\t\t"
+		"(with the brackets) where <FILE> will be replaced with the\n\t\t"
+		"path to the file on the system under test and <DEST> will be\n\t\t"
+		"replaced with the destination directory on the host. If\n\t\t"
+		"<FILE> and <DEST> are not specified, they will be appended\n\t\t"
+		"automatically. For example, an external getter that uses SCP\n\t\t"
+		"to retrieve files could be \"/usr/bin/scp target:'<FILE>' '<DEST>'\".\n");
 
 	return;
 }
@@ -417,6 +450,89 @@ LOCAL int parse_target_address(char *address, testrunner_lite_options *opts)
 }
 
 /* ------------------------------------------------------------------------- */
+/** Parse remote getter argument.
+ * @param getter Remote getter.
+ * @param opts Options struct
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_remote_getter(char *getter, testrunner_lite_options *opts) 
+{
+	size_t size;
+
+	size = strlen(getter) + strlen(" <FILE> <DEST>") + 1;
+	opts->remote_getter = malloc(size);
+
+	strcpy(opts->remote_getter, getter);
+	if (strstr(getter, "<FILE>") == NULL)
+		strcat(opts->remote_getter, " <FILE>");
+	if (strstr(getter, "<DEST>") == NULL)
+		strcat(opts->remote_getter, " <DEST>");
+
+	return 0;
+}
+
+/* ------------------------------------------------------------------------- */
+/** Parse target options to create remote executor string using SSH
+ * @param opts Options struct
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
+{
+	char portarg [3 + 5 + 1]; /* "-p " + max port size + '\0' */
+	size_t len;
+
+	if (opts->target_address == NULL) {
+		fprintf (stderr, "Missing target address\n");
+		return 1;
+	}
+
+	portarg[0] = '\0';
+	if (opts->target_port)
+		sprintf (portarg, "-p %u", opts->target_port);
+
+	len = strlen(SSH_REMOTE_EXECUTOR) + strlen(portarg) +
+		strlen(opts->target_address) + 1;
+	opts->remote_executor = malloc(len);
+	if (opts->remote_executor == NULL) {
+		fprintf (stderr, "Malloc failed\n");
+		return 1;
+	}
+
+	sprintf(opts->remote_executor, SSH_REMOTE_EXECUTOR, portarg,
+		opts->target_address);
+
+	return 0;
+}
+
+/* ------------------------------------------------------------------------- */
+/** Parse target options to create remote getter string using SCP
+ * @param opts Options struct
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_default_scp_getter(testrunner_lite_options *opts)
+{
+	char portarg [3 + 5 + 1]; /* "-P " + max port size + '\0' */
+	size_t len;
+
+	portarg[0] = '\0';
+	if (opts->target_port)
+		sprintf (portarg, "-P %u", opts->target_port);
+
+	len = strlen(SCP_REMOTE_GETTER) + strlen(portarg) +
+		strlen(opts->target_address) + 1;
+	opts->remote_getter = malloc(len);
+	if (opts->remote_getter == NULL) {
+		fprintf (stderr, "Malloc failed\n");
+		return 1;
+	}
+
+	sprintf(opts->remote_getter, SCP_REMOTE_GETTER, portarg,
+		opts->target_address);
+
+	return 0;
+}
+
+/* ------------------------------------------------------------------------- */
 /** Parse chroot option argument.
  * @param folder path to change root envrionment
  * @param opts Options struct containing field(s) to store path
@@ -512,7 +628,10 @@ LOCAL int test_chroot(char * folder) {
 int main (int argc, char *argv[], char *envp[])
 {
 	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0, V_flag = 0;
+	int power_flag = 0;
 	int opt_char, option_idx;
+	opts.remote_executor = NULL;
+	opts.remote_getter = NULL;
 #ifdef ENABLE_LIBSSH2
 	opts.priv_key = NULL;
 	opts.pub_key = NULL;
@@ -542,6 +661,8 @@ int main (int argc, char *argv[], char *envp[])
 			{"validate-only", no_argument, &A_flag},
 			{"no-hwinfo", no_argument, &opts.skip_hwinfo, 1},
 			{"target", required_argument, NULL, 't'},
+			{"executor", required_argument, NULL, 'E'},
+			{"getter", required_argument, NULL, 'G'},
 #ifdef ENABLE_LIBSSH2
 			{"libssh2", required_argument, NULL, 'n'},
 			{"keypair", required_argument, NULL, 'k'},
@@ -550,6 +671,7 @@ int main (int argc, char *argv[], char *envp[])
 			 &opts.print_step_output, 1},
 			{"disable-measurement-verdict", no_argument, 
 			 &opts.no_measurement_verdicts, 1},
+			{"measure-power", no_argument, &power_flag, 1},
 
 			{0, 0, 0, 0}
 		};
@@ -573,7 +695,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:n:k:v"
+					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:E:G:n:k:v"
 					"::", testrunnerlite_options, 
 					&option_idx);
 		if (opt_char == -1)
@@ -677,6 +799,16 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			break;
+		case 'E':
+			opts.remote_executor = malloc (strlen (optarg) + 1);
+			strcpy (opts.remote_executor, optarg);
+			break;
+		case 'G':
+			if (parse_remote_getter(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
 		case 'C':
 			if (parse_chroot_folder(optarg, &opts) != 0) {
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
@@ -728,6 +860,34 @@ int main (int argc, char *argv[], char *envp[])
 	}
 
 	/*
+	 * Convert target address to remote executor/getter using SSH/SCP
+	 */
+#ifdef ENABLE_LIBSSH2
+	if (!opts.libssh2) {
+#endif
+	if (opts.target_address) {
+		if (opts.remote_executor || opts.remote_getter) {
+			fprintf (stderr,
+				"%s: -t and -E/-G are mutually exclusive\n",
+				PROGNAME);
+			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+			goto OUT;
+		}
+
+		if ((parse_default_ssh_executor(&opts) != 0) ||
+		    (parse_default_scp_getter(&opts) != 0)) {
+			fprintf (stderr,
+				"%s: Failed to parse SSH/SCP executor/getter\n",
+				PROGNAME);
+			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+			goto OUT;
+		}
+	}
+#ifdef ENABLE_LIBSSH2
+	}
+#endif
+
+	/*
 	 * Do some post-validation for the options
 	 */
 	if (h_flag) {
@@ -739,9 +899,30 @@ int main (int argc, char *argv[], char *envp[])
 		goto OUT;
 	}
 
-	if (opts.chroot_folder && opts.target_address) {
+#ifdef ENABLE_LIBSSH2
+	if (opts.libssh2) {
+		if (opts.chroot_folder || opts.remote_executor || opts.remote_getter) {
+			fprintf (stderr,
+				"%s: -n is mutually exclusive with -C/-E/-G\n",
+				PROGNAME);
+			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+			goto OUT;
+		}
+	}
+#endif
+
+	if (opts.chroot_folder && (opts.remote_executor || opts.remote_getter)) {
 		fprintf (stderr,
-			"%s: -C and -t are mutually exclusive\n",
+			"%s: -C and remote execution (-t or -E/-G) are mutually exclusive\n",
+			PROGNAME);
+		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+		goto OUT;
+	}
+
+	if ((opts.remote_executor && !opts.remote_getter) ||
+	    (!opts.remote_executor && opts.remote_getter)) {
+		fprintf (stderr,
+			"%s: If either -E or -G is given, both must be given\n",
 			PROGNAME);
 		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
@@ -759,6 +940,9 @@ int main (int argc, char *argv[], char *envp[])
 		opts.run_automatic = 0;
 	if (a_flag)
 		opts.run_manual = 0;
+
+	if (power_flag)
+		opts.measure_power = 1;
 
 	if (!ifile) {
 		fprintf (stderr, 
@@ -873,6 +1057,8 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.environment) free (opts.environment);
 	if (opts.remote_logger) free (opts.remote_logger);
 	if (opts.target_address) free (opts.target_address);
+	if (opts.remote_executor) free (opts.remote_executor);
+	if (opts.remote_getter) free (opts.remote_getter);
 	if (opts.packageurl) free (opts.packageurl);
 	if (opts.vcsurl) free (opts.vcsurl);
 #ifdef ENABLE_LIBSSH2
@@ -887,7 +1073,7 @@ int main (int argc, char *argv[], char *envp[])
 	} else if (bail_out == 255+SIGTERM) {
 		signal (SIGTERM, SIG_DFL);
 		raise (SIGTERM);
-	} else if (bail_out) retval = TESTRUNNER_LITE_SSH_FAIL;
+	} else if (bail_out) retval = TESTRUNNER_LITE_REMOTE_FAIL;
 
 	return retval; 
 }	

@@ -2,6 +2,7 @@
  * This file is part of testrunner-lite
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Contains changes by Wind River Systems, 2011-03-09
  *
  * Contact: Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>
  *
@@ -190,9 +191,8 @@ static int exec_wrapper(const char *command)
 {
 	int ret = 0;
 
-	if (options->target_address) {
-		ret = ssh_execute (options->target_address, 
-				   options->target_port, command);
+	if (options->remote_executor) {
+		ret = remote_execute (options->remote_executor, command);
 	} else {
 		if (options->chroot_folder) {
 			if (chdir(options->chroot_folder) == -1) {
@@ -533,22 +533,19 @@ static int execution_terminated(exec_data* data) {
 		if (WIFEXITED(status)) {
 			/* child exited normally */
 			data->result = WEXITSTATUS(status);
-			if (options->target_address) {
+			if (options->remote_executor) {
 				if (data->result== 255 || 
 				    (data->result > 64 && data->result < 80) ||
 				    (data->result > 128 && data->result < 144))
 				{
 					/* suspicious return value - 
 					   do connection check */
-					if (ssh_check_conn (options->
-							    target_address,
-							    options->
-							    target_port)) {
-						bail_out = TESTRUNNER_LITE_SSH_FAIL;
+					if (remote_check_conn (options->remote_executor)) {
+						bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
 						global_failure = "connection "
 							"fail";
 						LOG_MSG(LOG_ERR, 
-							"ssh connection "
+							"remote connection "
 							"failure");
 						
 					}
@@ -567,15 +564,14 @@ static int execution_terminated(exec_data* data) {
 			LOG_MSG(LOG_DEBUG,
 				"Process %d was terminated by signal %d",
 				pid, WTERMSIG(status));
-			/* check that ssh connections work in case of 
+			/* check that remote connections work in case of 
 			 * remote execution
 			 */
-			if (options->target_address && 
-			    (ret = ssh_check_conn (options->target_address,
-						   options->target_port))) {
-				LOG_MSG(LOG_ERR, "ssh connection failure "
+			if (options->remote_executor && 
+			    (ret = remote_check_conn (options->remote_executor))) {
+				LOG_MSG(LOG_ERR, "remote connection failure "
 					"(%d)", ret);
-				bail_out = TESTRUNNER_LITE_SSH_FAIL;
+				bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
 				global_failure = "connection fail";
 			}
 
@@ -676,9 +672,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 			data->signaled = SIGTERM;
 
-			if (options->target_address && !bail_out) {
-				ssh_kill (options->target_address, 
-					  options->target_port, data->pid);
+			if (options->remote_executor && !bail_out) {
+				remote_kill (options->remote_executor, data->pid);
 			}
 			stream_data_append(&data->failure_info,
 					   FAILURE_INFO_TIMEOUT);
@@ -693,9 +688,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 			kill_step(data->pid, SIGKILL);
 			data->signaled = SIGKILL;
-			if (options->target_address && !bail_out) {
-				ssh_kill (options->target_address, 
-					  options->target_port, data->pid);
+			if (options->remote_executor && !bail_out) {
+				remote_kill (options->remote_executor, data->pid);
 			}
 
 			killed = 1;
@@ -710,9 +704,9 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 	reset_timer();
 
-	if (options->target_address && !terminated && !killed && !bail_out) {
-		/* ssh_kill does cleaning if timeout occured */
-		/* ssh_clean(options->target_address, data->pid); */
+	if (options->remote_executor && !terminated && !killed && !bail_out) {
+		/* remote_kill does cleaning if timeout occured */
+		/* remote_clean(options->target_address, data->pid); */
 		;
 	}
 	if (data->redirect_output == REDIRECT_OUTPUT) {
@@ -1006,15 +1000,12 @@ void kill_step(pid_t pid, int sig)
 int executor_init(testrunner_lite_options *opts)
 {
 	options = opts;
-	if (options->target_address) {
 #ifdef ENABLE_LIBSSH2
-		if (options->libssh2) {
-			return executor_init_libssh2(opts);
-		}
+	if (options->libssh2)
+		return executor_init_libssh2(opts);
 #endif
-		ssh_executor_init (options->target_address, 
-				   options->target_port);
-	}
+	if (options->remote_executor)
+		return remote_executor_init (options->remote_executor);
 	return 0;
 }
 
@@ -1049,8 +1040,8 @@ void executor_close()
 		return;
 	}
 #endif
-	if (options->target_address && !bail_out) {
-		ssh_executor_close(options->target_address);
+	if (options->remote_executor && !bail_out) {
+		remote_executor_close();
 	}
 }
 /*
@@ -1061,10 +1052,8 @@ void handle_sigint (int signum)
 	global_failure = "Interrupted by signal (2)";
 	bail_out = 255+SIGINT;
 	if (current_data) {
-		if (options->target_address)
-			ssh_kill (options->target_address, 
-				  options->target_port,
-				  current_data->pid);
+		if (options->remote_executor)
+			remote_kill (options->remote_executor, current_data->pid);
 		else
 			kill_step(current_data->pid, SIGKILL);
 	}
@@ -1078,9 +1067,8 @@ void handle_sigterm (int signum)
 	global_failure = "Interrupted by signal (15)";
 	bail_out = 255+SIGTERM;
 	if (current_data) {
-		if (options->target_address)
-			ssh_kill (options->target_address, 
-				  options->target_port, current_data->pid);
+		if (options->remote_executor)
+			remote_kill (options->remote_executor, current_data->pid);
 		else
 			kill_step(current_data->pid, SIGKILL);
 	}
