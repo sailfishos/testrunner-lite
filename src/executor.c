@@ -879,15 +879,21 @@ static int execute_libssh2 (const char* command, exec_data* data) {
 		if (!lssh2_conn) {
 			if (executor_init_libssh2(options) < 0) {
 				LOG_MSG(LOG_ERR, "Reopening libssh2 session failed");
+				bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
+				global_failure = "connection fail";
 				return -1;
 			}
 		}
 		if (lssh2_conn) {
 			if (lssh2_execute(lssh2_conn, command, data) < 0) {
+				bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
+				global_failure = "connection fail";
 				return -1;
 			}
 		} else {
 			LOG_MSG(LOG_ERR, "Could not open libssh2 session");
+			bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
+			global_failure = "connection fail";
 			return -1;
 		}
 	}
@@ -1024,6 +1030,8 @@ static int executor_init_libssh2(testrunner_lite_options *opts)
 	                                 options->pub_key); 
 	if (!lssh2_conn) {
 		LOG_MSG(LOG_ERR, "libssh2 executor init failed");
+		bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
+		global_failure = "connection fail";
 		return -1;
 	}
 	return 0;
