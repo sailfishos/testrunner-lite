@@ -105,7 +105,9 @@ typedef enum {
 	SOFT_TIMEOUT,
 	SOFT_TIMEOUT_KILLED,
 	HARD_TIMEOUT,
-	HARD_TIMEOUT_KILLED
+	HARD_TIMEOUT_KILLED,
+	SIGNALED_SIGINT,
+	SIGNALED_SIGTERM
 } trlite_timeout;
 
 /* ------------------------------------------------------------------------- */
@@ -153,6 +155,8 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
                                  exec_data *data);
 /* ------------------------------------------------------------------------- */
 static int lssh2_create_shell_scripts(libssh2_conn *conn);
+/* ------------------------------------------------------------------------- */
+static int lssh2_kill (libssh2_conn *conn, int signal);
 /* ------------------------------------------------------------------------- */
 static char *replace(char const *const cmd, char const *const pat, 
 		     char const *const rep);
@@ -271,6 +275,14 @@ static int lssh2_check_timeouts(libssh2_conn *conn)
 		break;
 	case HARD_TIMEOUT_KILLED:
 		//LOG_MSG(LOG_DEBUG, "Hard timeout, already killed");
+		break;
+	case SIGNALED_SIGINT:
+		LOG_MSG(LOG_DEBUG, "Sending SIGINT");
+		lssh2_kill(conn, SIGINT);
+		break;
+	case SIGNALED_SIGTERM:
+		LOG_MSG(LOG_DEBUG, "Sending SIGTERM");
+		lssh2_kill(conn, SIGTERM);
 		break;
 	default:
 		break;
@@ -982,15 +994,12 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	}
 
 	/* Check if the remote process was signaled */
-	if (last_timeout >= SOFT_TIMEOUT_KILLED && 
-	    last_timeout < HARD_TIMEOUT_KILLED) {
-		data->signaled = SIGTERM;
-		LOG_MSG(LOG_DEBUG, "Test step was signaled with SIGTERM");
-	} 
-	else if (last_timeout == HARD_TIMEOUT_KILLED) {
-		data->signaled = SIGKILL;
-		LOG_MSG(LOG_DEBUG, "Test step was signaled with SIGKILL");
-	}		
+	if (conn->signaled) {
+		LOG_MSG(LOG_DEBUG, "Remote process was signaled with %d", 
+		        conn->signaled);
+		data->signaled = conn->signaled;
+		conn->signaled = 0;
+	}
 
 	lssh2_stop_timer();
 	LOG_MSG(LOG_DEBUG, "Test step return value %d", data->result);
@@ -1012,7 +1021,7 @@ int lssh2_executor_close (libssh2_conn *conn)
 /** Kills remote shell
  * returns 0 on success, -1 if fails
  */
-int lssh2_kill (libssh2_conn *conn, int signal)
+static int lssh2_kill (libssh2_conn *conn, int signal)
 {
 	char *kill_cmd;
 	int kill_cmd_size;
@@ -1039,9 +1048,27 @@ int lssh2_kill (libssh2_conn *conn, int signal)
 		LOG_MSG(LOG_ERR, "Killing remote shell failed");
 	}
 	
+	conn->signaled = signal;
+
 	free(kill_cmd);
 	return 0;
 }
+
+int lssh2_signal (libssh2_conn *conn, int signal) {
+
+	switch(signal) {
+	case SIGINT:
+		last_timeout = SIGNALED_SIGINT;
+		break;
+	case SIGTERM:
+		last_timeout = SIGNALED_SIGTERM;
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */
 

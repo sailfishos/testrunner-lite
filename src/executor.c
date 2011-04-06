@@ -1054,7 +1054,7 @@ void handle_sigint (int signum)
 
 #ifdef ENABLE_LIBSSH2
 	if (options->libssh2) {
-		lssh2_kill(lssh2_conn, signum);
+		lssh2_signal(lssh2_conn, signum);
 		return;
 	}
 #endif
@@ -1079,7 +1079,7 @@ void handle_sigterm (int signum)
 
 #ifdef ENABLE_LIBSSH2
 	if (options->libssh2) {
-		lssh2_kill(lssh2_conn, signum);
+		lssh2_signal(lssh2_conn, signum);
 		return;
 	}
 #endif
