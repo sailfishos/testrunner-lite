@@ -100,20 +100,23 @@ kill -9 $PPID\n\
 fi\n\
 exit $ret\n' > /var/tmp/testrunner-lite.sh"
 
+/* State machine for timeouts and signals */
+/* TODO in the future: support multiple sessions, now there's
+   need for only one */
 typedef enum {
-	NO_TIMEOUT = 1,
+	OK = 1,
 	SOFT_TIMEOUT,
 	SOFT_TIMEOUT_KILLED,
 	HARD_TIMEOUT,
 	HARD_TIMEOUT_KILLED,
 	SIGNALED_SIGINT,
 	SIGNALED_SIGTERM
-} trlite_timeout;
+} trlite_status;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 static sigset_t blocked_signals;
-volatile trlite_timeout last_timeout = NO_TIMEOUT;
+volatile trlite_status trlite_status = OK;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 #define UNIQUE_ID_FMT     "%d"
@@ -134,7 +137,7 @@ static void lssh2_stop_timer();
 /* ------------------------------------------------------------------------- */
 static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data);
 /* ------------------------------------------------------------------------- */
-static int lssh2_check_timeouts(libssh2_conn *conn);
+static int lssh2_check_status(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
 static int lssh2_setup_socket(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
@@ -178,7 +181,7 @@ static int lssh2_set_timer(unsigned long soft_timeout,
 	struct sigaction act;
 	struct itimerval timer;
 	
-	last_timeout = NO_TIMEOUT;
+	trlite_status = OK;
 	act.sa_sigaction = &lssh2_timeout;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
@@ -223,7 +226,7 @@ static void lssh2_stop_timer()
 	if (setitimer(ITIMER_REAL, &timer, NULL) < 0) {
 		perror("setitimer");
 	}
-	last_timeout = NO_TIMEOUT;
+	trlite_status = OK;
 	LOG_MSG(LOG_DEBUG, "Timer stopped");
 }
 /* ------------------------------------------------------------------------- */
@@ -233,12 +236,12 @@ static void lssh2_stop_timer()
 static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data) 
 {
 	if (signal == SIGALRM) {
-		switch(last_timeout) {
-		case NO_TIMEOUT:
-			last_timeout = SOFT_TIMEOUT;
+		switch(trlite_status) {
+		case OK:
+			trlite_status = SOFT_TIMEOUT;
 			break;
 		case SOFT_TIMEOUT_KILLED:
-			last_timeout = HARD_TIMEOUT;
+			trlite_status = HARD_TIMEOUT;
 			break;
 		default:
 			break;
@@ -246,24 +249,24 @@ static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data)
 	}
 }
 /* ------------------------------------------------------------------------- */
-/** Checks during reading if the timeout timer has expired. Kills processes
- *  accordingly.
+/** Checks during reading if the timeout timer has expired, or if process was
+ *   signaled. Kills processes accordingly.
  */
-static int lssh2_check_timeouts(libssh2_conn *conn) 
+static int lssh2_check_status(libssh2_conn *conn) 
 {
 	if (!conn) {
 		LOG_MSG(LOG_ERR, "No connection");
 		return -1;
 	}
 	
-	switch(last_timeout) {
-	case NO_TIMEOUT:
+	switch(trlite_status) {
+	case OK:
 		//LOG_MSG(LOG_DEBUG, "No timeout");
 		break;
 	case SOFT_TIMEOUT:
 		LOG_MSG(LOG_DEBUG, "Soft timeout, sending SIGTERM");
 		lssh2_kill(conn, SIGTERM);
-		last_timeout = SOFT_TIMEOUT_KILLED;
+		trlite_status = SOFT_TIMEOUT_KILLED;
 		break;
 	case SOFT_TIMEOUT_KILLED:
 		//LOG_MSG(LOG_DEBUG, "Soft timeout, already killed");
@@ -271,16 +274,18 @@ static int lssh2_check_timeouts(libssh2_conn *conn)
 	case HARD_TIMEOUT:
 		LOG_MSG(LOG_DEBUG, "Hard timeout, sending SIGKILL");
 		lssh2_kill(conn, SIGKILL);
-		last_timeout = HARD_TIMEOUT_KILLED;
+		trlite_status = HARD_TIMEOUT_KILLED;
 		break;
 	case HARD_TIMEOUT_KILLED:
 		//LOG_MSG(LOG_DEBUG, "Hard timeout, already killed");
 		break;
 	case SIGNALED_SIGINT:
+		lssh2_stop_timer();
 		LOG_MSG(LOG_DEBUG, "Sending SIGINT");
 		lssh2_kill(conn, SIGINT);
 		break;
 	case SIGNALED_SIGTERM:
+		lssh2_stop_timer();
 		LOG_MSG(LOG_DEBUG, "Sending SIGTERM");
 		lssh2_kill(conn, SIGTERM);
 		break;
@@ -721,7 +726,7 @@ static int lssh2_read_output(libssh2_conn *conn,
 		if (n_stdout == LIBSSH2_ERROR_EAGAIN ||
 		    n_stderr == LIBSSH2_ERROR_EAGAIN) {
 			lssh2_select(conn);	
-			lssh2_check_timeouts(conn);
+			lssh2_check_status(conn);
 		} else {
 			break;
 		}	
@@ -842,6 +847,45 @@ static char *replace(char const *const cmd, char const *const pat,
 	    return newcmd;
     }
 }
+
+/* ------------------------------------------------------------------------- */
+/** Kills remote shell
+ * returns 0 on success, -1 if fails
+ */
+static int lssh2_kill (libssh2_conn *conn, int signal)
+{
+	char *kill_cmd;
+	int kill_cmd_size;
+	exec_data data;
+
+	LOG_MSG(LOG_DEBUG, "");
+
+	if (!conn) {
+		LOG_MSG(LOG_DEBUG, "No session");
+		return -1;
+	}
+	
+	kill_cmd_size = strlen(TRLITE_KILL_SHELL_CMD) + 5; /* Max PID size */
+	kill_cmd = malloc(kill_cmd_size);
+	snprintf (kill_cmd, kill_cmd_size, TRLITE_KILL_SHELL_CMD,
+	          signal);
+	
+	data.stdout_data.buffer = NULL;
+	data.stderr_data.buffer = NULL;
+	data.result = -1;
+	
+	LOG_MSG(LOG_DEBUG, "%s", kill_cmd);
+	if (lssh2_execute_command(conn, kill_cmd, &data) < 0) {
+		LOG_MSG(LOG_ERR, "Killing remote shell failed");
+	}
+	
+	conn->signaled = signal;
+
+	free(kill_cmd);
+	return 0;
+}
+
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -1017,51 +1061,19 @@ int lssh2_executor_close (libssh2_conn *conn)
 	LOG_MSG(LOG_DEBUG, "");
 	return lssh2_session_free(conn);
 }
+
 /* ------------------------------------------------------------------------- */
-/** Kills remote shell
- * returns 0 on success, -1 if fails
+/** Signals running session
+ * returns 0 on success
  */
-static int lssh2_kill (libssh2_conn *conn, int signal)
-{
-	char *kill_cmd;
-	int kill_cmd_size;
-	exec_data data;
-
-	LOG_MSG(LOG_DEBUG, "");
-
-	if (!conn) {
-		LOG_MSG(LOG_DEBUG, "No session");
-		return -1;
-	}
-	
-	kill_cmd_size = strlen(TRLITE_KILL_SHELL_CMD) + 5; /* Max PID size */
-	kill_cmd = malloc(kill_cmd_size);
-	snprintf (kill_cmd, kill_cmd_size, TRLITE_KILL_SHELL_CMD,
-	          signal);
-	
-	data.stdout_data.buffer = NULL;
-	data.stderr_data.buffer = NULL;
-	data.result = -1;
-	
-	LOG_MSG(LOG_DEBUG, "%s", kill_cmd);
-	if (lssh2_execute_command(conn, kill_cmd, &data) < 0) {
-		LOG_MSG(LOG_ERR, "Killing remote shell failed");
-	}
-	
-	conn->signaled = signal;
-
-	free(kill_cmd);
-	return 0;
-}
-
 int lssh2_signal (libssh2_conn *conn, int signal) {
 
 	switch(signal) {
 	case SIGINT:
-		last_timeout = SIGNALED_SIGINT;
+		trlite_status = SIGNALED_SIGINT;
 		break;
 	case SIGTERM:
-		last_timeout = SIGNALED_SIGTERM;
+		trlite_status = SIGNALED_SIGTERM;
 		break;
 	default:
 		break;
