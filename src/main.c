@@ -396,7 +396,7 @@ LOCAL int parse_keypair(char *keypair, testrunner_lite_options *opts) {
 
 	item = NULL;
 	param = malloc(strlen(keypair) + 1);
-	strcpy(param, keypair);
+	strncpy(param, keypair, strlen(keypair) + 1);
 	
 	/* will be modified by strsep */
 	param_ptr = param;
@@ -414,7 +414,7 @@ LOCAL int parse_keypair(char *keypair, testrunner_lite_options *opts) {
 		return 1;
 	}
 	opts->pub_key = malloc(strlen(item) + 1);
-	strncpy(opts->pub_key, item, strlen(item));
+	strncpy(opts->pub_key, item, strlen(item) + 1);
 	return 0;
 }
 #endif
