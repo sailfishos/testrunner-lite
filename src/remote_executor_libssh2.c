@@ -61,8 +61,12 @@
 /* ------------------------------------------------------------------------- */
 /* MACROS */
 
-/* How many tries after a session dies */
+/* How many retries after a session dies */
 #define MAX_SSH_RETRIES 5
+/* How many retries when a channel operation returns with EAGAIN */
+#define MAX_SSH_CHANNEL_RETRIES 3
+/* Timeout for pselect() */
+#define LIBSSH2_TIMEOUT 3
 /* Size we try to read from ssh session */
 #define CHANNEL_BUFFER_SIZE 1024
 #define KNOWN_HOSTS_FILE "known_hosts"
@@ -87,7 +91,7 @@
 #define REMOTE_RUN_SCRIPT "echo '#!/bin/bash\n\
 echo $$ > /var/tmp/testrunner-lite-shell.pid\n\
 bgjobs=0\n\
-if [ -e /root/.profile ]; then source /root/.profile > /dev/null; fi\n\
+if [ -e .profile ]; then source .profile > /dev/null; fi\n\
 eval $@\n\
 ret=$?\n\
 for bgjob in `jobs -p`\n\
@@ -111,18 +115,19 @@ typedef enum {
 	HARD_TIMEOUT_KILLED,
 	SIGNALED_SIGINT,
 	SIGNALED_SIGTERM
-} trlite_status;
+} trlite_state;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 static sigset_t blocked_signals;
-volatile trlite_status trlite_status = OK;
+volatile trlite_state trlite_status = OK;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 #define UNIQUE_ID_FMT     "%d"
 #define PID_FILE      "/var/tmp/testrunner-lite-children.pid"
 #define UNIQUE_ID_MAX_LEN (HOST_NAME_MAX + 10 + 1 + 1)
 #define PID_FILE_MAX_LEN  (30 + UNIQUE_ID_MAX_LEN + 10 + 1 + 1)
+const useconds_t conn_sleep = 10000;
 
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
@@ -152,7 +157,8 @@ static int lssh2_session_reconnect(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
 static int lssh2_session_free(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
-static int lssh2_channel_close(LIBSSH2_CHANNEL *channel, int *exitcode);
+static int lssh2_channel_close(libssh2_conn *conn, LIBSSH2_CHANNEL *channel, 
+                               int *exitcode);
 /* ------------------------------------------------------------------------- */
 static int lssh2_execute_command(libssh2_conn *conn, char *command, 
                                  exec_data *data);
@@ -254,7 +260,7 @@ static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data)
  */
 static int lssh2_check_status(libssh2_conn *conn) 
 {
-	if (!conn) {
+	if (!conn || conn->status == SESSION_GIVE_UP) {
 		LOG_MSG(LOG_ERR, "No connection");
 		return -1;
 	}
@@ -326,6 +332,7 @@ static int lssh2_session_connect(libssh2_conn *conn)
     int type;  
 	size_t len;
     int i;
+    int conn_retries = 0;
 
 	LOG_MSG(LOG_DEBUG, "connecting to %s port %u", conn->hostname,
 		conn->port ? conn->port : 22);
@@ -352,8 +359,19 @@ static int lssh2_session_connect(libssh2_conn *conn)
 	sigprocmask(SIG_BLOCK, &blocked_signals, NULL);
 
 	/* Start session */
-	while ((n = libssh2_session_startup(conn->ssh2_session, conn->sock)) ==
-	       LIBSSH2_ERROR_EAGAIN);
+	while (1) {
+		n = libssh2_session_startup(conn->ssh2_session, conn->sock);
+		if (n != LIBSSH2_ERROR_EAGAIN) {
+			break;
+		} else {
+			conn_retries++;
+			lssh2_select(conn);
+		}
+		if (conn_retries > MAX_SSH_RETRIES) {
+			LOG_MSG(LOG_ERR, "Max retries exceeded: can't open session");
+			break;
+		}
+	}
 
 	if (n) {
 		LOG_MSG(LOG_ERR, "libssh2 session startup failed");
@@ -399,7 +417,7 @@ static int lssh2_session_connect(libssh2_conn *conn)
 		}
 
 	}	else {
-		LOG_MSG(LOG_ERR, "libssh2_session_hostkey failed");
+		LOG_MSG(LOG_DEBUG, "libssh2_session_hostkey failed");
 		libssh2_knownhost_free(hosts);
 		return -1;
 	}
@@ -410,16 +428,17 @@ static int lssh2_session_connect(libssh2_conn *conn)
 	        "public key: %s", conn->priv_key, conn->pub_key);
     n = -1;
     i = 0;
-    while (i < 5 && n) {
-	    while ((n = libssh2_userauth_publickey_fromfile(conn->ssh2_session, 
+
+    while ((n = libssh2_userauth_publickey_fromfile(conn->ssh2_session, 
 	                                                conn->username,
 	                                                conn->pub_key,
 	                                                conn->priv_key,
-	                                                conn->password)) ==
-	            LIBSSH2_ERROR_EAGAIN);
-        i++;
-        sleep(1);
+                                                    conn->password)) ==
+           LIBSSH2_ERROR_EAGAIN && i < MAX_SSH_RETRIES) {
+	    lssh2_select(conn);
+	    i++;
     }
+    
 
 	if (n) {
 		/* Won't be fixed via connection retries, so giving up */
@@ -439,15 +458,23 @@ static int lssh2_session_connect(libssh2_conn *conn)
  * @param exitcode pointer to store return value from command
  * @return 0 on succes, -1 if fails
  */
-static int lssh2_channel_close(LIBSSH2_CHANNEL *channel, int *exitcode) 
+static int lssh2_channel_close(libssh2_conn *conn, LIBSSH2_CHANNEL *channel,
+                               int *exitcode) 
 {
 	int n;
 	*exitcode = -127;
+	int channel_retries = 0;
 	
 	if (channel) {
-		do {
+		while (channel_retries < MAX_SSH_CHANNEL_RETRIES) {
 			n = libssh2_channel_close(channel);
-		} while (n == LIBSSH2_ERROR_EAGAIN);
+			if (n != LIBSSH2_ERROR_EAGAIN) {
+				break;
+			} else {
+				lssh2_select(conn);
+				channel_retries++;
+			}
+		}
 		if (n < 0) {
 			LOG_MSG(LOG_ERR, 
 				"Closing SSH channel failed, error %d", n);
@@ -462,18 +489,23 @@ static int lssh2_channel_close(LIBSSH2_CHANNEL *channel, int *exitcode)
 				"Failed to get exit code, error %d", n);
 		}
 		
-		
-		do {
+		channel_retries = 0;
+		while (channel_retries < MAX_SSH_CHANNEL_RETRIES) {
 			n = libssh2_channel_free(channel);
-		} while (n == LIBSSH2_ERROR_EAGAIN);
+			if (n != LIBSSH2_ERROR_EAGAIN) {
+				break;
+			}
+			channel_retries++;
+			lssh2_select(conn);
+		}
 		if (n < 0) {
 			LOG_MSG(LOG_ERR, "Freeing SSH channel failed");
 			return -1;
 		} else if (n == 0) {
 			LOG_MSG(LOG_DEBUG, "SSH channel freed");
+		}
 			channel = NULL;
 		}
-	}     
 	return 0;
 }
 
@@ -485,10 +517,10 @@ static int lssh2_channel_close(LIBSSH2_CHANNEL *channel, int *exitcode)
 static int lssh2_session_free(libssh2_conn *conn) 
 {
 
-  	LOG_MSG(LOG_DEBUG, "");
-	if (!conn) {
+	LOG_MSG(LOG_DEBUG, "session_conn->session %p", conn->ssh2_session);
+	if (!conn || !conn->ssh2_session) {
 		LOG_MSG(LOG_DEBUG, "No SSH session");
-		return 0;
+		return -1;
 	}
 
 	exec_data data;
@@ -496,7 +528,8 @@ static int lssh2_session_free(libssh2_conn *conn)
 	data.stderr_data.buffer = NULL;
 	data.result = -1;
 	
-	if (conn->ssh2_session) {
+	if (conn->status != SESSION_GIVE_UP) {
+		if (conn->ssh2_session) {
 		LOG_MSG(LOG_DEBUG, "%s", TRLITE_KILL_BG_PIDS_CMD);
 		if (lssh2_execute_command(conn, 
 					  TRLITE_KILL_BG_PIDS_CMD, &data) < 0) {
@@ -509,6 +542,7 @@ static int lssh2_session_free(libssh2_conn *conn)
 	LOG_MSG(LOG_DEBUG, "%s", TRLITE_CLEAN_CMD);
 	if (lssh2_execute_command(conn, TRLITE_CLEAN_CMD, &data) < 0) {
 		LOG_MSG(LOG_ERR, "Cleaning shell scripts failed");
+	}
 	}
 
 	if (conn->ssh2_session) {
@@ -553,8 +587,9 @@ static int lssh2_session_reconnect(libssh2_conn *conn)
 		if (libssh2_session_free(conn->ssh2_session) < 0) {
 			/* Ignore */
 			LOG_MSG(LOG_ERR, "Reconnect: "
-				"disconnecting old session failed");
+				"freeing old session failed");
 		}
+		conn->ssh2_session = NULL;
 	}
 	
 	close(conn->sock);
@@ -727,6 +762,13 @@ static int lssh2_read_output(libssh2_conn *conn,
 		    n_stderr == LIBSSH2_ERROR_EAGAIN) {
 			lssh2_select(conn);	
 			lssh2_check_status(conn);
+			if (conn->status == SESSION_GIVE_UP) {
+				LOG_MSG(LOG_DEBUG, "Session died, giving up...");
+				data->signaled = SIGTERM;
+				return -1;
+			} else if (trlite_status == HARD_TIMEOUT_KILLED) {
+				break;
+			}
 		} else {
 			break;
 		}	
@@ -745,6 +787,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	LIBSSH2_CHANNEL *channel = NULL;
 	int n;
 	int retries = 0;
+	int channel_retries = 0;
 	
 	if (!conn || !conn->ssh2_session || conn->status == SESSION_GIVE_UP) {
 		LOG_MSG(LOG_DEBUG, "Cannot create SSH channel: no SSH session");
@@ -760,26 +803,54 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 						  NULL, NULL, 0) 
 		       == LIBSSH2_ERROR_EAGAIN ) {
 			lssh2_select(conn);
+			channel_retries++;
+			if (channel_retries > MAX_SSH_CHANNEL_RETRIES) {
+				channel_retries = 0;
+				break;
+			}
 		} 
 		if (channel) {
 			break;
 		}
+
+		/* Session stuck */
+		while (1) {
+			LOG_MSG(LOG_DEBUG, "SSH session stuck\n");
+			if (lssh2_session_reconnect(conn) < 0) {
+				usleep(conn_sleep);
+				retries++;
+			} else {
+				break;
+			}
+			/* The target died, or someone tripped over the 
+			   network cable. After this point we don't 
+			   use the connection anymore for anything. We don't 
+			   even try to properly close channels or session because of 
+			   robustness issues. Leaks memory, but testrunner-lite will
+			   be terminated after this failure */
 		if (retries > MAX_SSH_RETRIES) {
 			LOG_MSG(LOG_ERR, "Exceeding max number of retries " 
 			        "for SSH connection. Giving up.\n");			
+				conn->status = SESSION_GIVE_UP;
+				data->signaled = SIGTERM;
 			return -1;
 		}
 
-		/* Session stuck */
-		LOG_MSG(LOG_DEBUG, "SSH session stuck\n");
-		lssh2_session_reconnect(conn);
-		sleep(1);
-		retries++;
+		}
+	 
 	} while (!channel);
   
 	while ((n = libssh2_channel_exec(channel, command)) == 
 	       LIBSSH2_ERROR_EAGAIN) {
 		lssh2_select(conn);
+		channel_retries++;
+		if (channel_retries > MAX_SSH_CHANNEL_RETRIES) {
+			LOG_MSG(LOG_ERR, "Channel execute failed");
+			channel_retries = 0;
+			lssh2_channel_close(conn, channel, NULL);
+			conn->status = SESSION_GIVE_UP;
+			return -1;
+		}
 	}
 
 	/* Read streams if the receiving buffers exist 
@@ -790,7 +861,10 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 		libssh2_channel_flush_ex(channel, LIBSSH2_CHANNEL_FLUSH_ALL);
 	}
 
-	lssh2_channel_close(channel, &data->result);	
+	if (conn->status != SESSION_GIVE_UP) {
+		lssh2_channel_close(conn, channel, &data->result);	
+	}
+
 	return 0;
 
 }
@@ -916,7 +990,7 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	conn->password = "";
 	conn->writefd = NULL;
 	conn->readfd = NULL;
-	conn->timeout.tv_sec = 10;
+	conn->timeout.tv_sec = LIBSSH2_TIMEOUT;
 	conn->timeout.tv_nsec = 0;
 	
 	/* No ssh key files given, using default */
@@ -957,12 +1031,14 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	
 	if (lssh2_session_connect(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Connection error");
+		conn->status = SESSION_GIVE_UP;
 		lssh2_session_free(conn);
 		return NULL;
 	}
 
 	if (lssh2_create_shell_scripts(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Error creating remote shell scripts");
+		conn->status = SESSION_GIVE_UP;
 		lssh2_session_free(conn);
 		return NULL;
 	}
@@ -990,6 +1066,7 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 
 	if (conn->status == SESSION_GIVE_UP) {
 		LOG_MSG(LOG_ERR, "Fatal error, can't (re)connect");
+		data->signaled = SIGTERM;
 		return -1;
 	}
 
