@@ -761,9 +761,9 @@ static int lssh2_read_output(libssh2_conn *conn,
 			lssh2_check_status(conn);
 			if (conn->status == SESSION_GIVE_UP) {
 				LOG_MSG(LOG_DEBUG, "Session died, giving up...");
-				data->signaled = SIGTERM;
+				//data->signaled = SIGTERM;
 				return -1;
-			} else if (trlite_status != OK) {
+			} else if (trlite_status == HARD_TIMEOUT_KILLED) {
 				return -1;
 			}
 		} else {
@@ -829,7 +829,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 				LOG_MSG(LOG_ERR, "Exceeding max number of retries " 
 				        "for SSH connection. Giving up.\n");			
 				conn->status = SESSION_GIVE_UP;
-				data->signaled = SIGTERM;
+				//data->signaled = SIGTERM;
 				return -1;
 			}
 
@@ -989,6 +989,7 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	conn->readfd = NULL;
 	conn->timeout.tv_sec = LIBSSH2_TIMEOUT;
 	conn->timeout.tv_nsec = 0;
+	conn->signaled = 0;
 	
 	/* No ssh key files given, using default */
 	if (!priv_key || !pub_key || !strlen(priv_key) || !strlen(pub_key)) { 
@@ -1063,7 +1064,7 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 
 	if (conn->status == SESSION_GIVE_UP) {
 		LOG_MSG(LOG_ERR, "Fatal error, can't (re)connect");
-		data->signaled = SIGTERM;
+		//data->signaled = SIGTERM;
 		return -1;
 	}
 
