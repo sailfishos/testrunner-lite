@@ -86,14 +86,14 @@ typedef struct libssh2_conn {
 /* ------------------------------------------------------------------------- */
 libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
                                   in_port_t port, const char *priv_key, 
-				  const char *pub_key);
+                                  const char *pub_key);
 /* ------------------------------------------------------------------------- */
 int lssh2_execute(libssh2_conn *conn, const char *command, 
 		  exec_data *data);
 /* ------------------------------------------------------------------------- */
 int lssh2_executor_close(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
-int lssh2_signal (libssh2_conn *conn, int signal);
+int lssh2_signal (int signal);
 /* ------------------------------------------------------------------------- */
 
 #endif                          /* REMOTE_EXECUTOR_LIBSSH2_H */

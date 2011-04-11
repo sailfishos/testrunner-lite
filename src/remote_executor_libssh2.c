@@ -186,7 +186,8 @@ static int lssh2_set_timer(unsigned long soft_timeout,
 {
 	struct sigaction act;
 	struct itimerval timer;
-	
+	int ret = 0;
+
 	trlite_status = OK;
 	act.sa_sigaction = &lssh2_timeout;
 	sigemptyset(&act.sa_mask);
@@ -197,27 +198,25 @@ static int lssh2_set_timer(unsigned long soft_timeout,
 	timer.it_value.tv_sec = soft_timeout;
 	timer.it_value.tv_usec = 0;
 
-	/* set signal action. original action is stored in global 
-	 * default_alarm_action */
-	if (sigaction(SIGALRM, &act, NULL) < 0) {
-		perror("sigaction");
-		goto erraction;
+	/* set signal action. */
+	ret = sigaction(SIGALRM, &act, NULL);
+	if (ret < 0) {
+		LOG_MSG(LOG_DEBUG, "sigaction() failed: %s", strerror(ret));
+		return -1;
 	}
-
-	if (setitimer(ITIMER_REAL, &timer, NULL) < 0) {
-		perror("setitimer");
-		goto errtimer;
+   
+	ret = setitimer(ITIMER_REAL, &timer, NULL);
+	if (ret < 0) {
+		LOG_MSG(LOG_DEBUG, "setitimer() failed: %s", strerror(ret));
+		return -1;
 	}
 
 	LOG_MSG(LOG_DEBUG, "Set timeouts to: soft %u hard %u", 
 	        soft_timeout, hard_timeout);
 
 	return 0;
-
- errtimer:
- erraction:
-	return -1;
 }
+
 /* ------------------------------------------------------------------------- */
 /** Reset timer and restore signal action of SIGALRM
  */
@@ -232,7 +231,7 @@ static void lssh2_stop_timer()
 	if (setitimer(ITIMER_REAL, &timer, NULL) < 0) {
 		perror("setitimer");
 	}
-	trlite_status = OK;
+	//trlite_status = OK;
 	LOG_MSG(LOG_DEBUG, "Timer stopped");
 }
 /* ------------------------------------------------------------------------- */
@@ -286,12 +285,10 @@ static int lssh2_check_status(libssh2_conn *conn)
 		//LOG_MSG(LOG_DEBUG, "Hard timeout, already killed");
 		break;
 	case SIGNALED_SIGINT:
-		//lssh2_stop_timer();
 		LOG_MSG(LOG_DEBUG, "Sending SIGINT");
 		lssh2_kill(conn, SIGINT);
 		break;
 	case SIGNALED_SIGTERM:
-		//lssh2_stop_timer();
 		LOG_MSG(LOG_DEBUG, "Sending SIGTERM");
 		lssh2_kill(conn, SIGTERM);
 		break;
@@ -814,7 +811,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 		}
 
 		/* Session stuck */
-		while (trlite_status == OK) {
+		while (1) {
 			LOG_MSG(LOG_DEBUG, "SSH session stuck\n");
 			if (lssh2_session_reconnect(conn) < 0) {
 				usleep(conn_sleep);
@@ -1131,6 +1128,7 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 }
 /* ------------------------------------------------------------------------- */
 /** Clean up
+ * @param conn SSH session
  * returns 0 on success, -1 if fails
  */
 int lssh2_executor_close (libssh2_conn *conn)
@@ -1141,9 +1139,12 @@ int lssh2_executor_close (libssh2_conn *conn)
 
 /* ------------------------------------------------------------------------- */
 /** Signals running session
- * returns 0 on success
+ * @param signal signal number
+ * returns 0 on success, -1 if signal is unsupported
  */
-int lssh2_signal (libssh2_conn *conn, int signal) {
+int lssh2_signal (int signal) {
+
+	int ret = 0;
 
 	switch(signal) {
 	case SIGINT:
@@ -1153,9 +1154,10 @@ int lssh2_signal (libssh2_conn *conn, int signal) {
 		trlite_status = SIGNALED_SIGTERM;
 		break;
 	default:
+		ret = -1;
 		break;
 	}
-	return 0;
+	return ret;
 }
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
