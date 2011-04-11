@@ -286,12 +286,12 @@ static int lssh2_check_status(libssh2_conn *conn)
 		//LOG_MSG(LOG_DEBUG, "Hard timeout, already killed");
 		break;
 	case SIGNALED_SIGINT:
-		lssh2_stop_timer();
+		//lssh2_stop_timer();
 		LOG_MSG(LOG_DEBUG, "Sending SIGINT");
 		lssh2_kill(conn, SIGINT);
 		break;
 	case SIGNALED_SIGTERM:
-		lssh2_stop_timer();
+		//lssh2_stop_timer();
 		LOG_MSG(LOG_DEBUG, "Sending SIGTERM");
 		lssh2_kill(conn, SIGTERM);
 		break;
@@ -359,7 +359,7 @@ static int lssh2_session_connect(libssh2_conn *conn)
 	sigprocmask(SIG_BLOCK, &blocked_signals, NULL);
 
 	/* Start session */
-	while (1) {
+	while (trlite_status == OK) {
 		n = libssh2_session_startup(conn->ssh2_session, conn->sock);
 		if (n != LIBSSH2_ERROR_EAGAIN) {
 			break;
@@ -530,20 +530,20 @@ static int lssh2_session_free(libssh2_conn *conn)
 	
 	if (conn->status != SESSION_GIVE_UP) {
 		if (conn->ssh2_session) {
-		LOG_MSG(LOG_DEBUG, "%s", TRLITE_KILL_BG_PIDS_CMD);
-		if (lssh2_execute_command(conn, 
-					  TRLITE_KILL_BG_PIDS_CMD, &data) < 0) {
-			LOG_MSG(LOG_ERR, "Killing remote PID:s failed");
-		}
+			LOG_MSG(LOG_DEBUG, "%s", TRLITE_KILL_BG_PIDS_CMD);
+			if (lssh2_execute_command(conn, 
+			                          TRLITE_KILL_BG_PIDS_CMD, &data) < 0) {
+				LOG_MSG(LOG_ERR, "Killing remote PID:s failed");
+			}
+		}		
 	}
-	
 	data.result = -1;
 
 	LOG_MSG(LOG_DEBUG, "%s", TRLITE_CLEAN_CMD);
 	if (lssh2_execute_command(conn, TRLITE_CLEAN_CMD, &data) < 0) {
 		LOG_MSG(LOG_ERR, "Cleaning shell scripts failed");
 	}
-	}
+	
 
 	if (conn->ssh2_session) {
 		if (libssh2_session_disconnect(conn->ssh2_session, NULL) < 0) {
@@ -766,8 +766,8 @@ static int lssh2_read_output(libssh2_conn *conn,
 				LOG_MSG(LOG_DEBUG, "Session died, giving up...");
 				data->signaled = SIGTERM;
 				return -1;
-			} else if (trlite_status == HARD_TIMEOUT_KILLED) {
-				break;
+			} else if (trlite_status != OK) {
+				return -1;
 			}
 		} else {
 			break;
@@ -814,7 +814,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 		}
 
 		/* Session stuck */
-		while (1) {
+		while (trlite_status == OK) {
 			LOG_MSG(LOG_DEBUG, "SSH session stuck\n");
 			if (lssh2_session_reconnect(conn) < 0) {
 				usleep(conn_sleep);
@@ -828,13 +828,13 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 			   even try to properly close channels or session because of 
 			   robustness issues. Leaks memory, but testrunner-lite will
 			   be terminated after this failure */
-		if (retries > MAX_SSH_RETRIES) {
-			LOG_MSG(LOG_ERR, "Exceeding max number of retries " 
-			        "for SSH connection. Giving up.\n");			
+			if (retries > MAX_SSH_RETRIES) {
+				LOG_MSG(LOG_ERR, "Exceeding max number of retries " 
+				        "for SSH connection. Giving up.\n");			
 				conn->status = SESSION_GIVE_UP;
 				data->signaled = SIGTERM;
-			return -1;
-		}
+				return -1;
+			}
 
 		}
 	 
