@@ -9,6 +9,11 @@ ifeq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
   CFLAGS += -O2
 endif
 
+export GENERATE_DOCS:=yes
+ifneq (,$(findstring nodocs,$(DEB_BUILD_OPTIONS)))
+         export GENERATE_DOCS=no
+endif
+
 DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
@@ -23,7 +28,9 @@ build-stamp:
 	touch build-stamp 
 	./configure --enable-libssh2 --prefix=/usr  $(confflags)
 	$(MAKE) CFLAGS="$(CFLAGS)"  || exit 1 
+ifeq (yes, $(GENERATE_DOCS))
 	$(MAKE) html || exit 1 
+endif
 	touch NEWS 
 	touch ChangeLog
 	touch build-stamp
