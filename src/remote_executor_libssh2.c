@@ -114,7 +114,8 @@ typedef enum {
 	HARD_TIMEOUT,
 	HARD_TIMEOUT_KILLED,
 	SIGNALED_SIGINT,
-	SIGNALED_SIGTERM
+	SIGNALED_SIGTERM,
+	EXIT
 } trlite_state;
 
 /* ------------------------------------------------------------------------- */
@@ -291,6 +292,10 @@ static int lssh2_check_status(libssh2_conn *conn)
 	case SIGNALED_SIGTERM:
 		LOG_MSG(LOG_DEBUG, "Sending SIGTERM");
 		lssh2_kill(conn, SIGTERM);
+		break;
+	case EXIT:
+		LOG_MSG(LOG_INFO, "exiting... hurry up");
+		lssh2_kill(conn, SIGKILL);
 		break;
 	default:
 		break;
@@ -1147,6 +1152,13 @@ int lssh2_executor_close (libssh2_conn *conn)
 int lssh2_signal (int signal) {
 
 	int ret = 0;
+
+	/* Already signaled, send SIGKILL to remote end
+	   and exit */
+	if (trlite_status != OK) {
+		trlite_status = EXIT;
+		return ret;
+	}
 
 	switch(signal) {
 	case SIGINT:
