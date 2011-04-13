@@ -1,3 +1,11 @@
+testrunner-lite (1.6.1) unstable; urgency=low
+
+  * Fixes to process handling (possibility of busyloop removed) (by slahtinen)
+  * Configure option to disable documentation generation (by slahtinen)
+  * Existence of .profile file not expected with -t on target (by slahtinen)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Mon, 04 Apr 2011 12:23:02 +0300
+
 testrunner-lite (1.6.0) unstable; urgency=low
 
   * Support for measurement timestamps and series (BMC#13915)
