@@ -136,14 +136,13 @@ const useconds_t conn_sleep = 10000;
 /* ------------------------------------------------------------------------- */
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
-static int lssh2_set_timer(unsigned long soft_timeout, 
-                           unsigned long hard_timeout);
+static int lssh2_set_timer(unsigned long timeout); 
 /* ------------------------------------------------------------------------- */
 static void lssh2_stop_timer();
 /* ------------------------------------------------------------------------- */
 static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data);
 /* ------------------------------------------------------------------------- */
-static int lssh2_check_status(libssh2_conn *conn);
+static int lssh2_check_status(libssh2_conn *conn, exec_data *data);
 /* ------------------------------------------------------------------------- */
 static int lssh2_setup_socket(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
@@ -178,26 +177,24 @@ static char *replace(char const *const cmd, char const *const pat,
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
 /** Initialize timer and set signal action for SIGALRM
- * @param timeout Value in seconds after which global variable timer_value
- * will be set
+ * @param first_timeout seconds to first timeout
+ * @param first_timeout seconds to second timeout
+ *
  * @return 0 in success, -1 in error
  */
-static int lssh2_set_timer(unsigned long soft_timeout, 
-                           unsigned long hard_timeout) 
+static int lssh2_set_timer(unsigned long timeout)
 {
 	struct sigaction act;
 	struct itimerval timer;
 	int ret = 0;
 
-	trlite_status = OK;
 	act.sa_sigaction = &lssh2_timeout;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
-
-	timer.it_interval.tv_sec = hard_timeout;
-	timer.it_interval.tv_usec = 0;
-	timer.it_value.tv_sec = soft_timeout;
+	timer.it_value.tv_sec = timeout;
 	timer.it_value.tv_usec = 0;
+	timer.it_interval.tv_sec = 0;
+	timer.it_interval.tv_usec = 0;
 
 	/* set signal action. */
 	ret = sigaction(SIGALRM, &act, NULL);
@@ -212,8 +209,8 @@ static int lssh2_set_timer(unsigned long soft_timeout,
 		return -1;
 	}
 
-	LOG_MSG(LOG_DEBUG, "Set timeouts to: soft %u hard %u", 
-	        soft_timeout, hard_timeout);
+	LOG_MSG(LOG_DEBUG, "Timeout set to %u second(s)", 
+	        timeout);
 
 	return 0;
 }
@@ -232,7 +229,6 @@ static void lssh2_stop_timer()
 	if (setitimer(ITIMER_REAL, &timer, NULL) < 0) {
 		perror("setitimer");
 	}
-	//trlite_status = OK;
 	LOG_MSG(LOG_DEBUG, "Timer stopped");
 }
 /* ------------------------------------------------------------------------- */
@@ -247,6 +243,8 @@ static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data)
 			trlite_status = SOFT_TIMEOUT;
 			break;
 		case SOFT_TIMEOUT_KILLED:
+		case SIGNALED_SIGINT:
+		case SIGNALED_SIGTERM:			
 			trlite_status = HARD_TIMEOUT;
 			break;
 		default:
@@ -258,7 +256,7 @@ static void lssh2_timeout(int signal, siginfo_t *siginfo, void *data)
 /** Checks during reading if the timeout timer has expired, or if process was
  *   signaled. Kills processes accordingly.
  */
-static int lssh2_check_status(libssh2_conn *conn) 
+static int lssh2_check_status(libssh2_conn *conn, exec_data *data) 
 {
 	if (!conn || conn->status == SESSION_GIVE_UP) {
 		LOG_MSG(LOG_ERR, "No connection");
@@ -271,14 +269,17 @@ static int lssh2_check_status(libssh2_conn *conn)
 		break;
 	case SOFT_TIMEOUT:
 		LOG_MSG(LOG_DEBUG, "Soft timeout, sending SIGTERM");
+		lssh2_stop_timer();
 		lssh2_kill(conn, SIGTERM);
 		trlite_status = SOFT_TIMEOUT_KILLED;
+		lssh2_set_timer(data->hard_timeout);
 		break;
 	case SOFT_TIMEOUT_KILLED:
 		//LOG_MSG(LOG_DEBUG, "Soft timeout, already killed");
 		break;
 	case HARD_TIMEOUT:
 		LOG_MSG(LOG_DEBUG, "Hard timeout, sending SIGKILL");
+		lssh2_stop_timer();
 		lssh2_kill(conn, SIGKILL);
 		trlite_status = HARD_TIMEOUT_KILLED;
 		break;
@@ -288,10 +289,15 @@ static int lssh2_check_status(libssh2_conn *conn)
 	case SIGNALED_SIGINT:
 		LOG_MSG(LOG_DEBUG, "Sending SIGINT");
 		lssh2_kill(conn, SIGINT);
+		lssh2_stop_timer();
+		lssh2_set_timer(data->hard_timeout);
 		break;
 	case SIGNALED_SIGTERM:
 		LOG_MSG(LOG_DEBUG, "Sending SIGTERM");
+		lssh2_stop_timer();
 		lssh2_kill(conn, SIGTERM);
+		trlite_status = SOFT_TIMEOUT_KILLED;
+		lssh2_set_timer(data->hard_timeout);
 		break;
 	case EXIT:
 		LOG_MSG(LOG_INFO, "exiting... hurry up");
@@ -763,7 +769,7 @@ static int lssh2_read_output(libssh2_conn *conn,
 		if (n_stdout == LIBSSH2_ERROR_EAGAIN ||
 		    n_stderr == LIBSSH2_ERROR_EAGAIN) {
 			lssh2_select(conn);	
-			lssh2_check_status(conn);
+			lssh2_check_status(conn, data);
 			if (conn->status == SESSION_GIVE_UP) {
 				LOG_MSG(LOG_DEBUG, "Session died, giving up...");
 				conn->signaled = SIGKILL;
@@ -1110,7 +1116,7 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 	test_cmd = malloc(test_cmd_size);
 	snprintf(test_cmd, test_cmd_size, TRLITE_RUN_CMD, command);
 	LOG_MSG(LOG_DEBUG, "Executing test command: %s\n", test_cmd);
-	lssh2_set_timer(data->soft_timeout, data->hard_timeout);
+	lssh2_set_timer(data->soft_timeout);
 	if (lssh2_execute_command(conn, test_cmd, data) < 0) {
 		LOG_MSG(LOG_ERR, "Executing test command failed");
 		ret = -1;
