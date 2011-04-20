@@ -39,7 +39,8 @@ testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
                             -lgcov \
 			    $(XML2_LIBS) \
                             -lcurl \
-			    -ldl
+			    -ldl \
+			    -luuid	
 
 if ENABLE_EVENTS
 testrunnerliteunittests_LDADD += $(top_builddir)/src/event.o \

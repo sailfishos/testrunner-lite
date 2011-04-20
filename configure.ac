@@ -28,6 +28,7 @@ AC_ARG_ENABLE(
 )
 PKG_CHECK_MODULES([CHECK],[check])
 PKG_CHECK_MODULES([XML2],[libxml-2.0])
+PKG_CHECK_MODULES([CURL],[libcurl])
 AM_CONDITIONAL([ENABLE_EVENTS], [test "$events_feature" = "yes"])
 AM_COND_IF([ENABLE_EVENTS],
            [PKG_CHECK_MODULES([JSON], [json >= 0.9])])

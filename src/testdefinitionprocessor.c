@@ -37,6 +37,7 @@
 #include <libxml/tree.h>
 #include <signal.h>
 #include <ctype.h>
+#include <uuid/uuid.h>
 
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
@@ -91,7 +92,8 @@ LOCAL int failcount = 0;
 LOCAL int casecount = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
-/* None */
+#define CORE_PATTERN_COMMAND "sysctl -q -w kernel.core_pattern=\'|/usr/sbin/rich-core-dumper "\
+	"--pid=%p --signal=%s --name=%e --uuid=<UUID>\'"
 
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
@@ -132,12 +134,53 @@ LOCAL int step_post_process (const void *, const void *);
 LOCAL int event_execute (const void *data, const void *user);
 /* ------------------------------------------------------------------------- */
 #endif
+LOCAL int core_pattern_execute (const char *);
+/* ------------------------------------------------------------------------- */
+
 /* FORWARD DECLARATIONS */
 /* None */
 
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+/** Set device core pattern
+ * @param uuid String identifier
+ * @return 1 if set successfully, otherwise 0
+ */
+LOCAL int core_pattern_execute (const char *uuid)
+{
+	exec_data edata;
+	char *command;
+	size_t command_len;
+
+	memset (&edata, 0x0, sizeof (exec_data));
+        init_exec_data(&edata);
+        edata.soft_timeout = COMMON_SOFT_TIMEOUT;
+        edata.hard_timeout = COMMON_HARD_TIMEOUT;
+
+	command_len = strlen(CORE_PATTERN_COMMAND) + strlen(uuid) + 1;
+	command = (char *) malloc (command_len);
+	strcpy (command, CORE_PATTERN_COMMAND);
+
+	command = replace_string (command, "<UUID>", uuid);
+
+        LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
+        execute(command, &edata);
+        if (edata.result) {
+                LOG_MSG (LOG_WARNING, "%s: %s failed: %s\n", PROGNAME, command,
+                         (char *)(edata.stderr_data.buffer ?
+                                  edata.stderr_data.buffer : 
+                                  BAD_CAST "no info available"));
+        }
+        
+	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
+        if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
+        if (edata.failure_info.buffer) free (edata.failure_info.buffer);
+
+	free (command);
+	 
+	return 1;
+}
 #ifdef ENABLE_EVENTS
 /** Process event
  *  @param data event data
@@ -361,8 +404,9 @@ LOCAL int step_post_process (const void *data, const void *user)
 
 LOCAL int process_case (const void *data, const void *user) 
 {
-
 	td_case *c = (td_case *)data;
+	char *uuid_str = NULL;
+	uuid_t uuid;
 
 	if (c->gen.manual && !opts.run_manual) {
 		LOG_MSG(LOG_DEBUG, "Skipping manual case %s",
@@ -390,6 +434,18 @@ LOCAL int process_case (const void *data, const void *user)
 	cur_case_name = c->gen.name;
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
+
+	if (opts.dump_cores) {
+		uuid_generate (uuid);
+		
+		if (uuid_is_null (uuid)) {
+			LOG_MSG (LOG_WARNING, "Failed to generate UUID.");
+		}
+		else {
+			uuid_unparse (uuid, uuid_str);
+			core_pattern_execute (uuid_str);
+		}
+	}
 
 	if (opts.measure_power) {
 		if (system("hat_ctrl -stream:5:s1-2:f" MEASUREMENT_FILE
