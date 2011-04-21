@@ -187,6 +187,12 @@ LOCAL void usage()
 		"Causes testrunner-lite to write the given package URL to "
 		"results.\n"
 		);
+        printf ("  -d, --save-rich-cores\n\t\t"
+                "Save rich-core dumps. Creates UUID mappings between executed\n\t\t"
+                "test cases and generated rich-core dumps. This makes possible\n\t\t"
+                "to link each rich-cores and test cases in test reporting\n\t\t"
+                "NOTE: This feature requires working sp-rich-core package to be\n\t\t"
+                "installed in the Device Under Test.\n");
 	printf ("\nTest commands are executed locally by default.  Alternatively, one\n"
 		"of the following executors can be used:\n");
 	printf ("\nChroot Execution:\n");
@@ -201,13 +207,6 @@ LOCAL void usage()
 		"of the system under test. Behind the scenes, host-based\n\t\t"
 		"testing uses the external execution described below with SSH\n\t\t"
 		"and SCP.\n");
-	printf ("  -d, --dump-cores\n\t\t"
-	        "Creates UUID mappings between executed test cases and generated\n\t\t"
-	        "rich-core dumps. This makes possible to associate particular dumps\n\t\t"
-                "and test results in the reporting.\n\t\t"
-	        "NOTE: This feature requires working sp-rich-core package to be\t\t\n"
-	        "installed in the Device Under Test\n.");
-                 
 #ifdef ENABLE_LIBSSH2
 	printf ("\nLibssh2 Execution:\n");
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
@@ -679,7 +678,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"disable-measurement-verdict", no_argument, 
 			 &opts.no_measurement_verdicts, 1},
 			{"measure-power", no_argument, &power_flag, 1},
-			{"dump-cores", no_argument, &opts.dump_cores, 1},
+			{"save-rich-cores", no_argument, &opts.save_rcores, 1},
 			{0, 0, 0, 0}
 		};
 
@@ -852,7 +851,9 @@ int main (int argc, char *argv[], char *envp[])
 			opts.packageurl = strdup (optarg);
 			break;
 		case 'd':
-			opts.dump_cores = 1;
+			opts.save_rcores = 1;
+
+
 			break;
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
