@@ -94,7 +94,6 @@ LOCAL int casecount = 0;
 /* LOCAL CONSTANTS AND MACROS */
 #define CORE_PATTERN_COMMAND "sysctl -q -w kernel.core_pattern=\'|/usr/sbin/rich-core-dumper "\
 	"--pid=%p --signal=%s --name=%e --tc-uuid=<UUID>\'"
-#define DEVICE_CORE_DUMPS_LOCATOR "/home/meego/core-dumps/*%s*"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -147,7 +146,7 @@ LOCAL int fetch_rich_core_dumps (const char *);
 /* ------------------------------------------------------------------------- */
 /** Fetch rich-core dumps from the device
  * @param uuid String identifier
- * @return always 1
+ * @return 1, if found; otherwise 0
  */
 LOCAL int fetch_rich_core_dumps (const char *uuid)
 {
@@ -156,15 +155,16 @@ LOCAL int fetch_rich_core_dumps (const char *uuid)
 	char *get_pattern;
         size_t pattern_len;
 	td_file *file;
+	int ret = 0;
 
         memset (&edata, 0x0, sizeof (exec_data));
         init_exec_data(&edata);
         edata.soft_timeout = COMMON_SOFT_TIMEOUT;
         edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
-        pattern_len = strlen (DEVICE_CORE_DUMPS_LOCATOR) + strlen (uuid);
+        pattern_len = strlen (opts.rich_core_dumps) + strlen (uuid);
         get_pattern = (char *) malloc (pattern_len);
-	sprintf (get_pattern, DEVICE_CORE_DUMPS_LOCATOR, uuid);
+	sprintf (get_pattern, opts.rich_core_dumps, uuid);
 
         command = (char *) malloc (pattern_len + 4);
         sprintf (command, "ls %s", get_pattern);
@@ -175,7 +175,8 @@ LOCAL int fetch_rich_core_dumps (const char *uuid)
         free (command);
 
         if (edata.result != 0) {
-                LOG_MSG (LOG_DEBUG, "%s: Rich core dumps not found with UUID: %s \n", uuid);
+                LOG_MSG (LOG_DEBUG, "%s: Rich core dumps not found with UUID: %s \n", 
+			PROGNAME, uuid);
 		goto out;
         }
 
@@ -187,7 +188,7 @@ LOCAL int fetch_rich_core_dumps (const char *uuid)
                 file->series = 0;
 
 	process_get (file, 0);
-
+	ret = 1;
 out:
         if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
         if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
@@ -196,7 +197,7 @@ out:
 	if (get_pattern) free (get_pattern);
 	if (file) free (file);
 
-        return 1;
+        return ret;
 }
 
 /** Set device core pattern
@@ -493,7 +494,7 @@ LOCAL int process_case (const void *data, const void *user)
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
 
-	if (opts.save_rcores) {
+	if (opts.rich_core_dumps != NULL) {
 		/* Create UUID to map test case and rich-core dump. */
 		uuid_generate (uuid_gen);
 		
@@ -544,9 +545,8 @@ LOCAL int process_case (const void *data, const void *user)
 		process_current_measurement(MEASUREMENT_FILE, c);
 	}
 
-	if (opts.save_rcores && opts.target_address != NULL) {
+	if (opts.rich_core_dumps != NULL && fetch_rich_core_dumps (uuid_buf)) {
 		c->rich_core_uuid = xmlCharStrdup (uuid_buf);
-		fetch_rich_core_dumps (uuid_buf);
 	}
 	xmlListWalk (c->gets, process_get_case, c);
 	

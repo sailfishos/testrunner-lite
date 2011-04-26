@@ -87,7 +87,7 @@ LOCAL hw_info hwinfo;
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
 		"-o PasswordAuthentication=no %s %s"
 #define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
-
+#define RICH_CORE_SEARCH_PATTERN "*%s*"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -116,6 +116,8 @@ LOCAL int parse_default_scp_getter(testrunner_lite_options *opts);
 LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_chroot(char * folder);
+/* ------------------------------------------------------------------------- */
+LOCAL int create_rich_core_search_pattern(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -187,8 +189,9 @@ LOCAL void usage()
 		"Causes testrunner-lite to write the given package URL to "
 		"results.\n"
 		);
-        printf ("  -d, --save-rich-cores\n\t\t"
-                "Save rich-core dumps. Creates UUID mappings between executed\n\t\t"
+        printf ("  -d PATH, --rich-core-dumps=PATH\n\t\t"
+                "Save rich-core dumps. PATH is the location, where rich-core dumps\n\t\t"
+                "are produced in the device. Creates UUID mappings between executed\n\t\t"
                 "test cases and generated rich-core dumps. This makes possible\n\t\t"
                 "to link each rich-cores and test cases in test reporting\n\t\t"
                 "NOTE: This feature requires working sp-rich-core package to be\n\t\t"
@@ -623,6 +626,32 @@ LOCAL int test_chroot(char * folder) {
 }
 
 /* ------------------------------------------------------------------------- */
+/** Creates a pattern to locate rich-core dumps in the device.
+ * @param folder path to rich-core dumps in the device.
+ * @param opts options struct containing field(s)
+ * @return 0 on success; otherwise 1
+ */
+LOCAL int create_rich_core_search_pattern(char *folder, testrunner_lite_options *opts)
+{
+	size_t pattern_len;
+
+	if (folder && strlen (folder) > 0) {
+		pattern_len = strlen (folder) + 
+			strlen (RICH_CORE_SEARCH_PATTERN) + 2;
+		opts->rich_core_dumps = (char *) malloc (pattern_len);
+
+		strcpy (opts->rich_core_dumps, folder);
+		if (folder[strlen (folder) - 1] != '/') {
+			strcat (opts->rich_core_dumps, "/");
+		}
+		strcat (opts->rich_core_dumps, RICH_CORE_SEARCH_PATTERN);
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** main() for testrunnerlite - handle command line switches and call parser
@@ -678,7 +707,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"disable-measurement-verdict", no_argument, 
 			 &opts.no_measurement_verdicts, 1},
 			{"measure-power", no_argument, &power_flag, 1},
-			{"save-rich-cores", no_argument, &opts.save_rcores, 1},
+			{"rich-core-dumps", required_argument, NULL, 'd'},
 			{0, 0, 0, 0}
 		};
 
@@ -701,7 +730,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcdPC:f:o:e:l:r:u:U:L:t:E:G:n:k:v"
+					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:n:k:v"
 					"::", testrunnerlite_options, 
 					&option_idx);
 		if (opt_char == -1)
@@ -851,9 +880,10 @@ int main (int argc, char *argv[], char *envp[])
 			opts.packageurl = strdup (optarg);
 			break;
 		case 'd':
-			opts.save_rcores = 1;
-
-
+			if (create_rich_core_search_pattern (optarg, &opts) != 0) {
+                                retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+                                goto OUT;
+			}
 			break;
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
@@ -1077,6 +1107,7 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.priv_key) free (opts.priv_key);
 	if (opts.pub_key) free (opts.pub_key);
 #endif
+	if (opts.rich_core_dumps) free (opts.rich_core_dumps);
 	if (filter_string) free (filter_string);
 	if (bail_out == 255+SIGINT) {
 		signal (SIGINT, SIG_DFL);
