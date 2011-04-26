@@ -85,6 +85,8 @@
 #define TRLITE_CLEAN_CMD "rm /var/tmp/testrunner-lite-children.pid\
  /var/tmp/testrunner-lite.sh /var/tmp/testrunner-lite-shell.pid"
 
+#define TRLITE_CLEAN_CMD ""
+
 /* A shell script deployed to remote end that executes a test step,
    handles freezing ssh sessions by a horrible brute force hack
    and writes down background jobs */
@@ -288,8 +290,9 @@ static int lssh2_check_status(libssh2_conn *conn, exec_data *data)
 		break;
 	case SIGNALED_SIGINT:
 		LOG_MSG(LOG_DEBUG, "Sending SIGINT");
-		lssh2_kill(conn, SIGINT);
 		lssh2_stop_timer();
+		lssh2_kill(conn, SIGINT);
+		trlite_status = SOFT_TIMEOUT_KILLED;
 		lssh2_set_timer(data->hard_timeout);
 		break;
 	case SIGNALED_SIGTERM:

@@ -8,6 +8,7 @@ void handler(int signum) {
 
 int main(int argc, char* argv[]) {
 	signal(SIGTERM, handler);
+	signal(SIGINT, handler);
 
 	if (argc == 3) {
 		fprintf(stdout, "%s", argv[1]);
