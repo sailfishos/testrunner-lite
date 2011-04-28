@@ -84,9 +84,6 @@
 /* Cleans up helper shell scripts from remote end */
 #define TRLITE_CLEAN_CMD "rm /var/tmp/testrunner-lite-children.pid\
  /var/tmp/testrunner-lite.sh /var/tmp/testrunner-lite-shell.pid"
-
-#define TRLITE_CLEAN_CMD ""
-
 /* A shell script deployed to remote end that executes a test step,
    handles freezing ssh sessions by a horrible brute force hack
    and writes down background jobs */
