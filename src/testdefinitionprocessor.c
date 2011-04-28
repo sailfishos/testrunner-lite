@@ -37,6 +37,7 @@
 #include <libxml/tree.h>
 #include <signal.h>
 #include <ctype.h>
+#include <uuid/uuid.h>
 
 #include "testrunnerlite.h"
 #include "testdefinitionparser.h"
@@ -91,8 +92,8 @@ LOCAL int failcount = 0;
 LOCAL int casecount = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
-/* None */
-
+#define CORE_PATTERN_COMMAND "sysctl -q -w kernel.core_pattern=\'|/usr/sbin/rich-core-dumper "\
+	"--pid=%p --signal=%s --name=%e --tc-uuid=<UUID>\'"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -132,12 +133,112 @@ LOCAL int step_post_process (const void *, const void *);
 LOCAL int event_execute (const void *data, const void *user);
 /* ------------------------------------------------------------------------- */
 #endif
+LOCAL int set_device_core_pattern (const char *);
+/* ------------------------------------------------------------------------- */
+LOCAL int fetch_rich_core_dumps (const char *);
+/* ------------------------------------------------------------------------- */
+
 /* FORWARD DECLARATIONS */
 /* None */
 
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+/** Fetch rich-core dumps from the device
+ * @param uuid String identifier
+ * @return 1, if found; otherwise 0
+ */
+LOCAL int fetch_rich_core_dumps (const char *uuid)
+{
+        exec_data edata;
+        char *command;
+	char *get_pattern;
+        size_t pattern_len;
+	td_file *file;
+	int ret = 0;
+
+        memset (&edata, 0x0, sizeof (exec_data));
+        init_exec_data(&edata);
+        edata.soft_timeout = COMMON_SOFT_TIMEOUT;
+        edata.hard_timeout = COMMON_HARD_TIMEOUT;
+
+        pattern_len = strlen (opts.rich_core_dumps) + strlen (uuid);
+        get_pattern = (char *) malloc (pattern_len);
+	sprintf (get_pattern, opts.rich_core_dumps, uuid);
+
+        command = (char *) malloc (pattern_len + 4);
+        sprintf (command, "ls %s", get_pattern);
+
+        LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
+        execute(command, &edata);
+
+        free (command);
+
+        if (edata.result != 0) {
+                LOG_MSG (LOG_DEBUG, "%s: Rich core dumps not found with UUID: %s \n", 
+			PROGNAME, uuid);
+		goto out;
+        }
+
+
+	file = (td_file *)malloc (sizeof (td_file));
+		file->filename = (xmlChar *)get_pattern;
+                file->delete_after = 1;
+                file->measurement = 0;
+                file->series = 0;
+
+	process_get (file, 0);
+	ret = 1;
+out:
+        if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
+        if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
+        if (edata.failure_info.buffer) free (edata.failure_info.buffer);
+
+	if (get_pattern) free (get_pattern);
+	if (file) free (file);
+
+        return ret;
+}
+
+/** Set device core pattern
+ * @param uuid String identifier
+ * @return always 1 
+ */
+LOCAL int set_device_core_pattern (const char *uuid)
+{
+	exec_data edata;
+	char *command;
+	size_t command_len;
+
+	memset (&edata, 0x0, sizeof (exec_data));
+        init_exec_data(&edata);
+        edata.soft_timeout = COMMON_SOFT_TIMEOUT;
+        edata.hard_timeout = COMMON_HARD_TIMEOUT;
+
+	command_len = strlen(CORE_PATTERN_COMMAND) + strlen(uuid) + 1;
+	command = (char *) malloc (command_len);
+	strcpy (command, CORE_PATTERN_COMMAND);
+
+	command = replace_string (command, "<UUID>", uuid);
+
+        LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
+        execute(command, &edata);
+
+        if (edata.result) {
+                LOG_MSG (LOG_WARNING, "%s: %s failed: %s\n", PROGNAME, command,
+                         (char *)(edata.stderr_data.buffer ?
+                                  edata.stderr_data.buffer : 
+                                  BAD_CAST "no info available"));
+        }
+
+	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
+        if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
+        if (edata.failure_info.buffer) free (edata.failure_info.buffer);
+
+	free (command);
+
+	return 1;
+}
 #ifdef ENABLE_EVENTS
 /** Process event
  *  @param data event data
@@ -361,8 +462,10 @@ LOCAL int step_post_process (const void *data, const void *user)
 
 LOCAL int process_case (const void *data, const void *user) 
 {
-
 	td_case *c = (td_case *)data;
+	char uuid_buf[36];
+	uuid_t uuid_gen;
+	char *pos = NULL;
 
 	if (c->gen.manual && !opts.run_manual) {
 		LOG_MSG(LOG_DEBUG, "Skipping manual case %s",
@@ -390,6 +493,24 @@ LOCAL int process_case (const void *data, const void *user)
 	cur_case_name = c->gen.name;
 	LOG_MSG (LOG_INFO, "Starting test case %s", c->gen.name);
 	casecount++;
+
+	if (opts.rich_core_dumps != NULL) {
+		/* Create UUID to map test case and rich-core dump. */
+		uuid_generate (uuid_gen);
+		
+		if (uuid_is_null (uuid_gen)) {
+			LOG_MSG (LOG_WARNING, "Failed to generate UUID.");
+		}
+		else {
+			uuid_unparse (uuid_gen, uuid_buf);
+			/* UUID format is xxxx-xxxx-xxxx-xxxx. Replace dashes (-) */
+			/* with zeros (0). */
+			while ((pos = strchr(uuid_buf, '-')) != NULL) {
+				*pos = '0';
+			}
+			set_device_core_pattern (uuid_buf);
+		}
+	}
 
 	if (opts.measure_power) {
 		if (system("hat_ctrl -stream:5:s1-2:f" MEASUREMENT_FILE
@@ -424,6 +545,9 @@ LOCAL int process_case (const void *data, const void *user)
 		process_current_measurement(MEASUREMENT_FILE, c);
 	}
 
+	if (opts.rich_core_dumps != NULL && fetch_rich_core_dumps (uuid_buf)) {
+		c->rich_core_uuid = xmlCharStrdup (uuid_buf);
+	}
 	xmlListWalk (c->gets, process_get_case, c);
 	
 	LOG_MSG (LOG_INFO, "Finished test case %s Result: %s",

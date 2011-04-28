@@ -90,6 +90,7 @@ typedef struct {
 	int   no_measurement_verdicts; /**< flag for measurement verdicts */
 	char *chroot_folder;   /**< change root folder */
 	int measure_power;
+	char *rich_core_dumps;  /**< save rich-core dumps from DUT */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

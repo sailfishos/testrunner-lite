@@ -701,6 +701,12 @@ LOCAL int xml_write_case (const void *data, const void *user)
 						 c->description) < 0)
 			goto err_out;
 
+        if (c->rich_core_uuid)
+                if (xmlTextWriterWriteElement   (writer, 
+                                                 BAD_CAST "rich_core_uuid", 
+                                                 c->rich_core_uuid) < 0)
+                        goto err_out;
+
 	xmlListWalk (c->steps, xml_write_step, NULL);
 	xmlListWalk (c->measurements, xml_write_measurement, NULL);
 	xmlListWalk (c->series, xml_write_series, NULL);
