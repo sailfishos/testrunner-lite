@@ -347,10 +347,15 @@ LOCAL int step_post_process (const void *data, const void *user)
 	if (!step->pgid)
 		goto out;
 
-	if (opts.remote_executor && !bail_out) {
-		remote_kill (opts.remote_executor, step->pid, SIGKILL);
-	} 
-	kill_pgroup(step->pgid, SIGKILL);
+	/* The required PID file from remote has been cleaned already.
+	   Thus commented this useless remote_kill call */
+	/* if (opts.remote_executor && !bail_out) { */
+	/* 	remote_kill (opts.remote_executor, step->pid, SIGKILL); */
+	/* } */
+
+	if (step->pgid > 0) {
+		kill_pgroup(step->pgid, SIGKILL);
+	}
 	
  out:
 	return 1;
