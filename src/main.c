@@ -85,7 +85,7 @@ LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
-		"-o PasswordAuthentication=no %s %s"
+		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s"
 #define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
 
 /* ------------------------------------------------------------------------- */
@@ -201,6 +201,13 @@ LOCAL void usage()
 		"of the system under test. Behind the scenes, host-based\n\t\t"
 		"testing uses the external execution described below with SSH\n\t\t"
 		"and SCP.\n");
+	printf ("  -R[ACTION], --resume[=ACTION]\n\t\t"
+		"Resume testrun when ssh connection failure occurs.\n\t\t"
+		"The possible ACTIONs after resume are:\n\t\t"
+		"  exit      Exit after current test set\n\t\t"
+		"  continue  Continue normally to the next test set\n\t\t"
+		"The default action is 'exit'.\n"
+		);
 #ifdef ENABLE_LIBSSH2
 	printf ("\nLibssh2 Execution:\n");
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
@@ -672,6 +679,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"disable-measurement-verdict", no_argument, 
 			 &opts.no_measurement_verdicts, 1},
 			{"measure-power", no_argument, &power_flag, 1},
+			{"resume", optional_argument, NULL, 'R'},
 
 			{0, 0, 0, 0}
 		};
@@ -696,7 +704,7 @@ int main (int argc, char *argv[], char *envp[])
      
 		opt_char = getopt_long (argc, argv, 
 					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:E:G:n:k:v"
-					"::", testrunnerlite_options, 
+					"::R::", testrunnerlite_options,
 					&option_idx);
 		if (opt_char == -1)
 			break;
@@ -844,6 +852,26 @@ int main (int argc, char *argv[], char *envp[])
 		case 'U':
 			opts.packageurl = strdup (optarg);
 			break;
+		case 'R':
+			if (optarg) {
+				if (strncmp(optarg, "exit", 4) == 0) {
+					opts.resume_testrun =
+						RESUME_TESTRUN_ACTION_EXIT;
+					break;
+				}
+				else if (strncmp(optarg, "continue", 8) == 0) {
+					opts.resume_testrun =
+						RESUME_TESTRUN_ACTION_CONTINUE;
+					break;
+				}
+				fprintf (stderr, "invalid argument value: %s\n",
+					 optarg);
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			/* use default action if argument is not given */
+			opts.resume_testrun = RESUME_TESTRUN_ACTION_EXIT;
+			break;
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
 				 PROGNAME);
@@ -977,7 +1005,7 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	 * Set remote execution options.
 	 */
-	if (executor_init (&opts) < 0) {
+	if (executor_init (&opts) != 0) {
 		LOG_MSG(LOG_ERR, "Executor init failed... exiting");
 		goto OUT;
 	}

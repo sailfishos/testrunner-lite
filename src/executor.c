@@ -63,7 +63,7 @@ extern char *global_failure;
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES */
-/* None */
+volatile sig_atomic_t resume_testrun_count = 0;
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
@@ -533,23 +533,21 @@ static int execution_terminated(exec_data* data) {
 		if (WIFEXITED(status)) {
 			/* child exited normally */
 			data->result = WEXITSTATUS(status);
-			if (options->remote_executor) {
-				if (data->result== 255 || 
-				    (data->result > 64 && data->result < 80) ||
-				    (data->result > 128 && data->result < 144))
-				{
-					/* suspicious return value - 
-					   do connection check */
-					if (remote_check_conn (options->remote_executor)) {
-						bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
-						global_failure = "connection "
-							"fail";
-						LOG_MSG(LOG_ERR, 
-							"remote connection "
-							"failure");
-						
-					}
-				}
+			if (options->remote_executor &&
+			    (data->result == 255 ||
+			     (data->result > 64 && data->result < 80))
+			    ) {
+				bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
+				global_failure = "earlier connection failure";
+				LOG_MSG(LOG_ERR, "remote connection failure");
+				stream_data_append(&data->failure_info,
+						   "connection failure");
+			}
+			else if (options->remote_executor &&
+				 data->result > 128 &&
+				 data->result < 160) {
+				stream_data_append(&data->failure_info,
+						   "terminated by signal");
 			}
 			LOG_MSG(LOG_DEBUG,
 				"Process %d exited with status %d",
@@ -564,17 +562,6 @@ static int execution_terminated(exec_data* data) {
 			LOG_MSG(LOG_DEBUG,
 				"Process %d was terminated by signal %d",
 				pid, WTERMSIG(status));
-			/* check that remote connections work in case of 
-			 * remote execution
-			 */
-			if (options->remote_executor && 
-			    (ret = remote_check_conn (options->remote_executor))) {
-				LOG_MSG(LOG_ERR, "remote connection failure "
-					"(%d)", ret);
-				bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
-				global_failure = "connection fail";
-			}
-
 		} else {
 			data->result = -1;
 			LOG_MSG(LOG_ERR,
@@ -668,13 +655,16 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, terminating process %d", 
 				data->pid);
 
-			kill_step(data->pid, SIGTERM);
+			if (options->remote_executor && !bail_out) {
+				remote_kill (options->remote_executor, data->pid, SIGTERM);
+			}
+
+			if(!options->remote_executor) {
+				kill_step(data->pid, SIGTERM);
+			}
 
 			data->signaled = SIGTERM;
 
-			if (options->remote_executor && !bail_out) {
-				remote_kill (options->remote_executor, data->pid);
-			}
 			stream_data_append(&data->failure_info,
 					   FAILURE_INFO_TIMEOUT);
 
@@ -686,11 +676,13 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 			LOG_MSG(LOG_DEBUG, "Timeout, killing process %d", 
 				data->pid);
 
-			kill_step(data->pid, SIGKILL);
-			data->signaled = SIGKILL;
 			if (options->remote_executor && !bail_out) {
-				remote_kill (options->remote_executor, data->pid);
+				remote_kill (options->remote_executor, data->pid, SIGKILL);
 			}
+
+			kill_step(data->pid, SIGKILL);
+
+			data->signaled = SIGKILL;
 
 			killed = 1;
 		}
@@ -704,10 +696,9 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 	reset_timer();
 
-	if (options->remote_executor && !terminated && !killed && !bail_out) {
+	if (options->remote_executor && !bail_out) {
 		/* remote_kill does cleaning if timeout occured */
-		/* remote_clean(options->target_address, data->pid); */
-		;
+		remote_clean(options->remote_executor, data->pid);
 	}
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		close(stdout_fd);
@@ -1005,6 +996,7 @@ void kill_step(pid_t pid, int sig)
  */
 int executor_init(testrunner_lite_options *opts)
 {
+	LOG_MSG(LOG_INFO, "Initializing executor");
 	options = opts;
 #ifdef ENABLE_LIBSSH2
 	if (options->libssh2)
@@ -1052,16 +1044,85 @@ void executor_close()
 		remote_executor_close();
 	}
 }
+/** 
+ * Restore bail_out value to TESTRUNNER_LITE_REMOTE_FAIL if
+ * resume_testrun_count has been incremented and bail_out equals zero.
+ */
+void restore_bail_out_after_resume_execution()
+{
+	sigset_t mask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGTERM);
+	sigprocmask(SIG_BLOCK, &mask, NULL);
+
+	if (resume_testrun_count && bail_out == 0) {
+		bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
+	}
+
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+}
+/** 
+ * Wait for resume testrun signal. Resets bail_out to zero if resume signal
+ * is received. bail_out is reset only once.
+ * 
+ */
+void wait_for_resume_execution()
+{
+	sigset_t mask;
+	sigset_t waitmask;
+
+	/* block certain signals for this section */
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGTERM);
+	sigaddset(&mask, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &mask, &waitmask);
+
+	if (bail_out == TESTRUNNER_LITE_REMOTE_FAIL && !resume_testrun_count) {
+		/* block certain signals during sigsuspend */
+		sigaddset(&waitmask, SIGCHLD);
+		/* set handler */
+		signal(SIGUSR1, handle_resume_testrun);
+
+		/* signal parent we are suspending */
+		if (kill(getppid(), SIGUSR1) < 0) {
+			LOG_MSG (LOG_ERR, "Error sending signal to parent: %s",
+				 strerror(errno));
+		}
+
+		LOG_MSG(LOG_INFO, "Connection failure detected: "
+			"waiting for signal SIGUSR1 to continue");
+
+		/* wait for a signal  */
+		sigsuspend(&waitmask);
+
+		/* restore default handler */
+		signal(SIGUSR1, SIG_DFL);
+
+		/* recheck bail_out value and then resume flag */
+		if (bail_out == TESTRUNNER_LITE_REMOTE_FAIL &&
+		    resume_testrun_count) {
+			LOG_MSG(LOG_INFO, "Continuing after connection "
+				"failure");
+			bail_out = 0;
+		}
+	}
+
+	/* restore original mask */
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+}
 /*
 ** handler for SIGINT
 */
 void handle_sigint (int signum)
 {
-	global_failure = "Interrupted by signal (2)";
+	global_failure = "Testrunner-lite interrupted by signal (2)";
 	bail_out = 255+SIGINT;
 	if (current_data) {
 		if (options->remote_executor)
-			remote_kill (options->remote_executor, current_data->pid);
+			remote_kill (options->remote_executor, current_data->pid, SIGTERM);
 		else
 			kill_step(current_data->pid, SIGKILL);
 	}
@@ -1072,16 +1133,22 @@ void handle_sigint (int signum)
 */
 void handle_sigterm (int signum)
 {
-	global_failure = "Interrupted by signal (15)";
+	global_failure = "Testrunner-lite interrupted by signal (15)";
 	bail_out = 255+SIGTERM;
 	if (current_data) {
 		if (options->remote_executor)
-			remote_kill (options->remote_executor, current_data->pid);
+			remote_kill (options->remote_executor, current_data->pid, SIGTERM);
 		else
 			kill_step(current_data->pid, SIGKILL);
 	}
 }
 
+void handle_resume_testrun(int signum)
+{
+	if (signum == SIGUSR1) {
+		resume_testrun_count++;
+	}
+}
 
 /* ================= OTHER EXPORTED FUNCTIONS ============================== */
 /* None */

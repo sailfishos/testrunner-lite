@@ -176,14 +176,17 @@ LOCAL int step_execute (const void *data, const void *user)
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	if (bail_out) {
-		res = CASE_FAIL;
-		step->has_result = 1; 
+		step->has_result = 1;
 		step->return_code = bail_out;
 		if (global_failure) {
 			step->failure_info = xmlCharStrdup (global_failure);
-			c->failure_info = xmlCharStrdup (global_failure);
+			if (!c->failure_info) {
+				c->failure_info = xmlCharStrdup(global_failure);
+			}
 		}
-		goto out;
+		c->case_res = CASE_FAIL;
+
+		return 1;
 	}
 
 #ifdef ENABLE_EVENTS
@@ -344,8 +347,8 @@ LOCAL int step_post_process (const void *data, const void *user)
 	if (!step->pgid)
 		goto out;
 
-	if (opts.remote_executor) {
-		remote_kill (opts.remote_executor, step->pid);
+	if (opts.remote_executor && !bail_out) {
+		remote_kill (opts.remote_executor, step->pid, SIGKILL);
 	} 
 	kill_pgroup(step->pgid, SIGKILL);
 	
@@ -472,6 +475,9 @@ LOCAL int process_get (const void *data, const void *user)
 #ifdef ENABLE_LIBSSH2
 	char *remote = opts.target_address;
 #endif
+	if (bail_out) {
+		return 1;
+	}
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data(&edata);
@@ -578,6 +584,9 @@ LOCAL int process_get_case (const void *data, const void *user)
 	ret = process_get (data, NULL);
 	if (!ret)
 		LOG_MSG (LOG_WARNING, "get file processing failed");
+
+	if (bail_out)
+		return 1;
 
 	/* return if file not specified to contain measurement data */
 	if (!file->measurement)
@@ -765,6 +774,11 @@ LOCAL void process_set (td_set *s)
 	}
 	
 	xmlListWalk (s->cases, process_case, s);
+
+	if (opts.resume_testrun != RESUME_TESTRUN_ACTION_NONE) {
+		wait_for_resume_execution();
+	}
+
 	if (xmlListSize (s->post_steps) > 0) {
 		LOG_MSG (LOG_INFO, "Executing post steps");
 		cur_case_name = (xmlChar *)"post_steps";
@@ -778,6 +792,10 @@ LOCAL void process_set (td_set *s)
 				 "Post steps failed for %s.", s->gen.name);
 	}
 	xmlListWalk (s->gets, process_get, NULL);
+
+	if (opts.resume_testrun == RESUME_TESTRUN_ACTION_EXIT) {
+		restore_bail_out_after_resume_execution();
+	}
 
  short_circuit:
 	write_post_set (s);

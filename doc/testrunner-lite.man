@@ -94,6 +94,9 @@ of the testrunner itself, only the tests will have the new root folder set.
 \fB\-t\fR [\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]\fR, \fB\-\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]
 Enable host-based testing. If given, commands are executed from test control PC (host) side. ADDRESS is the ipv4 address of the system under test. Behind the scenes, host-based testing uses the external execution described below with SSH and SCP.
 .TP
+\fB\-R\fR[\fIACTION\fR], \fB--resume\fR=[\fIACTION\fR]
+Resume testrun when ssh connection failure occurs. Parent process is signaled with \fISIGUSR1\fR and then testrunner-lite suspends until it receives \fISIGUSR1\fR for notification of repaired network connection. After resume, the remaining cases are skipped and post steps and get operations are executed in the current test set. Finally, depending on given \fBACTION\fR, testrunner-lite either exits (\fBexit\fR) or continues to the next test set (\fBcontinue\fR). The default action is \fBexit\fR.
+.TP
 \fILibssh2 Execution:\fR
 .TP
 \fB\-n\fR [\FIUSER@\fR]\fIADDRESS\fR, \fB\-\-libssh2\fR=[\fIUSER@\fR]\fIADDRESS\fR

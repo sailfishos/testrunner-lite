@@ -498,7 +498,7 @@ START_TEST (test_executor_remote_killing_process)
 	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	/* 128 + SIGKILL or 255 depends on ssh */
-	fail_unless (edata.result == 143 ||
+	fail_unless (edata.result == 137 ||
 		     edata.result == 255, "result %d", edata.result); 
 	fail_if (edata.stdout_data.buffer == NULL);
 	fail_if (edata.stderr_data.buffer == NULL);

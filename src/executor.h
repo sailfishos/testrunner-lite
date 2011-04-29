@@ -45,7 +45,7 @@
  */
 #define SHELLCMD_ARGS      "-c"
 #define SHELLCMD_ARGS_STR  "-c"
-#define FAILURE_INFO_TIMEOUT "timeout"
+#define FAILURE_INFO_TIMEOUT "timeout "
 #define POLL_TIMEOUT_MS   100
 #define POLL_TIMEOUT_US   (1000*POLL_TIMEOUT_MS)
 #define COMMON_SOFT_TIMEOUT    90
@@ -116,9 +116,15 @@ void kill_step(pid_t pid, int sig);
 /* ------------------------------------------------------------------------- */
 void executor_close ();
 /* ------------------------------------------------------------------------- */
+void restore_bail_out_after_resume_execution();
+/* ------------------------------------------------------------------------- */
+void wait_for_resume_execution();
+/* ------------------------------------------------------------------------- */
 void handle_sigint (int signum);
 /* ------------------------------------------------------------------------- */
 void handle_sigterm (int signum);
+/* ------------------------------------------------------------------------- */
+void handle_resume_testrun(int signum);
 /* ------------------------------------------------------------------------- */
 #endif                          /* EXECUTOR_H */
 /* End of file */
