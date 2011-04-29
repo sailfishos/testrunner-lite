@@ -3,8 +3,11 @@ testrunner-lite (1.6.1) unstable; urgency=low
   * Fixes to process handling (possibility of busyloop removed) (by slahtinen)
   * Configure option to disable documentation generation (by slahtinen)
   * Existence of .profile file not expected with -t on target (by slahtinen)
+  * Handling for SIGINT and SIGTERM in libssh2 executor (BMC#15129)
+  * Issues with libssh2 executor and broken network connection (BMC#15197)
+  * New option (-d) for fetching rich cores over ssh (by rikhalon)
 
- -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Mon, 04 Apr 2011 12:23:02 +0300
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Fri, 29 Apr 2011 08:34:40 +0300
 
 testrunner-lite (1.6.0) unstable; urgency=low
 

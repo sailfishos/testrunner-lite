@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.6.0
+Version: 1.6.1
 # build.meego.com proposed patch > Release:7.1
 Release:7.1
 Summary: Generic test executor tool
