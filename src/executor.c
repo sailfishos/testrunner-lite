@@ -690,14 +690,13 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 
 	/* ensure that test process' children which have not terminated by
 	   SIGTERM are terminated now. */
-	if (data->pgid > 0) {
+	if (data->signaled && data->pgid > 0) {
 		kill_pgroup(data->pgid, SIGKILL);
 	}
 
 	reset_timer();
 
 	if (options->remote_executor && !bail_out) {
-		/* remote_kill does cleaning if timeout occured */
 		remote_clean(options->remote_executor, data->pid);
 	}
 	if (data->redirect_output == REDIRECT_OUTPUT) {
