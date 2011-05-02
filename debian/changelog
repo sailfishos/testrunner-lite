@@ -1,10 +1,8 @@
-testrunner-lite (1.6.1) unstable; urgency=low
+testrunner-lite (1.6.0-1) unstable; urgency=low
 
-  * Fixes to process handling (possibility of busyloop removed) (by slahtinen)
-  * Configure option to disable documentation generation (by slahtinen)
-  * Existence of .profile file not expected with -t on target (by slahtinen)
+  * Fixes: NB#201381 - Resume testrun after connection failure
 
- -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Mon, 04 Apr 2011 12:23:02 +0300
+ -- Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>  Mon, 02 May 2011 09:43:31 +0300
 
 testrunner-lite (1.6.0) unstable; urgency=low
 
