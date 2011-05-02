@@ -117,6 +117,8 @@ LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_chroot(char * folder);
 /* ------------------------------------------------------------------------- */
+LOCAL int parse_target_address_hwinfo(char* address, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -208,6 +210,10 @@ LOCAL void usage()
 		"  continue  Continue normally to the next test set\n\t\t"
 		"The default action is 'exit'.\n"
 		);
+	printf ("  -i [USER@]ADDRESS[:PORT], --hwinfo-target=[USER@]ADDRESS[:PORT]\n\t\t"
+		"Obtain hwinfo remotely. Hwinfo is usually obtained locally or in case\n\t\t"
+		"of host-based testing from target address. This option overrides\n\t\t"
+		"target address when hwinfo is obtained.\n");
 #ifdef ENABLE_LIBSSH2
 	printf ("\nLibssh2 Execution:\n");
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
@@ -624,6 +630,35 @@ LOCAL int test_chroot(char * folder) {
 }
 
 /* ------------------------------------------------------------------------- */
+/** Parse target address where to ask hwinfo
+ * @param address SUT address.
+ * @param opts Options struct containing field(s) to store url
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_target_address_hwinfo(char *address, testrunner_lite_options *opts) {
+	char *p;
+
+	if (address) {
+		opts->hwinfo_target = strdup(address);
+		p = strchr (opts->hwinfo_target, ':');
+		if (p) {
+			*p = '\0';
+			p++;
+			opts->hwinfo_port = atoi (p);
+			if (opts->hwinfo_port < 0 ||
+			    opts->hwinfo_port > USHRT_MAX) {
+				fprintf (stderr, "Invalid port %d\n",
+					 opts->hwinfo_port);
+				return 1;
+			}
+		}
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** main() for testrunnerlite - handle command line switches and call parser
@@ -637,6 +672,12 @@ int main (int argc, char *argv[], char *envp[])
 	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0, V_flag = 0;
 	int power_flag = 0;
 	int opt_char, option_idx;
+	char *address = NULL;
+	char *executor = NULL;
+#ifdef ENABLE_LIBSSH2
+	int libssh2 = 0;
+#endif
+	in_port_t port = 0;
 	opts.remote_executor = NULL;
 	opts.remote_getter = NULL;
 #ifdef ENABLE_LIBSSH2
@@ -680,6 +721,7 @@ int main (int argc, char *argv[], char *envp[])
 			 &opts.no_measurement_verdicts, 1},
 			{"measure-power", no_argument, &power_flag, 1},
 			{"resume", optional_argument, NULL, 'R'},
+			{"hwinfo-target", required_argument, NULL, 'i'},
 
 			{0, 0, 0, 0}
 		};
@@ -704,7 +746,7 @@ int main (int argc, char *argv[], char *envp[])
      
 		opt_char = getopt_long (argc, argv, 
 					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:E:G:n:k:v"
-					"::R::", testrunnerlite_options,
+					"::R::i:", testrunnerlite_options,
 					&option_idx);
 		if (opt_char == -1)
 			break;
@@ -871,6 +913,12 @@ int main (int argc, char *argv[], char *envp[])
 			}
 			/* use default action if argument is not given */
 			opts.resume_testrun = RESUME_TESTRUN_ACTION_EXIT;
+			break;
+		case 'i':
+			if (parse_target_address_hwinfo(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
 			break;
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
@@ -1049,8 +1097,48 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	** Obtain hardware info
 	*/
-	if (!opts.skip_hwinfo)
+	if (!opts.skip_hwinfo) {
+		/* Save old values */
+		address = opts.target_address;
+		port = opts.target_port;
+		executor = opts.remote_executor;
+
+		/* If hwinfo target is given change target address and port */
+		if(opts.hwinfo_target) {
+			opts.target_address = opts.hwinfo_target;
+			opts.target_port = opts.hwinfo_port;
+
+			if(parse_default_ssh_executor(&opts) != 0) {
+				fprintf (stderr,
+				"%s: Failed to parse hwinfo target\n",
+				PROGNAME);
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+
+#ifdef ENABLE_LIBSSH2
+			libssh2 = opts.libssh2;
+			opts.libssh2 = 0;
+#endif
+			/* If remote_executor was null initialize executor so we can
+			* obtain hwinfo from remote device */
+			if (executor_init (&opts) != 0) {
+				LOG_MSG(LOG_ERR, "Executor init failed... exiting");
+				goto OUT;
+			}
+		}
+
+		LOG_MSG (LOG_DEBUG, "Remote executor %s", opts.remote_executor);
 		read_hwinfo (&hwinfo);
+
+		/* Return original values */
+		opts.target_address = address;
+		opts.target_port = port;
+		opts.remote_executor = executor;
+#ifdef ENABLE_LIBSSH2
+		opts.libssh2 = libssh2;
+#endif
+	}
 	
 	/*
 	** Initialize result logger
