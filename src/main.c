@@ -87,7 +87,7 @@ LOCAL hw_info hwinfo;
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
 		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s"
 #define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
-
+#define RICH_CORE_SEARCH_PATTERN "*%s*"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -120,6 +120,8 @@ LOCAL int test_chroot(char * folder);
 LOCAL int parse_logid(char *logid, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int parse_target_address_hwinfo(char* address, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int create_rich_core_search_pattern(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -193,6 +195,13 @@ LOCAL void usage()
 		);
 	printf ("  --logid=ID\n\t\t"
 		"User defined identifier for HTTP log messages.\n");
+        printf ("  -d PATH, --rich-core-dumps=PATH\n\t\t"
+                "Save rich-core dumps. PATH is the location, where rich-core dumps\n\t\t"
+                "are produced in the device. Creates UUID mappings between executed\n\t\t"
+                "test cases and generated rich-core dumps. This makes possible\n\t\t"
+                "to link each rich-cores and test cases in test reporting\n\t\t"
+                "NOTE: This feature requires working sp-rich-core package to be\n\t\t"
+                "installed in the Device Under Test.\n");
 	printf ("\nTest commands are executed locally by default.  Alternatively, one\n"
 		"of the following executors can be used:\n");
 	printf ("\nChroot Execution:\n");
@@ -686,6 +695,31 @@ LOCAL int parse_target_address_hwinfo(char *address, testrunner_lite_options *op
 	}
 }
 
+/** Creates a pattern to locate rich-core dumps in the device.
+ * @param folder path to rich-core dumps in the device.
+ * @param opts options struct containing field(s)
+ * @return 0 on success; otherwise 1
+ */
+LOCAL int create_rich_core_search_pattern(char *folder, testrunner_lite_options *opts)
+{
+	size_t pattern_len;
+
+	if (folder && strlen (folder) > 0) {
+		pattern_len = strlen (folder) + 
+			strlen (RICH_CORE_SEARCH_PATTERN) + 2;
+		opts->rich_core_dumps = (char *) malloc (pattern_len);
+
+		strcpy (opts->rich_core_dumps, folder);
+		if (folder[strlen (folder) - 1] != '/') {
+			strcat (opts->rich_core_dumps, "/");
+		}
+		strcat (opts->rich_core_dumps, RICH_CORE_SEARCH_PATTERN);
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -752,6 +786,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"logid", required_argument, NULL,
 			 TRLITE_LONG_OPTION_LOGID},
 			{"hwinfo-target", required_argument, NULL, 'i'},
+			{"rich-core-dumps", required_argument, NULL, 'd'},
 
 			{0, 0, 0, 0}
 		};
@@ -775,7 +810,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:E:G:v::"
+					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:v::"
 #ifdef ENABLE_LIBSSH2
 					"n:k:"
 #endif
@@ -951,6 +986,12 @@ int main (int argc, char *argv[], char *envp[])
 			if (parse_target_address_hwinfo(optarg, &opts) != 0) {
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
+			}
+			break;
+		case 'd':
+			if (create_rich_core_search_pattern (optarg, &opts) != 0) {
+                                retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+                                goto OUT;
 			}
 			break;
 		case TRLITE_LONG_OPTION_LOGID:
@@ -1224,6 +1265,7 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.priv_key) free (opts.priv_key);
 	if (opts.pub_key) free (opts.pub_key);
 #endif
+	if (opts.rich_core_dumps) free (opts.rich_core_dumps);
 	if (filter_string) free (filter_string);
 	if (bail_out == 255+SIGINT) {
 		signal (SIGINT, SIG_DFL);

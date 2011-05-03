@@ -1119,11 +1119,21 @@ void handle_sigint (int signum)
 {
 	global_failure = "Testrunner-lite interrupted by signal (2)";
 	bail_out = 255+SIGINT;
+
+#ifdef ENABLE_LIBSSH2
+	if (options->libssh2) {
+		lssh2_signal(signum);
+		return;
+	}
+#endif
+
 	if (current_data) {
-		if (options->remote_executor)
+		if (options->remote_executor) {
 			remote_kill (options->remote_executor, current_data->pid, SIGTERM);
-		else
+		}
+		else {
 			kill_step(current_data->pid, SIGKILL);
+		}
 	}
 
 }
@@ -1134,11 +1144,21 @@ void handle_sigterm (int signum)
 {
 	global_failure = "Testrunner-lite interrupted by signal (15)";
 	bail_out = 255+SIGTERM;
+
+#ifdef ENABLE_LIBSSH2
+	if (options->libssh2) {
+		lssh2_signal(signum);
+		return;
+	}
+#endif
+
 	if (current_data) {
-		if (options->remote_executor)
+		if (options->remote_executor) {
 			remote_kill (options->remote_executor, current_data->pid, SIGTERM);
-		else
+		}
+		else {
 			kill_step(current_data->pid, SIGKILL);
+		}
 	}
 }
 

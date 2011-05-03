@@ -739,11 +739,10 @@ START_TEST (test_executor_remote_libssh2_terminating_process)
 		     (char*)edata.stderr_data.buffer);
 
 	fail_if (edata.signaled != SIGTERM);
+	executor_close();
 
 	/* check that killing was succesfull */
-	fail_if (execute("PATH=$PATH:/sbin/ pidof terminating", &edata));
-	executor_close();
-	//fail_unless (edata.result == 1);
+	fail_unless (system("pidof terminating"));
 END_TEST
 
 
@@ -787,12 +786,7 @@ START_TEST (test_executor_remote_libssh2_killing_process)
 	fail_if (edata.signaled != SIGKILL);
 	executor_close();
 	/* Check that process doesn't exist anymore */
-	executor_init (&opts);
-	init_exec_data(&edata);
-	fail_if (execute("PATH=$PATH:/sbin/ pidof unterminating", &edata));
-	printf("edata.result %d\n", edata.result);
-	fail_unless (edata.result == 1);
-	executor_close();
+	fail_unless (system("pidof unterminating"));
 END_TEST
 
 /* ------------------------------------------------------------------------- */

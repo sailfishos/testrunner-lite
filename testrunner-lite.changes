@@ -1,3 +1,10 @@
+* Fri Apr 29 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.6.1
+- Fixes to process handling (possibility of busyloop removed) (by slahtinen)
+- Configure option to disable documentation generation (by slahtinen)
+- Existence of .profile file not expected with -t on target (by slahtinen)
+- Handling for SIGINT and SIGTERM in libssh2 executor (BMC#15129)
+- Issues with libssh2 executor and broken network connection (BMC#15197)
+- New option (-d) for fetching rich cores over ssh (by rikhalon)
 * Thu Mar 24 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.6.0
 - Support for measurement timestamps and series (BMC#13915)
 - Support for generic executor (-E and -G) by Nick Wilson

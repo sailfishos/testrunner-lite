@@ -21,7 +21,7 @@ testrunner_lite_SOURCES = main.c \
 			  utils.c \
 			  log.c
 
-testrunner_lite_LDADD = $(XML2_LIBS) -lcurl -ldl
+testrunner_lite_LDADD = $(XML2_LIBS) -lcurl -ldl -luuid
 
 AM_CFLAGS = $(XML2_CFLAGS)-D_GNU_SOURCE -Wall
 

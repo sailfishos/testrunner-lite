@@ -79,20 +79,21 @@ typedef struct libssh2_conn {
 	fd_set *readfd;
 	LIBSSH2_SESSION *ssh2_session;
 	connection_status status;
+	int signaled;
 } libssh2_conn;
 /* ------------------------------------------------------------------------- */
 /* FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
 libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
                                   in_port_t port, const char *priv_key, 
-				  const char *pub_key);
+                                  const char *pub_key);
 /* ------------------------------------------------------------------------- */
 int lssh2_execute(libssh2_conn *conn, const char *command, 
 		  exec_data *data);
 /* ------------------------------------------------------------------------- */
 int lssh2_executor_close(libssh2_conn *conn);
 /* ------------------------------------------------------------------------- */
-int lssh2_kill (libssh2_conn *conn, int signal);
+int lssh2_signal (int signal);
 /* ------------------------------------------------------------------------- */
 
 #endif                          /* REMOTE_EXECUTOR_LIBSSH2_H */

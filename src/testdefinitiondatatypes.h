@@ -174,6 +174,7 @@ typedef struct {
 	xmlChar   *comment;     /**< Manual test case comment */
 	case_result_t  case_res; /**< Case result */
 	xmlChar   *failure_info;   /**< optional failure info */
+	xmlChar   *rich_core_uuid; /**< Optional UUID for rich core dumps */
 	int        dummy;       /**< Case is dummy - used with pre post steps */
 	int        filtered;    /**< Case is filtered */
 } td_case;

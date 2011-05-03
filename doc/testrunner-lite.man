@@ -83,6 +83,10 @@ Causes testrunner-lite to write the given packge URL to results.
 .TP
 \fB\-\-logid\fR=\fIID\fR
 Define an identifier ID for log messages when remote HTTP logger is used (--logger). ID is placed in the field \fIuserDefinedId\fR of the message. Only alphanumeric characters are accepted.
+\fB\-d \fIPATH\fR, \fB\-\-rich\-core\-dumps\fR=\fIPATH\fR
+Save rich-core dumps. PATH is the location, where rich-core dumps are produced in the device. Creates UUID mappings between executed test cases and generated rich-core dumps. This makes possible to link each rich-cores and test cases in test reporting.
+
+NOTE: This feature requires working sp-rich-core package to be installed in the Device Under Test.
 .TP
 Test commands are executed locally by default.  Alternatively, one of the following executors can be used:
 .TP

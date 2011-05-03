@@ -2,12 +2,12 @@ Source: testrunner-lite
 Section: misc
 Priority: optional
 Maintainer: Sampo Saaristo <ext-sampo.2.saaristo@nokia.com>
-Build-Depends: debhelper (>= 5), libtool, autoconf, automake, libxml2-dev, doxygen, check, libcurl3-dev, libtool
+Build-Depends: debhelper (>= 5), libtool, autoconf, automake, libxml2-dev, doxygen, check, libcurl3-dev, libtool, uuid-dev
 Standards-Version: 3.8.0
 
 Package: testrunner-lite
 Architecture: any
-Depends: libxml2, test-definition, libcurl3, openssh | ssh, testrunner-lite-hwinfo
+Depends: libxml2, test-definition, libcurl3, openssh | ssh, testrunner-lite-hwinfo, libuuid1
 Provides: testrunner
 Conflicts: testrunner
 Replaces: testrunner

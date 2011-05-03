@@ -104,6 +104,7 @@ typedef struct {
 	char *logid;		/**< User defined ID in HTTP log messages */
 	char *hwinfo_target;	/**< Address where to ask hwinfo */
 	in_port_t hwinfo_port; /**< Optional port for hwinfo address */
+	char *rich_core_dumps;  /**< save rich-core dumps from DUT */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
