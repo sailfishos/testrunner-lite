@@ -102,6 +102,8 @@ typedef struct {
 	int measure_power;
 	resume_testrun_action resume_testrun;
 	char *logid;		/**< User defined ID in HTTP log messages */
+	char *hwinfo_target;	/**< Address where to ask hwinfo */
+	in_port_t hwinfo_port; /**< Optional port for hwinfo address */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

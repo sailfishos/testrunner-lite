@@ -1039,7 +1039,7 @@ void executor_close()
 		return;
 	}
 #endif
-	if (options->remote_executor && !bail_out) {
+	if ((options->remote_executor || options->hwinfo_target) && !bail_out) {
 		remote_executor_close();
 	}
 }
