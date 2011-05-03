@@ -117,6 +117,8 @@ LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_chroot(char * folder);
 /* ------------------------------------------------------------------------- */
+LOCAL int parse_logid(char *logid, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -187,6 +189,8 @@ LOCAL void usage()
 		"Causes testrunner-lite to write the given package URL to "
 		"results.\n"
 		);
+	printf ("  --logid=ID\n\t\t"
+		"User defined identifier for HTTP log messages.\n");
 	printf ("\nTest commands are executed locally by default.  Alternatively, one\n"
 		"of the following executors can be used:\n");
 	printf ("\nChroot Execution:\n");
@@ -624,6 +628,30 @@ LOCAL int test_chroot(char * folder) {
 }
 
 /* ------------------------------------------------------------------------- */
+/** Parse logid option argument string. Only letters and digits are accepted.
+ * @param logid Option argument string
+ * @param opts Options struct
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_logid(char *logid, testrunner_lite_options *opts)
+{
+	char *p;
+
+	for (p = logid; *p != '\0'; p++) {
+		if (!isalnum(*p)) {
+			fprintf(stderr,
+				"%s: invalid char '%c' in logid argument\n",
+				PROGNAME,
+				*p);
+			return 1;
+		}
+	}
+
+	opts->logid = strdup(logid);
+	return 0;
+}
+
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** main() for testrunnerlite - handle command line switches and call parser
@@ -680,6 +708,8 @@ int main (int argc, char *argv[], char *envp[])
 			 &opts.no_measurement_verdicts, 1},
 			{"measure-power", no_argument, &power_flag, 1},
 			{"resume", optional_argument, NULL, 'R'},
+			{"logid", required_argument, NULL,
+			 TRLITE_LONG_OPTION_LOGID},
 
 			{0, 0, 0, 0}
 		};
@@ -872,6 +902,12 @@ int main (int argc, char *argv[], char *envp[])
 			/* use default action if argument is not given */
 			opts.resume_testrun = RESUME_TESTRUN_ACTION_EXIT;
 			break;
+		case TRLITE_LONG_OPTION_LOGID:
+			if (parse_logid(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
 		case ':':
 			fprintf (stderr, "%s missing argument - exiting\n",
 				 PROGNAME);
@@ -883,6 +919,8 @@ int main (int argc, char *argv[], char *envp[])
 				 PROGNAME);
 			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 			goto OUT;
+			break;
+		default:
 			break;
 		}
 	}
@@ -1089,6 +1127,7 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.remote_getter) free (opts.remote_getter);
 	if (opts.packageurl) free (opts.packageurl);
 	if (opts.vcsurl) free (opts.vcsurl);
+	if (opts.logid) free (opts.logid);
 #ifdef ENABLE_LIBSSH2
 	if (opts.username) free (opts.username);
 	if (opts.priv_key) free (opts.priv_key);

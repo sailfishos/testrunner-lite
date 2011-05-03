@@ -64,6 +64,10 @@ typedef enum {
 	RESUME_TESTRUN_ACTION_CONTINUE
 } resume_testrun_action;
 
+enum {
+	TRLITE_LONG_OPTION_LOGID = 256
+};
+
 /** Used for storing and passing user (command line) options.*/
 typedef struct {
 	char *input_filename;  /**< the input xml file */
@@ -97,6 +101,7 @@ typedef struct {
 	char *chroot_folder;   /**< change root folder */
 	int measure_power;
 	resume_testrun_action resume_testrun;
+	char *logid;		/**< User defined ID in HTTP log messages */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

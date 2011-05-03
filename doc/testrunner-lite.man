@@ -81,6 +81,9 @@ Causes testrunner-lite to write the given VCS URL to results.
 \fB\-U \fIURL\fR,  \fB\-\-package\-url\fR\=\fIURL\fR
 Causes testrunner-lite to write the given packge URL to results.
 .TP
+\fB\-\-logid\fR=\fIID\fR
+Define an identifier ID for log messages when remote HTTP logger is used (--logger). ID is placed in the field \fIuserDefinedId\fR of the message. Only alphanumeric characters are accepted.
+.TP
 Test commands are executed locally by default.  Alternatively, one of the following executors can be used:
 .TP
 \fIChroot Execution:\fI
