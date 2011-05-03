@@ -211,9 +211,10 @@ LOCAL void usage()
 		"The default action is 'exit'.\n"
 		);
 	printf ("  -i [USER@]ADDRESS[:PORT], --hwinfo-target=[USER@]ADDRESS[:PORT]\n\t\t"
-		"Obtain hwinfo remotely. Hwinfo is usually obtained locally or in case\n\t\t"
-		"of host-based testing from target address. This option overrides\n\t\t"
-		"target address when hwinfo is obtained.\n");
+		"Obtain hwinfo remotely. Hwinfo is usually obtained locally or in\n\t\t"
+		"case of host-based testing from target address. This option\n\t\t"
+		"overrides target address when hwinfo is obtained.\n\t\t"
+		"Usage is similar to -t option.\n");
 #ifdef ENABLE_LIBSSH2
 	printf ("\nLibssh2 Execution:\n");
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
@@ -745,8 +746,11 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:E:G:n:k:v"
-					"::R::i:", testrunnerlite_options,
+					":hVaAHSMsmcPC:f:o:e:l:r:u:U:L:t:E:G:v::"
+#ifdef ENABLE_LIBSSH2
+					"n:k:"
+#endif
+					"R::i:", testrunnerlite_options,
 					&option_idx);
 		if (opt_char == -1)
 			break;

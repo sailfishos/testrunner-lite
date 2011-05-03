@@ -97,6 +97,9 @@ Enable host-based testing. If given, commands are executed from test control PC 
 \fB\-R\fR[\fIACTION\fR], \fB--resume\fR=[\fIACTION\fR]
 Resume testrun when ssh connection failure occurs. Parent process is signaled with \fISIGUSR1\fR and then testrunner-lite suspends until it receives \fISIGUSR1\fR for notification of repaired network connection. After resume, the remaining cases are skipped and post steps and get operations are executed in the current test set. Finally, depending on given \fBACTION\fR, testrunner-lite either exits (\fBexit\fR) or continues to the next test set (\fBcontinue\fR). The default action is \fBexit\fR.
 .TP
+\fB\-i\fR [\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]\fR, \fB\-\-hwinfo\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]
+Obtain hwinfo remotely. Hwinfo is usually obtained locally or in case of host-based testing from target address. This option overrides target address when hwinfo is obtained. Usage is similar to -t option.
+.TP
 \fILibssh2 Execution:\fR
 .TP
 \fB\-n\fR [\FIUSER@\fR]\fIADDRESS\fR, \fB\-\-libssh2\fR=[\fIUSER@\fR]\fIADDRESS\fR
