@@ -570,6 +570,18 @@ START_TEST (test_remote_get)
      fail_if (ret, cmd);
 END_TEST
 
+START_TEST(test_remote_hwinfo)
+     int ret;
+     char cmd[1024];
+     char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
+
+     sprintf(cmd, "%s -v -f %s -o %s -i localhost:22", TESTRUNNERLITE_BIN,
+	      TESTDATA_SIMPLE_XML_1,  out_file);
+     ret = system (cmd);
+     fail_if (ret != 0, cmd);
+END_TEST
+
+
 #ifdef ENABLE_LIBSSH2
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_command)
@@ -1039,6 +1051,11 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test ssh connection check routine.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_remote_conn_check);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test obtaining hwinfo remotely.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_hwinfo);
     suite_add_tcase (s, tc);
 
 #ifdef ENABLE_LIBSSH2

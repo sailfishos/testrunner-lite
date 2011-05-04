@@ -396,6 +396,58 @@ START_TEST (test_remote_logging_command)
 }
 END_TEST
 
+START_TEST (test_remote_logging_command_with_logid)
+{
+    char buffer[1024];
+    char error[128];
+    char logger_option[128];
+    char logid_option[64];
+    const char *logid = "ID001trlite";
+    int portno = 9876;
+    pid_t pid = 0;
+
+    fail_if((pid = fork()) < 0);
+
+    if (pid == 0) {
+	/* child process to run testrunner-lite with --logger option */
+
+	/* wait for parent's server socket to be opened */
+	usleep(200000);
+
+	sprintf(logger_option, "--logger=http://127.0.0.1:%d", portno);
+	sprintf(logid_option, "--logid=%s", logid);
+
+	execl(TESTRUNNERLITE_BIN,
+	      TESTRUNNERLITE_BIN,
+	      "-f", TESTDATA_SIMPLE_XML_1,
+	      "-o", "/tmp/loggertestout.xml",
+	      "-v",
+	      "-H",
+	      logger_option,
+	      logid_option,
+	      (char*)NULL);
+	/* should never reach this point */
+	exit(1);
+    }
+
+    memset(buffer, 0, sizeof(buffer));
+    memset(error, 0, sizeof(error));
+    sprintf(logid_option, "userDefinedId=%s", logid);
+
+    run_server_socket(portno, buffer, sizeof(buffer) - 1, error);
+
+    /* wait child terminates */
+    wait(NULL);
+
+    fail_if(strlen(error) > 0, error);
+
+    /* Check that buffer contains at least something we expected */
+    fail_if(strstr(buffer, "HTTP") == NULL);
+    fail_if(strstr(buffer, "levelno") == NULL);
+    fail_if(strstr(buffer, logid_option) == NULL);
+}
+END_TEST
+
 START_TEST (test_hwinfo)
      
      hw_info hi;
@@ -510,6 +562,10 @@ Suite *make_features_suite (void)
 
     tc = tcase_create ("Test remote logging command.");
     tcase_add_test (tc, test_remote_logging_command);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test remote logging command with logid.");
+    tcase_add_test (tc, test_remote_logging_command_with_logid);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test hw info.");
