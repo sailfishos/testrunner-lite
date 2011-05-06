@@ -1004,33 +1004,41 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	conn->signaled = 0;
 	
 	/* No ssh key files given, using default */
-	if (!priv_key || !pub_key || !strlen(priv_key) || !strlen(pub_key)) { 
+	/*if (!priv_key || !pub_key || !strlen(priv_key) || !strlen(pub_key)) {
 		priv_key = DEFAULT_PRIVATE_KEY;
 		pub_key = DEFAULT_PUBLIC_KEY;
-	}
+	}*/
 
 	/* Get the ssh keys from the user running testrunner-lite */
-	home_dir = getenv("HOME");
+	/*home_dir = getenv("HOME");
 	if (!home_dir) {
-		LOG_MSG(LOG_ERR, "Fatal: Could not get env for "
-		        "HOME");
-		conn->status = SESSION_GIVE_UP;
-		return NULL;
-	}
+		LOG_MSG(LOG_DEBUG, "Could not get env for "
+		        "HOME, using hardcoded home dir %s", DEFAULT_HOME);
+	    home_dir = DEFAULT_HOME;
+	}*/
 
 	/* Create absolute paths to keys for libssh2
 	   ( ~ notation doesn't work in 1.2.6 yet) */
-	key_size = strlen(home_dir) + 
-		strlen(KEY_FMT) + 
-		strlen(pub_key) - 1;
+	/*key_size = strlen(home_dir) +
+	    strlen(KEY_FMT) +
+	    strlen(pub_key) - 1;
 	public_key_file = malloc(key_size);
 	snprintf(public_key_file, key_size, KEY_FMT, home_dir, pub_key);
 
-	key_size = strlen(home_dir) + 
-		strlen(KEY_FMT) + 
-		strlen(priv_key) - 1;
+	key_size = strlen(home_dir) +
+	   strlen(KEY_FMT) +
+	   strlen(priv_key) - 1;
 	private_key_file = malloc(key_size);
-	snprintf(private_key_file, key_size, KEY_FMT, home_dir, priv_key);
+	snprintf(private_key_file, key_size, KEY_FMT, home_dir, priv_key);*/
+
+	key_size = strlen(pub_key) + 1;
+	public_key_file = malloc(key_size);
+	snprintf(public_key_file, key_size, pub_key);
+
+	key_size = strlen(priv_key) + 1;
+	private_key_file = malloc(key_size);
+	snprintf(private_key_file, key_size, priv_key);
+
 
 	LOG_MSG(LOG_DEBUG, "public key file: %s\n", public_key_file);
 	LOG_MSG(LOG_DEBUG, "private key file: %s\n", private_key_file);
