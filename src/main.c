@@ -1184,11 +1184,17 @@ int main (int argc, char *argv[], char *envp[])
 		address = opts.target_address;
 		port = opts.target_port;
 		executor = opts.remote_executor;
+#ifdef ENABLE_LIBSSH2
+		libssh2 = opts.libssh2;
+#endif
 
 		/* If hwinfo target is given change target address and port */
 		if(opts.hwinfo_target) {
 			opts.target_address = opts.hwinfo_target;
 			opts.target_port = opts.hwinfo_port;
+#ifdef ENABLE_LIBSSH2
+			opts.libssh2 = 0;
+#endif
 
 			if(parse_default_ssh_executor(&opts) != 0) {
 				fprintf (stderr,
@@ -1198,10 +1204,6 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 
-#ifdef ENABLE_LIBSSH2
-			libssh2 = opts.libssh2;
-			opts.libssh2 = 0;
-#endif
 			/* If remote_executor was null initialize executor so we can
 			* obtain hwinfo from remote device */
 			if (executor_init (&opts) != 0) {
