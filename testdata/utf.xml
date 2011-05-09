@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testdefinition version="0.1">
+  <suite name="utf8-suite">
+    <set name="utf8-set">
+      <case name="case1">
+      	<step>cat /usr/share/testrunner-lite-regression-tests/testdata/UTF-8-demo.txt</step>
+      </case>
+    </set>
+  </suite>
+</testdefinition>   

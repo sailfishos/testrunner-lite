@@ -48,7 +48,22 @@
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
-/* None */
+
+const unsigned long unicode_rangemin[] = {
+	0,
+	0,
+	0x80,
+	0x800,
+	0x10000
+};
+
+const unsigned long unicode_rangemax[] = {
+	0,
+	0,
+	0x7FF,
+	0xFFFF,
+	0x10FFFF
+};
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
@@ -80,7 +95,65 @@
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/* None */
+
+static inline int is_cont_byte(unsigned char data)
+{
+	return data >> 6 == 0x02;
+}
+
+static inline int decode_utf8_length(unsigned char data)
+{
+	int n;
+
+	for (n = 2; n < 7; ++n) {
+		if (((data >> (7-n)) & 0x07) == 0x06) {
+			return n;
+		}
+	}
+
+	return 0;
+}
+
+static inline int utf8_decode(const unsigned char **data)
+{
+	const unsigned char *p = *data;
+	unsigned long codepoint = 0L;
+	int n, l;
+
+	l = decode_utf8_length(*p);
+
+	if (l > 1 && l < 5) {
+		codepoint = *p++ & 0x1F >> (l-2);
+		for (n = l - 1; n && *p; --n, ++p) {
+			if (!is_cont_byte(*p)) {
+				return 0;
+			}
+			codepoint <<= 6;
+			codepoint += *p & 0x3F;
+		}
+
+		/* null character before decoding completed */
+		if (n) {
+			return 0;
+		}
+
+		/* check code point value ranges */
+		if (codepoint < unicode_rangemin[l]) {
+			return 0;
+		}
+
+		if (codepoint > unicode_rangemax[l]) {
+			return 0;
+		}
+
+	} else {
+		return 0;
+	}
+
+	*data = p;
+	return 1;
+}
+
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -218,6 +291,35 @@ int list_contains(const char *list, const char *value, const char* delim)
 
 	free(str);
 	return ret;
+}
+
+/** 
+ * Check data is valid UTF-8. If invalid data is found, function
+ * returns immediately. Maximum number of allowed bytes for an UTF-8
+ * sequence is 4 and maximum code point value U+10FFFF. Validation
+ * ends when null character is found.
+ * 
+ * @param data Data to be validated with terminating null
+ * 
+ * @return 1 when data is valid UTF-8 and 0 if not
+ */
+int utf8_validity_check(const unsigned char *data)
+{
+	const unsigned char *p = data;
+
+	while (*p != '\0') {
+		if (isascii(*p)) {
+			++p;
+			continue;
+		} else if (is_cont_byte(*p)) {
+			/* unexpected continuation byte */
+			return 0;
+		} else if (!utf8_decode(&p)) {
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 
