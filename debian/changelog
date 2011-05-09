@@ -1,3 +1,12 @@
+testrunner-lite (1.6.1-1) unstable; urgency=low
+
+  * Fixes: NB#191357 - Added -i option to ask hwinfo remotely in case of chroot testing
+  * Fixes: NB#239080 - Testrunner-lite segfaults after SSH connection drop when using libssh2 support
+  * Fixes: NB#252155 - Add user defined log id to testrunner-lite http log output
+  * Fixes: NB#253782 - Implement stricter UTF-8 check for test step ouput in testrunner-lite
+
+ -- Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>  Mon, 09 May 2011 14:11:11 +0300
+
 testrunner-lite (1.6.1) unstable; urgency=low
 
   * Fixes to process handling (possibility of busyloop removed) (by slahtinen)
