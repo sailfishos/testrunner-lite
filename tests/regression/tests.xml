@@ -254,5 +254,14 @@
 	<hardware>true</hardware>
       </environments>
     </set>
+
+    <set name="utf8-validation">
+      <case name="basic-ut8-input">
+	<!-- testrunner-lite should not create stdout.PID file. step outputs valid utf-8 -->
+	<step>rm -f /tmp/stdout.*</step>
+	<step>testrunner-lite -f /usr/share/testrunner-lite-regression-tests/testdata/utf.xml -o /tmp/utftestresult.xml</step>
+	<step>[ ! -f /tmp/stdout.* ]</step>
+      </case>
+    </set>
   </suite>
 </testdefinition>

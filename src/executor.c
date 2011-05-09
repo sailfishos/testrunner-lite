@@ -754,7 +754,7 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 	FILE *ofile = NULL;
 	size_t written = 0;
 	
-	if (xmlCheckUTF8 (data->buffer)) {
+	if (utf8_validity_check (data->buffer)) {
 		return;
 	}
 	
