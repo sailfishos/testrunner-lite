@@ -30,6 +30,8 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "testdefinitionparser.h"
 #include "testdefinitiondatatypes.h"
@@ -531,6 +533,174 @@ END_TEST
 START_TEST (test_executor_remote_conn_check)
         int ret = remote_check_conn (DEFAULT_REMOTE_EXECUTOR);
 	fail_if (ret, "ret=%d", ret);
+END_TEST
+/* ------------------------------------------------------------------------- */
+static volatile sig_atomic_t sigusr1_flag = 0;
+
+void resume_signal_handler(int sig)
+{
+	if (sig == SIGUSR1) {
+		sigusr1_flag = 1;
+	}
+}
+
+START_TEST (test_executor_remote_resume_exit)
+	char result_file[128];
+	pid_t pid = 0;
+	int status = 0;
+
+	/* clean possible old files */
+	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
+	unlink("/tmp/testrunner-lite-tests/resumetest2.txt");
+
+	fail_if((pid = fork()) < 0);
+
+	if (pid == 0) {
+		sprintf(result_file, "/tmp/testrunner-lite-tests/"
+			"trlitetestout%d.xml", getpid());
+		execl(TESTRUNNERLITE_BIN,
+		      TESTRUNNERLITE_BIN,
+		      "-f", TESTDATA_RESUME_TEST_XML,
+		      "-o", result_file,
+		      "-v",
+		      "-t localhost",
+		      "--resume=exit",
+		      (char*)NULL);
+		/* execl should not return */
+	}
+
+	/* setup handler and wait for a signal */
+	signal(SIGUSR1, resume_signal_handler);
+
+	/* sleep until testrunner-lite is executing sleep step */
+	sleep(10);
+	/* cause ssh connection failure by blocking incoming packets
+	   to port 22 on localhost */
+	status = system("/sbin/iptables -A INPUT -p tcp --destination 127.0.0.1"
+	       " --destination-port 22 -j DROP");
+
+	/* wait for a signal */
+	pause();
+
+	/* restore default handler */
+	signal(SIGUSR1, SIG_DFL);
+
+	/* remove port blocking */
+	status = system("/sbin/iptables -D INPUT -p tcp --destination 127.0.0.1"
+			" --destination-port 22 -j DROP");
+
+	/* test if SIGUSR1 has been received */
+	if (sigusr1_flag) {
+		/* signal testrunner-lite to continue */
+		kill(pid, SIGUSR1);
+	}
+
+	/* wait testrunner-lite returns */
+	fail_if(waitpid(pid, &status, 0) < 0);
+
+	fail_unless(WIFEXITED(status) && WEXITSTATUS(status) == 2,
+		    "Unexpected exit status %d from testrunner-lite", status);
+
+	fail_unless(sigusr1_flag, "SIGSUR1 not received from testrunner-lite");
+
+	/* do some checks on results */
+
+	status = system("[ -f /tmp/testrunner-lite-tests/resumetest1.txt ]");
+	fail_unless(WEXITSTATUS(status) == 0 ,"resumetest1.txt does not exist");
+
+	status = system("grep set1case1 /tmp/testrunner-lite-tests/resumetest1.txt");
+	fail_unless(WEXITSTATUS(status) == 0, "contents of resumetest1.txt");
+
+	status = system("[ ! -f /tmp/testrunner-lite-tests/resumetest2.txt ]");
+	fail_unless(WEXITSTATUS(status) == 0, "resumetest2.txt should not exist");
+
+	/* clean */
+	sprintf(result_file, "/tmp/testrunner-lite-tests/"
+			"trlitetestout%d.xml", pid);
+	unlink(result_file);
+	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
+	unlink("/tmp/testrunner-lite-tests/resumetest2.txt");
+END_TEST
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_remote_resume_continue)
+	char result_file[128];
+	pid_t pid = 0;
+	int status = 0;
+
+	/* clean possible old files */
+	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
+	unlink("/tmp/testrunner-lite-tests/resumetest2.txt");
+
+	fail_if((pid = fork()) < 0);
+
+	if (pid == 0) {
+		sprintf(result_file, "/tmp/testrunner-lite-tests/"
+			"trlitetestout%d.xml", getpid());
+		execl(TESTRUNNERLITE_BIN,
+		      TESTRUNNERLITE_BIN,
+		      "-f", TESTDATA_RESUME_TEST_XML,
+		      "-o", result_file,
+		      "-v",
+		      "-t localhost",
+		      "--resume=continue",
+		      (char*)NULL);
+		/* execl should not return */
+	}
+
+	/* setup handler and wait for a signal */
+	signal(SIGUSR1, resume_signal_handler);
+
+	/* sleep until testrunner-lite is executing sleep step */
+	sleep(10);
+	/* cause ssh connection failure by blocking incoming packets
+	   to port 22 on localhost */
+	status = system("/sbin/iptables -A INPUT -p tcp --destination 127.0.0.1"
+	       " --destination-port 22 -j DROP");
+
+	/* wait for a signal */
+	pause();
+
+	/* restore default handler */
+	signal(SIGUSR1, SIG_DFL);
+
+	/* remove port blocking */
+	status = system("/sbin/iptables -D INPUT -p tcp --destination 127.0.0.1"
+	       " --destination-port 22 -j DROP");
+
+	/* test if SIGUSR1 has been received */
+	if (sigusr1_flag) {
+		/* signal testrunner-lite to continue */
+		kill(pid, SIGUSR1);
+	}
+
+	/* wait testrunner-lite returns */
+	fail_if(waitpid(pid, &status, 0) < 0);
+
+	fail_unless(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+		    "Unexpected exit status %d from testrunner-lite", status);
+
+	fail_unless(sigusr1_flag, "SIGSUR1 not received from testrunner-lite");
+
+	/* do some checks on results */
+
+	status = system("[ -f /tmp/testrunner-lite-tests/resumetest1.txt ]");
+	fail_unless(WEXITSTATUS(status) == 0 ,"resumetest1.txt does not exist");
+
+	status = system("grep set1case1 /tmp/testrunner-lite-tests/resumetest1.txt");
+	fail_unless(WEXITSTATUS(status) == 0, "contents of resumetest1.txt");
+
+	status = system("[ -f /tmp/testrunner-lite-tests/resumetest2.txt ]");
+	fail_unless(WEXITSTATUS(status) == 0, "resumetest2.txt does not exist");
+
+	status = system("grep set2case1 /tmp/testrunner-lite-tests/resumetest2.txt");
+	fail_unless(WEXITSTATUS(status) == 0, "contents of resumetest2.txt");
+
+	/* clean */
+	sprintf(result_file, "/tmp/testrunner-lite-tests/"
+			"trlitetestout%d.xml", pid);
+	unlink(result_file);
+	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
+	unlink("/tmp/testrunner-lite-tests/resumetest2.txt");
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_get)
@@ -1051,6 +1221,16 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test ssh connection check routine.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_remote_conn_check);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test resume testrun feature with --resume=exit.");
+    tcase_set_timeout (tc, 80);
+    tcase_add_test (tc, test_executor_remote_resume_exit);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test resume testrun feature with --resume=continue.");
+    tcase_set_timeout (tc, 80);
+    tcase_add_test (tc, test_executor_remote_resume_continue);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test obtaining hwinfo remotely.");

@@ -46,6 +46,7 @@
 #define TESTDATA_PRE_STEP_FAIL_XML  "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-pre_step-fail.xml"
 #define TESTDATA_FILTER_TESTS_XML  "/usr/share/testrunner-lite-tests/testdata/filter_tests.xml"
 #define TESTDATA_ENVIRONMENT_TESTS_XML  "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-environment.xml"
+#define TESTDATA_RESUME_TEST_XML  "/usr/share/testrunner-lite-tests/testdata/resumetest.xml"
 #define TESTRUNNERLITE_BIN  "/usr/bin/testrunner-lite"
 
 /* ------------------------------------------------------------------------- */
