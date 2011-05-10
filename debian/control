@@ -7,7 +7,7 @@ Standards-Version: 3.8.0
 
 Package: testrunner-lite
 Architecture: any
-Depends: libxml2, test-definition, libcurl3, openssh | ssh, testrunner-lite-hwinfo, libuuid1
+Depends: libxml2, test-definition (>= 1.3.1), libcurl3, openssh | ssh, testrunner-lite-hwinfo, libuuid1
 Provides: testrunner
 Conflicts: testrunner
 Replaces: testrunner
@@ -36,7 +36,7 @@ Description: Library for obtaining hardware information in maemo environment
 Package: testrunner-lite-tests
 Section: tests
 Architecture: any
-Depends: ci-testing, testrunner-lite, check, ${shlibs:Depends}
+Depends: ci-testing, testrunner-lite, check, iptables, ${shlibs:Depends}
 XB-Maemo-CI-Packages: testrunner-lite
 XB-Maemo-CI-Stage: fast, staging, acceptance, validation
 Description: Unit tests for testrunner
