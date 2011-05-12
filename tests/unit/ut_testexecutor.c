@@ -65,6 +65,7 @@
 #define DEFAULT_REMOTE_EXECUTOR_PORT "/usr/bin/ssh -o StrictHostKeyChecking=no " \
 		"-o PasswordAuthentication=no -p 22 localhost"
 #define DEFAULT_REMOTE_GETTER "/usr/bin/scp localhost:'<FILE>' '<DEST>'"
+#define LOCAL_SSH_RULE " -p tcp -d 127.0.0.1 --dport 22 -j DROP"
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
@@ -75,6 +76,8 @@
 td_suite *suite;
 td_set   *set;
 char  *suite_description;
+static volatile sig_atomic_t sigusr1_flag = 0;
+static volatile sig_atomic_t sigchld_flag = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 /* None */
@@ -535,13 +538,127 @@ START_TEST (test_executor_remote_conn_check)
 	fail_if (ret, "ret=%d", ret);
 END_TEST
 /* ------------------------------------------------------------------------- */
-static volatile sig_atomic_t sigusr1_flag = 0;
 
 void resume_signal_handler(int sig)
 {
 	if (sig == SIGUSR1) {
 		sigusr1_flag = 1;
+	} else if (sig == SIGCHLD) {
+		sigchld_flag = 1;
 	}
+}
+
+/** 
+ * Ensure blocking of ssh port with iptables is removed, e.g, in case
+ * a test case timeouts and blocking can not be removed in the test case
+ * 
+ */
+void teardown_resume_test()
+{
+	int status = system("/sbin/iptables -D INPUT" LOCAL_SSH_RULE);
+}
+
+/** 
+ * Runs testrunner-lite with --resume option, generates ssh connection failure
+ * by using iptables, restores connection and handles required signaling with
+ * SIGUSR1.
+ * 
+ * @param optionarg Argument value for option --resume
+ * @param retval Excpected return value for tesrunner-lite
+ * 
+ * @return PID of forked testrunner-lite process
+ */
+pid_t run_resume_test(const char *optionarg, int retval)
+{
+	char result_file[128];
+	char resume_option[128];
+	pid_t pid = 0;
+	int status = 0;
+	siginfo_t info;
+	sigset_t mask;
+	sigset_t origmask;
+	void (*origchld)(int);
+	void (*origusr1)(int);
+
+	/* block SIGCHLD until sigsuspend is called and set a handler so we can
+	   catch too early return of forked testrunner-lite process */
+	origchld = signal(SIGCHLD, resume_signal_handler);
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &mask, &origmask);
+
+	fail_if((pid = fork()) < 0);
+
+	if (pid == 0) {
+		/* undo SIGCHLD changes here in the child process */
+		sigprocmask(SIG_UNBLOCK, &mask, NULL);
+		signal(SIGCHLD, origchld);
+		sprintf(result_file, "/tmp/testrunner-lite-tests/"
+			"trlitetestout%d.xml", getpid());
+		sprintf(resume_option, "--resume=%s", optionarg);
+		execl(TESTRUNNERLITE_BIN,
+		      TESTRUNNERLITE_BIN,
+		      "-f", TESTDATA_RESUME_TEST_XML,
+		      "-o", result_file,
+		      "-v",
+		      "-t 127.0.0.1",
+		      resume_option,
+		      (char*)NULL);
+		/* execl should not return */
+	}
+
+	/* setup handler */
+	origusr1 = signal(SIGUSR1, resume_signal_handler);
+
+	/* sleep until testrunner-lite is executing sleep step */
+	sleep(10);
+	/* cause ssh connection failure by blocking incoming packets
+	   to port 22 on localhost */
+	status = system("/sbin/iptables -A INPUT" LOCAL_SSH_RULE);
+
+	/* wait for a signal */
+	while (1) {
+		sigsuspend(&origmask);
+		if (sigchld_flag) {
+			/* child has terminated. it's either iptables or tr-lite */
+			sigchld_flag = 0;
+			info.si_pid = 0;
+			if (waitid(P_PID, pid, &info,
+				   WEXITED | WNOHANG | WNOWAIT) == 0) {
+				/* continue only if testrunner-lite not terminated */
+				if (info.si_pid != pid) {
+					continue;
+				}
+			}
+		}
+		break;
+	}
+
+	/* restore original handlers */
+	signal(SIGUSR1, origusr1);
+	signal(SIGCHLD, origchld);
+	/* ... and no need to unblock SIGCHLD anymore */
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
+	/* remove port blocking */
+	status = system("/sbin/iptables -D INPUT" LOCAL_SSH_RULE);
+
+	/* test if SIGUSR1 has been received */
+	if (sigusr1_flag) {
+		/* signal testrunner-lite to continue */
+		kill(pid, SIGUSR1);
+	}
+
+	/* wait testrunner-lite returns */
+	fail_if(waitpid(pid, &status, 0) < 0);
+
+	fail_unless(WIFEXITED(status) && WEXITSTATUS(status) == retval,
+		    "Unexpected return value %d from testrunner-lite",
+		    WEXITSTATUS(status));
+
+	fail_unless(sigusr1_flag, "SIGSUR1 not received from testrunner-lite");
+
+	return pid;
 }
 
 START_TEST (test_executor_remote_resume_exit)
@@ -553,58 +670,10 @@ START_TEST (test_executor_remote_resume_exit)
 	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
 	unlink("/tmp/testrunner-lite-tests/resumetest2.txt");
 
-	fail_if((pid = fork()) < 0);
-
-	if (pid == 0) {
-		sprintf(result_file, "/tmp/testrunner-lite-tests/"
-			"trlitetestout%d.xml", getpid());
-		execl(TESTRUNNERLITE_BIN,
-		      TESTRUNNERLITE_BIN,
-		      "-f", TESTDATA_RESUME_TEST_XML,
-		      "-o", result_file,
-		      "-v",
-		      "-t localhost",
-		      "--resume=exit",
-		      (char*)NULL);
-		/* execl should not return */
-	}
-
-	/* setup handler and wait for a signal */
-	signal(SIGUSR1, resume_signal_handler);
-
-	/* sleep until testrunner-lite is executing sleep step */
-	sleep(10);
-	/* cause ssh connection failure by blocking incoming packets
-	   to port 22 on localhost */
-	status = system("/sbin/iptables -A INPUT -p tcp --destination 127.0.0.1"
-	       " --destination-port 22 -j DROP");
-
-	/* wait for a signal */
-	pause();
-
-	/* restore default handler */
-	signal(SIGUSR1, SIG_DFL);
-
-	/* remove port blocking */
-	status = system("/sbin/iptables -D INPUT -p tcp --destination 127.0.0.1"
-			" --destination-port 22 -j DROP");
-
-	/* test if SIGUSR1 has been received */
-	if (sigusr1_flag) {
-		/* signal testrunner-lite to continue */
-		kill(pid, SIGUSR1);
-	}
-
-	/* wait testrunner-lite returns */
-	fail_if(waitpid(pid, &status, 0) < 0);
-
-	fail_unless(WIFEXITED(status) && WEXITSTATUS(status) == 2,
-		    "Unexpected exit status %d from testrunner-lite", status);
-
-	fail_unless(sigusr1_flag, "SIGSUR1 not received from testrunner-lite");
+	/* run resume test body */
+	pid = run_resume_test("exit", 2);
 
 	/* do some checks on results */
-
 	status = system("[ -f /tmp/testrunner-lite-tests/resumetest1.txt ]");
 	fail_unless(WEXITSTATUS(status) == 0 ,"resumetest1.txt does not exist");
 
@@ -631,58 +700,10 @@ START_TEST (test_executor_remote_resume_continue)
 	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
 	unlink("/tmp/testrunner-lite-tests/resumetest2.txt");
 
-	fail_if((pid = fork()) < 0);
-
-	if (pid == 0) {
-		sprintf(result_file, "/tmp/testrunner-lite-tests/"
-			"trlitetestout%d.xml", getpid());
-		execl(TESTRUNNERLITE_BIN,
-		      TESTRUNNERLITE_BIN,
-		      "-f", TESTDATA_RESUME_TEST_XML,
-		      "-o", result_file,
-		      "-v",
-		      "-t localhost",
-		      "--resume=continue",
-		      (char*)NULL);
-		/* execl should not return */
-	}
-
-	/* setup handler and wait for a signal */
-	signal(SIGUSR1, resume_signal_handler);
-
-	/* sleep until testrunner-lite is executing sleep step */
-	sleep(10);
-	/* cause ssh connection failure by blocking incoming packets
-	   to port 22 on localhost */
-	status = system("/sbin/iptables -A INPUT -p tcp --destination 127.0.0.1"
-	       " --destination-port 22 -j DROP");
-
-	/* wait for a signal */
-	pause();
-
-	/* restore default handler */
-	signal(SIGUSR1, SIG_DFL);
-
-	/* remove port blocking */
-	status = system("/sbin/iptables -D INPUT -p tcp --destination 127.0.0.1"
-	       " --destination-port 22 -j DROP");
-
-	/* test if SIGUSR1 has been received */
-	if (sigusr1_flag) {
-		/* signal testrunner-lite to continue */
-		kill(pid, SIGUSR1);
-	}
-
-	/* wait testrunner-lite returns */
-	fail_if(waitpid(pid, &status, 0) < 0);
-
-	fail_unless(WIFEXITED(status) && WEXITSTATUS(status) == 0,
-		    "Unexpected exit status %d from testrunner-lite", status);
-
-	fail_unless(sigusr1_flag, "SIGSUR1 not received from testrunner-lite");
+	/* run resume test body */
+	pid = run_resume_test("continue", 0);
 
 	/* do some checks on results */
-
 	status = system("[ -f /tmp/testrunner-lite-tests/resumetest1.txt ]");
 	fail_unless(WEXITSTATUS(status) == 0 ,"resumetest1.txt does not exist");
 
@@ -1225,11 +1246,13 @@ Suite *make_testexecutor_suite (void)
 
     tc = tcase_create ("Test resume testrun feature with --resume=exit.");
     tcase_set_timeout (tc, 80);
+    tcase_add_unchecked_fixture (tc, NULL, teardown_resume_test);
     tcase_add_test (tc, test_executor_remote_resume_exit);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test resume testrun feature with --resume=continue.");
     tcase_set_timeout (tc, 80);
+    tcase_add_unchecked_fixture (tc, NULL, teardown_resume_test);
     tcase_add_test (tc, test_executor_remote_resume_continue);
     suite_add_tcase (s, tc);
 
