@@ -598,10 +598,10 @@ LOCAL int process_get (const void *data, const void *user)
 	char *command;
 	char *fname;
 	exec_data edata;
-	int command_len;
 	char *p;
 	char *executor = opts.remote_executor;
 #ifdef ENABLE_LIBSSH2
+	int command_len;
 	char *remote = opts.target_address;
 #endif
 	if (bail_out) {
