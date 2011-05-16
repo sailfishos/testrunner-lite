@@ -555,7 +555,8 @@ void resume_signal_handler(int sig)
  */
 void teardown_resume_test()
 {
-	int status = system("/sbin/iptables -D INPUT" LOCAL_SSH_RULE);
+	int status;
+	status = system("/sbin/iptables -D INPUT" LOCAL_SSH_RULE);
 }
 
 /** 

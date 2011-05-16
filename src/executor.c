@@ -47,6 +47,7 @@
 #endif
 #include "executor.h"
 #include "log.h"
+#include "utils.h"
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL DATA STRUCTURES */
