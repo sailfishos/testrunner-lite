@@ -1072,6 +1072,13 @@ void wait_for_resume_execution()
 	sigset_t mask;
 	sigset_t waitmask;
 
+#ifdef ENABLE_LIBSSH2
+	if(lssh2_conn) {
+		lssh2_conn->status = SESSION_OK;
+		lssh2_conn->signaled = 0;
+	}
+#endif
+
 	/* block certain signals for this section */
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGINT);

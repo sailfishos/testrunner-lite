@@ -30,6 +30,7 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <libssh2.h>
+#include <fcntl.h>
 
 #include "testrunnerlite.h"
 #include "executor.h"
@@ -601,12 +602,12 @@ static int lssh2_session_reconnect(libssh2_conn *conn)
 	}
 	
 	close(conn->sock);
-	
+
 	if (lssh2_setup_socket(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Reconnect: setup socket failed");
 		return -1;
 	}
-	
+
 	if (lssh2_session_connect(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Reconnect: session connect failed");
 		return -1;
@@ -620,12 +621,26 @@ static int lssh2_session_reconnect(libssh2_conn *conn)
  */
 static int lssh2_setup_socket(libssh2_conn *conn) 
 {
-
+	int flags, s;
 	struct hostent *host;
+	struct timeval tv;
+
 	conn->hostaddr = inet_addr(conn->hostname);
 	conn->sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (conn->sock < 0) {
 		LOG_MSG(LOG_ERR, "Opening socket failed %s", strerror(errno));
+		return -1;
+	}
+
+	/* Get socket flags */
+	flags = fcntl(conn->sock, F_GETFL, 0);
+	if(flags < 0) {
+		LOG_MSG(LOG_ERR, "Setting socket to non-blocking failed: %s", strerror(errno));
+		return -1;
+	}
+	/* Add non-blocking flag */
+	if(fcntl(conn->sock, F_SETFL, flags | O_NONBLOCK) < 0) {
+		LOG_MSG(LOG_ERR, "Setting socket to non-blocking failed: %s", strerror(errno));
 		return -1;
 	}
 
@@ -645,12 +660,40 @@ static int lssh2_setup_socket(libssh2_conn *conn)
 
 	memcpy (&(conn->sin.sin_addr.s_addr), host->h_addr, host->h_length);
 
-	if (connect(conn->sock, (struct sockaddr*)(&conn->sin),
-	            sizeof(struct sockaddr_in)) != 0) {
-		LOG_MSG(LOG_ERR, "Connecting to remote end failed %s", 
-			strerror(errno));
-		close(conn->sock);
-		return -1;
+	s = connect(conn->sock, (struct sockaddr*)(&conn->sin),
+	            sizeof(struct sockaddr_in));
+	if(s < 0) {
+		/* Connecting is in progress */
+		if(errno == EINPROGRESS) {
+			LOG_MSG(LOG_DEBUG, "Connecting to device");
+
+			FD_ZERO(&conn->nfd);
+			FD_SET(conn->sock, &conn->nfd);
+			tv.tv_sec = 10;
+			tv.tv_usec = 0;
+			s = select(conn->sock + 1, NULL, &conn->nfd, NULL, &tv);
+
+			if (s < 0 && errno != EINTR) {
+				LOG_MSG(LOG_ERR, "Error connecting after select %d - %s\n", errno, strerror(errno));
+				return -1;
+			} else if(s > 0) {
+				int so_error;
+				socklen_t slen = sizeof(so_error);
+				getsockopt(conn->sock, SOL_SOCKET, SO_ERROR, &so_error, &slen);
+				if (so_error == 0) {
+					LOG_MSG(LOG_DEBUG, "Connected to %s", conn->hostname);
+				} else {
+					LOG_MSG(LOG_ERR, "Error connecting after getsockopt %d - %s\n", errno, strerror(errno));
+					return -1;
+				}
+			} else {
+				LOG_MSG(LOG_DEBUG, "Timeout when connecting to device");
+				return -1;
+			}
+		} else {
+			LOG_MSG(LOG_ERR, "Error connecting %d - %s\n", errno, strerror(errno));
+			return -1;
+		}
 	}
 
 	return 0;
@@ -798,9 +841,19 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	int retries = 0;
 	int channel_retries = 0;
 	
-	if (!conn || !conn->ssh2_session || conn->status == SESSION_GIVE_UP) {
-		LOG_MSG(LOG_DEBUG, "Cannot create SSH channel: no SSH session");
-		return -1;
+	if (!conn || !conn->ssh2_session) {
+		if(conn && conn->status != SESSION_GIVE_UP) {
+			LOG_MSG(LOG_DEBUG, "Try to reconnect SSH session");
+			trlite_status = OK;
+			if (lssh2_session_reconnect(conn) < 0) {
+				LOG_MSG(LOG_ERR, "Connection error");
+				conn->status = SESSION_GIVE_UP;
+				lssh2_session_free(conn);
+				return -1;
+			}
+		} else {
+			return -1;
+		}
 	}
 
 	/* Open session channel */
