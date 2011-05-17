@@ -1066,7 +1066,7 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	if(*pub_key == '/') {
 		key_size = strlen(pub_key) + 1;
 		public_key_file = malloc(key_size);
-		snprintf(public_key_file, key_size, pub_key);
+		strncpy(public_key_file, pub_key, key_size);
 	} else {
 		home_dir = getenv("HOME");
 		if (!home_dir) {
@@ -1085,7 +1085,7 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	if(*priv_key == '/') {
 		key_size = strlen(priv_key) + 1;
 		private_key_file = malloc(key_size);
-		snprintf(private_key_file, key_size, priv_key);
+		strncpy(private_key_file, priv_key, key_size);
 	} else {
 		home_dir = getenv("HOME");
 		if (!home_dir) {
