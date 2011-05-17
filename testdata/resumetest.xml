@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testdefinition version="0.1">
+  <suite name="resume-test-suite">
+    <set name="resume-test-set1">
+      <pre_steps>
+      	<step>rm -f /tmp/resumetest.tmp /tmp/resumetest1.txt</step>
+      </pre_steps>
+
+      <case name="set1case1">
+      	<step>echo set1case1 &gt; /tmp/resumetest.tmp</step>
+      </case>
+
+      <case name="set1case2">
+	<!-- connection failure should occur during this step -->
+      	<step>sleep 80</step>
+      </case>
+
+      <case name="set1case3">
+	<!-- this case should be skipped due to connection failure -->
+      	<step>echo set1case3 &gt; /tmp/resumetest.tmp</step>
+      </case>
+
+      <post_steps>
+	<step>mv /tmp/resumetest.tmp /tmp/resumetest1.txt</step>
+      </post_steps>
+
+      <get>
+	<file>/tmp/resumetest1.txt</file>
+      </get>
+    </set>
+
+    <set name="resume-test-set2">
+      <pre_steps>
+      	<step>rm -f /tmp/resumetest2.txt</step>
+      </pre_steps>
+
+      <case name="set2case1">
+      	<step>echo set2case1 &gt; /tmp/resumetest.tmp</step>
+      </case>
+
+      <post_steps>
+	<step>mv /tmp/resumetest.tmp /tmp/resumetest2.txt</step>
+      </post_steps>
+
+      <get>
+	<file>/tmp/resumetest2.txt</file>
+      </get>
+
+    </set>
+  </suite>
+</testdefinition>   

@@ -85,7 +85,7 @@ LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
-		"-o PasswordAuthentication=no %s %s"
+		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s"
 #define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
 #define RICH_CORE_SEARCH_PATTERN "*%s*"
 /* ------------------------------------------------------------------------- */
@@ -116,6 +116,10 @@ LOCAL int parse_default_scp_getter(testrunner_lite_options *opts);
 LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_chroot(char * folder);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_logid(char *logid, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int parse_target_address_hwinfo(char* address, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int create_rich_core_search_pattern(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
@@ -189,6 +193,8 @@ LOCAL void usage()
 		"Causes testrunner-lite to write the given package URL to "
 		"results.\n"
 		);
+	printf ("  --logid=ID\n\t\t"
+		"User defined identifier for HTTP log messages.\n");
         printf ("  -d PATH, --rich-core-dumps=PATH\n\t\t"
                 "Save rich-core dumps. PATH is the location, where rich-core dumps\n\t\t"
                 "are produced in the device. Creates UUID mappings between executed\n\t\t"
@@ -210,6 +216,18 @@ LOCAL void usage()
 		"of the system under test. Behind the scenes, host-based\n\t\t"
 		"testing uses the external execution described below with SSH\n\t\t"
 		"and SCP.\n");
+	printf ("  -R[ACTION], --resume[=ACTION]\n\t\t"
+		"Resume testrun when ssh connection failure occurs.\n\t\t"
+		"The possible ACTIONs after resume are:\n\t\t"
+		"  exit      Exit after current test set\n\t\t"
+		"  continue  Continue normally to the next test set\n\t\t"
+		"The default action is 'exit'.\n"
+		);
+	printf ("  -i [USER@]ADDRESS[:PORT], --hwinfo-target=[USER@]ADDRESS[:PORT]\n\t\t"
+		"Obtain hwinfo remotely. Hwinfo is usually obtained locally or in\n\t\t"
+		"case of host-based testing from target address. This option\n\t\t"
+		"overrides target address when hwinfo is obtained.\n\t\t"
+		"Usage is similar to -t option.\n");
 #ifdef ENABLE_LIBSSH2
 	printf ("\nLibssh2 Execution:\n");
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
@@ -626,6 +644,57 @@ LOCAL int test_chroot(char * folder) {
 }
 
 /* ------------------------------------------------------------------------- */
+/** Parse logid option argument string. Only letters and digits are accepted.
+ * @param logid Option argument string
+ * @param opts Options struct
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_logid(char *logid, testrunner_lite_options *opts)
+{
+	char *p;
+
+	for (p = logid; *p != '\0'; p++) {
+		if (!isalnum(*p)) {
+			fprintf(stderr,
+				"%s: invalid char '%c' in logid argument\n",
+				PROGNAME,
+				*p);
+			return 1;
+		}
+	}
+
+	opts->logid = strdup(logid);
+	return 0;
+}
+
+/** Parse target address where to ask hwinfo
+ * @param address SUT address.
+ * @param opts Options struct containing field(s) to store url
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_target_address_hwinfo(char *address, testrunner_lite_options *opts) {
+	char *p;
+
+	if (address) {
+		opts->hwinfo_target = strdup(address);
+		p = strchr (opts->hwinfo_target, ':');
+		if (p) {
+			*p = '\0';
+			p++;
+			opts->hwinfo_port = atoi (p);
+			if (opts->hwinfo_port < 0 ||
+			    opts->hwinfo_port > USHRT_MAX) {
+				fprintf (stderr, "Invalid port %d\n",
+					 opts->hwinfo_port);
+				return 1;
+			}
+		}
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
 /** Creates a pattern to locate rich-core dumps in the device.
  * @param folder path to rich-core dumps in the device.
  * @param opts options struct containing field(s)
@@ -665,6 +734,12 @@ int main (int argc, char *argv[], char *envp[])
 	int h_flag = 0, a_flag = 0, m_flag = 0, A_flag = 0, V_flag = 0;
 	int power_flag = 0;
 	int opt_char, option_idx;
+	char *address = NULL;
+	char *executor = NULL;
+#ifdef ENABLE_LIBSSH2
+	int libssh2 = 0;
+#endif
+	in_port_t port = 0;
 	opts.remote_executor = NULL;
 	opts.remote_getter = NULL;
 #ifdef ENABLE_LIBSSH2
@@ -707,7 +782,12 @@ int main (int argc, char *argv[], char *envp[])
 			{"disable-measurement-verdict", no_argument, 
 			 &opts.no_measurement_verdicts, 1},
 			{"measure-power", no_argument, &power_flag, 1},
+			{"resume", optional_argument, NULL, 'R'},
+			{"logid", required_argument, NULL,
+			 TRLITE_LONG_OPTION_LOGID},
+			{"hwinfo-target", required_argument, NULL, 'i'},
 			{"rich-core-dumps", required_argument, NULL, 'd'},
+
 			{0, 0, 0, 0}
 		};
 
@@ -730,8 +810,11 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:n:k:v"
-					"::", testrunnerlite_options, 
+					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:v::"
+#ifdef ENABLE_LIBSSH2
+					"n:k:"
+#endif
+					"R::i:", testrunnerlite_options,
 					&option_idx);
 		if (opt_char == -1)
 			break;
@@ -879,10 +962,42 @@ int main (int argc, char *argv[], char *envp[])
 		case 'U':
 			opts.packageurl = strdup (optarg);
 			break;
+		case 'R':
+			if (optarg) {
+				if (strncmp(optarg, "exit", 4) == 0) {
+					opts.resume_testrun =
+						RESUME_TESTRUN_ACTION_EXIT;
+					break;
+				}
+				else if (strncmp(optarg, "continue", 8) == 0) {
+					opts.resume_testrun =
+						RESUME_TESTRUN_ACTION_CONTINUE;
+					break;
+				}
+				fprintf (stderr, "invalid argument value: %s\n",
+					 optarg);
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			/* use default action if argument is not given */
+			opts.resume_testrun = RESUME_TESTRUN_ACTION_EXIT;
+			break;
+		case 'i':
+			if (parse_target_address_hwinfo(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
 		case 'd':
 			if (create_rich_core_search_pattern (optarg, &opts) != 0) {
                                 retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
                                 goto OUT;
+			}
+			break;
+		case TRLITE_LONG_OPTION_LOGID:
+			if (parse_logid(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
 			}
 			break;
 		case ':':
@@ -896,6 +1011,8 @@ int main (int argc, char *argv[], char *envp[])
 				 PROGNAME);
 			retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 			goto OUT;
+			break;
+		default:
 			break;
 		}
 	}
@@ -1018,7 +1135,7 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	 * Set remote execution options.
 	 */
-	if (executor_init (&opts) < 0) {
+	if (executor_init (&opts) != 0) {
 		LOG_MSG(LOG_ERR, "Executor init failed... exiting");
 		goto OUT;
 	}
@@ -1062,8 +1179,50 @@ int main (int argc, char *argv[], char *envp[])
 	/*
 	** Obtain hardware info
 	*/
-	if (!opts.skip_hwinfo)
+	if (!opts.skip_hwinfo) {
+		/* Save old values */
+		address = opts.target_address;
+		port = opts.target_port;
+		executor = opts.remote_executor;
+#ifdef ENABLE_LIBSSH2
+		libssh2 = opts.libssh2;
+#endif
+
+		/* If hwinfo target is given change target address and port */
+		if(opts.hwinfo_target) {
+			opts.target_address = opts.hwinfo_target;
+			opts.target_port = opts.hwinfo_port;
+#ifdef ENABLE_LIBSSH2
+			opts.libssh2 = 0;
+#endif
+
+			if(parse_default_ssh_executor(&opts) != 0) {
+				fprintf (stderr,
+				"%s: Failed to parse hwinfo target\n",
+				PROGNAME);
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+
+			/* If remote_executor was null initialize executor so we can
+			* obtain hwinfo from remote device */
+			if (executor_init (&opts) != 0) {
+				LOG_MSG(LOG_ERR, "Executor init failed... exiting");
+				goto OUT;
+			}
+		}
+
+		LOG_MSG (LOG_DEBUG, "Remote executor %s", opts.remote_executor);
 		read_hwinfo (&hwinfo);
+
+		/* Return original values */
+		opts.target_address = address;
+		opts.target_port = port;
+		opts.remote_executor = executor;
+#ifdef ENABLE_LIBSSH2
+		opts.libssh2 = libssh2;
+#endif
+	}
 	
 	/*
 	** Initialize result logger
@@ -1102,6 +1261,7 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.remote_getter) free (opts.remote_getter);
 	if (opts.packageurl) free (opts.packageurl);
 	if (opts.vcsurl) free (opts.vcsurl);
+	if (opts.logid) free (opts.logid);
 #ifdef ENABLE_LIBSSH2
 	if (opts.username) free (opts.username);
 	if (opts.priv_key) free (opts.priv_key);

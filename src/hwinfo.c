@@ -41,7 +41,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL GLOBAL VARIABLES */
-/* None */
+extern int bail_out;
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL FUNCTION PROTOTYPES */
@@ -88,10 +88,14 @@ LOCAL unsigned char *exec_command (const char *cmd)
 {
 	char *p;
 	exec_data edata;
+
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data (&edata);
 	
 	if (cmd == NULL || !strlen (cmd))
+		return NULL;
+
+	if (bail_out)
 		return NULL;
 
 	edata.soft_timeout = DEFAULT_TIMEOUT;

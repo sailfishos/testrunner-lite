@@ -57,7 +57,7 @@ int remote_executor_init (const char *executor);
 /* ------------------------------------------------------------------------- */
 int remote_execute (const char *executor, const char *command);
 /* ------------------------------------------------------------------------- */
-int remote_kill (const char *executor, pid_t id);
+int remote_kill (const char *executor, pid_t id, int signal);
 /* ------------------------------------------------------------------------- */
 int remote_check_conn (const char *executor);
 /* ------------------------------------------------------------------------- */

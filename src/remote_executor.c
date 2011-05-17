@@ -234,7 +234,7 @@ int remote_check_conn (const char *executor)
  *  @param executor prepended to command to execute on DUT
  *  @param id PID of the test step
  */
-int remote_kill (const char *executor, pid_t id)
+int remote_kill (const char *executor, pid_t id, int signal)
 {
 	int ret;
 	pid_t pid;
@@ -251,8 +251,8 @@ int remote_kill (const char *executor, pid_t id)
 		return 1;
 	
 	sprintf(file, PID_FILE_FMT, unique_id, id);
-	sprintf (cmd, "[ -f %1$s ] && pkill -9 -P $(cat %1$s); rm -f %1$s", 
-		 file);
+	sprintf (cmd, "[ -f %1$s ] && pkill -%2$d -P $(cat %1$s)"/*; rm -f %1$s"*/,
+		 file, signal);
 
 	ret = _execute (executor, cmd);
 
