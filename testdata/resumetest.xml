@@ -7,6 +7,8 @@
       </pre_steps>
 
       <case name="set1case1">
+	<!-- testrunner-lite should distinguish return value 255 from connection failure -->
+	<step expected_result="255">exit 255</step>
       	<step>echo set1case1 &gt; /tmp/resumetest.tmp</step>
       </case>
 
