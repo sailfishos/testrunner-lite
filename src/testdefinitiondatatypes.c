@@ -324,6 +324,8 @@ td_case *td_case_create()
 					    list_dummy_compare);
 	td_c->series = xmlListCreate (td_measurement_series_delete,
 				      list_dummy_compare);
+	td_c->crashids = xmlListCreate (list_string_delete,
+					list_dummy_compare);
 
 	return td_c;
 }
@@ -376,6 +378,7 @@ void td_case_delete(xmlLinkPtr lk)
 	xmlListDelete (td_c->gets);
 	xmlListDelete (td_c->measurements);
 	xmlListDelete (td_c->series);
+	xmlListDelete (td_c->crashids);
 
 	xmlFree (td_c->comment);
 	xmlFree (td_c->failure_info);

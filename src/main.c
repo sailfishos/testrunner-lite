@@ -87,7 +87,6 @@ LOCAL hw_info hwinfo;
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
 		"-o PasswordAuthentication=no %s %s"
 #define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
-#define RICH_CORE_SEARCH_PATTERN "*%s*"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -117,7 +116,7 @@ LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_chroot(char * folder);
 /* ------------------------------------------------------------------------- */
-LOCAL int create_rich_core_search_pattern(char *folder, testrunner_lite_options *opts);
+LOCAL int set_rich_core_dumps(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -626,25 +625,23 @@ LOCAL int test_chroot(char * folder) {
 }
 
 /* ------------------------------------------------------------------------- */
-/** Creates a pattern to locate rich-core dumps in the device.
+/** Save the rich-core dumps folder setting
  * @param folder path to rich-core dumps in the device.
  * @param opts options struct containing field(s)
  * @return 0 on success; otherwise 1
  */
-LOCAL int create_rich_core_search_pattern(char *folder, testrunner_lite_options *opts)
+LOCAL int set_rich_core_dumps(char *folder, testrunner_lite_options *opts)
 {
 	size_t pattern_len;
 
 	if (folder && strlen (folder) > 0) {
-		pattern_len = strlen (folder) + 
-			strlen (RICH_CORE_SEARCH_PATTERN) + 2;
+		pattern_len = strlen (folder) + 2;
 		opts->rich_core_dumps = (char *) malloc (pattern_len);
 
 		strcpy (opts->rich_core_dumps, folder);
 		if (folder[strlen (folder) - 1] != '/') {
 			strcat (opts->rich_core_dumps, "/");
 		}
-		strcat (opts->rich_core_dumps, RICH_CORE_SEARCH_PATTERN);
 		return 0;
 	} else {
 		return 1;
@@ -880,7 +877,7 @@ int main (int argc, char *argv[], char *envp[])
 			opts.packageurl = strdup (optarg);
 			break;
 		case 'd':
-			if (create_rich_core_search_pattern (optarg, &opts) != 0) {
+			if (set_rich_core_dumps (optarg, &opts) != 0) {
                                 retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
                                 goto OUT;
 			}

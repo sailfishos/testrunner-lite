@@ -109,6 +109,8 @@ LOCAL int xml_write_measurement (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_series (const void *, const void *);
 /* ------------------------------------------------------------------------- */
+LOCAL int xml_write_crashid (const void *, const void *);
+/* ------------------------------------------------------------------------- */
 LOCAL int xml_write_measurement_item (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_td_start (td_td *);
@@ -710,6 +712,7 @@ LOCAL int xml_write_case (const void *data, const void *user)
 	xmlListWalk (c->steps, xml_write_step, NULL);
 	xmlListWalk (c->measurements, xml_write_measurement, NULL);
 	xmlListWalk (c->series, xml_write_series, NULL);
+	xmlListWalk (c->crashids, xml_write_crashid, NULL); 
 
 	return !xml_end_element ();
 
@@ -853,6 +856,25 @@ LOCAL int xml_write_measurement (const void *data, const void *user)
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
+/** Write chrashid to results
+ * @param data chrashid 
+ * @param user not used
+ * @return 1 on success, 0 on error
+ */
+LOCAL int xml_write_crashid (const void *data, const void *user)
+{
+	char *id = (char *)data;
+	if (xmlTextWriterWriteElement (writer, 
+				       BAD_CAST "crash_id", 
+				       BAD_CAST id) < 0) {
+		LOG_MSG (LOG_ERR, "%s:%s:failed to write crash_id\n",
+			 PROGNAME, __FUNCTION__);
+		return 0;
+	}
+	
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
 /** Write measurement series data
  * @param data measurement series data 
  * @param user not used
@@ -915,6 +937,7 @@ LOCAL int xml_write_series (const void *data, const void *user)
 	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
 	return 0;
 }
+
 /* ------------------------------------------------------------------------- */
 /** Write measurement item data
  * @param data measurement item data 
