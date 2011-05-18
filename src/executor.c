@@ -538,11 +538,13 @@ static int execution_terminated(exec_data* data) {
 			    (data->result == 255 ||
 			     (data->result > 64 && data->result < 80))
 			    ) {
-				bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
-				global_failure = "earlier connection failure";
-				LOG_MSG(LOG_ERR, "remote connection failure");
-				stream_data_append(&data->failure_info,
-						   "connection failure");
+				if (remote_check_conn(options->remote_executor)) {
+					bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
+					global_failure = "earlier connection failure";
+					LOG_MSG(LOG_ERR, "remote connection failure");
+					stream_data_append(&data->failure_info,
+							   "connection failure");
+				}
 			}
 			else if (options->remote_executor &&
 				 data->result > 128 &&

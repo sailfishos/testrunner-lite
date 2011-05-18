@@ -225,7 +225,7 @@ int remote_check_conn (const char *executor)
 	int ret;
 	char cmd[1024];
 
-	sprintf (cmd, "%s \"echo foo\"", executor);
+	sprintf (cmd, "%s \"echo echo from remote connection check\"", executor);
 	ret = system (cmd);
 	return ret;
 }
