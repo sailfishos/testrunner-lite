@@ -59,7 +59,59 @@
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
-/* None */
+
+static const char *valid_utf8_samples[] = {
+    /* First possible sequence of a certain length */
+    "\xC2\x80",
+    "\xE0\xA0\x80",
+    "\xF0\x90\x80\x80",
+    /* Last possible sequence of a certain length */
+    "\x7F",
+    "\xDF\xBF",
+    "\xEF\xBF\xBF",
+    /* Other boundary conditions */
+    "\xED\x9F\xBF",		/* U-0000D7FF */
+    "\xEE\x80\x80",		/* U-0000E000 */
+    "\xEF\xBF\xBD",		/* U-0000FFFD */
+    "\xF4\x8F\xBF\xBF",		/* U-0010FFFF */
+};
+
+static const char *invalid_utf8_samples[] = {
+    /* Unexpected continuation bytes */
+    "\x80",
+    "\xBF",
+    "\x80\xBF",
+    "\x80\xBF\x80",
+    "\x80\xBF\x80\xBF",
+    "\x80\xBF\x80\xBF\x80",
+    "\x80\xBF\x80\xBF\x80\xBF",
+    "\x80\xBF\x80\xBF\x80\xBF\x80",
+    /* Sequences with last continuation byte missing */
+    "\xC0",
+    "\xE0\x80",
+    "\xF0\x80\x80",
+    "\xDF",
+    "\xEF\xBF",
+    "\xF7\xBF\xBF",
+    /* Concatenation of above incomplete sequences */
+    "\xC0\xE0\x80\xF0\x80\x80\xDF\xEF\xBF\xF7\xBF\xBF",
+    /* Impossible bytes */
+    "\xFE",
+    "\xFF",
+    "\xFE\xFE\xFF\xFF",
+    /* Examples of an overlong ASCII character  */
+    "\xC0\xAF",
+    "\xE0\x80\xAF",
+    "\xF0\x80\x80\xAF",
+    "\xF8\x80\x80\x80\xAF",
+    "\xFC\x80\x80\x80\x80\xAF",
+    /* Maximum overlong sequences */
+    "\xC1\xBF",
+    "\xE0\x9F\xBF",
+    "\xF0\x8F\xBF\xBF",
+    "\xF8\x87\xBF\xBF\xBF",
+    "\xFC\x83\xBF\xBF\xBF\xBF",
+};
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
@@ -119,6 +171,20 @@ START_TEST (test_ctrl_char_strip)
 		      strlen (valid_str)),
 	     "FAIL: stdout %s != %s", edata.stdout_data.buffer, valid_str);
 
+END_TEST
+
+START_TEST (test_utf8_checker)
+    int i;
+
+    /* check valid sequences */
+    for (i = 0; i  < sizeof(valid_utf8_samples)/sizeof(char*); ++i) {
+	fail_unless(utf8_validity_check((const unsigned char*)valid_utf8_samples[i]));
+    }
+
+    /* check invalid sequences */
+    for (i = 0; i  < sizeof(invalid_utf8_samples)/sizeof(char*); ++i) {
+	fail_if(utf8_validity_check((const unsigned char*)invalid_utf8_samples[i]));
+    }
 END_TEST
 
 START_TEST (test_logging)
@@ -396,6 +462,58 @@ START_TEST (test_remote_logging_command)
 }
 END_TEST
 
+START_TEST (test_remote_logging_command_with_logid)
+{
+    char buffer[1024];
+    char error[128];
+    char logger_option[128];
+    char logid_option[64];
+    const char *logid = "ID001trlite";
+    int portno = 9876;
+    pid_t pid = 0;
+
+    fail_if((pid = fork()) < 0);
+
+    if (pid == 0) {
+	/* child process to run testrunner-lite with --logger option */
+
+	/* wait for parent's server socket to be opened */
+	usleep(200000);
+
+	sprintf(logger_option, "--logger=http://127.0.0.1:%d", portno);
+	sprintf(logid_option, "--logid=%s", logid);
+
+	execl(TESTRUNNERLITE_BIN,
+	      TESTRUNNERLITE_BIN,
+	      "-f", TESTDATA_SIMPLE_XML_1,
+	      "-o", "/tmp/loggertestout.xml",
+	      "-v",
+	      "-H",
+	      logger_option,
+	      logid_option,
+	      (char*)NULL);
+	/* should never reach this point */
+	exit(1);
+    }
+
+    memset(buffer, 0, sizeof(buffer));
+    memset(error, 0, sizeof(error));
+    sprintf(logid_option, "userDefinedId=%s", logid);
+
+    run_server_socket(portno, buffer, sizeof(buffer) - 1, error);
+
+    /* wait child terminates */
+    wait(NULL);
+
+    fail_if(strlen(error) > 0, error);
+
+    /* Check that buffer contains at least something we expected */
+    fail_if(strstr(buffer, "HTTP") == NULL);
+    fail_if(strstr(buffer, "levelno") == NULL);
+    fail_if(strstr(buffer, logid_option) == NULL);
+}
+END_TEST
+
 START_TEST (test_hwinfo)
      
      hw_info hi;
@@ -500,6 +618,10 @@ Suite *make_features_suite (void)
     tcase_add_test (tc, test_ctrl_char_strip);
     suite_add_tcase (s, tc);
 
+    tc = tcase_create ("Test UTF-8 validation");
+    tcase_add_test (tc, test_utf8_checker);
+    suite_add_tcase (s, tc);
+
     tc = tcase_create ("Test logging.");
     tcase_add_test (tc, test_logging);
     suite_add_tcase (s, tc);
@@ -510,6 +632,10 @@ Suite *make_features_suite (void)
 
     tc = tcase_create ("Test remote logging command.");
     tcase_add_test (tc, test_remote_logging_command);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test remote logging command with logid.");
+    tcase_add_test (tc, test_remote_logging_command_with_logid);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test hw info.");

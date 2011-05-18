@@ -42,6 +42,7 @@
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL GLOBAL VARIABLES */
 extern struct timeval created;
+extern testrunner_lite_options opts;
 
 /* ------------------------------------------------------------------------- */
 /* EXTERNAL FUNCTION PROTOTYPES */
@@ -271,6 +272,7 @@ void log_msg(int type, const char *file, const char *function,
 	post_msg = create_msg ("levelno=%d&"
 			       "name=testrunner-lite&"
 			       "levelname=%s&" 
+			       "userDefinedId=%s&"
 			       "module=%s&"
 			       "filename=%s&"
 			       "pathname=testrunner-lite/src&"
@@ -288,6 +290,7 @@ void log_msg(int type, const char *file, const char *function,
 			       "msecs=%d.%d&"
 			       ,to_python_level[type],
 			       stream_name,
+			       opts.logid ? opts.logid : "None",
 			       module,
 			       file,
 			       function,
