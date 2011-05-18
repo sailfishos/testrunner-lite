@@ -215,11 +215,9 @@ LOCAL void usage()
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
 	        "Run host based testing with native ssh (libssh2) "
 	        "EXPERIMENTAL\n");
-	printf ("  -k private_key:public_key, --keypair private_key:public_key\n"
-	        "\t\tlibssh2 feature\n"
-	        "\t\tKeypair consists of private and public key file names\n"
-	        "\t\tThey are expected to be found under $HOME/.ssh\n");
 #endif
+	printf ("  -k ssh_key, --ssh_key\n"
+	        "\t\tpath to ssh auth key file\n");
 	printf ("\nExternal Execution:\n");
 	printf ("  -E EXECUTOR, --executor=EXECUTOR\n\t\t"
 		"Use an external command to execute test commands on the\n\t\t"
@@ -391,22 +389,32 @@ LOCAL int parse_target_address_libssh2(char *address,
 		return 1;
 	}
 }
+#endif // ENABLE_LIBSSH2
+
 /* ------------------------------------------------------------------------- */
-/** Parse keypair
- * @param keypair full path to keypair in format: private_key:public_key
+/** Parse key
+ * @param key path to ssh key
  * @param opts Options struct containing field(s) to store key filenames
  * @return 0 in success, 1 on failure
  */
-LOCAL int parse_keypair(char *keypair, testrunner_lite_options *opts) {
+LOCAL int parse_key(char *key, testrunner_lite_options *opts) {
+#if 0
 	char *param_ptr;
 	char *item;
 	char *param;
 	char *token;
 
 	item = NULL;
-	param = malloc(strlen(keypair) + 1);
-	strncpy(param, keypair, strlen(keypair) + 1);
-	
+#endif
+
+	if (!key || !strlen(key)) {
+		return 1;
+	}
+
+	opts->ssh_key = malloc(strlen(key) + 1);
+	strncpy(opts->ssh_key, key, strlen(key) + 1);
+
+#if 0	
 	/* will be modified by strsep */
 	param_ptr = param;
 	token = ":";
@@ -424,9 +432,10 @@ LOCAL int parse_keypair(char *keypair, testrunner_lite_options *opts) {
 	}
 	opts->pub_key = malloc(strlen(item) + 1);
 	strncpy(opts->pub_key, item, strlen(item) + 1);
+#endif
 	return 0;
 }
-#endif
+
 /* ------------------------------------------------------------------------- */
 /** Parse target address option argument for ssh client option
  * @param address SUT address.
@@ -668,10 +677,9 @@ int main (int argc, char *argv[], char *envp[])
 	opts.remote_executor = NULL;
 	opts.remote_getter = NULL;
 #ifdef ENABLE_LIBSSH2
-	opts.priv_key = NULL;
-	opts.pub_key = NULL;
 	opts.libssh2 = 0;
 #endif
+	opts.ssh_key = NULL;
 	FILE *ifile = NULL;
 	testrunner_lite_return_code retval = TESTRUNNER_LITE_OK;
 	xmlChar *filter_string = NULL;
@@ -859,8 +867,8 @@ int main (int argc, char *argv[], char *envp[])
 			}
 			break;
 		case 'k':
-			if (parse_keypair(optarg, &opts) != 0) {
-				fprintf(stderr, "Error parsing libssh2 keypair\n");
+			if (parse_key(optarg, &opts) != 0) {
+				fprintf(stderr, "Error parsing key\n");
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
@@ -1104,9 +1112,8 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.vcsurl) free (opts.vcsurl);
 #ifdef ENABLE_LIBSSH2
 	if (opts.username) free (opts.username);
-	if (opts.priv_key) free (opts.priv_key);
-	if (opts.pub_key) free (opts.pub_key);
 #endif
+	if (opts.ssh_key) free (opts.ssh_key);
 	if (opts.rich_core_dumps) free (opts.rich_core_dumps);
 	if (filter_string) free (filter_string);
 	if (bail_out == 255+SIGINT) {

@@ -84,9 +84,8 @@ typedef struct {
 #ifdef ENABLE_LIBSSH2
 	char *username;         /**< Remote user name for libssh2 */
 	int   libssh2;          /**< flag for libssh2 usage */
-	char *priv_key;  /**< private key file with full path (libssh2) */
-	char *pub_key;  /**< public key file with full path (libssh2) */
 #endif
+	char *ssh_key;          /** < custom SSH key */
 	int   no_measurement_verdicts; /**< flag for measurement verdicts */
 	char *chroot_folder;   /**< change root folder */
 	int measure_power;

@@ -981,14 +981,16 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
  * @return session instance on success, NULL if fails
  */
  libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
-                                   in_port_t port, const char *priv_key, 
-				   const char *pub_key) 
+                                   in_port_t port, const char *ssh_key)
 {
 	char *home_dir;
+	char *priv_key;
+	char *pub_key;
 	char *private_key_file;
 	char *public_key_file;
+	const char *postfix = ".pub";
 	int key_size;
-	libssh2_conn *conn;	
+	libssh2_conn *conn;
 
 	LOG_MSG(LOG_DEBUG, "");
 
@@ -1004,36 +1006,49 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	conn->signaled = 0;
 	
 	/* No ssh key files given, using default */
-	if (!priv_key || !pub_key || !strlen(priv_key) || !strlen(pub_key)) { 
-		priv_key = DEFAULT_PRIVATE_KEY;
-		pub_key = DEFAULT_PUBLIC_KEY;
+	if (!ssh_key || !strlen(ssh_key)) {
+		priv_key = malloc(strlen(DEFAULT_PRIVATE_KEY) + 1);
+		strncpy(priv_key, DEFAULT_PRIVATE_KEY, strlen(DEFAULT_PRIVATE_KEY) + 1);
+		pub_key = malloc(strlen(DEFAULT_PUBLIC_KEY) + 1);
+		strncpy(pub_key, DEFAULT_PUBLIC_KEY, strlen(DEFAULT_PUBLIC_KEY) + 1);
+	} else {		
+		int postlen = strlen(ssh_key) + strlen(postfix) + 1;
+		priv_key = malloc(strlen(ssh_key) + 1);
+		strncpy(priv_key, ssh_key, strlen(ssh_key) + 1);
+		pub_key = malloc(postlen);
+		strncpy(pub_key, ssh_key, strlen(ssh_key) + 1);
+		pub_key = strncat(pub_key, postfix, postlen);
 	}
 
-	/* Get the ssh keys from the user running testrunner-lite */
-	home_dir = getenv("HOME");
-	if (!home_dir) {
-		LOG_MSG(LOG_ERR, "Fatal: Could not get env for "
-		        "HOME");
-		conn->status = SESSION_GIVE_UP;
-		return NULL;
-	}
-
+	/* Get the ssh keys from the user running testrunner-lite */	
 	/* Create absolute paths to keys for libssh2
 	   ( ~ notation doesn't work in 1.2.6 yet) */
-	key_size = strlen(home_dir) + 
-		strlen(KEY_FMT) + 
-		strlen(pub_key) - 1;
-	public_key_file = malloc(key_size);
-	snprintf(public_key_file, key_size, KEY_FMT, home_dir, pub_key);
+	if (strchr(ssh_key, '~')) {
+		home_dir = getenv("HOME");
+		if (!home_dir) {
+			LOG_MSG(LOG_ERR, "Fatal: Could not get env for "
+			        "HOME");
+			conn->status = SESSION_GIVE_UP;
+			return NULL;
+		}
 
-	key_size = strlen(home_dir) + 
-		strlen(KEY_FMT) + 
-		strlen(priv_key) - 1;
-	private_key_file = malloc(key_size);
-	snprintf(private_key_file, key_size, KEY_FMT, home_dir, priv_key);
-
-	LOG_MSG(LOG_DEBUG, "public key file: %s\n", public_key_file);
-	LOG_MSG(LOG_DEBUG, "private key file: %s\n", private_key_file);
+		key_size = strlen(home_dir) + 
+			strlen(KEY_FMT) + 
+			strlen(pub_key) - 1;
+		public_key_file = malloc(key_size);
+		snprintf(public_key_file, key_size, KEY_FMT, home_dir, pub_key);
+		
+		key_size = strlen(home_dir) + 
+			strlen(KEY_FMT) + 
+			strlen(priv_key) - 1;
+		private_key_file = malloc(key_size);
+		snprintf(private_key_file, key_size, KEY_FMT, home_dir, priv_key);
+		LOG_MSG(LOG_DEBUG, "public key file: %s\n", public_key_file);
+		LOG_MSG(LOG_DEBUG, "private key file: %s\n", private_key_file);
+	} else {
+		private_key_file = malloc(strlen(ssh_key) + 1);
+		public_key_file = malloc(strlen(ssh_key) + strlen(postfix) + 1);
+	}
 
 	conn->priv_key = private_key_file;
 	conn->pub_key = public_key_file;
