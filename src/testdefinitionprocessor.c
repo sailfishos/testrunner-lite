@@ -135,7 +135,7 @@ LOCAL int event_execute (const void *data, const void *user);
 #endif
 LOCAL int set_device_core_pattern (const char *);
 /* ------------------------------------------------------------------------- */
-LOCAL int fetch_rich_core_dumps (const char *);
+LOCAL int fetch_rich_core_dumps (const char *, xmlListPtr);
 /* ------------------------------------------------------------------------- */
 
 /* FORWARD DECLARATIONS */
@@ -144,11 +144,35 @@ LOCAL int fetch_rich_core_dumps (const char *);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
+/** Puts crashids from string to list
+ * @param ids crash identifiers separetated by newlined
+ * @param crashids list to store found crash identifier into
+ */
+LOCAL void parse_crashids(char *ids, xmlListPtr crashids)
+{
+	char *p;
+	char *id;
+
+	if (!ids || strlen (ids) == 0)
+	      return;
+	p = strtok (ids, "\n");
+
+	while (p) {
+		id = strdup(p);
+                LOG_MSG (LOG_DEBUG, "Adding crash id: %s \n", id);
+		xmlListInsert (crashids, id);
+		p = strtok (NULL, "\n");
+	}
+	
+}
+/* ------------------------------------------------------------------------- */
 /** Fetch rich-core dumps from the device
  * @param uuid String identifier
+ * @param crashids list to store found crash identifier into
  * @return 1, if found; otherwise 0
  */
-LOCAL int fetch_rich_core_dumps (const char *uuid)
+LOCAL int fetch_rich_core_dumps (const char *uuid, xmlListPtr crashids)
 {
         exec_data edata;
         char *command;
@@ -156,18 +180,25 @@ LOCAL int fetch_rich_core_dumps (const char *uuid)
         size_t pattern_len;
 	td_file *file;
 	int ret = 0;
+#define RICHCORE_SEARCH_COMMAND "rich-core-find-uuid"
+#define RICH_CORE_SEARCH_PATTERN "%s*%s*"
 
         memset (&edata, 0x0, sizeof (exec_data));
         init_exec_data(&edata);
         edata.soft_timeout = COMMON_SOFT_TIMEOUT;
         edata.hard_timeout = COMMON_HARD_TIMEOUT;
+	edata.redirect_output = REDIRECT_OUTPUT;
 
-        pattern_len = strlen (opts.rich_core_dumps) + strlen (uuid);
+        pattern_len = strlen (opts.rich_core_dumps) + strlen (uuid) + 3;
         get_pattern = (char *) malloc (pattern_len);
-	sprintf (get_pattern, opts.rich_core_dumps, uuid);
+	sprintf (get_pattern, RICH_CORE_SEARCH_PATTERN,
+		 opts.rich_core_dumps, uuid);
 
-        command = (char *) malloc (pattern_len + 4);
-        sprintf (command, "ls %s", get_pattern);
+        command = (char *) malloc (strlen(RICHCORE_SEARCH_COMMAND) +
+				   strlen (opts.rich_core_dumps) + 
+				   strlen (uuid) + 3);
+        sprintf (command, "%s %s %s", 
+		 RICHCORE_SEARCH_COMMAND, opts.rich_core_dumps, uuid);
 
         LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
         execute(command, &edata);
@@ -178,8 +209,9 @@ LOCAL int fetch_rich_core_dumps (const char *uuid)
                 LOG_MSG (LOG_DEBUG, "%s: Rich core dumps not found with UUID: %s \n", 
 			PROGNAME, uuid);
 		goto out;
-        }
-
+        } else {
+		parse_crashids ((char *)edata.stdout_data.buffer, crashids);
+	}
 
 	file = (td_file *)malloc (sizeof (td_file));
 		file->filename = (xmlChar *)get_pattern;
@@ -207,7 +239,7 @@ out:
 LOCAL int set_device_core_pattern (const char *uuid)
 {
 	exec_data edata;
-	char *command;
+	char *command, *p;
 	size_t command_len;
 
 	memset (&edata, 0x0, sizeof (exec_data));
@@ -219,7 +251,9 @@ LOCAL int set_device_core_pattern (const char *uuid)
 	command = (char *) malloc (command_len);
 	strcpy (command, CORE_PATTERN_COMMAND);
 
+	p = command;
 	command = replace_string (command, "<UUID>", uuid);
+	free (p);
 
         LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
         execute(command, &edata);
@@ -277,14 +311,17 @@ LOCAL int step_execute (const void *data, const void *user)
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	if (bail_out) {
-		res = CASE_FAIL;
-		step->has_result = 1; 
+		step->has_result = 1;
 		step->return_code = bail_out;
 		if (global_failure) {
 			step->failure_info = xmlCharStrdup (global_failure);
-			c->failure_info = xmlCharStrdup (global_failure);
+			if (!c->failure_info) {
+				c->failure_info = xmlCharStrdup(global_failure);
+			}
 		}
-		goto out;
+		c->case_res = CASE_FAIL;
+
+		return 1;
 	}
 
 #ifdef ENABLE_EVENTS
@@ -445,10 +482,15 @@ LOCAL int step_post_process (const void *data, const void *user)
 	if (!step->pgid)
 		goto out;
 
-	if (opts.remote_executor) {
-		remote_kill (opts.remote_executor, step->pid);
-	} 
-	kill_pgroup(step->pgid, SIGKILL);
+	/* The required PID file from remote has been cleaned already.
+	   Thus commented this useless remote_kill call */
+	/* if (opts.remote_executor && !bail_out) { */
+	/* 	remote_kill (opts.remote_executor, step->pid, SIGKILL); */
+	/* } */
+
+	if (step->pgid > 0) {
+		kill_pgroup(step->pgid, SIGKILL);
+	}
 	
  out:
 	return 1;
@@ -545,7 +587,8 @@ LOCAL int process_case (const void *data, const void *user)
 		process_current_measurement(MEASUREMENT_FILE, c);
 	}
 
-	if (opts.rich_core_dumps != NULL && fetch_rich_core_dumps (uuid_buf)) {
+	if (opts.rich_core_dumps != NULL && 
+	    fetch_rich_core_dumps (uuid_buf, c->crashids)) {
 		c->rich_core_uuid = xmlCharStrdup (uuid_buf);
 	}
 	xmlListWalk (c->gets, process_get_case, c);
@@ -590,12 +633,15 @@ LOCAL int process_get (const void *data, const void *user)
 	char *command;
 	char *fname;
 	exec_data edata;
-	int command_len;
 	char *p;
 	char *executor = opts.remote_executor;
 #ifdef ENABLE_LIBSSH2
+	int command_len;
 	char *remote = opts.target_address;
 #endif
+	if (bail_out) {
+		return 1;
+	}
 
 	memset (&edata, 0x0, sizeof (exec_data));
 	init_exec_data(&edata);
@@ -702,6 +748,9 @@ LOCAL int process_get_case (const void *data, const void *user)
 	ret = process_get (data, NULL);
 	if (!ret)
 		LOG_MSG (LOG_WARNING, "get file processing failed");
+
+	if (bail_out)
+		return 1;
 
 	/* return if file not specified to contain measurement data */
 	if (!file->measurement)
@@ -889,6 +938,11 @@ LOCAL void process_set (td_set *s)
 	}
 	
 	xmlListWalk (s->cases, process_case, s);
+
+	if (opts.resume_testrun != RESUME_TESTRUN_ACTION_NONE) {
+		wait_for_resume_execution();
+	}
+
 	if (xmlListSize (s->post_steps) > 0) {
 		LOG_MSG (LOG_INFO, "Executing post steps");
 		cur_case_name = (xmlChar *)"post_steps";
@@ -902,6 +956,10 @@ LOCAL void process_set (td_set *s)
 				 "Post steps failed for %s.", s->gen.name);
 	}
 	xmlListWalk (s->gets, process_get, NULL);
+
+	if (opts.resume_testrun == RESUME_TESTRUN_ACTION_EXIT) {
+		restore_bail_out_after_resume_execution();
+	}
 
  short_circuit:
 	write_post_set (s);

@@ -173,8 +173,9 @@ typedef struct {
 	xmlListPtr series;         /**< measurement series */
 	xmlChar   *comment;     /**< Manual test case comment */
 	case_result_t  case_res; /**< Case result */
-	xmlChar   *failure_info;   /**< optional failure info */
+	xmlChar   *failure_info;   /**< Optional failure info */
 	xmlChar   *rich_core_uuid; /**< Optional UUID for rich core dumps */
+	xmlListPtr crashids;    /**< List of crashids related to this case */
 	int        dummy;       /**< Case is dummy - used with pre post steps */
 	int        filtered;    /**< Case is filtered */
 } td_case;

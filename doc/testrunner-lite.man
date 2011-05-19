@@ -81,6 +81,8 @@ Causes testrunner-lite to write the given VCS URL to results.
 \fB\-U \fIURL\fR,  \fB\-\-package\-url\fR\=\fIURL\fR
 Causes testrunner-lite to write the given packge URL to results.
 .TP
+\fB\-\-logid\fR=\fIID\fR
+Define an identifier ID for log messages when remote HTTP logger is used (--logger). ID is placed in the field \fIuserDefinedId\fR of the message. Only alphanumeric characters are accepted.
 \fB\-d \fIPATH\fR, \fB\-\-rich\-core\-dumps\fR=\fIPATH\fR
 Save rich-core dumps. PATH is the location, where rich-core dumps are produced in the device. Creates UUID mappings between executed test cases and generated rich-core dumps. This makes possible to link each rich-cores and test cases in test reporting.
 
@@ -98,6 +100,12 @@ of the testrunner itself, only the tests will have the new root folder set.
 .TP
 \fB\-t\fR [\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]\fR, \fB\-\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]
 Enable host-based testing. If given, commands are executed from test control PC (host) side. ADDRESS is the ipv4 address of the system under test. Behind the scenes, host-based testing uses the external execution described below with SSH and SCP.
+.TP
+\fB\-R\fR[\fIACTION\fR], \fB--resume\fR=[\fIACTION\fR]
+Resume testrun when ssh connection failure occurs. Parent process is signaled with \fISIGUSR1\fR and then testrunner-lite suspends until it receives \fISIGUSR1\fR for notification of repaired network connection. After resume, the remaining cases are skipped and post steps and get operations are executed in the current test set. Finally, depending on given \fBACTION\fR, testrunner-lite either exits (\fBexit\fR) or continues to the next test set (\fBcontinue\fR). The default action is \fBexit\fR.
+.TP
+\fB\-i\fR [\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]\fR, \fB\-\-hwinfo\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]
+Obtain hwinfo remotely. Hwinfo is usually obtained locally or in case of host-based testing from target address. This option overrides target address when hwinfo is obtained. Usage is similar to -t option.
 .TP
 \fILibssh2 Execution:\fR
 .TP

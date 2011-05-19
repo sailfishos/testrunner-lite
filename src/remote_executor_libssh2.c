@@ -30,6 +30,7 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <libssh2.h>
+#include <fcntl.h>
 
 #include "testrunnerlite.h"
 #include "executor.h"
@@ -72,7 +73,8 @@
 #define KNOWN_HOSTS_FILE "known_hosts"
 #define DEFAULT_PUBLIC_KEY "id_eat_dsa.pub"
 #define DEFAULT_PRIVATE_KEY "id_eat_dsa"
-#define KEY_FMT "%s/.ssh/%s"
+#define KEY_FMT "%s%s"
+#define PUB_KEY_FMT "%s.pub"
 /* A command to be run in the remote end while executing a test step */
 #define TRLITE_RUN_CMD ". /var/tmp/testrunner-lite.sh '%s'"
 /* Kills the children of the jammed shell session */
@@ -569,8 +571,14 @@ static int lssh2_session_free(libssh2_conn *conn)
 
 	close(conn->sock);
 
-	if (conn->priv_key) free(conn->priv_key);
-	if (conn->pub_key) free(conn->pub_key);
+	if (conn->priv_key) { 
+		free(conn->priv_key);
+		conn->priv_key = NULL;
+	}
+	if (conn->pub_key) {
+		free(conn->pub_key);
+		conn->pub_key = NULL;
+	}
 	
 	if (conn) {
 		free(conn);
@@ -601,12 +609,12 @@ static int lssh2_session_reconnect(libssh2_conn *conn)
 	}
 	
 	close(conn->sock);
-	
+
 	if (lssh2_setup_socket(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Reconnect: setup socket failed");
 		return -1;
 	}
-	
+
 	if (lssh2_session_connect(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Reconnect: session connect failed");
 		return -1;
@@ -620,12 +628,26 @@ static int lssh2_session_reconnect(libssh2_conn *conn)
  */
 static int lssh2_setup_socket(libssh2_conn *conn) 
 {
-
+	int flags, s;
 	struct hostent *host;
+	struct timeval tv;
+
 	conn->hostaddr = inet_addr(conn->hostname);
 	conn->sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (conn->sock < 0) {
 		LOG_MSG(LOG_ERR, "Opening socket failed %s", strerror(errno));
+		return -1;
+	}
+
+	/* Get socket flags */
+	flags = fcntl(conn->sock, F_GETFL, 0);
+	if(flags < 0) {
+		LOG_MSG(LOG_ERR, "Setting socket to non-blocking failed: %s", strerror(errno));
+		return -1;
+	}
+	/* Add non-blocking flag */
+	if(fcntl(conn->sock, F_SETFL, flags | O_NONBLOCK) < 0) {
+		LOG_MSG(LOG_ERR, "Setting socket to non-blocking failed: %s", strerror(errno));
 		return -1;
 	}
 
@@ -645,12 +667,40 @@ static int lssh2_setup_socket(libssh2_conn *conn)
 
 	memcpy (&(conn->sin.sin_addr.s_addr), host->h_addr, host->h_length);
 
-	if (connect(conn->sock, (struct sockaddr*)(&conn->sin),
-	            sizeof(struct sockaddr_in)) != 0) {
-		LOG_MSG(LOG_ERR, "Connecting to remote end failed %s", 
-			strerror(errno));
-		close(conn->sock);
-		return -1;
+	s = connect(conn->sock, (struct sockaddr*)(&conn->sin),
+	            sizeof(struct sockaddr_in));
+	if(s < 0) {
+		/* Connecting is in progress */
+		if(errno == EINPROGRESS) {
+			LOG_MSG(LOG_DEBUG, "Connecting to device");
+
+			FD_ZERO(&conn->nfd);
+			FD_SET(conn->sock, &conn->nfd);
+			tv.tv_sec = 10;
+			tv.tv_usec = 0;
+			s = select(conn->sock + 1, NULL, &conn->nfd, NULL, &tv);
+
+			if (s < 0 && errno != EINTR) {
+				LOG_MSG(LOG_ERR, "Error connecting after select %d - %s\n", errno, strerror(errno));
+				return -1;
+			} else if(s > 0) {
+				int so_error;
+				socklen_t slen = sizeof(so_error);
+				getsockopt(conn->sock, SOL_SOCKET, SO_ERROR, &so_error, &slen);
+				if (so_error == 0) {
+					LOG_MSG(LOG_DEBUG, "Connected to %s", conn->hostname);
+				} else {
+					LOG_MSG(LOG_ERR, "Error connecting after getsockopt %d - %s\n", errno, strerror(errno));
+					return -1;
+				}
+			} else {
+				LOG_MSG(LOG_DEBUG, "Timeout when connecting to device");
+				return -1;
+			}
+		} else {
+			LOG_MSG(LOG_ERR, "Error connecting %d - %s\n", errno, strerror(errno));
+			return -1;
+		}
 	}
 
 	return 0;
@@ -798,9 +848,19 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	int retries = 0;
 	int channel_retries = 0;
 	
-	if (!conn || !conn->ssh2_session || conn->status == SESSION_GIVE_UP) {
-		LOG_MSG(LOG_DEBUG, "Cannot create SSH channel: no SSH session");
-		return -1;
+	if (!conn || !conn->ssh2_session) {
+		if(conn && conn->status != SESSION_GIVE_UP) {
+			LOG_MSG(LOG_DEBUG, "Try to reconnect SSH session");
+			trlite_status = OK;
+			if (lssh2_session_reconnect(conn) < 0) {
+				LOG_MSG(LOG_ERR, "Connection error");
+				conn->status = SESSION_GIVE_UP;
+				lssh2_session_free(conn);
+				return -1;
+			}
+		} else {
+			return -1;
+		}
 	}
 
 	/* Open session channel */
@@ -988,11 +1048,14 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	char *pub_key;
 	char *private_key_file;
 	char *public_key_file;
-	const char *postfix = ".pub";
 	int key_size;
+	struct stat priv_key_file_status;
+	struct stat pub_key_file_status;
+	
+
 	libssh2_conn *conn;
 
-	LOG_MSG(LOG_DEBUG, "");
+	LOG_MSG(LOG_DEBUG, "ssh key %s", ssh_key);
 
 	conn = malloc(sizeof(libssh2_conn));
 	conn->hostname = hostname;
@@ -1012,18 +1075,17 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 		pub_key = malloc(strlen(DEFAULT_PUBLIC_KEY) + 1);
 		strncpy(pub_key, DEFAULT_PUBLIC_KEY, strlen(DEFAULT_PUBLIC_KEY) + 1);
 	} else {		
-		int postlen = strlen(ssh_key) + strlen(postfix) + 1;
+		int postlen = strlen(ssh_key) + strlen(PUB_KEY_FMT) + 1;
 		priv_key = malloc(strlen(ssh_key) + 1);
 		strncpy(priv_key, ssh_key, strlen(ssh_key) + 1);
 		pub_key = malloc(postlen);
-		strncpy(pub_key, ssh_key, strlen(ssh_key) + 1);
-		pub_key = strncat(pub_key, postfix, postlen);
+		snprintf(pub_key, postlen, PUB_KEY_FMT, ssh_key);
 	}
 
 	/* Get the ssh keys from the user running testrunner-lite */	
 	/* Create absolute paths to keys for libssh2
 	   ( ~ notation doesn't work in 1.2.6 yet) */
-	if (strchr(ssh_key, '~')) {
+	if (ssh_key[0] == '~') {
 		home_dir = getenv("HOME");
 		if (!home_dir) {
 			LOG_MSG(LOG_ERR, "Fatal: Could not get env for "
@@ -1036,39 +1098,77 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 			strlen(KEY_FMT) + 
 			strlen(pub_key) - 1;
 		public_key_file = malloc(key_size);
-		snprintf(public_key_file, key_size, KEY_FMT, home_dir, pub_key);
+		snprintf(public_key_file, key_size, KEY_FMT, home_dir, &pub_key[1]);
 		
 		key_size = strlen(home_dir) + 
 			strlen(KEY_FMT) + 
 			strlen(priv_key) - 1;
 		private_key_file = malloc(key_size);
-		snprintf(private_key_file, key_size, KEY_FMT, home_dir, priv_key);
-		LOG_MSG(LOG_DEBUG, "public key file: %s\n", public_key_file);
-		LOG_MSG(LOG_DEBUG, "private key file: %s\n", private_key_file);
+		snprintf(private_key_file, key_size, KEY_FMT, home_dir, &priv_key[1]);
 	} else {
-		private_key_file = malloc(strlen(ssh_key) + 1);
-		public_key_file = malloc(strlen(ssh_key) + strlen(postfix) + 1);
+		private_key_file = malloc(strlen(priv_key) + 1);
+		strncpy(private_key_file, priv_key, strlen(priv_key) + 1);
+		public_key_file = malloc(strlen(pub_key) + 1);
+		strncpy(public_key_file, pub_key, strlen(pub_key) + 1); 
 	}
+
+	LOG_MSG(LOG_DEBUG, "public key file: %s\n", public_key_file);
+	LOG_MSG(LOG_DEBUG, "private key file: %s\n", private_key_file);
 
 	conn->priv_key = private_key_file;
 	conn->pub_key = public_key_file;
 	conn->status = SESSION_OK;
+
+	/* Check that files are available */
+	if (stat(conn->priv_key, &priv_key_file_status) != 0) {
+		LOG_MSG(LOG_ERR, "Private key %s doesn't exist or isn't readable",
+		        conn->priv_key);
+		goto error;
+	}
+
+	if (stat(conn->pub_key, &pub_key_file_status) != 0) {
+		LOG_MSG(LOG_ERR, "Public key %s doesn't exist or isn't readable",
+		        conn->pub_key);
+		goto error;
+	}
+
 	
 	if (lssh2_session_connect(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Connection error");
 		conn->status = SESSION_GIVE_UP;
 		lssh2_session_free(conn);
-		return NULL;
+		goto error;
 	}
 
 	if (lssh2_create_shell_scripts(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Error creating remote shell scripts");
 		conn->status = SESSION_GIVE_UP;
 		lssh2_session_free(conn);
-		return NULL;
+		goto error;
 	}
 
+	if (priv_key) { 
+		free(priv_key);
+		priv_key = NULL;
+	}
+	if (pub_key) { 
+		free(pub_key);
+		pub_key = NULL;
+	}
 	return conn;
+
+ error:
+	if (priv_key) { 
+		free(priv_key);
+		priv_key = NULL;
+	}
+	if (pub_key) { 
+		free(pub_key);
+		pub_key = NULL;
+	}
+
+	return NULL;
+
 }
 /* ------------------------------------------------------------------------- */
 /** Builds a test command out of test step and executes it in remote end

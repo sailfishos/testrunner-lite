@@ -58,6 +58,16 @@ typedef enum {
 	TESTRUNNER_LITE_RESULT_LOGGING_FAIL
 } testrunner_lite_return_code;
 
+typedef enum {
+	RESUME_TESTRUN_ACTION_NONE = 0,
+	RESUME_TESTRUN_ACTION_EXIT,
+	RESUME_TESTRUN_ACTION_CONTINUE
+} resume_testrun_action;
+
+enum {
+	TRLITE_LONG_OPTION_LOGID = 256
+};
+
 /** Used for storing and passing user (command line) options.*/
 typedef struct {
 	char *input_filename;  /**< the input xml file */
@@ -89,6 +99,10 @@ typedef struct {
 	int   no_measurement_verdicts; /**< flag for measurement verdicts */
 	char *chroot_folder;   /**< change root folder */
 	int measure_power;
+	resume_testrun_action resume_testrun;
+	char *logid;		/**< User defined ID in HTTP log messages */
+	char *hwinfo_target;	/**< Address where to ask hwinfo */
+	in_port_t hwinfo_port; /**< Optional port for hwinfo address */
 	char *rich_core_dumps;  /**< save rich-core dumps from DUT */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */

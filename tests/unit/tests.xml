@@ -18,7 +18,7 @@
     <case type="Functional" name="testrunnerlite_unit_tests_testdefinitionparser" description="testrunner-lite testdefinitionparser tests" timeout="180">
      <step>export CK_DEFAULT_TIMEOUT=10;/usr/lib/testrunner-lite-tests/testrunnerliteunittests testdefinitionparser</step>
     </case>
-    <case type="Functional" name="testrunnerlite_unit_tests_testexecutor" description="testrunner-lite testexecutor tests" timeout="180">
+    <case type="Functional" name="testrunnerlite_unit_tests_testexecutor" description="testrunner-lite testexecutor tests" timeout="240">
      <step>export CK_DEFAULT_TIMEOUT=10;/usr/lib/testrunner-lite-tests/testrunnerliteunittests testexecutor</step>
     </case>
     <case type="Functional" name="testrunnerlite_unit_tests_testresultlogger" description="testrunner-lite testresultlogger tests" timeout="180">
