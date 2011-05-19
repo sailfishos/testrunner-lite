@@ -15,11 +15,13 @@ Requires: test-definition, openssh, testrunner-lite-hwinfo, libssh2, libuuid
 
 %package tests
 Summary: Unit tests for testrunner-lite
-Requires: testrunner-lite
+Requires:  %{name} = %{version}-%{release}
 
 %package regression-tests
 Summary: Regression tests for testrunner-lite
-Requires: testrunner-lite, libxml2-utils
+Requires: %{name} = %{version}-%{release}
+Requires: test-definition >= 1.3.0
+Requires: libxml2, diffutils
 
 %package docs
 Summary: Testrunner-lite doxygen documentation in html format

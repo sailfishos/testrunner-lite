@@ -1,13 +1,14 @@
 testrunner-lite (1.7.0) unstable; urgency=low
 
   * Support for fetching rich cores and writing crash identifiers to results (BMC#17754)
-  * Option to resume (--resume) test run after connection fail (by slahtinen)
-  * Option to ask hwinfo remotely in case of chroot testing (-i) (by kylanpaj)
-  * Option to pass user defined log id to http log output (--logid) (by slahtinen)
-  * Stricter UTF-8 checks for test step output (by slahtinen)
-  * Both absolute and $HOME/.ssh paths accepted for libssh2 keypairs (by kylanpaj) (BMC#15292)
+  * Option to resume (--resume) test run after connection fail (BMC#17688)
+  * Option to ask hwinfo remotely in case of chroot testing (-i) (BMC#17685)
+  * Option to pass user defined log id to http log output (--logid) (BMC#17687)
+  * Stricter UTF-8 checks for test step output (BMC#17686)
+  * Both absolute and $HOME/.ssh paths accepted for libssh2 keypairs (BMC#15292)
+  * More specific version requirements for testrunner-lite test packages (BMC#17266)
 
- -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Thu, 19 May 2011 08:56:57 +0300
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Thu, 19 May 2011 16:26:28 +0300
 
 testrunner-lite (1.6.1) unstable; urgency=low
 
