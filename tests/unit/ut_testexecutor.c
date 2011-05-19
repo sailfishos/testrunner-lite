@@ -811,6 +811,56 @@ START_TEST (test_executor_remote_libssh2_command)
 	fail_unless (edata.stderr_data.buffer == NULL);
 	executor_close();
 END_TEST
+
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_remote_libssh2_default_key)
+/* Just to see if using default key causes problem.
+   Not trying to connect */
+	testrunner_lite_options opts;
+	memset (&opts, 0x0, sizeof (opts));
+	opts.libssh2 = 1;
+	opts.log_level = LOG_LEVEL;
+	opts.username = getenv("LOGNAME");
+	opts.ssh_key = "";
+	opts.target_address = "localhost";
+	opts.target_port = 0;
+	printf("a\n");
+	executor_init (&opts);
+	printf("b\n");
+	log_init(&opts);
+	printf("c\n");
+	executor_close();
+END_TEST
+
+/* ------------------------------------------------------------------------- */
+START_TEST (test_executor_remote_libssh2_nonexisting_key)
+    testrunner_lite_options opts;
+    int ret = 0;
+    memset (&opts, 0x0, sizeof (opts));
+    opts.libssh2 = 1;
+    opts.log_level = LOG_LEVEL;
+    opts.username = getenv("LOGNAME");
+    opts.ssh_key = "foobarbar";
+    opts.target_address = "localhost";
+    opts.target_port = 0;
+    ret = executor_init (&opts);
+    fail_unless (ret != 0);
+    log_init(&opts);
+	executor_close();
+
+    memset (&opts, 0x0, sizeof (opts));
+    opts.libssh2 = 1;
+    opts.log_level = LOG_LEVEL;
+    opts.username = getenv("LOGNAME");
+    opts.ssh_key = "~/foobarbar";
+    opts.target_address = "localhost";
+    opts.target_port = 0;
+    ret = executor_init (&opts);
+    fail_unless (ret != 0);
+    log_init(&opts);
+	executor_close();
+END_TEST
+
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_command_port)
 	exec_data edata;
@@ -1259,6 +1309,16 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test executor remote libssh2 command.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_remote_libssh2_command);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor remote libssh2 default key.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_executor_remote_libssh2_default_key);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test executor remote libssh2 nonexisting key");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_executor_remote_libssh2_nonexisting_key);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test executor remote libssh2 command with port.");

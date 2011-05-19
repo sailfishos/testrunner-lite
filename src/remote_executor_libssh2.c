@@ -1085,7 +1085,7 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	/* Get the ssh keys from the user running testrunner-lite */	
 	/* Create absolute paths to keys for libssh2
 	   ( ~ notation doesn't work in 1.2.6 yet) */
-	if (ssh_key[0] == '~') {
+	if (priv_key[0] == '~') {
 		home_dir = getenv("HOME");
 		if (!home_dir) {
 			LOG_MSG(LOG_ERR, "Fatal: Could not get env for "
@@ -1285,7 +1285,11 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 int lssh2_executor_close (libssh2_conn *conn)
 {
 	LOG_MSG(LOG_DEBUG, "");
-	return lssh2_session_free(conn);
+	if (conn) {
+		return lssh2_session_free(conn);
+	} else {
+		return 0;
+	}
 }
 
 /* ------------------------------------------------------------------------- */
