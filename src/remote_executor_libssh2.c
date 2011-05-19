@@ -31,6 +31,7 @@
 #include <sys/time.h>
 #include <libssh2.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "testrunnerlite.h"
 #include "executor.h"
@@ -1049,8 +1050,7 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	char *private_key_file;
 	char *public_key_file;
 	int key_size;
-	struct stat priv_key_file_status;
-	struct stat pub_key_file_status;
+	int err;
 	
 
 	libssh2_conn *conn;
@@ -1120,18 +1120,41 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	conn->status = SESSION_OK;
 
 	/* Check that files are available */
-	if (stat(conn->priv_key, &priv_key_file_status) != 0) {
-		LOG_MSG(LOG_ERR, "Private key %s doesn't exist or isn't readable",
-		        conn->priv_key);
-		goto error;
+	if (access(conn->priv_key, R_OK) < 0) {
+		err = errno;
+		switch (err) {
+		case ENOENT:
+			LOG_MSG(LOG_ERR, "Private key %s doesn't exist",
+			        conn->priv_key);
+			goto error;
+		case EACCES:
+			LOG_MSG(LOG_ERR, "No read access to private key %s",
+			        conn->priv_key);
+			goto error;
+		default:
+			LOG_MSG(LOG_ERR, "Private key %s error; %d",
+			        conn->priv_key, access);
+			goto error;
+		}
 	}
 
-	if (stat(conn->pub_key, &pub_key_file_status) != 0) {
-		LOG_MSG(LOG_ERR, "Public key %s doesn't exist or isn't readable",
-		        conn->pub_key);
-		goto error;
+	if (access(conn->pub_key, R_OK) < 0) {
+		err = errno;
+		switch (err) {
+		case ENOENT:
+			LOG_MSG(LOG_ERR, "Public key %s doesn't exist",
+			        conn->pub_key);
+			goto error;
+		case EACCES:
+			LOG_MSG(LOG_ERR, "No read access to public key %s",
+			        conn->pub_key);
+			goto error;
+		default:
+			LOG_MSG(LOG_ERR, "Public key %s error; %d",
+			        conn->pub_key, access);
+			goto error;
+		}
 	}
-
 	
 	if (lssh2_session_connect(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Connection error");
