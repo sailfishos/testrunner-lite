@@ -87,7 +87,6 @@ LOCAL hw_info hwinfo;
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
 		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s"
 #define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
-#define RICH_CORE_SEARCH_PATTERN "*%s*"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -117,11 +116,12 @@ LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 LOCAL int test_chroot(char * folder);
 /* ------------------------------------------------------------------------- */
+LOCAL int set_rich_core_dumps(char *folder, testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
 LOCAL int parse_logid(char *logid, testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
-LOCAL int parse_target_address_hwinfo(char* address, testrunner_lite_options *opts);
-/* ------------------------------------------------------------------------- */
-LOCAL int create_rich_core_search_pattern(char *folder, testrunner_lite_options *opts);
+LOCAL int parse_target_address_hwinfo(char* address, 
+				      testrunner_lite_options *opts);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -642,7 +642,29 @@ LOCAL int test_chroot(char * folder) {
 
 	return 0;
 }
+/* ------------------------------------------------------------------------- */
+/** Save the rich-core dumps folder setting
+ * @param folder path to rich-core dumps in the device.
+ * @param opts options struct containing field(s)
+ * @return 0 on success; otherwise 1
+ */
+LOCAL int set_rich_core_dumps(char *folder, testrunner_lite_options *opts)
+{
+	size_t pattern_len;
 
+	if (folder && strlen (folder) > 0) {
+		pattern_len = strlen (folder) + 2;
+		opts->rich_core_dumps = (char *) malloc (pattern_len);
+
+		strcpy (opts->rich_core_dumps, folder);
+		if (folder[strlen (folder) - 1] != '/') {
+			strcat (opts->rich_core_dumps, "/");
+		}
+		return 0;
+	} else {
+		return 1;
+	}
+}
 /* ------------------------------------------------------------------------- */
 /** Parse logid option argument string. Only letters and digits are accepted.
  * @param logid Option argument string
@@ -666,7 +688,7 @@ LOCAL int parse_logid(char *logid, testrunner_lite_options *opts)
 	opts->logid = strdup(logid);
 	return 0;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Parse target address where to ask hwinfo
  * @param address SUT address.
  * @param opts Options struct containing field(s) to store url
@@ -694,32 +716,6 @@ LOCAL int parse_target_address_hwinfo(char *address, testrunner_lite_options *op
 		return 1;
 	}
 }
-
-/** Creates a pattern to locate rich-core dumps in the device.
- * @param folder path to rich-core dumps in the device.
- * @param opts options struct containing field(s)
- * @return 0 on success; otherwise 1
- */
-LOCAL int create_rich_core_search_pattern(char *folder, testrunner_lite_options *opts)
-{
-	size_t pattern_len;
-
-	if (folder && strlen (folder) > 0) {
-		pattern_len = strlen (folder) + 
-			strlen (RICH_CORE_SEARCH_PATTERN) + 2;
-		opts->rich_core_dumps = (char *) malloc (pattern_len);
-
-		strcpy (opts->rich_core_dumps, folder);
-		if (folder[strlen (folder) - 1] != '/') {
-			strcat (opts->rich_core_dumps, "/");
-		}
-		strcat (opts->rich_core_dumps, RICH_CORE_SEARCH_PATTERN);
-		return 0;
-	} else {
-		return 1;
-	}
-}
-
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
@@ -989,7 +985,7 @@ int main (int argc, char *argv[], char *envp[])
 			}
 			break;
 		case 'd':
-			if (create_rich_core_search_pattern (optarg, &opts) != 0) {
+			if (set_rich_core_dumps (optarg, &opts) != 0) {
                                 retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
                                 goto OUT;
 			}
