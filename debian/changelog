@@ -1,3 +1,14 @@
+testrunner-lite (1.7.0) unstable; urgency=low
+
+  * Support for fetching rich cores and writing crash identifiers to results (BMC#17754)
+  * Option to resume (--resume) test run after connection fail (by slahtinen)
+  * Option to ask hwinfo remotely in case of chroot testing (-i) (by kylanpaj)
+  * Option to pass user defined log id to http log output (--logid) (by slahtinen)
+  * Stricter UTF-8 checks for test step output (by slahtinen)
+  * Both absolute and $HOME/.ssh paths accepted for libssh2 keypairs (by kylanpaj) (BMC#15292)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Thu, 19 May 2011 08:56:57 +0300
+
 testrunner-lite (1.6.1) unstable; urgency=low
 
   * Fixes to process handling (possibility of busyloop removed) (by slahtinen)
