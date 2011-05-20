@@ -86,7 +86,7 @@ LOCAL hw_info hwinfo;
 /* LOCAL CONSTANTS AND MACROS */
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
 		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s %s"
-#define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
+#define SCP_REMOTE_GETTER "/usr/bin/scp %s %s %s:'<FILE>' '<DEST>'"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -520,7 +520,12 @@ LOCAL int parse_remote_getter(char *getter, testrunner_lite_options *opts)
 LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 {
 	char portarg [3 + 5 + 1]; /* "-p " + max port size + '\0' */
-	int keyarg_len = strlen(opts->ssh_key) + 3 + 1; /* -i + ssh key len + '\0' */
+	int keyarg_len;
+	if (opts->ssh_key) {  
+		keyarg_len = strlen(opts->ssh_key) + 3 + 1; /* -i + ssh key len + '\0'*/
+	} else {
+		keyarg_len = 1; /* for null termination */
+	}
 	char keyarg[keyarg_len];
 	size_t len;
 
@@ -560,22 +565,34 @@ LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 LOCAL int parse_default_scp_getter(testrunner_lite_options *opts)
 {
 	char portarg [3 + 5 + 1]; /* "-P " + max port size + '\0' */
+	int keyarg_len;
+	if (opts->ssh_key) {  
+		keyarg_len = strlen(opts->ssh_key) + 3 + 1; /* -i + ssh key len + '\0'*/
+	} else {
+		keyarg_len = 1; /* for null termination */
+	}
+	char keyarg[keyarg_len];
 	size_t len;
 
 	portarg[0] = '\0';
 	if (opts->target_port)
 		sprintf (portarg, "-P %u", opts->target_port);
 
+	keyarg[0] = '\0';
+	if (opts->ssh_key) {
+		snprintf (keyarg, keyarg_len + 1, "-i %s", opts->ssh_key);
+	}
+
 	len = strlen(SCP_REMOTE_GETTER) + strlen(portarg) +
-		strlen(opts->target_address) + 1;
+		strlen(opts->target_address) + keyarg_len + 1;
 	opts->remote_getter = malloc(len);
 	if (opts->remote_getter == NULL) {
 		fprintf (stderr, "Malloc failed\n");
 		return 1;
 	}
 
-	sprintf(opts->remote_getter, SCP_REMOTE_GETTER, portarg,
-		opts->target_address);
+	sprintf(opts->remote_getter, SCP_REMOTE_GETTER, portarg, keyarg,
+	        opts->target_address);
 
 	return 0;
 }
@@ -815,6 +832,7 @@ int main (int argc, char *argv[], char *envp[])
 
 	opts.output_type = OUTPUT_TYPE_XML;
 	opts.run_automatic = opts.run_manual = 1;
+	opts.ssh_key = NULL;
 	gettimeofday (&created, NULL);
 	signal (SIGINT, handle_sigint);
 	signal (SIGTERM, handle_sigterm);
