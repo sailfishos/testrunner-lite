@@ -371,6 +371,7 @@ START_TEST (test_executor_remote_command)
 	sleep(1);
 	executor_close();
 END_TEST
+
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_command_port)
 	exec_data edata;
@@ -774,6 +775,49 @@ START_TEST(test_remote_hwinfo)
      fail_if (ret != 0, cmd);
 END_TEST
 
+/* ------------------------------------------------------------------------- */
+START_TEST (test_remote_custom_key)
+
+     int ret;
+     char cmd[1024];
+     
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	      "-t localhost -k ~/.ssh/myrsakey", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_SIMPLE_XML_1);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+END_TEST
+
+/* ------------------------------------------------------------------------- */
+START_TEST (test_remote_custom_key_full_path)
+
+     int ret;
+     char cmd[1024];
+     char *homepath;
+     homepath = getenv("HOME");
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	      "-t localhost -k %s/.ssh/myrsakey", 
+              TESTRUNNERLITE_BIN, 
+              TESTDATA_SIMPLE_XML_1, homepath);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+END_TEST
+
+
+/* ------------------------------------------------------------------------- */
+START_TEST (test_remote_custom_key_nonexisting)
+
+     int ret;
+     char cmd[1024];
+     
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	      "-t localhost -k ~/.ssh/foobarbar", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_SIMPLE_XML_1);
+     ret = system (cmd);
+     fail_if(ret == 0);
+END_TEST
 
 #ifdef ENABLE_LIBSSH2
 /* ------------------------------------------------------------------------- */
@@ -1303,6 +1347,21 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test obtaining hwinfo remotely.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_remote_hwinfo);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test custom ssh key.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_custom_key);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test custom ssh key full path.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_custom_key_full_path);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test custom nonexisting ssh key.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_custom_key_nonexisting);
     suite_add_tcase (s, tc);
 
 #ifdef ENABLE_LIBSSH2

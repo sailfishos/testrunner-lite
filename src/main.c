@@ -85,7 +85,7 @@ LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
-		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s"
+		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s %s"
 #define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
@@ -228,14 +228,15 @@ LOCAL void usage()
 		"case of host-based testing from target address. This option\n\t\t"
 		"overrides target address when hwinfo is obtained.\n\t\t"
 		"Usage is similar to -t option.\n");
+	printf ("  -k SSH_KEY, --ssh-key=SSH_KEY\n"
+	        "\t\tpath to ssh private auth key file\n");
+
 #ifdef ENABLE_LIBSSH2
 	printf ("\nLibssh2 Execution:\n");
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
 	        "Run host based testing with native ssh (libssh2) "
 	        "EXPERIMENTAL\n");
 #endif
-	printf ("  -k ssh_key, --ssh_key\n"
-	        "\t\tpath to ssh auth key file\n");
 	printf ("\nExternal Execution:\n");
 	printf ("  -E EXECUTOR, --executor=EXECUTOR\n\t\t"
 		"Use an external command to execute test commands on the\n\t\t"
@@ -416,41 +417,45 @@ LOCAL int parse_target_address_libssh2(char *address,
  * @return 0 in success, 1 on failure
  */
 LOCAL int parse_key(char *key, testrunner_lite_options *opts) {
-#if 0
-	char *param_ptr;
-	char *item;
-	char *param;
-	char *token;
 
-	item = NULL;
-#endif
+	struct stat ssh_key_file;
+	int err;
+
+	fprintf(stderr, "key : %s\n", key);
 
 	if (!key || !strlen(key)) {
 		return 1;
 	}
 
+	/* Check that the parameter is an existing file with read access */
+	if (stat(key, &ssh_key_file) == -1) {
+			fprintf(stderr, "%s: ssh key file not found: %s\n",
+				PROGNAME, key);
+			return 1;
+	}
+
+	if (S_ISDIR(ssh_key_file.st_mode)) {
+		fprintf(stderr, "%s: '%s' is a directory, not a file\n",
+		        PROGNAME, key);
+		return 1;
+	}
+
+	if (access(key, R_OK) < 0) {
+		err = errno;
+		switch (err) {
+		case EACCES:
+			fprintf(stderr, "No read access to ssh key %s\n",
+			        key);
+			return 1;
+		default:
+			fprintf(stderr, "Access error to private key %s: %d\n",
+			        key, err);
+			return 1;
+		}		
+	}
+
 	opts->ssh_key = malloc(strlen(key) + 1);
 	strncpy(opts->ssh_key, key, strlen(key) + 1);
-
-#if 0	
-	/* will be modified by strsep */
-	param_ptr = param;
-	token = ":";
-	item = strsep(&param_ptr, token);
-	if (!item || !strlen(item)) {
-		free(param);
-		return 1;
-	}
-	opts->priv_key = malloc(strlen(item) + 1);
-	strncpy(opts->priv_key, item, strlen(item) + 1);
-	item = strsep(&param_ptr, token);
-	if (!item || !strlen(item)) {
-		free(param);
-		return 1;
-	}
-	opts->pub_key = malloc(strlen(item) + 1);
-	strncpy(opts->pub_key, item, strlen(item) + 1);
-#endif
 	return 0;
 }
 
@@ -515,6 +520,8 @@ LOCAL int parse_remote_getter(char *getter, testrunner_lite_options *opts)
 LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 {
 	char portarg [3 + 5 + 1]; /* "-p " + max port size + '\0' */
+	int keyarg_len = strlen(opts->ssh_key) + 3 + 1; /* -i + ssh key len + '\0' */
+	char keyarg[keyarg_len];
 	size_t len;
 
 	if (opts->target_address == NULL) {
@@ -525,9 +532,14 @@ LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 	portarg[0] = '\0';
 	if (opts->target_port)
 		sprintf (portarg, "-p %u", opts->target_port);
+	
+	keyarg[0] = '\0';
+	if (opts->ssh_key) {
+		snprintf (keyarg, keyarg_len + 1, "-i %s", opts->ssh_key);
+	}
 
 	len = strlen(SSH_REMOTE_EXECUTOR) + strlen(portarg) +
-		strlen(opts->target_address) + 1;
+		strlen(opts->target_address) + keyarg_len + 1;
 	opts->remote_executor = malloc(len);
 	if (opts->remote_executor == NULL) {
 		fprintf (stderr, "Malloc failed\n");
@@ -535,7 +547,7 @@ LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 	}
 
 	sprintf(opts->remote_executor, SSH_REMOTE_EXECUTOR, portarg,
-		opts->target_address);
+	        opts->target_address, keyarg);
 
 	return 0;
 }
@@ -779,7 +791,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"getter", required_argument, NULL, 'G'},
 #ifdef ENABLE_LIBSSH2
 			{"libssh2", required_argument, NULL, 'n'},
-			{"keypair", required_argument, NULL, 'k'},
+			{"ssh-key", required_argument, NULL, 'k'},
 #endif
 			{"print-step-output", no_argument, 
 			 &opts.print_step_output, 1},
@@ -814,9 +826,9 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:v::"
+					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:v::k:"
 #ifdef ENABLE_LIBSSH2
-					"n:k:"
+					"n:"
 #endif
 					"R::i:", testrunnerlite_options,
 					&option_idx);
@@ -945,14 +957,13 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			break;
+#endif
 		case 'k':
 			if (parse_key(optarg, &opts) != 0) {
-				fprintf(stderr, "Error parsing key\n");
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
 			break;
-#endif
 		case 'P':
 			opts.print_step_output = 1;
 			break;

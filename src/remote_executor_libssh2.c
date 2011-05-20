@@ -172,6 +172,9 @@ static int lssh2_kill (libssh2_conn *conn, int signal);
 static char *replace(char const *const cmd, char const *const pat, 
 		     char const *const rep);
 /* ------------------------------------------------------------------------- */
+static int lssh2_verify_keypair(libssh2_conn *conn, const char *username, 
+                                const char *ssh_key);
+/* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -529,7 +532,7 @@ static int lssh2_session_free(libssh2_conn *conn)
 {
 
 	LOG_MSG(LOG_DEBUG, "session_conn->session %p", conn->ssh2_session);
-	if (!conn || !conn->ssh2_session) {
+	if (!conn || !conn->ssh2_session) { 
 		LOG_MSG(LOG_DEBUG, "No SSH session");
 		return -1;
 	}
@@ -1029,45 +1032,28 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	return 0;
 }
 
-
 /* ------------------------------------------------------------------------- */
-/* ======================== FUNCTIONS ====================================== */
-/* ------------------------------------------------------------------------- */
-/** Creates an instance of SSH session
- * @param username User name 
- * @param hostname Host name
- * @param port Host port (0 defaults to 22)
- * @param priv_key private key
- * @param pub_key public key
- * @return session instance on success, NULL if fails
+/** Parses and verifies the keypair for libssh2
+ * @param conn SSH session
+ * @param username user login name
+ * @ssh_key path to SSH private key
+ * returns 0 on success, -1 if fails
  */
- libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
-                                   in_port_t port, const char *ssh_key)
-{
+static int lssh2_verify_keypair(libssh2_conn *conn, const char *username, 
+                                const char *ssh_key) {
+
 	char *home_dir;
 	char *priv_key;
 	char *pub_key;
 	char *private_key_file;
 	char *public_key_file;
+	struct stat ssh_key_file;
 	int key_size;
 	int err;
-	
 
-	libssh2_conn *conn;
 
-	LOG_MSG(LOG_DEBUG, "ssh key %s", ssh_key);
+	LOG_MSG(LOG_DEBUG, "ssh key parameter: %s", ssh_key);
 
-	conn = malloc(sizeof(libssh2_conn));
-	conn->hostname = hostname;
-	conn->username = username;
-	conn->port = port;
-	conn->password = "";
-	conn->writefd = NULL;
-	conn->readfd = NULL;
-	conn->timeout.tv_sec = LIBSSH2_TIMEOUT;
-	conn->timeout.tv_nsec = 0;
-	conn->signaled = 0;
-	
 	/* No ssh key files given, using default */
 	if (!ssh_key || !strlen(ssh_key)) {
 		priv_key = malloc(strlen(DEFAULT_PRIVATE_KEY) + 1);
@@ -1091,7 +1077,7 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 			LOG_MSG(LOG_ERR, "Fatal: Could not get env for "
 			        "HOME");
 			conn->status = SESSION_GIVE_UP;
-			return NULL;
+			goto error;
 		}
 
 		key_size = strlen(home_dir) + 
@@ -1119,7 +1105,32 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	conn->pub_key = public_key_file;
 	conn->status = SESSION_OK;
 
-	/* Check that files are available */
+	/* Check that the ssh key files exist and have read access */
+	if (stat(conn->priv_key, &ssh_key_file) == -1) {
+			LOG_MSG(LOG_ERR, "ssh private key file not found: %s\n",
+			        conn->priv_key);
+			goto error;
+	}
+
+	if (S_ISDIR(ssh_key_file.st_mode)) {
+		fprintf(stderr, "ssh private key '%s' is a directory, not a file\n",
+		        conn->priv_key);
+		goto error;
+	}
+
+	if (stat(conn->pub_key, &ssh_key_file) == -1) {
+			LOG_MSG(LOG_ERR, "ssh public key file not found: %s\n",
+			        conn->pub_key);
+			goto error;
+	}
+
+	if (S_ISDIR(ssh_key_file.st_mode)) {
+		fprintf(stderr, "ssh public key '%s' is a directory, not a file\n",
+		        conn->pub_key);
+		goto error;
+	}
+
+	/* Check that files are readable */
 	if (access(conn->priv_key, R_OK) < 0) {
 		err = errno;
 		switch (err) {
@@ -1156,6 +1167,60 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 		}
 	}
 	
+	if (priv_key) { 
+		free(priv_key);
+		priv_key = NULL;
+	}
+	if (pub_key) { 
+		free(pub_key);
+		pub_key = NULL;
+	}
+	return 0;
+
+ error:	
+	if (priv_key) { 
+		free(priv_key);
+		priv_key = NULL;
+	}
+	if (pub_key) { 
+		free(pub_key);
+		pub_key = NULL;
+	}
+	return -1;
+
+}
+
+/* ------------------------------------------------------------------------- */
+/* ======================== FUNCTIONS ====================================== */
+/* ------------------------------------------------------------------------- */
+/** Creates an instance of SSH session
+ * @param username User name 
+ * @param hostname Host name
+ * @param port Host port (0 defaults to 22)
+ * @param priv_key private key
+ * @param pub_key public key
+ * @return session instance on success, NULL if fails
+ */
+ libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
+                                   in_port_t port, const char *ssh_key)
+{
+	libssh2_conn *conn;
+	conn = malloc(sizeof(libssh2_conn));
+	conn->hostname = hostname;
+	conn->username = username;
+	conn->port = port;
+	conn->password = "";
+	conn->writefd = NULL;
+	conn->readfd = NULL;
+	conn->timeout.tv_sec = LIBSSH2_TIMEOUT;
+	conn->timeout.tv_nsec = 0;
+	conn->signaled = 0;
+	
+	if (lssh2_verify_keypair(conn, username, ssh_key) < 0) {
+		free(conn);
+		goto error;
+	}
+	
 	if (lssh2_session_connect(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Connection error");
 		conn->status = SESSION_GIVE_UP;
@@ -1170,26 +1235,9 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 		goto error;
 	}
 
-	if (priv_key) { 
-		free(priv_key);
-		priv_key = NULL;
-	}
-	if (pub_key) { 
-		free(pub_key);
-		pub_key = NULL;
-	}
 	return conn;
 
  error:
-	if (priv_key) { 
-		free(priv_key);
-		priv_key = NULL;
-	}
-	if (pub_key) { 
-		free(pub_key);
-		pub_key = NULL;
-	}
-
 	return NULL;
 
 }
