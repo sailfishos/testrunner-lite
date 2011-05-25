@@ -28,6 +28,7 @@
 #include <getopt.h>
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <libxml/xmlreader.h>
 #include <libxml/xmlschemas.h>
@@ -100,6 +101,10 @@ LOCAL int td_parse_gets(xmlListPtr);
 LOCAL int td_parse_set ();
 /* ------------------------------------------------------------------------- */
 LOCAL int td_parse_hwiddetect ();
+/* ------------------------------------------------------------------------- */
+LOCAL void log_xml_error(void * ctx, const char * fmt, ...);
+/* ------------------------------------------------------------------------- */
+LOCAL void log_xml_warning(void * ctx, const char * fmt, ...);
 /* ------------------------------------------------------------------------- */
 #ifdef ENABLE_EVENTS
 LOCAL td_step *td_parse_event();
@@ -892,6 +897,43 @@ LOCAL int td_parse_hwiddetect ()
 
 	return 0;
 }
+/* ------------------------------------------------------------------------- */
+/** Callback for parser/validator errors
+ */
+LOCAL void log_xml_error(void * ctx, const char * fmt, ...)
+{
+	char* msg = NULL;
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vasprintf(&msg, fmt, ap);
+	va_end(ap);
+
+	if (ret >= 0) {
+		LOG_MSG(LOG_ERR, msg);
+		free(msg);
+	}
+}
+/* ------------------------------------------------------------------------- */
+/** Callback for parser/validator warnings
+ */
+LOCAL void log_xml_warning(void * ctx, const char * fmt, ...)
+{
+	char* msg = NULL;
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vasprintf(&msg, fmt, ap);
+	va_end(ap);
+
+	if (ret >= 0) {
+		LOG_MSG(LOG_WARNING, msg);
+		free(msg);
+	}
+}
+
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -920,6 +962,8 @@ int parse_test_definition (testrunner_lite_options *opts)
 			 PROGNAME);
 		goto out;
 	}
+
+	xmlSetGenericErrorFunc(ctxt, log_xml_error);
 	
 	doc = xmlCtxtReadFile(ctxt, opts->input_filename, NULL, XML_PARSE_NOENT);
 	if (doc == NULL) {
@@ -954,6 +998,9 @@ int parse_test_definition (testrunner_lite_options *opts)
 		goto out;
 	}
 
+	xmlSchemaSetParserErrors(schema_ctxt, log_xml_error,
+				 log_xml_warning, NULL);
+
 	sch = xmlSchemaParse(schema_ctxt);
 	if (sch == NULL) {
 		LOG_MSG (LOG_ERR, "%s: Failed to parse schema\n",
@@ -969,9 +1016,16 @@ int parse_test_definition (testrunner_lite_options *opts)
 		
 	}
 	
+	xmlSchemaSetValidErrors(valid_ctxt, log_xml_error,
+				log_xml_warning, NULL);
+
 	ret = xmlSchemaValidateDoc(valid_ctxt, doc);
-	if (ret)
+	if (ret) {
+		LOG_MSG (LOG_ERR, "%s: Failed to validate %s against schema\n",
+			 PROGNAME,
+			 opts->input_filename);
 		ret = TESTRUNNER_LITE_XML_VALIDATION_FAIL;
+	}
 out:
 	/* 
 	 * 3) Clean up
