@@ -72,8 +72,8 @@
 /* Size we try to read from ssh session */
 #define CHANNEL_BUFFER_SIZE 1024
 #define KNOWN_HOSTS_FILE "known_hosts"
-#define DEFAULT_PUBLIC_KEY "id_eat_dsa.pub"
-#define DEFAULT_PRIVATE_KEY "id_eat_dsa"
+#define DEFAULT_PUBLIC_KEY "~/.ssh/id_eat_dsa.pub"
+#define DEFAULT_PRIVATE_KEY "~/.ssh/id_eat_dsa"
 #define KEY_FMT "%s%s"
 #define PUB_KEY_FMT "%s.pub"
 /* A command to be run in the remote end while executing a test step */
