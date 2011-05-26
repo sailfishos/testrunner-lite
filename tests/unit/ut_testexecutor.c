@@ -1298,6 +1298,83 @@ START_TEST (test_remote_libssh2_get_username)
      fail_if (ret, cmd);
 END_TEST
 
+/* ------------------------------------------------------------------------- */
+START_TEST (test_remote_libssh2_custom_key_get)
+
+     int ret;
+     char cmd[1024];
+     
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	      "-n localhost -k ~/.ssh/myrsakey", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_GET_XML_1);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+    
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+END_TEST
+
+/* ------------------------------------------------------------------------- */
+START_TEST (test_remote_libssh2_custom_key_full_path_get)
+
+     int ret;
+     char cmd[1024];
+     char *homepath;
+     homepath = getenv("HOME");
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+              "-n localhost -k %s/.ssh/myrsakey", 
+              TESTRUNNERLITE_BIN, 
+              TESTDATA_GET_XML_1, homepath);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+    
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+END_TEST
+
 #endif /* ENABLE_LIBSSH2 */
 
 /* ------------------------------------------------------------------------- */
@@ -1494,6 +1571,17 @@ Suite *make_testexecutor_suite (void)
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_remote_libssh2_get_username);
     suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test libssh2 custom ssh key get.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_libssh2_custom_key_get);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test libssh2 custom ssh key get full path.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_libssh2_custom_key_full_path_get);
+    suite_add_tcase (s, tc);
+
 #endif /* ENABLE_LIBSSH2 */
 
     return s;

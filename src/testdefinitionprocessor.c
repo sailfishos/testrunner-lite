@@ -637,6 +637,7 @@ LOCAL int process_get (const void *data, const void *user)
 	char *executor = opts.remote_executor;
 #ifdef ENABLE_LIBSSH2
 	int command_len;
+	int key_param_len = 0;
 	char *remote = opts.target_address;
 #endif
 	if (bail_out) {
@@ -656,20 +657,36 @@ LOCAL int process_get (const void *data, const void *user)
 	*/
 #ifdef ENABLE_LIBSSH2
 	if (opts.libssh2) {
+		if (opts.ssh_key) {
+			/* length of "-i keyfile + \'0'" */
+			key_param_len = strlen(opts.ssh_key) + 3 + 1;			
+		} else {
+			key_param_len = 1;
+		}
+
+		char key_param[key_param_len];
+
+		if (opts.ssh_key) {
+			snprintf(key_param, key_param_len, "-i %s", opts.ssh_key);
+		} else {
+			key_param[0] = '\0';
+		}
+		
 		opts.target_address = NULL; /* execute locally */
 		command_len = strlen ("scp ") +
 			strlen (opts.username) + 1 +
 			strlen (fname) +
 			strlen (opts.output_folder) +
-			strlen (remote) + 30;
+			strlen (remote) + 30 + 
+			key_param_len;
 		command = (char *)malloc (command_len);
 		if (opts.target_port)
 			sprintf (command, "scp -P %u ", opts.target_port);
 		else
 			sprintf (command, "scp ");
 		p = (char *)(command + (strlen (command)));
-			sprintf (p, "%s@%s:\'%s\' %s", opts.username, remote,
-			 fname, opts.output_folder);
+			sprintf (p, "%s@%s:\'%s\' %s %s", opts.username, remote,
+			         fname, opts.output_folder, key_param);
 	} else
 #endif
 	if (executor) {
