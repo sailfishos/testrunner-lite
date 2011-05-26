@@ -1,3 +1,9 @@
+testrunner-lite (1.6.1-4) unstable; urgency=low
+
+  * Fixes: NB#259853 - Testrunner does not log test definition schema validation error
+
+ -- Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>  Thu, 26 May 2011 09:32:26 +0300
+
 testrunner-lite (1.6.1-3) unstable; urgency=low
 
   * Fixes: NB#256409 - Return value 255 from a test step wrongly intepreted as a connection failure
