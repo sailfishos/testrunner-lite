@@ -846,6 +846,44 @@ START_TEST (test_remote_custom_key_get)
 END_TEST
 
 /* ------------------------------------------------------------------------- */
+START_TEST (test_remote_custom_key_port_get)
+
+     int ret;
+     char cmd[1024];
+     
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	      "-t localhost:22 -k ~/.ssh/myrsakey", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_GET_XML_1);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+    
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+END_TEST
+
+/* ------------------------------------------------------------------------- */
 START_TEST (test_remote_custom_key_full_path_get)
 
      int ret;
@@ -1336,6 +1374,45 @@ START_TEST (test_remote_libssh2_custom_key_get)
      fail_if (ret, cmd);
 END_TEST
 
+
+/* ------------------------------------------------------------------------- */
+START_TEST (test_remote_libssh2_custom_key_port_get)
+
+     int ret;
+     char cmd[1024];
+     
+     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	      "-n localhost:22 -k ~/.ssh/myrsakey", 
+	      TESTRUNNERLITE_BIN, 
+	      TESTDATA_GET_XML_1);
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+    
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+     
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
+     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+END_TEST
+
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_libssh2_custom_key_full_path_get)
 
@@ -1506,6 +1583,11 @@ Suite *make_testexecutor_suite (void)
     tcase_add_test (tc, test_remote_custom_key_get);
     suite_add_tcase (s, tc);
 
+    tc = tcase_create ("Test custom ssh key port get.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_custom_key_port_get);
+    suite_add_tcase (s, tc);
+
     tc = tcase_create ("Test custom ssh key get full path.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_remote_custom_key_full_path_get);
@@ -1575,6 +1657,11 @@ Suite *make_testexecutor_suite (void)
     tc = tcase_create ("Test libssh2 custom ssh key get.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_remote_libssh2_custom_key_get);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test libssh2 custom ssh key port get.");
+    tcase_set_timeout (tc, 20);
+    tcase_add_test (tc, test_remote_libssh2_custom_key_port_get);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test libssh2 custom ssh key get full path.");
