@@ -59,7 +59,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
-#define LOG_LEVEL 2
+#define LOG_LEVEL 0
 #define DEFAULT_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
 		"-o PasswordAuthentication=no localhost"
 #define DEFAULT_REMOTE_EXECUTOR_PORT "/usr/bin/ssh -o StrictHostKeyChecking=no " \

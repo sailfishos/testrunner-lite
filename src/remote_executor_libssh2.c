@@ -1071,13 +1071,19 @@ static int lssh2_verify_keypair(libssh2_conn *conn, const char *username,
 	/* Get the ssh keys from the user running testrunner-lite */	
 	/* Create absolute paths to keys for libssh2
 	   ( ~ notation doesn't work in 1.2.6 yet) */
-	if (priv_key[0] == '~') {
-		home_dir = getenv("HOME");
-		if (!home_dir) {
-			LOG_MSG(LOG_ERR, "Fatal: Could not get env for "
-			        "HOME");
-			conn->status = SESSION_GIVE_UP;
-			goto error;
+	/* Checking the keys is redundant to main.c, but kept here so that libssh2 executor
+	   would remain standalone */
+	if (strlen(priv_key) > 1 && priv_key[0] == '~') {
+		/* ~/file -notation */
+		if (priv_key[1] == '/') {
+			home_dir = getenv("HOME");
+			if (!home_dir) {
+				fprintf(stderr, "Fatal: Could not find users home directory\n");
+				goto error;
+			}
+		} else {
+			/* ~username/file -notation */
+			home_dir = "/home/";
 		}
 
 		key_size = strlen(home_dir) + 

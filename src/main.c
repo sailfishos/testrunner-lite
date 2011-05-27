@@ -228,8 +228,8 @@ LOCAL void usage()
 		"case of host-based testing from target address. This option\n\t\t"
 		"overrides target address when hwinfo is obtained.\n\t\t"
 		"Usage is similar to -t option.\n");
-	printf ("  -k SSH_KEY, --ssh-key=SSH_KEY\n"
-	        "\t\tpath to ssh private auth key file\n");
+	printf ("  -k KEY, --ssh-key=KEY\n"
+	        "\t\tpath to SSH private key file\n");
 
 #ifdef ENABLE_LIBSSH2
 	printf ("\nLibssh2 Execution:\n");
@@ -420,41 +420,73 @@ LOCAL int parse_key(char *key, testrunner_lite_options *opts) {
 
 	struct stat ssh_key_file;
 	int err;
+	int key_size;
+	char *home_dir;
+	char *ssh_key;
 
 	if (!key || !strlen(key)) {
 		return 1;
 	}
 
+	/* We can't rely that the shell would translate '~' to users home path
+	   in every occasion */
+	if (strlen(key) > 1 && key[0] == '~') {
+		/* ~/file -notation */
+		if (key[1] == '/') {
+			home_dir = getenv("HOME");
+			if (!home_dir) {
+				fprintf(stderr, "Fatal: Could not find users home directory\n");
+				goto error;
+			}
+		} else {
+			/* ~username/file -notation */
+			home_dir = "/home/";
+		}
+
+		key_size = strlen(home_dir) + 
+			strlen(key) - 1 + 1; /* remove '~', add '\0' */
+		ssh_key = malloc(key_size);
+		snprintf(ssh_key, key_size, "%s%s", home_dir, &key[1]);
+	} else {
+		ssh_key = malloc(strlen(key) + 1);
+		strncpy(ssh_key, key, strlen(key) + 1);
+	}
+
 	/* Check that the parameter is an existing file with read access */
-	if (stat(key, &ssh_key_file) == -1) {
+	if (stat(ssh_key, &ssh_key_file) == -1) {
 			fprintf(stderr, "%s: ssh key file not found: %s\n",
-				PROGNAME, key);
-			return 1;
+				PROGNAME, ssh_key);
+			goto error;
 	}
 
 	if (S_ISDIR(ssh_key_file.st_mode)) {
 		fprintf(stderr, "%s: '%s' is a directory, not a file\n",
-		        PROGNAME, key);
-		return 1;
+		        PROGNAME, ssh_key);
+		goto error;
 	}
 
-	if (access(key, R_OK) < 0) {
+	if (access(ssh_key, R_OK) < 0) {
 		err = errno;
 		switch (err) {
 		case EACCES:
 			fprintf(stderr, "No read access to ssh key %s\n",
-			        key);
-			return 1;
+			        ssh_key);
+			goto error;
 		default:
 			fprintf(stderr, "Access error to private key %s: %d\n",
-			        key, err);
-			return 1;
+			        ssh_key, err);
+			goto error;
 		}		
 	}
 
-	opts->ssh_key = malloc(strlen(key) + 1);
-	strncpy(opts->ssh_key, key, strlen(key) + 1);
+	opts->ssh_key = malloc(strlen(ssh_key) + 1);
+	strncpy(opts->ssh_key, ssh_key, strlen(ssh_key) + 1);
+	if (ssh_key) free (ssh_key);
 	return 0;
+
+ error:
+	if (ssh_key) free(ssh_key);
+	return 1;
 }
 
 /* ------------------------------------------------------------------------- */

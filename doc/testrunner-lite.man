@@ -107,13 +107,13 @@ Resume testrun when ssh connection failure occurs. Parent process is signaled wi
 \fB\-i\fR [\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]\fR, \fB\-\-hwinfo\-target\fR\=[\fIUSER\fR@]\fIADDRESS\fR[:\fIPORT\fR]
 Obtain hwinfo remotely. Hwinfo is usually obtained locally or in case of host-based testing from target address. This option overrides target address when hwinfo is obtained. Usage is similar to -t option.
 .TP
+\fB\-k \fRKEY\fR, \fB\-\-ssh-key=\fIKEY\fR
+Path to SSH private key file\fR	
+.TP 
 \fILibssh2 Execution:\fR
 .TP
 \fB\-n\fR [\FIUSER@\fR]\fIADDRESS\fR, \fB\-\-libssh2\fR=[\fIUSER@\fR]\fIADDRESS\fR
 Run host based testing with native ssh (libssh2) \fIEXPERIMENTAL\fR
-.TP 
-\fB\-k \fIprivate_key\fR:\fIpublic_key\fR, \fB\-\-keypair \fIprivate_key\fR:\fIpublic_key\fR
-libssh2 featureKeypair consists of private and public key file names They are expected to be found under \fI$HOME/.ssh\fR
 .TP
 \fIExternal Execution:\fR
 .TP 
