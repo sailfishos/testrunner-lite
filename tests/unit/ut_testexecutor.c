@@ -971,11 +971,8 @@ START_TEST (test_executor_remote_libssh2_default_key)
 	opts.ssh_key = "";
 	opts.target_address = "localhost";
 	opts.target_port = 0;
-	printf("a\n");
 	executor_init (&opts);
-	printf("b\n");
 	log_init(&opts);
-	printf("c\n");
 	executor_close();
 END_TEST
 
