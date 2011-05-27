@@ -421,8 +421,6 @@ LOCAL int parse_key(char *key, testrunner_lite_options *opts) {
 	struct stat ssh_key_file;
 	int err;
 
-	fprintf(stderr, "key : %s\n", key);
-
 	if (!key || !strlen(key)) {
 		return 1;
 	}
