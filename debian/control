@@ -7,7 +7,7 @@ Standards-Version: 3.8.0
 
 Package: testrunner-lite
 Architecture: any
-Depends: libxml2, test-definition, libcurl3, openssh | ssh, testrunner-lite-hwinfo, libssh2-1, libuuid1
+Depends: libxml2, test-definition  (>= 1.3.0), libcurl3, openssh | ssh, testrunner-lite-hwinfo, libssh2-1, libuuid1
 Description: generic test executor tool
 
 Package: testrunner-lite-doc
@@ -33,7 +33,7 @@ Description: Library for obtaining hardware information in meego environment
 Package: testrunner-lite-tests
 Section: tests
 Architecture: any
-Depends: testrunner-lite, check, ${shlibs:Depends}
+Depends: testrunner-lite (= ${binary:Version}), check
 XB-Maemo-CI-Packages: testrunner-lite
 XB-Maemo-CI-Stage: fast, staging, acceptance, validation
 Description: Unit tests for testrunner
@@ -41,7 +41,7 @@ Description: Unit tests for testrunner
 Package: testrunner-lite-regression-tests
 Section: tests
 Architecture: any
-Depends: testrunner-lite, libxml2-utils, ${shlibs:Depends}
+Depends: testrunner-lite  (= ${binary:Version}), libxml2-utils, test-definition (>= 1.3.0)
 XB-Maemo-CI-Packages: testrunner-lite
 XB-Maemo-CI-Stage: fast, staging, acceptance, validation
 Description: Regression tests for testrunner
