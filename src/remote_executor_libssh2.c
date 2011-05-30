@@ -478,7 +478,7 @@ static int lssh2_channel_close(libssh2_conn *conn, LIBSSH2_CHANNEL *channel,
 	int n;
 	*exitcode = -127;
 	int channel_retries = 0;
-	
+
 	if (channel) {
 		while (channel_retries < MAX_SSH_CHANNEL_RETRIES) {
 			n = libssh2_channel_close(channel);
@@ -851,6 +851,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	int n;
 	int retries = 0;
 	int channel_retries = 0;
+	int exitcode = -127;
 	
 	if (!conn || !conn->ssh2_session) {
 		if(conn && conn->status != SESSION_GIVE_UP) {
@@ -920,7 +921,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 		if (channel_retries > MAX_SSH_CHANNEL_RETRIES) {
 			LOG_MSG(LOG_ERR, "Channel execute failed");
 			channel_retries = 0;
-			lssh2_channel_close(conn, channel, NULL);
+			lssh2_channel_close(conn, channel, &exitcode);
 			conn->status = SESSION_GIVE_UP;
 			return -1;
 		}
@@ -935,7 +936,11 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	}
 
 	if (conn->status != SESSION_GIVE_UP) {
-		lssh2_channel_close(conn, channel, &data->result);	
+		lssh2_channel_close(conn, channel, &exitcode);	
+		/* Ignore exit code if not requested */
+		if (data) {
+			data->result = exitcode;
+		}
 	}
 
 	return 0;
@@ -1036,7 +1041,7 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 /** Parses and verifies the keypair for libssh2
  * @param conn SSH session
  * @param username user login name
- * @ssh_key path to SSH private key
+ * @param ssh_key path to SSH private key
  * returns 0 on success, -1 if fails
  */
 static int lssh2_verify_keypair(libssh2_conn *conn, const char *username, 

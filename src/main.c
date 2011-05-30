@@ -435,7 +435,8 @@ LOCAL int parse_key(char *key, testrunner_lite_options *opts) {
 		if (key[1] == '/') {
 			home_dir = getenv("HOME");
 			if (!home_dir) {
-				fprintf(stderr, "Fatal: Could not find users home directory\n");
+				fprintf(stderr, "Fatal: Could not find users home "
+				        "directory\n");
 				goto error;
 			}
 		} else {
