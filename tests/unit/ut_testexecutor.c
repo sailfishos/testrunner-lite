@@ -1549,13 +1549,13 @@ Suite *make_testexecutor_suite (void)
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test resume testrun feature with --resume=exit.");
-    tcase_set_timeout (tc, 120);
+    tcase_set_timeout (tc, 320);
     tcase_add_unchecked_fixture (tc, NULL, teardown_resume_test);
     tcase_add_test (tc, test_executor_remote_resume_exit);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test resume testrun feature with --resume=continue.");
-    tcase_set_timeout (tc, 120);
+    tcase_set_timeout (tc, 320);
     tcase_add_unchecked_fixture (tc, NULL, teardown_resume_test);
     tcase_add_test (tc, test_executor_remote_resume_continue);
     suite_add_tcase (s, tc);
