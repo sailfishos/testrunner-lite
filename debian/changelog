@@ -8,9 +8,9 @@ testrunner-lite (1.7.0) unstable; urgency=low
   * Both absolute and $HOME/.ssh paths accepted for libssh2 keypairs (BMC#15292)
   * More specific version requirements for testrunner-lite test packages (BMC#17266)
   * Soft termination of test step during timeout on remote execution mode (BMC#9103)
-  * Possibility to provide key filename (-k) with -t option (BMC#17683)
+  * Support for ssh key filename (-k) also with -t option (BMC#17683)
 
- -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Mon, 30 May 2011 09:24:19 +0300
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Mon, 30 May 2011 09:49:55 +0300
 
 testrunner-lite (1.6.1) unstable; urgency=low
 
