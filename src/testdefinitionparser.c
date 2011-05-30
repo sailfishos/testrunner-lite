@@ -918,6 +918,8 @@ LOCAL int td_parse_hwiddetect ()
 }
 /* ------------------------------------------------------------------------- */
 /** Callback for parser/validator errors
+ * @param ctx pointer to xmlSchemaParserCtxt
+ * @param fmt format as in printf()
  */
 LOCAL void log_xml_error(void * ctx, const char * fmt, ...)
 {
@@ -936,6 +938,8 @@ LOCAL void log_xml_error(void * ctx, const char * fmt, ...)
 }
 /* ------------------------------------------------------------------------- */
 /** Callback for parser/validator warnings
+ * @param ctx pointer to xmlSchemaParserCtxt
+ * @param fmt format as in printf()
  */
 LOCAL void log_xml_warning(void * ctx, const char * fmt, ...)
 {

@@ -538,12 +538,16 @@ static int execution_terminated(exec_data* data) {
 			    (data->result == 255 ||
 			     (data->result > 64 && data->result < 80))
 			    ) {
-				if (remote_check_conn(options->remote_executor)) {
+				if (remote_check_conn
+				    (options->remote_executor)) {
 					bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
-					global_failure = "earlier connection failure";
-					LOG_MSG(LOG_ERR, "remote connection failure");
+					global_failure = 
+						"earlier connection failure";
+					LOG_MSG(LOG_ERR, 
+						"remote connection failure");
 					stream_data_append(&data->failure_info,
-							   "connection failure");
+							   "connection "
+							   "failure");
 				}
 			}
 			else if (options->remote_executor &&
@@ -680,7 +684,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 				data->pid);
 
 			if (options->remote_executor && !bail_out) {
-				remote_kill (options->remote_executor, data->pid, SIGKILL);
+				remote_kill (options->remote_executor, 
+					     data->pid, SIGKILL);
 			}
 
 			kill_step(data->pid, SIGKILL);
@@ -871,7 +876,8 @@ static int execute_libssh2 (const char* command, exec_data* data) {
 		/* Session may have died, try reopening */
 		if (!lssh2_conn) {
 			if (executor_init_libssh2(options) < 0) {
-				LOG_MSG(LOG_ERR, "Reopening libssh2 session failed");
+				LOG_MSG(LOG_ERR, 
+					"Reopening libssh2 session failed");
 				bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
 				global_failure = "connection fail";
 				return -1;
@@ -1163,7 +1169,8 @@ void handle_sigterm (int signum)
 
 	if (current_data) {
 		if (options->remote_executor) {
-			remote_kill (options->remote_executor, current_data->pid, SIGTERM);
+			remote_kill (options->remote_executor, 
+				     current_data->pid, SIGTERM);
 		}
 		else {
 			kill_step(current_data->pid, SIGKILL);

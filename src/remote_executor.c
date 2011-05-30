@@ -203,8 +203,8 @@ int remote_execute (const char *executor, const char *command)
 			 "sh < /tmp/mypid.sh > " 
 			 PID_FILE_FMT 
 			 "; if [ -e .profile ]; then source .profile >"
-			 " /dev/null; fi; %s",
-			 setname, casename, stepnum, unique_id, getpid(), command);
+			 " /dev/null; fi; %s", setname, casename, stepnum, 
+			 unique_id, getpid(), command);
 	else
 		sprintf (cmd, "sh < /tmp/mypid.sh > " 
 			 PID_FILE_FMT 
@@ -225,7 +225,8 @@ int remote_check_conn (const char *executor)
 	int ret;
 	char cmd[1024];
 
-	sprintf (cmd, "%s \"echo echo from remote connection check\"", executor);
+	sprintf (cmd, "%s \"echo echo from remote connection check\"", 
+		 executor);
 	ret = system (cmd);
 	return ret;
 }
@@ -251,7 +252,7 @@ int remote_kill (const char *executor, pid_t id, int signal)
 		return 1;
 	
 	sprintf(file, PID_FILE_FMT, unique_id, id);
-	sprintf (cmd, "[ -f %1$s ] && pkill -%2$d -P $(cat %1$s)"/*; rm -f %1$s"*/,
+	sprintf (cmd, "[ -f %1$s ] && pkill -%2$d -P $(cat %1$s)",
 		 file, signal);
 
 	ret = _execute (executor, cmd);
