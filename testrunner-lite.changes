@@ -8,6 +8,8 @@
 - More specific version requirements for testrunner-lite test packages (BMC#17266)
 - Soft termination of test step during timeout on remote execution mode (BMC#9103)
 - Support for ssh key filename (-k) also with -t option (BMC#17683)
+- Error logging functions for XML parser/validator (BMC#18217)
+- Remote connection check routine brought back (BMC#18218)
 * Fri Apr 29 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.6.1
 - Fixes to process handling (possibility of busyloop removed) (by slahtinen)
 - Configure option to disable documentation generation (by slahtinen)
