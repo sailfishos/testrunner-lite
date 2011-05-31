@@ -805,8 +805,6 @@ START_TEST (test_remote_custom_key_full_path)
 END_TEST
 
 
-#ifdef ENABLE_LIBSSH2
-
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_custom_key_get)
 
@@ -922,6 +920,7 @@ START_TEST (test_remote_custom_key_full_path_get)
      fail_if (ret, cmd);
 END_TEST
 
+#ifdef ENABLE_LIBSSH2
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_command)
