@@ -70,6 +70,12 @@
 	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg18.xml</step>
       </case>
 
+      <post_steps>
+        <step>rm -f /tmp/get*test*.txt</step>
+        <step>rm -f /tmp/measurement.txt /tmp/series.txt</step>
+        <step>rm -f /tmp/trl_cases.* /tmp/trl_steps.*</step>
+        <step>rm -f /tmp/trlitereg*.out.xml</step>
+      </post_steps>
 
       <environments>
 	<scratchbox>false</scratchbox>
@@ -176,6 +182,7 @@
 
       <post_steps>
 	<step>rm -fr /tmp/testrunnerlitetestdir</step>
+	<step>rm -f /tmp/get*test*.txt</step>
       </post_steps>
 
       <environments>
