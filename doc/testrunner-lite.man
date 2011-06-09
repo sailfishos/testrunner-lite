@@ -20,10 +20,13 @@ Display short help and exit
 \fB\-V\fR,  \fB\-\-version\fR
 Display version and exit
 .TP
-\fB\-f\fR \fIFILE\fR,  \fB\-\-file\fR \fIFILE\fR
+\fB\-f\fR \fIFILE\fR,  \fB\-\-file\fR\=\fIFILE\fR
 Input file with test definitions in XML (required)
 .TP
-\fB\-o\fR \fIFILE\fR,  \fB\-\-output\fR \fIFILE\fR
+\fB\-o\fR \fIFILE\fR,  \fB\-\-output\fR\=\fIFILE\fR
+Output file for test results (required)
+.TP
+\fB\-r\fR \fIFORMAT\fR,  \fB\-\-format\fR\=\fIFORMAT\fR
 Output file format; FORMAT can be xml or text (Default xml)
 .TP
 \fB\-v, -vv\fR,  \fB\-\-verbose\fR[\fB=\fR{\fIINFO\fR|\fIDEBUG\fR}]
@@ -83,6 +86,7 @@ Causes testrunner-lite to write the given packge URL to results.
 .TP
 \fB\-\-logid\fR=\fIID\fR
 Define an identifier ID for log messages when remote HTTP logger is used (--logger). ID is placed in the field \fIuserDefinedId\fR of the message. Only alphanumeric characters are accepted.
+.TP
 \fB\-d \fIPATH\fR, \fB\-\-rich\-core\-dumps\fR=\fIPATH\fR
 Save rich-core dumps. PATH is the location, where rich-core dumps are produced in the device. Creates UUID mappings between executed test cases and generated rich-core dumps. This makes possible to link each rich-cores and test cases in test reporting.
 
