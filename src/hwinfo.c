@@ -90,7 +90,6 @@ LOCAL unsigned char *exec_command (const char *cmd)
 	exec_data edata;
 
 	memset (&edata, 0x0, sizeof (exec_data));
-	init_exec_data (&edata);
 	
 	if (cmd == NULL || !strlen (cmd))
 		return NULL;
@@ -98,6 +97,7 @@ LOCAL unsigned char *exec_command (const char *cmd)
 	if (bail_out)
 		return NULL;
 
+	init_exec_data (&edata);
 	edata.soft_timeout = DEFAULT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	LOG_MSG (LOG_INFO, "Getting HW information");
@@ -114,8 +114,11 @@ LOCAL unsigned char *exec_command (const char *cmd)
 	}
 	p = strchr  ((char *)edata.stdout_data.buffer, '\n');
 	if (p) *p ='\0';
-	
-	return edata.stdout_data.buffer;
+	p = edata.stdout_data.buffer;
+	edata.stdout_data.buffer = NULL;
+	clean_exec_data(&edata);
+
+	return p;
 }
 
 /* ------------------------------------------------------------------------- */

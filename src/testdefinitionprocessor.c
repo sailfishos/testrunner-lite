@@ -902,7 +902,7 @@ LOCAL void end_suite ()
 LOCAL void process_set (td_set *s)
 {
 	td_case dummy;
-
+	td_steps *steps;
 	/*
 	** Check that the set is not filtered
 	*/
@@ -980,10 +980,14 @@ LOCAL void process_set (td_set *s)
 
  short_circuit:
 	write_post_set (s);
-	if (xmlListSize (s->pre_steps) > 0)
-		xmlListWalk (s->pre_steps, step_post_process, &dummy);
-	if (xmlListSize (s->post_steps) > 0)
-		xmlListWalk (s->post_steps, step_post_process, &dummy);
+	if (xmlListSize (s->pre_steps) > 0) {
+		steps = xmlLinkGetData(xmlListFront(s->pre_steps));
+		xmlListWalk (steps->steps, step_post_process, &dummy);
+	}
+	if (xmlListSize (s->post_steps) > 0) {
+		steps = xmlLinkGetData(xmlListFront(s->post_steps));
+		xmlListWalk (steps->steps, step_post_process, &dummy);
+	}
 	xml_end_element();
  skip_all:
 	td_set_delete (s);
