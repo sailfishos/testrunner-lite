@@ -140,8 +140,7 @@ START_TEST (test_logger_write_xml)
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
     memset (&hwinfo, 0x0, sizeof (hw_info));
 
-    test_opts.input_filename = malloc (strlen(TESTDATA_VALID_XML_1)+1);
-    strcpy (test_opts.input_filename, TESTDATA_VALID_XML_1);
+    test_opts.input_filename = strdup (TESTDATA_VALID_XML_1);
     cbs.test_suite = ut_test_suite;
     cbs.test_suite_description = ut_test_suite_description;
     cbs.test_set = ut_test_set;
@@ -185,8 +184,7 @@ START_TEST (test_logger_write_txt)
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
     memset (&hwinfo, 0x0, sizeof (hw_info));
 
-    test_opts.input_filename = malloc (strlen(TESTDATA_VALID_XML_1)+1);
-    strcpy (test_opts.input_filename, TESTDATA_VALID_XML_1);
+    test_opts.input_filename = strdup (TESTDATA_VALID_XML_1);
     cbs.test_suite = ut_test_suite;
     cbs.test_suite_description = ut_test_suite_description;
     cbs.test_set = ut_test_set;

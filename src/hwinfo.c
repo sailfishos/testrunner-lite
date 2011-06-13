@@ -86,7 +86,7 @@ LOCAL unsigned char *exec_command (const char *c);
  */
 LOCAL unsigned char *exec_command (const char *cmd)
 {
-	char *p;
+	unsigned char *p;
 	exec_data edata;
 
 	memset (&edata, 0x0, sizeof (exec_data));
@@ -112,7 +112,7 @@ LOCAL unsigned char *exec_command (const char *cmd)
 		free (edata.stdout_data.buffer);
 		return NULL;
 	}
-	p = strchr  ((char *)edata.stdout_data.buffer, '\n');
+	p = (unsigned char *)strchr  ((char *)edata.stdout_data.buffer, '\n');
 	if (p) *p ='\0';
 	p = edata.stdout_data.buffer;
 	edata.stdout_data.buffer = NULL;

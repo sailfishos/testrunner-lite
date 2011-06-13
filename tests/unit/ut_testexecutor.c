@@ -70,7 +70,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-/* None */
+#define TEST_CMD_LEN 1024
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
@@ -434,7 +434,8 @@ START_TEST (test_executor_remote_long_command)
 
 	memset (test_string , 'c', TEST_STRING_SIZE);
 	test_string [TEST_STRING_SIZE - 1] = '\0';
-	sprintf (command, "echo %s; sleep 2", test_string);
+	snprintf (command, TEST_STRING_SIZE + 100,
+		  "echo %s; sleep 2", test_string);
 	fail_if (execute(command, &edata));
 	fail_unless (edata.result == 0, "result = %d", edata.result);
 	fail_unless (edata.stdout_data.length == TEST_STRING_SIZE, 
@@ -525,11 +526,11 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST(test_executor_remote_test_bg_process_cleanup)
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
      
-     sprintf (cmd, "%s -v -f %s -o %s -tlocalhost", TESTRUNNERLITE_BIN, 
-	      TESTDATA_BG_XML,  out_file);
+     snprintf (cmd, TEST_CMD_LEN, "%s -v -f %s -o %s -tlocalhost", 
+	       TESTRUNNERLITE_BIN, TESTDATA_BG_XML,  out_file);
      ret = system (cmd);
      fail_if (ret != 0, cmd);
      ret = system("pidof unterminating");
@@ -597,9 +598,9 @@ pid_t run_resume_test(const char *optionarg, int retval)
 		/* undo SIGCHLD changes here in the child process */
 		sigprocmask(SIG_UNBLOCK, &mask, NULL);
 		signal(SIGCHLD, origchld);
-		sprintf(result_file, "/tmp/testrunner-lite-tests/"
+		snprintf(result_file, 128, "/tmp/testrunner-lite-tests/"
 			"trlitetestout%d.xml", getpid());
-		sprintf(resume_option, "--resume=%s", optionarg);
+		snprintf(resume_option, 128, "--resume=%s", optionarg);
 		execl(TESTRUNNERLITE_BIN,
 		      TESTRUNNERLITE_BIN,
 		      "-f", TESTDATA_RESUME_TEST_XML,
@@ -688,7 +689,7 @@ START_TEST (test_executor_remote_resume_exit)
 	fail_unless(WEXITSTATUS(status) == 0, "resumetest2.txt should not exist");
 
 	/* clean */
-	sprintf(result_file, "/tmp/testrunner-lite-tests/"
+	snprintf(result_file, 128, "/tmp/testrunner-lite-tests/"
 			"trlitetestout%d.xml", pid);
 	unlink(result_file);
 	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
@@ -721,7 +722,7 @@ START_TEST (test_executor_remote_resume_continue)
 	fail_unless(WEXITSTATUS(status) == 0, "contents of resumetest2.txt");
 
 	/* clean */
-	sprintf(result_file, "/tmp/testrunner-lite-tests/"
+	snprintf(result_file, 128, "/tmp/testrunner-lite-tests/"
 			"trlitetestout%d.xml", pid);
 	unlink(result_file);
 	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
@@ -731,47 +732,51 @@ END_TEST
 START_TEST (test_remote_get)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-	      "-t localhost", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_GET_XML_1);
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml -t localhost", 
+	      TESTRUNNERLITE_BIN, TESTDATA_GET_XML_1);
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     snprintf (cmd, TEST_CMD_LEN, "stat /tmp/testrunnerlitetestdir2/");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
     
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	      "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
 
 START_TEST(test_remote_hwinfo)
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
 
-     sprintf(cmd, "%s -v -f %s -o %s -i localhost:22", TESTRUNNERLITE_BIN,
-	      TESTDATA_SIMPLE_XML_1,  out_file);
+     snprintf(cmd, TEST_CMD_LEN, "%s -v -f %s -o %s -i localhost:22", 
+	      TESTRUNNERLITE_BIN, TESTDATA_SIMPLE_XML_1,  out_file);
      ret = system (cmd);
      fail_if (ret != 0, cmd);
 END_TEST
@@ -780,12 +785,13 @@ END_TEST
 START_TEST (test_remote_custom_key)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-	      "-t localhost -k ~/.ssh/myrsakey", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_SIMPLE_XML_1);
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	       "-t localhost -k ~/.ssh/myrsakey", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_SIMPLE_XML_1);
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
@@ -794,13 +800,14 @@ END_TEST
 START_TEST (test_remote_custom_key_full_path)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      char *homepath;
      homepath = getenv("HOME");
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-	      "-t localhost -k %s/.ssh/myrsakey", 
-              TESTRUNNERLITE_BIN, 
-              TESTDATA_SIMPLE_XML_1, homepath);
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	       "-t localhost -k %s/.ssh/myrsakey", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_SIMPLE_XML_1, homepath);
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
@@ -810,36 +817,42 @@ END_TEST
 START_TEST (test_remote_custom_key_get)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-	      "-t localhost -k ~/.ssh/myrsakey", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_GET_XML_1);
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	       "-t localhost -k ~/.ssh/myrsakey", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_GET_XML_1);
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     snprintf (cmd, TEST_CMD_LEN, "stat /tmp/testrunnerlitetestdir2/");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
     
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
@@ -848,36 +861,43 @@ END_TEST
 START_TEST (test_remote_custom_key_port_get)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-	      "-t localhost:22 -k ~/.ssh/myrsakey", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_GET_XML_1);
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	       "-t localhost:22 -k ~/.ssh/myrsakey", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_GET_XML_1);
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
     
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
@@ -886,37 +906,43 @@ END_TEST
 START_TEST (test_remote_custom_key_full_path_get)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      char *homepath;
      homepath = getenv("HOME");
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-              "-t localhost -k %s/.ssh/myrsakey", 
-              TESTRUNNERLITE_BIN, 
-              TESTDATA_GET_XML_1, homepath);
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	       "-t localhost -k %s/.ssh/myrsakey", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_GET_XML_1, homepath);
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     snprintf (cmd, TEST_CMD_LEN, "stat /tmp/testrunnerlitetestdir2/");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
     
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	  "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
@@ -1062,7 +1088,8 @@ START_TEST (test_executor_remote_libssh2_long_command)
 
 	memset (test_string , 'c', TEST_STRING_SIZE);
 	test_string [TEST_STRING_SIZE - 1] = '\0';
-	sprintf (command, "echo %s; sleep 2", test_string);
+	snprintf (command, TEST_STRING_SIZE + 100,
+		  "echo %s; sleep 2", test_string);
 	fail_if (execute(command, &edata));
 	fail_unless (edata.result == 0, "result = %d", edata.result);
 	fail_unless (edata.stdout_data.length == TEST_STRING_SIZE, 
@@ -1254,38 +1281,44 @@ END_TEST
 START_TEST (test_remote_libssh2_get)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      
      /* get doesn't use libssh2, but username parsing differs with -t option */
 
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-	      "-n localhost -k ~/.ssh/myrsakey", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_GET_XML_1);
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	       "-n localhost -k ~/.ssh/myrsakey", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_GET_XML_1);
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     snprintf (cmd, TEST_CMD_LEN, "stat /tmp/testrunnerlitetestdir2/");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
     
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
@@ -1294,13 +1327,14 @@ END_TEST
 START_TEST (test_remote_libssh2_get_username)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
 
      char *username = getenv("LOGNAME");
 
      /* get doesn't use libssh2, but username parsing differs with -t option */
 
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
 	      "-n %s@localhost -k ~/.ssh/myrsakey", 
               TESTRUNNERLITE_BIN, 
               TESTDATA_GET_XML_1,
@@ -1308,27 +1342,32 @@ START_TEST (test_remote_libssh2_get_username)
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     snprintf (cmd, TEST_CMD_LEN, "stat /tmp/testrunnerlitetestdir2/");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
     
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
@@ -1337,36 +1376,42 @@ END_TEST
 START_TEST (test_remote_libssh2_custom_key_get)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-	      "-n localhost -k ~/.ssh/myrsakey", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_GET_XML_1);
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	       "-n localhost -k ~/.ssh/myrsakey", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_GET_XML_1);
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     snprintf (cmd, TEST_CMD_LEN, "stat /tmp/testrunnerlitetestdir2/");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
     
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
@@ -1376,36 +1421,42 @@ END_TEST
 START_TEST (test_remote_libssh2_custom_key_port_get)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-	      "-n localhost:22 -k ~/.ssh/myrsakey", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_GET_XML_1);
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	       "-n localhost:22 -k ~/.ssh/myrsakey", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_GET_XML_1);
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     snprintf (cmd, TEST_CMD_LEN, "stat /tmp/testrunnerlitetestdir2/");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
     
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST
@@ -1414,37 +1465,43 @@ END_TEST
 START_TEST (test_remote_libssh2_custom_key_full_path_get)
 
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
      char *homepath;
      homepath = getenv("HOME");
-     sprintf (cmd, "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
-              "-n localhost -k %s/.ssh/myrsakey", 
-              TESTRUNNERLITE_BIN, 
-              TESTDATA_GET_XML_1, homepath);
+     snprintf (cmd, TEST_CMD_LEN,
+	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
+	       "-n localhost -k %s/.ssh/myrsakey", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_GET_XML_1, homepath);
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/");
+     snprintf (cmd, TEST_CMD_LEN, "stat /tmp/testrunnerlitetestdir2/");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest.txt");
+     snprintf (cmd, TEST_CMD_LEN, 
+	       "stat /tmp/testrunnerlitetestdir2/gettest.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
     
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest2.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
      
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest3.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/gettest4.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 
-     sprintf (cmd, "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
+     snprintf (cmd, TEST_CMD_LEN,
+	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
 END_TEST

@@ -189,20 +189,21 @@ char *replace_string (const char *orig, const char *from, const char *to)
 
 	if (from_pos == NULL) {
 		/* nothing to replace */
-		strcpy(result, orig);
+		strncpy(result, orig, result_size);
 		return result;
 	}
 
 	len_before = from_pos - orig;
 
 	/* copy original string before match */
-	p = strncpy(result, orig, len_before);
+	p = strncpy(result, orig, result_size);
 
 	/* insert new string */
-	p = strcpy(p + len_before, to);
+	p = strncpy(p + len_before, to, result_size - len_before);
 
 	/* append original string after match */
-	strcpy(p + strlen(to), from_pos + strlen(from));
+	strncpy(p + strlen(to), from_pos + strlen(from), 
+		result_size - len_before - strlen(to));
 
 	return result;
 }

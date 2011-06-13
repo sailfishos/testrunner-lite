@@ -54,7 +54,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-/* None */
+#define TEST_CMD_LEN 1024
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
@@ -219,14 +219,14 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (acceptance_test_case_filter)
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
 
      /* Execute testrunner with filter_tests.xml and testcase filter  */
-     sprintf (cmd, "%s -a -v -f %s -e scratchbox "
-	      "-o /tmp/testrunnerlitetestdir/res.xml "
-	      "-l'-testcase=serm003'", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_FILTER_TESTS_XML);
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -v -f %s -e scratchbox "
+	       "-o /tmp/testrunnerlitetestdir/res.xml "
+	       "-l'-testcase=serm003'", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_FILTER_TESTS_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
 
@@ -237,11 +237,11 @@ START_TEST (acceptance_test_case_filter)
      fail_if (ret);
 
      /* Try another filter  */
-     sprintf (cmd, "%s -a -v -f %s "
-	      "-o /tmp/testrunnerlitetestdir/res.xml "
-	      "-l'testcase=abc111,abc211'", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_FILTER_TESTS_XML);
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -v -f %s "
+	       "-o /tmp/testrunnerlitetestdir/res.xml "
+	       "-l'testcase=abc111,abc211'", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_FILTER_TESTS_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
 
@@ -258,10 +258,10 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (acceptance_test_set_filter)
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
 
      /* Execute testrunner with filter_tests.xml and set filter  */
-     sprintf (cmd, "%s -a -v -f %s -e scratchbox "
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -v -f %s -e scratchbox "
 	      "-o /tmp/testrunnerlitetestdir/res.xml "
 	      "-l'-testset=testset21'", 
 	      TESTRUNNERLITE_BIN, 
@@ -283,11 +283,11 @@ START_TEST (acceptance_test_set_filter)
      fail_if (ret);
 
      /* Try another filter  */
-     sprintf (cmd, "%s -a -v -f %s "
-	      "-o /tmp/testrunnerlitetestdir/res.xml "
-	      "-l'testset=testset12,Yet-another-test-set'", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_FILTER_TESTS_XML);
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -v -f %s "
+	       "-o /tmp/testrunnerlitetestdir/res.xml "
+	       "-l'testset=testset12,Yet-another-test-set'", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_FILTER_TESTS_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
      /* Check that only testset12 are Yet-another-testset are included */
@@ -308,14 +308,14 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (acceptance_test_requirement_filter)
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
 
      /* Execute testrunner with filter_tests.xml and requirement filter  */
-     sprintf (cmd, "%s -a -e scratchbox -v -f %s "
-	      "-o /tmp/testrunnerlitetestdir/res.xml "
-	      "-l'requirement=66666,50002'", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_FILTER_TESTS_XML);
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -e scratchbox -v -f %s "
+	       "-o /tmp/testrunnerlitetestdir/res.xml "
+	       "-l'requirement=66666,50002'", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_FILTER_TESTS_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
 
@@ -354,14 +354,14 @@ END_TEST
 
 START_TEST (acceptance_test_feature_filter)
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
 
      /* Execute testrunner with filter_tests.xml and feature filter  */
-     sprintf (cmd, "%s -a -v -f %s "
-	      "-o /tmp/testrunnerlitetestdir/res.xml "
-	      "-l'feature=feature2'", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_FILTER_TESTS_XML);
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -v -f %s "
+	       "-o /tmp/testrunnerlitetestdir/res.xml "
+	       "-l'feature=feature2'", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_FILTER_TESTS_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
 
@@ -376,14 +376,14 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (acceptance_test_type_filter)
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
 
      /* Execute testrunner with filter_tests.xml and type filter  */
-     sprintf (cmd, "%s -a -v -f %s -e scratchbox "
-	      "-o /tmp/testrunnerlitetestdir/res.xml "
-	      "-l'type=Integration'", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_FILTER_TESTS_XML);
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -v -f %s -e scratchbox "
+	       "-o /tmp/testrunnerlitetestdir/res.xml "
+	       "-l'type=Integration'", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_FILTER_TESTS_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
 
@@ -425,14 +425,14 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (acceptance_test_filter_combo)
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
 
      /* Execute testrunner with filter_tests.xml and type filter  */
-     sprintf (cmd, "%s -a -v -f %s -e scratchbox "
-	      "-o /tmp/testrunnerlitetestdir/res.xml "
-	      "-l'type=Integration -testcase=xxx312'", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_FILTER_TESTS_XML);
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -v -f %s -e scratchbox "
+	       "-o /tmp/testrunnerlitetestdir/res.xml "
+	       "-l'type=Integration -testcase=xxx312'", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_FILTER_TESTS_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
 
@@ -474,13 +474,13 @@ END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (acceptance_test_environment_flag)
      int ret;
-     char cmd[1024];
+     char cmd[TEST_CMD_LEN];
 
      /* Run testrunner-lite with -e scratchbox */
-     sprintf (cmd, "%s -a -v -f %s -e scratchbox "
-	      "-o /tmp/testrunnerlitetestdir/res.xml ", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_ENVIRONMENT_TESTS_XML);
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -v -f %s -e scratchbox "
+	       "-o /tmp/testrunnerlitetestdir/res.xml ", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_ENVIRONMENT_TESTS_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
 
@@ -493,10 +493,10 @@ START_TEST (acceptance_test_environment_flag)
      ret = system ("grep neither /tmp/testrunnerlitetestdir/res.xml");
      fail_unless (ret);
 
-     sprintf (cmd, "%s -a -v -f %s -e hardware "
-	      "-o /tmp/testrunnerlitetestdir/res.xml ", 
-	      TESTRUNNERLITE_BIN, 
-	      TESTDATA_ENVIRONMENT_TESTS_XML);
+     snprintf (cmd, TEST_CMD_LEN, "%s -a -v -f %s -e hardware "
+	       "-o /tmp/testrunnerlitetestdir/res.xml ", 
+	       TESTRUNNERLITE_BIN, 
+	       TESTDATA_ENVIRONMENT_TESTS_XML);
      ret = system (cmd);
      fail_if (ret, cmd);
 

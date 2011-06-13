@@ -76,12 +76,12 @@ volatile sig_atomic_t resume_testrun_count = 0;
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
-static volatile sig_atomic_t timer_value = 0;
-static struct sigaction default_alarm_action = { .sa_handler = NULL };
-static testrunner_lite_options *options;
-static exec_data *current_data; 
+LOCAL volatile sig_atomic_t timer_value = 0;
+LOCAL struct sigaction default_alarm_action = { .sa_handler = NULL };
+LOCAL testrunner_lite_options *options;
+LOCAL exec_data *current_data; 
 #ifdef ENABLE_LIBSSH2
-static libssh2_conn *lssh2_conn;
+LOCAL libssh2_conn *lssh2_conn;
 #endif
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
@@ -95,29 +95,48 @@ static libssh2_conn *lssh2_conn;
 /* LOCAL FUNCTION PROTOTYPES */
 /* ------------------------------------------------------------------------- */
 #if 0
-static void parse_command_args(const char* command, char* argv[], int max_args);
-static void free_args(char* argv[]);
+/* ------------------------------------------------------------------------- */
+LOCAL void parse_command_args(const char* command, char* argv[], int max_args);
+/* ------------------------------------------------------------------------- */
+LOCAL void free_args(char* argv[]);
 #endif
-static void set_child_signal_handlers();
-static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, 
+/* ------------------------------------------------------------------------- */
+LOCAL void set_child_signal_handlers();
+/* ------------------------------------------------------------------------- */
+LOCAL pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, 
 				   const char *command);
-static pid_t fork_process(const char *command);
-static void* stream_data_realloc(stream_data* data, int size);
-static void stream_data_free(stream_data* data);
-static void stream_data_append(stream_data* data, char* src);
-static int read_and_append(int fd, stream_data* data);
-static void timer_handler(int signum);
-static int set_timer(long secs);
-static void reset_timer();
-static int execution_terminated(exec_data* data);
-static void process_output_streams(int stdout_fd, int stderr_fd, 
+/* ------------------------------------------------------------------------- */
+LOCAL pid_t fork_process(const char *command);
+/* ------------------------------------------------------------------------- */
+LOCAL void* stream_data_realloc(stream_data* data, int size);
+/* ------------------------------------------------------------------------- */
+LOCAL void stream_data_free(stream_data* data);
+/* ------------------------------------------------------------------------- */
+LOCAL void stream_data_append(stream_data* data, char* src);
+/* ------------------------------------------------------------------------- */
+LOCAL int read_and_append(int fd, stream_data* data);
+/* ------------------------------------------------------------------------- */
+LOCAL void timer_handler(int signum);
+/* ------------------------------------------------------------------------- */
+LOCAL int set_timer(long secs);
+/* ------------------------------------------------------------------------- */
+LOCAL void reset_timer();
+/* ------------------------------------------------------------------------- */
+LOCAL int execution_terminated(exec_data* data);
+/* ------------------------------------------------------------------------- */
+LOCAL void process_output_streams(int stdout_fd, int stderr_fd, 
 				   exec_data* data);
-static void communicate(int stdout_fd, int stderr_fd, exec_data* data);
-static void strip_ctrl_chars (stream_data* data);
-static void utf8_check (stream_data* data, const char *id, pid_t pid);
+/* ------------------------------------------------------------------------- */
+LOCAL void communicate(int stdout_fd, int stderr_fd, exec_data* data);
+/* ------------------------------------------------------------------------- */
+LOCAL void strip_ctrl_chars (stream_data* data);
+/* ------------------------------------------------------------------------- */
+LOCAL void utf8_check (stream_data* data, const char *id, pid_t pid);
 #ifdef ENABLE_LIBSSH2
-static int executor_init_libssh2 (testrunner_lite_options *opts);
-static int execute_libssh2 (const char *command, exec_data *data);
+/* ------------------------------------------------------------------------- */
+LOCAL int executor_init_libssh2 (testrunner_lite_options *opts);
+/* ------------------------------------------------------------------------- */
+LOCAL int execute_libssh2 (const char *command, exec_data *data);
 #endif
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
@@ -127,12 +146,13 @@ static int execute_libssh2 (const char *command, exec_data *data);
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
 #if 0
+/* ------------------------------------------------------------------------- */
 /** Parse a command
  * @param command Command string to parse
  * @param argv Array of strings to store parsed arguments
  * @param max_args Maximum number of arguments to parse
  */
-static void parse_command_args(const char* command, char* argv[], int max_args)
+LOCAL void parse_command_args(const char* command, char* argv[], int max_args)
 {
 	int n = 0;
 	int size = strlen(command) + 1;
@@ -152,10 +172,7 @@ static void parse_command_args(const char* command, char* argv[], int max_args)
 		str = strtok(buff, " ");
 
 		for ( ;str != NULL && n < max_args; n++) {
-			argv[n] = (char*)malloc(strlen(str) + 1);
-			if (argv[n]) {
-				strcpy(argv[n], str);
-			}
+			argv[n] = stdup (str);
 			str = strtok(NULL, " ");
 		}
 	}
@@ -163,32 +180,32 @@ static void parse_command_args(const char* command, char* argv[], int max_args)
 
 	free(buff);
 }
-
+/* ------------------------------------------------------------------------- */
 /** Free argument strings
  * @param argv Array of argument strings to free
  */
-static void free_args(char* argv[]) {
+LOCAL void free_args(char* argv[]) {
 	while(*argv != NULL) {
 		free(*argv);
 		argv++;
 	}
 }
 #endif
-
+/* ------------------------------------------------------------------------- */
 /** Resets signal handlers set by parent process
  * 
  */
-static void set_child_signal_handlers()
+LOCAL void set_child_signal_handlers()
 {
 	signal(SIGINT, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
 }
-
+/* ------------------------------------------------------------------------- */
 /** Executes a command on local or remote host
  * @param command Command to execute
  * @return Does not return in success, error code from exec in case of error
  */
-static int exec_wrapper(const char *command) 
+LOCAL int exec_wrapper(const char *command) 
 {
 	int ret = 0;
 
@@ -215,7 +232,7 @@ static int exec_wrapper(const char *command)
 
 	return ret;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Create new process with new session ID and redirect its output
  * @param stdout_fd Pointer to a file descriptor used to read stdout of
  *        executed command
@@ -224,7 +241,7 @@ static int exec_wrapper(const char *command)
  * @param command Command to execute
  * @return PID of process on success, -1 in error
  */
-static pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *command) {
+LOCAL pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *command) {
 	int out_pipe[2];
 	int err_pipe[2];
 	pid_t pid;
@@ -286,12 +303,12 @@ error_err:
 error_out:
 	return -1;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Create new process with new session ID
  * @param command Command to execute
  * @return PID of process on success, -1 in error
  */
-static pid_t fork_process(const char *command) {
+LOCAL pid_t fork_process(const char *command) {
 	pid_t pid = fork();
 
 	if (pid > 0) {		/* parent */
@@ -313,13 +330,13 @@ static pid_t fork_process(const char *command) {
 
 	return pid;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Allocate memory for stream_data
  * @param data Pointer to stream_data structure
  * @param size Number of bytes to be allocated
  * @return Non NULL on success, NULL in error
  */
-static void* stream_data_realloc(stream_data* data, int size) {
+LOCAL void* stream_data_realloc(stream_data* data, int size) {
 	unsigned char* newptr = (unsigned char*)malloc(size);
 	unsigned char* oldptr = data->buffer;
 	int length = data->size <= size ? data->size : size;
@@ -337,39 +354,39 @@ static void* stream_data_realloc(stream_data* data, int size) {
 
 	return (void*)newptr;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Free memory allocated for stream_data
  * @param data Pointer to stream_data structure
  */
-static void stream_data_free(stream_data* data) {
+LOCAL void stream_data_free(stream_data* data) {
 	free(data->buffer);
 	data->buffer = NULL;
 	data->size = 0;
 	data->length = 0;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Append data to stream_data and reallocate memory if necessary
  * @param data Pointer to stream_data structure
  * @param src Data to append
  */
-static void stream_data_append(stream_data* data, char* src) {
+LOCAL void stream_data_append(stream_data* data, char* src) {
 	int length = strlen(src);
 
 	if (data->size - data->length >= length + 1 || 
 	    stream_data_realloc(data, data->length + length + 1) != NULL) {
-		strcpy((char *)&data->buffer[data->length], src);
+		strncpy((char *)&data->buffer[data->length], src, length + 1);
 		data->length += length;
 	}
 
 }
-
+/* ------------------------------------------------------------------------- */
 /** Read data from file descriptor and append to stream_data. Reallocates 
  * memory if necessary
  * @param fd File descriptor to read
  * @param data Pointer to stream_data structure
  * @return Value returned by read
  */
-static int read_and_append(int fd, stream_data* data) {
+LOCAL int read_and_append(int fd, stream_data* data) {
 	const int read_size = 255;	/* number of bytes to read */
 	int ret = 0;
 
@@ -402,22 +419,22 @@ static int read_and_append(int fd, stream_data* data) {
 
 	return ret;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Signal handler for SIGALRM (timer)
  * @param signum Identifier of received signal
  */
-static void timer_handler(int signum) {
+LOCAL void timer_handler(int signum) {
 	if (signum == SIGALRM) {
 		timer_value = 1;
 	}
 }
-
+/* ------------------------------------------------------------------------- */
 /** Initialize timer and set signal action for SIGALRM
  * @param secs Value in seconds after which global variable timer_value
  * will be set
  * @return 0 in success, -1 in error
  */
-static int set_timer(long secs) {
+LOCAL int set_timer(long secs) {
 	struct sigaction act;
 	struct itimerval timer;
 
@@ -455,10 +472,10 @@ static int set_timer(long secs) {
  erraction:
 	return -1;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Reset timer and restore signal action of SIGALRM
  */
-static void reset_timer() {
+LOCAL void reset_timer() {
 	struct itimerval timer;
 
 	timer.it_interval.tv_sec = 0;
@@ -480,13 +497,13 @@ static void reset_timer() {
 
 	LOG_MSG(LOG_DEBUG, "Reset timeout timer");
 }
-
+/* ------------------------------------------------------------------------- */
 /** Do unblocking wait for state change of process(es)
  * belonging to process group
  * @param data Input and output data of the process
  * @return 1 if process(es) has terminated, 0 otherwise
  */
-static int execution_terminated(exec_data* data) {
+LOCAL int execution_terminated(exec_data* data) {
 	pid_t pid = 0;
 	pid_t pgroup = 0;
 	int ret = 0;
@@ -562,8 +579,9 @@ static int execution_terminated(exec_data* data) {
 		} else if (WIFSIGNALED(status)) {
 			/* child terminated by a signal */
 			data->result = WTERMSIG(status);
-			sprintf (fail_str, " terminated by signal %d ",
-				 WTERMSIG(status));
+			snprintf (fail_str, 100,
+				  " terminated by signal %d ",
+				  WTERMSIG(status));
 			stream_data_append(&data->failure_info,
 					   fail_str);
 			LOG_MSG(LOG_DEBUG,
@@ -580,13 +598,13 @@ static int execution_terminated(exec_data* data) {
 
 	return ret;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Read output streams from executed process
  * @param stdout_fd File descriptor to read stdout stream
  * @param stderr_fd File descriptor to read stderr stream
  * @param data Input and output data controlling execution
  */
-static void process_output_streams(int stdout_fd, int stderr_fd, 
+LOCAL void process_output_streams(int stdout_fd, int stderr_fd, 
 				   exec_data* data) 
 {
 	struct pollfd fds[2];
@@ -626,13 +644,13 @@ static void process_output_streams(int stdout_fd, int stderr_fd,
 	}
 
 }
-
+/* ------------------------------------------------------------------------- */
 /** Set timeout timers, read output, and control execution of test step
  * @param stdout_fd File descriptor to read stdout stream
  * @param stderr_fd File descriptor to read stderr stream
  * @param data Input and output data controlling execution
  */
-static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
+LOCAL void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 	int terminated = 0;
 	int killed = 0;
 	int ready = 0;
@@ -663,7 +681,8 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 				data->pid);
 
 			if (options->remote_executor && !bail_out) {
-				remote_kill (options->remote_executor, data->pid, SIGTERM);
+				remote_kill (options->remote_executor, 
+					     data->pid, SIGTERM);
 			}
 
 			if(!options->remote_executor) {
@@ -712,12 +731,11 @@ static void communicate(int stdout_fd, int stderr_fd, exec_data* data) {
 		close(stderr_fd);
 	}
 }
-
 /* ------------------------------------------------------------------------- */
 /** Replace control characters with space 
  * @param data stream data to mangle
  */
-static void strip_ctrl_chars (stream_data* data)
+LOCAL void strip_ctrl_chars (stream_data* data)
 {
 	size_t clean_len = 0, tmp;
 	char *p = (char *)data->buffer, *endp;
@@ -749,30 +767,28 @@ static void strip_ctrl_chars (stream_data* data)
 	} while (p != endp);
 	
 }
-
 /* ------------------------------------------------------------------------- */
 /** If the data contains non utf-8 write the data to file instead of result xml
  * @param data stream data to mangle
  * @param id identifier (stdout/stderr)
  * @param pid pid of test step
  */
-static void utf8_check (stream_data* data, const char *id, pid_t pid)
+LOCAL void utf8_check (stream_data* data, const char *id, pid_t pid)
 {
 	char *fname = NULL;
 	FILE *ofile = NULL;
-	size_t written = 0;
+	size_t written = 0, len;
 	
 	if (utf8_validity_check (data->buffer)) {
 		return;
 	}
-	
-	fname = (char *)malloc (strlen (options->output_folder) + 
-				strlen ("id") + 10 + 1 + 1);
+	len = strlen (options->output_folder) + strlen ("id") + 10 + 1 + 1;
+	fname = (char *)malloc (len);
 	if (!fname) {
 			LOG_MSG(LOG_ERR, "OOM");
 			goto error;
 	}
-	sprintf (fname, "%s/%s.%d", options->output_folder, 
+	snprintf (fname, len, "%s/%s.%d", options->output_folder, 
 		 id, pid);
 	
 	ofile = fopen (fname, "w+");
@@ -787,16 +803,15 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 		LOG_MSG(LOG_WARNING, "failed to write full stdout to"
 			"%s\n", fname,  strerror(errno));
 	}
-	data->buffer = (unsigned char *)realloc (data->buffer, 
-						 strlen("non utf-8 output "
-							"detected - see file ")
-						 + strlen (fname) + 1);
+	len = strlen("non utf-8 output detected - see file ") + strlen (fname) 
+		+ 1;
+	data->buffer = (unsigned char *)realloc (data->buffer, len);
 	if (!data->buffer) {
 		LOG_MSG(LOG_ERR, "OOM");
 		goto error;
 	}
 
-	sprintf ((char *)data->buffer, 
+	snprintf ((char *)data->buffer, len,
 		 "non utf-8 output detected - see file %s.%d", id, pid);
 	
 	LOG_MSG (LOG_DEBUG, "non utf-8 ouput from test step -  wrote to "
@@ -816,7 +831,6 @@ static void utf8_check (stream_data* data, const char *id, pid_t pid)
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-
 /** Execute a test step command
  * @param command Command to execute
  * @param data Input and output data controlling execution
@@ -861,14 +875,14 @@ int execute(const char* command, exec_data* data) {
 						  data->pid);
 	return 0;
 }
-
 #ifdef ENABLE_LIBSSH2
+/* ------------------------------------------------------------------------- */
 /** Execute a test step command with libssh2
  * @param command Command to execute
  * @param data Input and output data controlling execution
  * @return 0 in success, -1 in error
  */
-static int execute_libssh2 (const char* command, exec_data* data) {
+LOCAL int execute_libssh2 (const char* command, exec_data* data) {
 
 	data->start_time = time(NULL);
 
@@ -907,7 +921,7 @@ static int execute_libssh2 (const char* command, exec_data* data) {
 	return 0;
 }
 #endif
-
+/* ------------------------------------------------------------------------- */
 /** Initialize exec_data structure
  * @param data Pointer to data
  */
@@ -923,13 +937,16 @@ void init_exec_data(exec_data* data) {
 	init_stream_data(&data->failure_info, 0);
 	data->waited = 0;
 }
-
+/* ------------------------------------------------------------------------- */
+/** Clean the exec_data structure
+ * @param data Pointer to exec_data
+ */
 void clean_exec_data(exec_data* data) {
 	clean_stream_data(&data->stdout_data);
 	clean_stream_data(&data->stderr_data);
 	clean_stream_data(&data->failure_info);
 }
-
+/* ------------------------------------------------------------------------- */
 /** Initialize stream_data structure
  * @param data Pointer to data
  * @param allocate Number of bytes to allocate for string buffer
@@ -945,14 +962,14 @@ void init_stream_data(stream_data* data, int allocate) {
 		data->buffer[0] = '\0';
 	}
 }
-
+/* ------------------------------------------------------------------------- */
 /** Clean stream_data structure
  * @param data Pointer to data
  */
 void clean_stream_data(stream_data* data) {
 	stream_data_free(data);
 }
-
+/* ------------------------------------------------------------------------- */
 /** Send signal to process group of a test process
  * @param pid pgroup Process group ID for signal
  * @param sig Signal number
@@ -980,7 +997,7 @@ int kill_pgroup(pid_t pgroup, int sig) {
 
 	return 0;
 }
-
+/* ------------------------------------------------------------------------- */
 /** Send signal to a process group of test step
  * 
  * @param pid Process ID of test step
@@ -998,7 +1015,7 @@ void kill_step(pid_t pid, int sig)
 		}
 	}
 }
-
+/* ------------------------------------------------------------------------- */
 /** Sets the remote host for executor 
  * @param opts testrunner lite options
  */
@@ -1014,12 +1031,12 @@ int executor_init(testrunner_lite_options *opts)
 		return remote_executor_init (options->remote_executor);
 	return 0;
 }
-
+/* ------------------------------------------------------------------------- */
 #ifdef ENABLE_LIBSSH2
 /** Sets the remote host for libssh2 executor 
  * @param opts testrunner lite options
  */
-static int executor_init_libssh2(testrunner_lite_options *opts)
+LOCAL int executor_init_libssh2(testrunner_lite_options *opts)
 {
 	lssh2_conn = NULL;
 	options = opts;
@@ -1036,7 +1053,7 @@ static int executor_init_libssh2(testrunner_lite_options *opts)
 	return 0;
 }
 #endif
-
+/* ------------------------------------------------------------------------- */
 /** Clean up for executor
  */
 void executor_close()
@@ -1051,6 +1068,7 @@ void executor_close()
 		remote_executor_close();
 	}
 }
+/* ------------------------------------------------------------------------- */
 /** 
  * Restore bail_out value to TESTRUNNER_LITE_REMOTE_FAIL if
  * resume_testrun_count has been incremented and bail_out equals zero.
@@ -1070,8 +1088,8 @@ void restore_bail_out_after_resume_execution()
 
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 }
-/** 
- * Wait for resume testrun signal. Resets bail_out to zero if resume signal
+/* ------------------------------------------------------------------------- */
+/**  Wait for resume testrun signal. Resets bail_out to zero if resume signal
  * is received. bail_out is reset only once.
  * 
  */
@@ -1127,9 +1145,10 @@ void wait_for_resume_execution()
 	/* restore original mask */
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 }
-/*
-** handler for SIGINT
-*/
+/* ------------------------------------------------------------------------- */
+/** handler for SIGINT
+ *  @param signum not used
+ */
 void handle_sigint (int signum)
 {
 	global_failure = "Testrunner-lite interrupted by signal (2)";
@@ -1152,9 +1171,10 @@ void handle_sigint (int signum)
 	}
 
 }
-/*
-** handler for SIGTERM
-*/
+/* ------------------------------------------------------------------------- */
+/** handler for SIGTERM
+ *  @param signum not used
+ */
 void handle_sigterm (int signum)
 {
 	global_failure = "Testrunner-lite interrupted by signal (15)";
@@ -1177,7 +1197,10 @@ void handle_sigterm (int signum)
 		}
 	}
 }
-
+/* ------------------------------------------------------------------------- */
+/** handler for SIGUSR1
+ *  @param signum signal number
+ */
 void handle_resume_testrun(int signum)
 {
 	if (signum == SIGUSR1) {

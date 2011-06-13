@@ -974,8 +974,8 @@ static char *replace(char const *const cmd, char const *const pat,
     
     {
 	    /* Allocate the new string */
-	    int newlen = cmdlen + count * (replen - patlen);
-	    char *const newcmd = (char *) malloc(sizeof(char) * (newlen + 1));
+	    int newlen = cmdlen + count * (replen - patlen) + 1;
+	    char *const newcmd = (char *) malloc(sizeof(char) * newlen);
 	    
 	    if (newcmd != NULL) {
 		    /* Replace the strings */
@@ -993,8 +993,9 @@ static char *replace(char const *const cmd, char const *const pat,
 			    cmdptr = patloc + patlen;
 			    patloc = strstr(cmdptr, pat);
 		    }
-		    /* Copy what is left */
-		    strcpy(newptr, cmdptr);
+		    /* Copy what is left, size is ascertained when calculating
+		     *  newlen */
+		    strncpy(newptr, cmdptr, newlen - (newptr - newcmd));
 	    }
 	    return newcmd;
     }

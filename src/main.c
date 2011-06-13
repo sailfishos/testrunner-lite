@@ -302,15 +302,15 @@ LOCAL int create_output_folder ()
 			return 1;
 
 		}
-		opts.output_folder = (char *)malloc (strlen (pwd) + 2);
-		strcpy (opts.output_folder, pwd);
+		len = strlen (pwd) + 2;
+		opts.output_folder = (char *)malloc (len);
+		strncpy (opts.output_folder, pwd, len);
 		opts.output_folder[strlen(pwd)] = '/';
 		opts.output_folder[strlen(pwd) + 1] = '\0';
 	}
-	
-	cmd = (char *)malloc (strlen(opts.output_folder) + 
-			      strlen("mkdir -p ") + 1);
-	sprintf (cmd, "mkdir -p %s", opts.output_folder);
+	len = strlen(opts.output_folder) + strlen("mkdir -p ") + 1;
+	cmd = (char *)malloc (len);
+	snprintf (cmd, len, "mkdir -p %s", opts.output_folder);
 
 	if  (system (cmd)) {
 		LOG_MSG (LOG_ERR, "%s failed to create output "
@@ -333,8 +333,7 @@ LOCAL int create_output_folder ()
 LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) 
 {
 	if (url) {
-		opts->remote_logger = malloc(strlen(url) + 1);
-		strcpy(opts->remote_logger, url);
+		opts->remote_logger = strdup(url);
 		return 0;
 	} else {
 		return 1;
@@ -362,8 +361,7 @@ LOCAL int parse_target_address_libssh2(char *address,
 	if (address) {
 		/* Parse username from address */
 		item = NULL;
-		param = malloc(strlen(address) + 1);
-		strcpy(param, address);
+		param = strdup(address);
 		
 		/* will be modified by strsep */
 		param_ptr = param;
@@ -385,10 +383,8 @@ LOCAL int parse_target_address_libssh2(char *address,
 			username = item;
 			target_address = param_ptr;
 		}
-		opts->username = malloc(strlen(username) + 1);
-		strcpy(opts->username, username);
-		opts->target_address = malloc(strlen(target_address) + 1);
-		strcpy(opts->target_address, target_address);
+		opts->username = strdup(username);
+		opts->target_address = strdup(target_address);
 		p = strchr (opts->target_address, ':');
 		if (p) {
 			*p = '\0';
@@ -534,7 +530,7 @@ LOCAL int parse_remote_getter(char *getter, testrunner_lite_options *opts)
 	size = strlen(getter) + strlen(" <FILE> <DEST>") + 1;
 	opts->remote_getter = malloc(size);
 
-	strcpy(opts->remote_getter, getter);
+	strncpy(opts->remote_getter, getter, size);
 	if (strstr(getter, "<FILE>") == NULL)
 		strcat(opts->remote_getter, " <FILE>");
 	if (strstr(getter, "<DEST>") == NULL)
@@ -553,7 +549,8 @@ LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 	char portarg [3 + 5 + 1]; /* "-p " + max port size + '\0' */
 	int keyarg_len;
 	if (opts->ssh_key) {  
-		keyarg_len = strlen(opts->ssh_key) + 3 + 1; /* -i + ssh key len + '\0'*/
+		keyarg_len = strlen(opts->ssh_key) + 3 + 1; /* -i + ssh key 
+							     * len + '\0'*/
 	} else {
 		keyarg_len = 1; /* for null termination */
 	}
@@ -567,7 +564,8 @@ LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 
 	portarg[0] = '\0';
 	if (opts->target_port)
-		sprintf (portarg, "-p %u", opts->target_port);
+		snprintf (portarg, 3 + 5 + 1,
+			  "-p %u", opts->target_port);
 	
 	keyarg[0] = '\0';
 	if (opts->ssh_key) {
@@ -582,7 +580,7 @@ LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 		return 1;
 	}
 
-	sprintf(opts->remote_executor, SSH_REMOTE_EXECUTOR, portarg,
+	snprintf(opts->remote_executor, len, SSH_REMOTE_EXECUTOR, portarg,
 	        opts->target_address, keyarg);
 
 	return 0;
@@ -607,7 +605,7 @@ LOCAL int parse_default_scp_getter(testrunner_lite_options *opts)
 
 	portarg[0] = '\0';
 	if (opts->target_port)
-		sprintf (portarg, "-P %u", opts->target_port);
+		snprintf (portarg, 3 + 5 + 1, "-P %u", opts->target_port);
 
 	keyarg[0] = '\0';
 	if (opts->ssh_key) {
@@ -622,8 +620,8 @@ LOCAL int parse_default_scp_getter(testrunner_lite_options *opts)
 		return 1;
 	}
 
-	sprintf(opts->remote_getter, SCP_REMOTE_GETTER, portarg, keyarg,
-	        opts->target_address);
+	snprintf(opts->remote_getter, len, SCP_REMOTE_GETTER, portarg, keyarg,
+		 opts->target_address);
 
 	return 0;
 }
@@ -639,8 +637,7 @@ LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts) {
 	struct stat stat_buf;
 
 	if (folder) {
-		opts->chroot_folder = malloc(strlen(folder) + 1);
-		strcpy(opts->chroot_folder, folder);
+		opts->chroot_folder = strdup (folder);
 
 		// check that folder exists, is a directory and we can chroot into it
 		if (stat(folder, &stat_buf) == -1) {
@@ -725,7 +722,7 @@ LOCAL int set_rich_core_dumps(char *folder, testrunner_lite_options *opts)
 		pattern_len = strlen (folder) + 2;
 		opts->rich_core_dumps = (char *) malloc (pattern_len);
 
-		strcpy (opts->rich_core_dumps, folder);
+		strncpy (opts->rich_core_dumps, folder, pattern_len);
 		if (folder[strlen (folder) - 1] != '/') {
 			strcat (opts->rich_core_dumps, "/");
 		}
@@ -941,16 +938,13 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			fclose (ifile);
-			opts.input_filename = malloc (strlen (optarg) + 1);
-			strcpy (opts.input_filename, optarg); 
+			opts.input_filename = strdup (optarg); 
 			break;
 		case 'o':
-			opts.output_filename = malloc (strlen (optarg) + 1);
-			strcpy (opts.output_filename, optarg); 
+			opts.output_filename = strdup (optarg); 
 			break;
 		case 'e':
-			opts.environment = malloc (strlen (optarg) + 1);
-			strcpy (opts.environment, optarg); 
+			opts.environment = strdup (optarg); 
 			break;
 		case 'A':
 			A_flag = 1;
@@ -983,8 +977,7 @@ int main (int argc, char *argv[], char *envp[])
 			}
 			break;
 		case 'E':
-			opts.remote_executor = malloc (strlen (optarg) + 1);
-			strcpy (opts.remote_executor, optarg);
+			opts.remote_executor = strdup (optarg);
 			break;
 		case 'G':
 			if (parse_remote_getter(optarg, &opts) != 0) {
@@ -1228,8 +1221,7 @@ int main (int argc, char *argv[], char *envp[])
 	}
 
 	if (!opts.environment) {
-		opts.environment = (char *)malloc (strlen ("hardware") + 1);
-		strcpy (opts.environment, "hardware");
+		opts.environment = strdup ("hardware");
 	}
 
         /*

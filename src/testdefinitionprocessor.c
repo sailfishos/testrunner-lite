@@ -191,14 +191,17 @@ LOCAL int fetch_rich_core_dumps (const char *uuid, xmlListPtr crashids)
 
         pattern_len = strlen (opts.rich_core_dumps) + strlen (uuid) + 3;
         get_pattern = (char *) malloc (pattern_len);
-	sprintf (get_pattern, RICH_CORE_SEARCH_PATTERN,
+	snprintf (get_pattern, pattern_len, RICH_CORE_SEARCH_PATTERN,
 		 opts.rich_core_dumps, uuid);
 
         command = (char *) malloc (strlen(RICHCORE_SEARCH_COMMAND) +
 				   strlen (opts.rich_core_dumps) + 
 				   strlen (uuid) + 3);
-        sprintf (command, "%s %s %s", 
-		 RICHCORE_SEARCH_COMMAND, opts.rich_core_dumps, uuid);
+        snprintf (command, strlen(RICHCORE_SEARCH_COMMAND) +
+		  strlen (opts.rich_core_dumps) + 
+		  strlen (uuid) + 3,
+		  "%s %s %s", 
+		  RICHCORE_SEARCH_COMMAND, opts.rich_core_dumps, uuid);
 
         LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
         execute(command, &edata);
@@ -248,8 +251,7 @@ LOCAL int set_device_core_pattern (const char *uuid)
         edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
 	command_len = strlen(CORE_PATTERN_COMMAND) + strlen(uuid) + 1;
-	command = (char *) malloc (command_len);
-	strcpy (command, CORE_PATTERN_COMMAND);
+	command = strdup (CORE_PATTERN_COMMAND);
 
 	p = command;
 	command = replace_string (command, "<UUID>", uuid);
@@ -651,7 +653,7 @@ LOCAL int process_get (const void *data, const void *user)
 
 	fname = malloc (strlen((char *)file->filename) + 1);
 	trim_string ((char *)file->filename, fname);
-
+	command_len = strlen ("rm -f ") + strlen (fname) + 1;
 	/*
 	** Compose command 
 	*/
@@ -681,12 +683,14 @@ LOCAL int process_get (const void *data, const void *user)
 			key_param_len;
 		command = (char *)malloc (command_len);
 		if (opts.target_port)
-			sprintf (command, "scp -P %u ", opts.target_port);
+			snprintf (command, command_len,
+				  "scp -P %u ", opts.target_port);
 		else
-			sprintf (command, "scp ");
+			snprintf (command, command_len, "scp ");
 		p = (char *)(command + (strlen (command)));
-			sprintf (p, "%s@%s:\'%s\' %s %s", opts.username, remote,
-			         fname, opts.output_folder, key_param);
+		snprintf (p, command_len - strlen(command),
+			  "%s@%s:\'%s\' %s %s", opts.username, remote,
+			  fname, opts.output_folder, key_param);
 	} else
 #endif
 	if (executor) {
@@ -696,10 +700,10 @@ LOCAL int process_get (const void *data, const void *user)
 		command = replace_string (command, "<DEST>", opts.output_folder);
 		free(p);
 	} else {
-		command = (char *)malloc (strlen ("cp ") + 
-					     strlen (fname) +
-					     strlen (opts.output_folder) + 2);
-		sprintf (command, "cp %s %s", fname,
+		command_len = strlen ("cp ") + strlen (fname) +
+			strlen (opts.output_folder) + 2;
+		command = (char *)malloc (command_len);
+		snprintf (command, command_len, "cp %s %s", fname,
 			 opts.output_folder);
 	}
 
@@ -730,7 +734,7 @@ LOCAL int process_get (const void *data, const void *user)
 	init_exec_data(&edata);
 	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	sprintf (command, "rm -f %s", fname);
+	snprintf (command, command_len, "rm -f %s", fname);
 	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
 	execute(command, &edata);
 	if (edata.result) {
@@ -761,6 +765,7 @@ LOCAL int process_get_case (const void *data, const void *user)
 	td_case *c = (td_case *)user;
 	char *trimmed_name, *fname, *filename, *failure_str = NULL;
 	int measurement_verdict = CASE_PASS;
+	size_t len;
 
 	ret = process_get (data, NULL);
 	if (!ret)
@@ -780,9 +785,9 @@ LOCAL int process_get_case (const void *data, const void *user)
 		fname = trimmed_name;
 	else
 		fname ++;
-	filename = malloc (strlen((char *)fname) + 2 + 
-			   strlen (opts.output_folder));
-	sprintf (filename, "%s%s", opts.output_folder, fname);
+	len = strlen((char *)fname) + 2 + strlen (opts.output_folder);
+	filename = malloc (len);
+	snprintf (filename, len, "%s%s", opts.output_folder, fname);
 
 	ret = get_measurements (filename, c, file->series);
 	free (trimmed_name);
