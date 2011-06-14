@@ -637,8 +637,8 @@ LOCAL int process_get (const void *data, const void *user)
 	exec_data edata;
 	char *p;
 	char *executor = opts.remote_executor;
-#ifdef ENABLE_LIBSSH2
 	int command_len;
+#ifdef ENABLE_LIBSSH2
 	int key_param_len = 0;
 	char *remote = opts.target_address;
 #endif
