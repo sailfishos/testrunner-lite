@@ -1,3 +1,11 @@
+testrunner-lite (1.7.1) unstable; urgency=low
+
+  * All strcpy() and sprintf() function calls replaced with safer alternatives (BMC#13887)
+  * Errors reported by valgrind fixed (BMC#18861)
+  * Environmet is cleaned up after testing by unit and regression tests (BMC#17264)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Tue, 14 Jun 2011 12:38:16 +0300
+
 testrunner-lite (1.7.0) unstable; urgency=low
 
   * Support for fetching rich cores and writing crash identifiers to results (BMC#17754)
