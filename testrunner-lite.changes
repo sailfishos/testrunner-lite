@@ -2,6 +2,7 @@
 - All strcpy() and sprintf() function calls replaced with safer alternatives (BMC#13887)
 - Errors reported by valgrind fixed (BMC#18861)
 - Environmet is cleaned up after testing by unit and regression tests (BMC#17264)
+- Fixed regression test fail due to test definition changes (BMC#19912)
 * Mon May 30 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.7.0
 - Support for fetching rich cores and writing crash identifiers to results (BMC#17754)
 - Option to resume (--resume) test run after connection fail (BMC#17688)
