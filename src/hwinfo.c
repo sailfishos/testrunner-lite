@@ -137,7 +137,7 @@ int read_hwinfo (hw_info *hi)
 
 	memset (hi, 0x0, sizeof (hw_info));
 
-	plugin = dlopen ("/usr/lib/testrunner-lite-hwinfo.so",
+	plugin = dlopen (LIBDIR "/testrunner-lite-hwinfo.so",
 			  RTLD_NOW | RTLD_LOCAL);
 	if  (!plugin) {
 		LOG_MSG (LOG_WARNING, "failed to load hwinfo plugin %s",

@@ -207,7 +207,7 @@ START_TEST (test_executor_long_input_streams)
 	init_exec_data(&edata);
 	edata.soft_timeout = 2;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/share/testrunner-lite-tests/long_output.sh", 
+	fail_if (execute(DATADIR "/testrunner-lite-tests/long_output.sh", 
 			 &edata));
 	fail_unless (edata.result == 0);
 	fail_if (edata.stdout_data.buffer == NULL);
@@ -228,7 +228,7 @@ START_TEST (test_executor_terminating_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM);
 	fail_if (edata.stdout_data.buffer == NULL);
@@ -253,7 +253,7 @@ START_TEST (test_executor_killing_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM || edata.result == SIGKILL);
 	fail_if (edata.stdout_data.buffer == NULL);
@@ -466,7 +466,7 @@ START_TEST (test_executor_remote_terminating_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 2;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 	/* 128 + SIGKILL or 255 depends on ssh*/
 	fail_unless (edata.result == 143 ||
@@ -504,7 +504,7 @@ START_TEST (test_executor_remote_killing_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 2;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	/* 128 + SIGKILL or 255 depends on ssh */
 	fail_unless (edata.result == 137 ||
@@ -1148,7 +1148,7 @@ START_TEST (test_executor_remote_libssh2_terminating_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 5;
 	edata.hard_timeout = 5;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 
 	fail_if (edata.stdout_data.buffer == NULL);
@@ -1187,7 +1187,7 @@ START_TEST (test_executor_remote_libssh2_killing_process)
 	log_init(&opts);
 	edata.soft_timeout = 5;
 	edata.hard_timeout = 5;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	/* 128 + SIGKILL or 255 depends on ssh */
 	/* Let's skip this until we get recent enough
@@ -1229,7 +1229,7 @@ START_TEST (test_executor_remote_libssh2_bg_process)
 	log_init(&opts);
 	edata.soft_timeout = 20;
 	edata.hard_timeout = 5;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating aa bb &"
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/terminating aa bb &"
 			 , &edata));
 	/* Check that the process stayed in bg */
 	fail_if (execute("PATH=$PATH:/sbin/ pidof terminating", &edata));
@@ -1264,7 +1264,7 @@ START_TEST (test_executor_remote_libssh2_daemon_process)
 	log_init(&opts);
 	edata.soft_timeout = 20;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/trlite-test-daemon"
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/trlite-test-daemon"
 			 , &edata));
 	/* Check that the process stayed in bg */
 	fail_if (execute("PATH=$PATH:/sbin/ pidof trlite-test-daemon", &edata));

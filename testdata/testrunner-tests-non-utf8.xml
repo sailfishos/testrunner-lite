@@ -3,7 +3,7 @@
   <suite name="non_utf8_tests"  timeout="10">  
     <set name="non_utf8" description="check non utf-8 detection" timeout="15">
       <case name="cat_binary" description="cat binary file" timeout="30">
-        <step expected_result="0">cat /usr/bin/testrunner-lite</step>
+        <step expected_result="0">cat /bin/ls</step>
       </case>     
     </set>
  </suite>

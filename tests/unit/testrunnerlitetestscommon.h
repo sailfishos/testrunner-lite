@@ -34,20 +34,24 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-#define TESTDATA_VALID_XML_1    "/usr/share/testrunner-lite-tests/testdata/sample_input_file.xml"
-#define TESTDATA_INVALID_XML_1    "/usr/share/testrunner-lite-tests/testdata/invalid.xml"
-#define TESTDATA_INVALID_SEMANTIC_XML_1    "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-semantic_invalid.xml"
-#define TESTDATA_SIMPLE_XML_1   "/usr/share/testrunner-lite-tests/testdata/simple.xml"
-#define TESTDATA_GET_XML_1    "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-get.xml"
-#define TESTDATA_UTF8_XML_1    "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-utf8.xml"
-#define TESTDATA_ENTITY_SUBSTITUTION    "/usr/share/testrunner-lite-tests/testdata/entity_substitution.xml"
-#define TESTDATA_NON_UTF8_XML_1 "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-non-utf8.xml"
-#define TESTDATA_BG_XML "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-bg.xml"
-#define TESTDATA_PRE_STEP_FAIL_XML  "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-pre_step-fail.xml"
-#define TESTDATA_FILTER_TESTS_XML  "/usr/share/testrunner-lite-tests/testdata/filter_tests.xml"
-#define TESTDATA_ENVIRONMENT_TESTS_XML  "/usr/share/testrunner-lite-tests/testdata/testrunner-tests-environment.xml"
-#define TESTDATA_RESUME_TEST_XML  "/usr/share/testrunner-lite-tests/testdata/resumetest.xml"
-#define TESTRUNNERLITE_BIN  "/usr/bin/testrunner-lite"
+#define TESTDATA_VALID_XML_1 DATADIR "/testrunner-lite-tests/testdata/sample_input_file.xml"
+#define TESTDATA_INVALID_XML_1 DATADIR "/testrunner-lite-tests/testdata/invalid.xml"
+#define TESTDATA_INVALID_SEMANTIC_XML_1 DATADIR  "/testrunner-lite-tests/testdata/testrunner-tests-semantic_invalid.xml"
+#define TESTDATA_SIMPLE_XML_1  DATADIR  "/testrunner-lite-tests/testdata/simple.xml"
+#define TESTDATA_GET_XML_1 DATADIR "/testrunner-lite-tests/testdata/testrunner-tests-get.xml"
+#define TESTDATA_UTF8_XML_1 DATADIR "/testrunner-lite-tests/testdata/testrunner-tests-utf8.xml"
+#define TESTDATA_ENTITY_SUBSTITUTION DATADIR "/testrunner-lite-tests/testdata/entity_substitution.xml"
+#define TESTDATA_NON_UTF8_XML_1 DATADIR "/testrunner-lite-tests/testdata/testrunner-tests-non-utf8.xml"
+#define TESTDATA_BG_XML DATADIR "/testrunner-lite-tests/testdata/testrunner-tests-bg.xml"
+#define TESTDATA_PRE_STEP_FAIL_XML DATADIR "/testrunner-lite-tests/testdata/testrunner-tests-pre_step-fail.xml"
+#define TESTDATA_FILTER_TESTS_XML DATADIR "/testrunner-lite-tests/testdata/filter_tests.xml"
+#define TESTDATA_ENVIRONMENT_TESTS_XML DATADIR"/testrunner-lite-tests/testdata/testrunner-tests-environment.xml"
+#define TESTDATA_RESUME_TEST_XML DATADIR "/testrunner-lite-tests/testdata/resumetest.xml"
+#define TESTDATA_MANUAL_SET DATADIR "/testrunner-lite-tests/testdata/testrunner-tests-manual-set.xml"
+#define TESTDATA_SEMI_AUTO DATADIR "/testrunner-lite-tests/testdata/testrunner-tests-semi_auto.xml"
+#define TESTDATA_MANUAL_NO_STEPS DATADIR "/testrunner-lite-tests/testdata/testrunner-tests-manual-nosteps.xml"
+#define TESTDATA_MANUAL_EMPTY_STEPS DATADIR "/testrunner-lite-tests/testdata/testrunner-tests-manual-emptysteps.xml"
+#define TESTRUNNERLITE_BIN BINDIR  "/testrunner-lite"
 
 /* ------------------------------------------------------------------------- */
 /* DATA TYPES */

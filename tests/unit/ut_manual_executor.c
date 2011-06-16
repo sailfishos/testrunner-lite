@@ -300,8 +300,10 @@ START_TEST (test_execute_manual_set)
      int ret;
      FILE *f;
 
-     f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
-		 "testrunner-tests-manual-set.xml -o /tmp/res.xml", "w");
+     f = popen (TESTRUNNERLITE_BIN 
+		" -f "
+		TESTDATA_MANUAL_SET
+		" -o /tmp/res.xml", "w");
      fail_if (f == NULL, "popen() failed");
      ret = fwrite ("P\nP\ntestcomment\n", 1, strlen("P\nP\ntestcomment\n"), f);
      fail_if (ret != strlen("P\nP\ntestcomment\n"), 
@@ -323,8 +325,10 @@ START_TEST (test_execute_semi_auto)
      int ret;
      FILE *f;
 
-     f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
-		 "testrunner-tests-semi_auto.xml -o /tmp/res.xml", "w");
+     f = popen (TESTRUNNERLITE_BIN
+		" -f "
+		TESTDATA_SEMI_AUTO
+		" -o /tmp/res.xml", "w");
      fail_if (f == NULL, "popen() failed");
      ret = fwrite ("P\n\n", 1, 5, f);
      fail_if (ret != 5, "fwrite() returned : %d", ret);
@@ -342,8 +346,10 @@ START_TEST (test_execute_manual_case_no_steps)
      int ret;
      FILE *f;
 
-     f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
-		 "testrunner-tests-manual-nosteps.xml -o /tmp/res.xml -v", "w");
+     f = popen (TESTRUNNERLITE_BIN
+		" -f "
+		TESTDATA_MANUAL_NO_STEPS
+		" -o /tmp/res.xml -v", "w");
      fail_if (f == NULL, "popen() failed");
      ret = fwrite ("F\n\n", 1, 5, f);
      fail_if (ret != 5, "fwrite() returned : %d", ret);
@@ -360,8 +366,10 @@ START_TEST (test_execute_manual_empty_steps)
      int ret;
      FILE *f;
 
-     f = popen ("testrunner-lite -f /usr/share/testrunner-lite-tests/testdata/"
-		 "testrunner-tests-manual-emptysteps.xml -o /tmp/res.xml -v", "w");
+     f = popen (TESTRUNNERLITE_BIN
+		" -f "
+		TESTDATA_MANUAL_EMPTY_STEPS
+		" -o /tmp/res.xml -v", "w");
      fail_if (f == NULL, "popen() failed");
      sleep (1);
      ret = fwrite ("P\n", 1, 3 , f);

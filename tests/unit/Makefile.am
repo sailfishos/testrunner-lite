@@ -1,11 +1,13 @@
-testsdefinitiondir = /usr/share/testrunner-lite-tests/
+testsdefinitiondir = @datadir@/testrunner-lite-tests/
 testsdefinition_DATA = tests.xml
 
 testrunnerliteunittestsdir = $(libdir)/testrunner-lite-tests
 
 testrunnerliteunittests_PROGRAMS = testrunnerliteunittests
 
-datadir = .
+
+tests.xml: tests.xml.in 
+	sed s,LIBDIR,$(libdir),g tests.xml.in > tests.xml
 
 testrunnerliteunittests_SOURCES = main.c \
                               ut_testdefinitionparser.c \
@@ -16,6 +18,7 @@ testrunnerliteunittests_SOURCES = main.c \
 			      ut_filters.c \
                               ut_manual_executor.c
 
+AM_CPPFLAGS = -DDATADIR=\"$(datadir)\" -DLIBDIR=\"$(libdir)\" -DBINDIR=\"$(bindir)\"
 AM_CFLAGS = -I. \
             -I/usr/include \
 	    $(XML2_CFLAGS) \
@@ -53,3 +56,6 @@ testrunnerliteunittests_LDADD += $(top_builddir)/src/remote_executor_libssh2.o \
                                  $(LIBSSH2_LIBS)
 AM_CFLAGS        		      += -DENABLE_LIBSSH2
 endif
+
+clean-local:
+	rm -f tests.xml

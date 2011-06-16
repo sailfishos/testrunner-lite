@@ -3,7 +3,7 @@
   <suite name="utf8_test"  timeout="10">  
     <set name="utf8_set" description="try utf-8 output"  timeout="15">    
       <case name="unicode_stuff_to_stdout" description="cat file with unicode chars" timeout="30">
-        <step expected_result="0">cat /usr/share/testrunner-lite-tests/testdata/unicode.txt</step>
+        <step expected_result="0">cat DATADIR/testrunner-lite-tests/testdata/unicode.txt</step>
       </case>     
     </set>
     <set name="utf8_set2" description="utf-8 on command line arguments"  timeout="15">    
