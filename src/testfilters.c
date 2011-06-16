@@ -475,8 +475,7 @@ int parse_filter_string (char *filters)
 
 	/* Make a local copy of filter string */
 	LOG_MSG (LOG_DEBUG, "string to parse %s", filters);
-	f = (char *)malloc (strlen(filters) + 1);
-	strcpy (f, filters);
+	f = strdup (filters);
 	p = f;
 	while (p && !done) {
 		/* Find filter key */

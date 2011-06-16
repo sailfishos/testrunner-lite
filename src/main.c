@@ -85,8 +85,8 @@ LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
-		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s"
-#define SCP_REMOTE_GETTER "/usr/bin/scp %s %s:'<FILE>' '<DEST>'"
+		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s %s"
+#define SCP_REMOTE_GETTER "/usr/bin/scp %s %s %s:'<FILE>' '<DEST>'"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -228,15 +228,14 @@ LOCAL void usage()
 		"case of host-based testing from target address. This option\n\t\t"
 		"overrides target address when hwinfo is obtained.\n\t\t"
 		"Usage is similar to -t option.\n");
+	printf ("  -k KEY, --ssh-key=KEY\n"
+	        "\t\tpath to SSH private key file\n");
+
 #ifdef ENABLE_LIBSSH2
 	printf ("\nLibssh2 Execution:\n");
 	printf ("  -n [USER@]ADDRESS, --libssh2=[USER@]ADDRESS\n\t\t"
 	        "Run host based testing with native ssh (libssh2) "
 	        "EXPERIMENTAL\n");
-	printf ("  -k private_key:public_key, --keypair private_key:public_key\n"
-	        "\t\tlibssh2 feature\n"
-	        "\t\tKeypair consists of private and public key file names\n"
-	        "\t\tThey are expected to be found under $HOME/.ssh\n");
 #endif
 	printf ("\nExternal Execution:\n");
 	printf ("  -E EXECUTOR, --executor=EXECUTOR\n\t\t"
@@ -303,15 +302,15 @@ LOCAL int create_output_folder ()
 			return 1;
 
 		}
-		opts.output_folder = (char *)malloc (strlen (pwd) + 2);
-		strcpy (opts.output_folder, pwd);
+		len = strlen (pwd) + 2;
+		opts.output_folder = (char *)malloc (len);
+		strncpy (opts.output_folder, pwd, len);
 		opts.output_folder[strlen(pwd)] = '/';
 		opts.output_folder[strlen(pwd) + 1] = '\0';
 	}
-	
-	cmd = (char *)malloc (strlen(opts.output_folder) + 
-			      strlen("mkdir -p ") + 1);
-	sprintf (cmd, "mkdir -p %s", opts.output_folder);
+	len = strlen(opts.output_folder) + strlen("mkdir -p ") + 1;
+	cmd = (char *)malloc (len);
+	snprintf (cmd, len, "mkdir -p %s", opts.output_folder);
 
 	if  (system (cmd)) {
 		LOG_MSG (LOG_ERR, "%s failed to create output "
@@ -334,8 +333,7 @@ LOCAL int create_output_folder ()
 LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts) 
 {
 	if (url) {
-		opts->remote_logger = malloc(strlen(url) + 1);
-		strcpy(opts->remote_logger, url);
+		opts->remote_logger = strdup(url);
 		return 0;
 	} else {
 		return 1;
@@ -363,8 +361,7 @@ LOCAL int parse_target_address_libssh2(char *address,
 	if (address) {
 		/* Parse username from address */
 		item = NULL;
-		param = malloc(strlen(address) + 1);
-		strcpy(param, address);
+		param = strdup(address);
 		
 		/* will be modified by strsep */
 		param_ptr = param;
@@ -386,10 +383,8 @@ LOCAL int parse_target_address_libssh2(char *address,
 			username = item;
 			target_address = param_ptr;
 		}
-		opts->username = malloc(strlen(username) + 1);
-		strcpy(opts->username, username);
-		opts->target_address = malloc(strlen(target_address) + 1);
-		strcpy(opts->target_address, target_address);
+		opts->username = strdup(username);
+		opts->target_address = strdup(target_address);
 		p = strchr (opts->target_address, ':');
 		if (p) {
 			*p = '\0';
@@ -409,42 +404,88 @@ LOCAL int parse_target_address_libssh2(char *address,
 		return 1;
 	}
 }
+#endif // ENABLE_LIBSSH2
+
 /* ------------------------------------------------------------------------- */
-/** Parse keypair
- * @param keypair full path to keypair in format: private_key:public_key
+/** Parse key
+ * @param key path to ssh key
  * @param opts Options struct containing field(s) to store key filenames
  * @return 0 in success, 1 on failure
  */
-LOCAL int parse_keypair(char *keypair, testrunner_lite_options *opts) {
-	char *param_ptr;
-	char *item;
-	char *param;
-	char *token;
+LOCAL int parse_key(char *key, testrunner_lite_options *opts) {
 
-	item = NULL;
-	param = malloc(strlen(keypair) + 1);
-	strncpy(param, keypair, strlen(keypair) + 1);
-	
-	/* will be modified by strsep */
-	param_ptr = param;
-	token = ":";
-	item = strsep(&param_ptr, token);
-	if (!item || !strlen(item)) {
-		free(param);
+	struct stat ssh_key_file;
+	int err;
+	int key_size;
+	char *home_dir;
+	char *ssh_key;
+
+	if (!key || !strlen(key)) {
 		return 1;
 	}
-	opts->priv_key = malloc(strlen(item) + 1);
-	strncpy(opts->priv_key, item, strlen(item) + 1);
-	item = strsep(&param_ptr, token);
-	if (!item || !strlen(item)) {
-		free(param);
-		return 1;
+
+	/* We can't rely that the shell would translate '~' to users home path
+	   in every occasion */
+	if (strlen(key) > 1 && key[0] == '~') {
+		/* ~/file -notation */
+		if (key[1] == '/') {
+			home_dir = getenv("HOME");
+			if (!home_dir) {
+				fprintf(stderr, "Fatal: Could not find users home "
+				        "directory\n");
+				goto error;
+			}
+		} else {
+			/* ~username/file -notation */
+			home_dir = "/home/";
+		}
+
+		key_size = strlen(home_dir) + 
+			strlen(key) - 1 + 1; /* remove '~', add '\0' */
+		ssh_key = malloc(key_size);
+		snprintf(ssh_key, key_size, "%s%s", home_dir, &key[1]);
+	} else {
+		ssh_key = malloc(strlen(key) + 1);
+		strncpy(ssh_key, key, strlen(key) + 1);
 	}
-	opts->pub_key = malloc(strlen(item) + 1);
-	strncpy(opts->pub_key, item, strlen(item) + 1);
+
+	/* Check that the parameter is an existing file with read access */
+	if (stat(ssh_key, &ssh_key_file) == -1) {
+			fprintf(stderr, "%s: ssh key file not found: %s\n",
+				PROGNAME, ssh_key);
+			goto error;
+	}
+
+	if (S_ISDIR(ssh_key_file.st_mode)) {
+		fprintf(stderr, "%s: '%s' is a directory, not a file\n",
+		        PROGNAME, ssh_key);
+		goto error;
+	}
+
+	if (access(ssh_key, R_OK) < 0) {
+		err = errno;
+		switch (err) {
+		case EACCES:
+			fprintf(stderr, "No read access to ssh key %s\n",
+			        ssh_key);
+			goto error;
+		default:
+			fprintf(stderr, "Access error to private key %s: %d\n",
+			        ssh_key, err);
+			goto error;
+		}		
+	}
+
+	opts->ssh_key = malloc(strlen(ssh_key) + 1);
+	strncpy(opts->ssh_key, ssh_key, strlen(ssh_key) + 1);
+	if (ssh_key) free (ssh_key);
 	return 0;
+
+ error:
+	if (ssh_key) free(ssh_key);
+	return 1;
 }
-#endif
+
 /* ------------------------------------------------------------------------- */
 /** Parse target address option argument for ssh client option
  * @param address SUT address.
@@ -489,7 +530,7 @@ LOCAL int parse_remote_getter(char *getter, testrunner_lite_options *opts)
 	size = strlen(getter) + strlen(" <FILE> <DEST>") + 1;
 	opts->remote_getter = malloc(size);
 
-	strcpy(opts->remote_getter, getter);
+	strncpy(opts->remote_getter, getter, size);
 	if (strstr(getter, "<FILE>") == NULL)
 		strcat(opts->remote_getter, " <FILE>");
 	if (strstr(getter, "<DEST>") == NULL)
@@ -506,6 +547,14 @@ LOCAL int parse_remote_getter(char *getter, testrunner_lite_options *opts)
 LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 {
 	char portarg [3 + 5 + 1]; /* "-p " + max port size + '\0' */
+	int keyarg_len;
+	if (opts->ssh_key) {  
+		keyarg_len = strlen(opts->ssh_key) + 3 + 1; /* -i + ssh key 
+							     * len + '\0'*/
+	} else {
+		keyarg_len = 1; /* for null termination */
+	}
+	char keyarg[keyarg_len];
 	size_t len;
 
 	if (opts->target_address == NULL) {
@@ -515,18 +564,24 @@ LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 
 	portarg[0] = '\0';
 	if (opts->target_port)
-		sprintf (portarg, "-p %u", opts->target_port);
+		snprintf (portarg, 3 + 5 + 1,
+			  "-p %u", opts->target_port);
+	
+	keyarg[0] = '\0';
+	if (opts->ssh_key) {
+		snprintf (keyarg, keyarg_len + 1, "-i %s", opts->ssh_key);
+	}
 
 	len = strlen(SSH_REMOTE_EXECUTOR) + strlen(portarg) +
-		strlen(opts->target_address) + 1;
+		strlen(opts->target_address) + keyarg_len + 1;
 	opts->remote_executor = malloc(len);
 	if (opts->remote_executor == NULL) {
 		fprintf (stderr, "Malloc failed\n");
 		return 1;
 	}
 
-	sprintf(opts->remote_executor, SSH_REMOTE_EXECUTOR, portarg,
-		opts->target_address);
+	snprintf(opts->remote_executor, len, SSH_REMOTE_EXECUTOR, portarg,
+	        opts->target_address, keyarg);
 
 	return 0;
 }
@@ -539,22 +594,34 @@ LOCAL int parse_default_ssh_executor(testrunner_lite_options *opts)
 LOCAL int parse_default_scp_getter(testrunner_lite_options *opts)
 {
 	char portarg [3 + 5 + 1]; /* "-P " + max port size + '\0' */
+	int keyarg_len;
+	if (opts->ssh_key) {  
+		keyarg_len = strlen(opts->ssh_key) + 3 + 1; /* -i + ssh key len + '\0'*/
+	} else {
+		keyarg_len = 1; /* for null termination */
+	}
+	char keyarg[keyarg_len];
 	size_t len;
 
 	portarg[0] = '\0';
 	if (opts->target_port)
-		sprintf (portarg, "-P %u", opts->target_port);
+		snprintf (portarg, 3 + 5 + 1, "-P %u", opts->target_port);
+
+	keyarg[0] = '\0';
+	if (opts->ssh_key) {
+		snprintf (keyarg, keyarg_len + 1, "-i %s", opts->ssh_key);
+	}
 
 	len = strlen(SCP_REMOTE_GETTER) + strlen(portarg) +
-		strlen(opts->target_address) + 1;
+		strlen(opts->target_address) + keyarg_len + 1;
 	opts->remote_getter = malloc(len);
 	if (opts->remote_getter == NULL) {
 		fprintf (stderr, "Malloc failed\n");
 		return 1;
 	}
 
-	sprintf(opts->remote_getter, SCP_REMOTE_GETTER, portarg,
-		opts->target_address);
+	snprintf(opts->remote_getter, len, SCP_REMOTE_GETTER, portarg, keyarg,
+		 opts->target_address);
 
 	return 0;
 }
@@ -570,8 +637,7 @@ LOCAL int parse_chroot_folder(char *folder, testrunner_lite_options *opts) {
 	struct stat stat_buf;
 
 	if (folder) {
-		opts->chroot_folder = malloc(strlen(folder) + 1);
-		strcpy(opts->chroot_folder, folder);
+		opts->chroot_folder = strdup (folder);
 
 		// check that folder exists, is a directory and we can chroot into it
 		if (stat(folder, &stat_buf) == -1) {
@@ -656,7 +722,7 @@ LOCAL int set_rich_core_dumps(char *folder, testrunner_lite_options *opts)
 		pattern_len = strlen (folder) + 2;
 		opts->rich_core_dumps = (char *) malloc (pattern_len);
 
-		strcpy (opts->rich_core_dumps, folder);
+		strncpy (opts->rich_core_dumps, folder, pattern_len);
 		if (folder[strlen (folder) - 1] != '/') {
 			strcat (opts->rich_core_dumps, "/");
 		}
@@ -739,10 +805,9 @@ int main (int argc, char *argv[], char *envp[])
 	opts.remote_executor = NULL;
 	opts.remote_getter = NULL;
 #ifdef ENABLE_LIBSSH2
-	opts.priv_key = NULL;
-	opts.pub_key = NULL;
 	opts.libssh2 = 0;
 #endif
+	opts.ssh_key = NULL;
 	FILE *ifile = NULL;
 	testrunner_lite_return_code retval = TESTRUNNER_LITE_OK;
 	xmlChar *filter_string = NULL;
@@ -771,7 +836,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"getter", required_argument, NULL, 'G'},
 #ifdef ENABLE_LIBSSH2
 			{"libssh2", required_argument, NULL, 'n'},
-			{"keypair", required_argument, NULL, 'k'},
+			{"ssh-key", required_argument, NULL, 'k'},
 #endif
 			{"print-step-output", no_argument, 
 			 &opts.print_step_output, 1},
@@ -795,6 +860,7 @@ int main (int argc, char *argv[], char *envp[])
 
 	opts.output_type = OUTPUT_TYPE_XML;
 	opts.run_automatic = opts.run_manual = 1;
+	opts.ssh_key = NULL;
 	gettimeofday (&created, NULL);
 	signal (SIGINT, handle_sigint);
 	signal (SIGTERM, handle_sigterm);
@@ -806,9 +872,9 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:v::"
+					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:v::k:"
 #ifdef ENABLE_LIBSSH2
-					"n:k:"
+					"n:"
 #endif
 					"R::i:", testrunnerlite_options,
 					&option_idx);
@@ -872,16 +938,13 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			fclose (ifile);
-			opts.input_filename = malloc (strlen (optarg) + 1);
-			strcpy (opts.input_filename, optarg); 
+			opts.input_filename = strdup (optarg); 
 			break;
 		case 'o':
-			opts.output_filename = malloc (strlen (optarg) + 1);
-			strcpy (opts.output_filename, optarg); 
+			opts.output_filename = strdup (optarg); 
 			break;
 		case 'e':
-			opts.environment = malloc (strlen (optarg) + 1);
-			strcpy (opts.environment, optarg); 
+			opts.environment = strdup (optarg); 
 			break;
 		case 'A':
 			A_flag = 1;
@@ -914,8 +977,7 @@ int main (int argc, char *argv[], char *envp[])
 			}
 			break;
 		case 'E':
-			opts.remote_executor = malloc (strlen (optarg) + 1);
-			strcpy (opts.remote_executor, optarg);
+			opts.remote_executor = strdup (optarg);
 			break;
 		case 'G':
 			if (parse_remote_getter(optarg, &opts) != 0) {
@@ -937,14 +999,13 @@ int main (int argc, char *argv[], char *envp[])
 				goto OUT;
 			}
 			break;
+#endif
 		case 'k':
-			if (parse_keypair(optarg, &opts) != 0) {
-				fprintf(stderr, "Error parsing libssh2 keypair\n");
+			if (parse_key(optarg, &opts) != 0) {
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
 			break;
-#endif
 		case 'P':
 			opts.print_step_output = 1;
 			break;
@@ -1160,8 +1221,7 @@ int main (int argc, char *argv[], char *envp[])
 	}
 
 	if (!opts.environment) {
-		opts.environment = (char *)malloc (strlen ("hardware") + 1);
-		strcpy (opts.environment, "hardware");
+		opts.environment = strdup ("hardware");
 	}
 
         /*
@@ -1247,6 +1307,7 @@ int main (int argc, char *argv[], char *envp[])
 	cleanup_filters();
 	log_close();
  OUT:
+	clean_hwinfo(&hwinfo);
 	if (opts.input_filename) free (opts.input_filename);
 	if (opts.output_filename) free (opts.output_filename);
 	if (opts.output_folder) free (opts.output_folder);
@@ -1260,9 +1321,8 @@ int main (int argc, char *argv[], char *envp[])
 	if (opts.logid) free (opts.logid);
 #ifdef ENABLE_LIBSSH2
 	if (opts.username) free (opts.username);
-	if (opts.priv_key) free (opts.priv_key);
-	if (opts.pub_key) free (opts.pub_key);
 #endif
+	if (opts.ssh_key) free (opts.ssh_key);
 	if (opts.rich_core_dumps) free (opts.rich_core_dumps);
 	if (filter_string) free (filter_string);
 	if (bail_out == 255+SIGINT) {

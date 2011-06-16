@@ -1,3 +1,28 @@
+testrunner-lite (1.7.1) unstable; urgency=low
+
+  * All strcpy() and sprintf() function calls replaced with safer alternatives (BMC#13887)
+  * Errors reported by valgrind fixed (BMC#18861)
+  * Environmet is cleaned up after testing by unit and regression tests (BMC#17264)
+  * Fixed regression test fail due to test definition changes (BMC#19912)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Tue, 14 Jun 2011 12:38:16 +0300
+
+testrunner-lite (1.7.0) unstable; urgency=low
+
+  * Support for fetching rich cores and writing crash identifiers to results (BMC#17754)
+  * Option to resume (--resume) test run after connection fail (BMC#17688)
+  * Option to ask hwinfo remotely in case of chroot testing (-i) (BMC#17685)
+  * Option to pass user defined log id to http log output (--logid) (BMC#17687)
+  * Stricter UTF-8 checks for test step output (BMC#17686)
+  * Both absolute and $HOME/.ssh paths accepted for libssh2 keypairs (BMC#15292)
+  * More specific version requirements for testrunner-lite test packages (BMC#17266)
+  * Soft termination of test step during timeout on remote execution mode (BMC#9103)
+  * Support for ssh key filename (-k) also with -t option (BMC#17683)
+  * Error logging functions for XML parser/validator (BMC#18217)
+  * Remote connection check routine brought back (BMC#18218)
+
+ -- Sampo Saaristo <sampo.saaristo@sofica.fi>  Mon, 30 May 2011 16:50:05 +0300
+
 testrunner-lite (1.6.1-4) unstable; urgency=low
 
   * Fixes: NB#259853 - Testrunner does not log test definition schema validation error

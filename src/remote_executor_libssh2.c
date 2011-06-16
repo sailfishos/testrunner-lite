@@ -31,6 +31,7 @@
 #include <sys/time.h>
 #include <libssh2.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "testrunnerlite.h"
 #include "executor.h"
@@ -71,9 +72,10 @@
 /* Size we try to read from ssh session */
 #define CHANNEL_BUFFER_SIZE 1024
 #define KNOWN_HOSTS_FILE "known_hosts"
-#define DEFAULT_PUBLIC_KEY "id_eat_dsa.pub"
-#define DEFAULT_PRIVATE_KEY "id_eat_dsa"
-#define KEY_FMT "%s/.ssh/%s"
+#define DEFAULT_PUBLIC_KEY "~/.ssh/id_eat_dsa.pub"
+#define DEFAULT_PRIVATE_KEY "~/.ssh/id_eat_dsa"
+#define KEY_FMT "%s%s"
+#define PUB_KEY_FMT "%s.pub"
 /* A command to be run in the remote end while executing a test step */
 #define TRLITE_RUN_CMD ". /var/tmp/testrunner-lite.sh '%s'"
 /* Kills the children of the jammed shell session */
@@ -169,6 +171,9 @@ static int lssh2_kill (libssh2_conn *conn, int signal);
 /* ------------------------------------------------------------------------- */
 static char *replace(char const *const cmd, char const *const pat, 
 		     char const *const rep);
+/* ------------------------------------------------------------------------- */
+static int lssh2_verify_keypair(libssh2_conn *conn, const char *username, 
+                                const char *ssh_key);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -473,7 +478,7 @@ static int lssh2_channel_close(libssh2_conn *conn, LIBSSH2_CHANNEL *channel,
 	int n;
 	*exitcode = -127;
 	int channel_retries = 0;
-	
+
 	if (channel) {
 		while (channel_retries < MAX_SSH_CHANNEL_RETRIES) {
 			n = libssh2_channel_close(channel);
@@ -527,7 +532,7 @@ static int lssh2_session_free(libssh2_conn *conn)
 {
 
 	LOG_MSG(LOG_DEBUG, "session_conn->session %p", conn->ssh2_session);
-	if (!conn || !conn->ssh2_session) {
+	if (!conn || !conn->ssh2_session) { 
 		LOG_MSG(LOG_DEBUG, "No SSH session");
 		return -1;
 	}
@@ -570,8 +575,14 @@ static int lssh2_session_free(libssh2_conn *conn)
 
 	close(conn->sock);
 
-	if (conn->priv_key) free(conn->priv_key);
-	if (conn->pub_key) free(conn->pub_key);
+	if (conn->priv_key) { 
+		free(conn->priv_key);
+		conn->priv_key = NULL;
+	}
+	if (conn->pub_key) {
+		free(conn->pub_key);
+		conn->pub_key = NULL;
+	}
 	
 	if (conn) {
 		free(conn);
@@ -840,6 +851,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	int n;
 	int retries = 0;
 	int channel_retries = 0;
+	int exitcode = -127;
 	
 	if (!conn || !conn->ssh2_session) {
 		if(conn && conn->status != SESSION_GIVE_UP) {
@@ -909,7 +921,7 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 		if (channel_retries > MAX_SSH_CHANNEL_RETRIES) {
 			LOG_MSG(LOG_ERR, "Channel execute failed");
 			channel_retries = 0;
-			lssh2_channel_close(conn, channel, NULL);
+			lssh2_channel_close(conn, channel, &exitcode);
 			conn->status = SESSION_GIVE_UP;
 			return -1;
 		}
@@ -924,7 +936,11 @@ static int lssh2_execute_command(libssh2_conn *conn, char *command,
 	}
 
 	if (conn->status != SESSION_GIVE_UP) {
-		lssh2_channel_close(conn, channel, &data->result);	
+		lssh2_channel_close(conn, channel, &exitcode);	
+		/* Ignore exit code if not requested */
+		if (data) {
+			data->result = exitcode;
+		}
 	}
 
 	return 0;
@@ -958,8 +974,8 @@ static char *replace(char const *const cmd, char const *const pat,
     
     {
 	    /* Allocate the new string */
-	    int newlen = cmdlen + count * (replen - patlen);
-	    char *const newcmd = (char *) malloc(sizeof(char) * (newlen + 1));
+	    int newlen = cmdlen + count * (replen - patlen) + 1;
+	    char *const newcmd = (char *) malloc(sizeof(char) * newlen);
 	    
 	    if (newcmd != NULL) {
 		    /* Replace the strings */
@@ -977,8 +993,9 @@ static char *replace(char const *const cmd, char const *const pat,
 			    cmdptr = patloc + patlen;
 			    patloc = strstr(cmdptr, pat);
 		    }
-		    /* Copy what is left */
-		    strcpy(newptr, cmdptr);
+		    /* Copy what is left, size is ascertained when calculating
+		     *  newlen */
+		    strncpy(newptr, cmdptr, newlen - (newptr - newcmd));
 	    }
 	    return newcmd;
     }
@@ -1021,6 +1038,169 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	return 0;
 }
 
+/* ------------------------------------------------------------------------- */
+/** Parses and verifies the keypair for libssh2
+ * @param conn SSH session
+ * @param username user login name
+ * @param ssh_key path to SSH private key
+ * returns 0 on success, -1 if fails
+ */
+static int lssh2_verify_keypair(libssh2_conn *conn, const char *username, 
+                                const char *ssh_key) {
+
+	char *home_dir;
+	char *priv_key;
+	char *pub_key;
+	char *private_key_file;
+	char *public_key_file;
+	struct stat ssh_key_file;
+	int key_size;
+	int err;
+
+
+	LOG_MSG(LOG_DEBUG, "ssh key parameter: %s", ssh_key);
+
+	/* No ssh key files given, using default */
+	if (!ssh_key || !strlen(ssh_key)) {
+		priv_key = malloc(strlen(DEFAULT_PRIVATE_KEY) + 1);
+		strncpy(priv_key, DEFAULT_PRIVATE_KEY, strlen(DEFAULT_PRIVATE_KEY) + 1);
+		pub_key = malloc(strlen(DEFAULT_PUBLIC_KEY) + 1);
+		strncpy(pub_key, DEFAULT_PUBLIC_KEY, strlen(DEFAULT_PUBLIC_KEY) + 1);
+	} else {		
+		int postlen = strlen(ssh_key) + strlen(PUB_KEY_FMT) + 1;
+		priv_key = malloc(strlen(ssh_key) + 1);
+		strncpy(priv_key, ssh_key, strlen(ssh_key) + 1);
+		pub_key = malloc(postlen);
+		snprintf(pub_key, postlen, PUB_KEY_FMT, ssh_key);
+	}
+
+	/* Get the ssh keys from the user running testrunner-lite */	
+	/* Create absolute paths to keys for libssh2
+	   ( ~ notation doesn't work in 1.2.6 yet) */
+	/* Checking the keys is redundant to main.c, but kept here so that libssh2 executor
+	   would remain standalone */
+	if (strlen(priv_key) > 1 && priv_key[0] == '~') {
+		/* ~/file -notation */
+		if (priv_key[1] == '/') {
+			home_dir = getenv("HOME");
+			if (!home_dir) {
+				fprintf(stderr, "Fatal: Could not find users home directory\n");
+				goto error;
+			}
+		} else {
+			/* ~username/file -notation */
+			home_dir = "/home/";
+		}
+
+		key_size = strlen(home_dir) + 
+			strlen(KEY_FMT) + 
+			strlen(pub_key) - 1;
+		public_key_file = malloc(key_size);
+		snprintf(public_key_file, key_size, KEY_FMT, home_dir, &pub_key[1]);
+		
+		key_size = strlen(home_dir) + 
+			strlen(KEY_FMT) + 
+			strlen(priv_key) - 1;
+		private_key_file = malloc(key_size);
+		snprintf(private_key_file, key_size, KEY_FMT, home_dir, &priv_key[1]);
+	} else {
+		private_key_file = malloc(strlen(priv_key) + 1);
+		strncpy(private_key_file, priv_key, strlen(priv_key) + 1);
+		public_key_file = malloc(strlen(pub_key) + 1);
+		strncpy(public_key_file, pub_key, strlen(pub_key) + 1); 
+	}
+
+	LOG_MSG(LOG_DEBUG, "public key file: %s\n", public_key_file);
+	LOG_MSG(LOG_DEBUG, "private key file: %s\n", private_key_file);
+
+	conn->priv_key = private_key_file;
+	conn->pub_key = public_key_file;
+	conn->status = SESSION_OK;
+
+	/* Check that the ssh key files exist and have read access */
+	if (stat(conn->priv_key, &ssh_key_file) == -1) {
+			LOG_MSG(LOG_ERR, "ssh private key file not found: %s\n",
+			        conn->priv_key);
+			goto error;
+	}
+
+	if (S_ISDIR(ssh_key_file.st_mode)) {
+		fprintf(stderr, "ssh private key '%s' is a directory, not a file\n",
+		        conn->priv_key);
+		goto error;
+	}
+
+	if (stat(conn->pub_key, &ssh_key_file) == -1) {
+			LOG_MSG(LOG_ERR, "ssh public key file not found: %s\n",
+			        conn->pub_key);
+			goto error;
+	}
+
+	if (S_ISDIR(ssh_key_file.st_mode)) {
+		fprintf(stderr, "ssh public key '%s' is a directory, not a file\n",
+		        conn->pub_key);
+		goto error;
+	}
+
+	/* Check that files are readable */
+	if (access(conn->priv_key, R_OK) < 0) {
+		err = errno;
+		switch (err) {
+		case ENOENT:
+			LOG_MSG(LOG_ERR, "Private key %s doesn't exist",
+			        conn->priv_key);
+			goto error;
+		case EACCES:
+			LOG_MSG(LOG_ERR, "No read access to private key %s",
+			        conn->priv_key);
+			goto error;
+		default:
+			LOG_MSG(LOG_ERR, "Private key %s error; %d",
+			        conn->priv_key, access);
+			goto error;
+		}
+	}
+
+	if (access(conn->pub_key, R_OK) < 0) {
+		err = errno;
+		switch (err) {
+		case ENOENT:
+			LOG_MSG(LOG_ERR, "Public key %s doesn't exist",
+			        conn->pub_key);
+			goto error;
+		case EACCES:
+			LOG_MSG(LOG_ERR, "No read access to public key %s",
+			        conn->pub_key);
+			goto error;
+		default:
+			LOG_MSG(LOG_ERR, "Public key %s error; %d",
+			        conn->pub_key, access);
+			goto error;
+		}
+	}
+	
+	if (priv_key) { 
+		free(priv_key);
+		priv_key = NULL;
+	}
+	if (pub_key) { 
+		free(pub_key);
+		pub_key = NULL;
+	}
+	return 0;
+
+ error:	
+	if (priv_key) { 
+		free(priv_key);
+		priv_key = NULL;
+	}
+	if (pub_key) { 
+		free(pub_key);
+		pub_key = NULL;
+	}
+	return -1;
+
+}
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
@@ -1034,17 +1214,9 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
  * @return session instance on success, NULL if fails
  */
  libssh2_conn *lssh2_executor_init(const char *username, const char *hostname,
-                                   in_port_t port, const char *priv_key, 
-				   const char *pub_key) 
+                                   in_port_t port, const char *ssh_key)
 {
-	char *home_dir;
-	char *private_key_file;
-	char *public_key_file;
-	int key_size;
-	libssh2_conn *conn;	
-
-	LOG_MSG(LOG_DEBUG, "");
-
+	libssh2_conn *conn;
 	conn = malloc(sizeof(libssh2_conn));
 	conn->hostname = hostname;
 	conn->username = username;
@@ -1056,73 +1228,30 @@ static int lssh2_kill (libssh2_conn *conn, int signal)
 	conn->timeout.tv_nsec = 0;
 	conn->signaled = 0;
 	
-	/* No ssh key files given, using default */
-	if (!priv_key || !pub_key || !strlen(priv_key) || !strlen(pub_key)) {
-		priv_key = DEFAULT_PRIVATE_KEY;
-		pub_key = DEFAULT_PUBLIC_KEY;
+	if (lssh2_verify_keypair(conn, username, ssh_key) < 0) {
+		free(conn);
+		goto error;
 	}
-
-	/* Get the ssh keys from the user running testrunner-lite */
-	if(*pub_key == '/') {
-		key_size = strlen(pub_key) + 1;
-		public_key_file = malloc(key_size);
-		strncpy(public_key_file, pub_key, key_size);
-	} else {
-		home_dir = getenv("HOME");
-		if (!home_dir) {
-			LOG_MSG(LOG_ERR, "Fatal: Could not get env for "
-				    "HOME");
-			conn->status = SESSION_GIVE_UP;
-			return NULL;
-		}
-		key_size = strlen(home_dir) +
-		strlen(KEY_FMT) +
-		strlen(pub_key) - 1;
-		public_key_file = malloc(key_size);
-		snprintf(public_key_file, key_size, KEY_FMT, home_dir, pub_key);
-	}
-
-	if(*priv_key == '/') {
-		key_size = strlen(priv_key) + 1;
-		private_key_file = malloc(key_size);
-		strncpy(private_key_file, priv_key, key_size);
-	} else {
-		home_dir = getenv("HOME");
-		if (!home_dir) {
-			LOG_MSG(LOG_ERR, "Fatal: Could not get env for "
-				    "HOME");
-			conn->status = SESSION_GIVE_UP;
-			return NULL;
-		}
-		key_size = strlen(home_dir) +
-			strlen(KEY_FMT) +
-			strlen(priv_key) - 1;
-		private_key_file = malloc(key_size);
-		snprintf(private_key_file, key_size, KEY_FMT, home_dir, priv_key);
-	}
-
-	LOG_MSG(LOG_DEBUG, "public key file: %s\n", public_key_file);
-	LOG_MSG(LOG_DEBUG, "private key file: %s\n", private_key_file);
-
-	conn->priv_key = private_key_file;
-	conn->pub_key = public_key_file;
-	conn->status = SESSION_OK;
 	
 	if (lssh2_session_connect(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Connection error");
 		conn->status = SESSION_GIVE_UP;
 		lssh2_session_free(conn);
-		return NULL;
+		goto error;
 	}
 
 	if (lssh2_create_shell_scripts(conn) < 0) {
 		LOG_MSG(LOG_ERR, "Error creating remote shell scripts");
 		conn->status = SESSION_GIVE_UP;
 		lssh2_session_free(conn);
-		return NULL;
+		goto error;
 	}
 
 	return conn;
+
+ error:
+	return NULL;
+
 }
 /* ------------------------------------------------------------------------- */
 /** Builds a test command out of test step and executes it in remote end
@@ -1216,7 +1345,11 @@ int lssh2_execute(libssh2_conn *conn, const char *command,
 int lssh2_executor_close (libssh2_conn *conn)
 {
 	LOG_MSG(LOG_DEBUG, "");
-	return lssh2_session_free(conn);
+	if (conn) {
+		return lssh2_session_free(conn);
+	} else {
+		return 0;
+	}
 }
 
 /* ------------------------------------------------------------------------- */

@@ -526,7 +526,7 @@ LOCAL int td_parse_case(td_set *s)
 	const xmlChar *name;
 	td_step *step = NULL;
 	td_case *c = NULL;
-	int ret;
+	int ret, manual_steps = 0;
 
 	c = td_case_create();
 	if (!c)
@@ -586,6 +586,7 @@ LOCAL int td_parse_case(td_set *s)
 				     PROGNAME);
 			    goto ERROUT;
 		    }
+		    if (step->manual) manual_steps = 1;
 		}
 
 #ifdef ENABLE_EVENTS
@@ -611,7 +612,25 @@ LOCAL int td_parse_case(td_set *s)
 	} while  (!(xmlTextReaderNodeType(reader) == 
 		    XML_READER_TYPE_END_ELEMENT &&
 		    !xmlStrcmp (name, BAD_CAST "case")));
- OK_OUT:	
+ OK_OUT:
+	/* Do sanity check on case manual attribute
+	 * all steps automatic -> case automatic
+	 * manual and automatic steps -> case manual
+	 * all steps manual -> case manual
+	 */
+	if (xmlListSize (c->steps) > 0) {
+		if (c->gen.manual && !manual_steps) {
+			LOG_MSG (LOG_WARNING, "Manual case (%s) with automatic "
+				 "steps only - forcing automatic", 
+				 c->gen.name);
+			c->gen.manual = 0;
+		} else if (!c->gen.manual && manual_steps) {
+			LOG_MSG (LOG_WARNING, "Automatic case (%s) with manual "
+				 "steps - forcing manual", 
+				 c->gen.name);
+			c->gen.manual = 1;
+		}
+	}
 	xmlListAppend (s->cases, c);
 	
 	return 0;
@@ -899,6 +918,8 @@ LOCAL int td_parse_hwiddetect ()
 }
 /* ------------------------------------------------------------------------- */
 /** Callback for parser/validator errors
+ * @param ctx pointer to xmlSchemaParserCtxt
+ * @param fmt format as in printf()
  */
 LOCAL void log_xml_error(void * ctx, const char * fmt, ...)
 {
@@ -917,6 +938,8 @@ LOCAL void log_xml_error(void * ctx, const char * fmt, ...)
 }
 /* ------------------------------------------------------------------------- */
 /** Callback for parser/validator warnings
+ * @param ctx pointer to xmlSchemaParserCtxt
+ * @param fmt format as in printf()
  */
 LOCAL void log_xml_warning(void * ctx, const char * fmt, ...)
 {

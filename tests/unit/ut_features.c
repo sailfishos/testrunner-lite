@@ -115,7 +115,7 @@ static const char *invalid_utf8_samples[] = {
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-/* None */
+#define TEST_CMD_LEN 1024
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
@@ -143,7 +143,7 @@ static const char *invalid_utf8_samples[] = {
 /* ------------------------------------------------------------------------- */
 START_TEST (test_ctrl_char_strip)
     exec_data edata;
-    char cmd[1024];
+    char cmd[TEST_CMD_LEN];
     const char test_str[] = {'t',0x02,'e','s','t','f',0x06,0x07,0x08,0x09,
 			     'o',0x0B,'o',0x0C,0x0E,0x0F,0x10,0x11,0x12,
 			     0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,
@@ -163,7 +163,7 @@ START_TEST (test_ctrl_char_strip)
     init_exec_data(&edata);
     edata.soft_timeout = 0;
     edata.hard_timeout = 0;
-    sprintf (cmd, "echo -e %s", test_str); 
+    snprintf (cmd, TEST_CMD_LEN, "echo -e %s", test_str); 
     fail_if (execute(cmd, &edata));
     fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
     fail_unless (strlen ((char *)edata.stderr_data.buffer) == 0);
@@ -190,7 +190,7 @@ END_TEST
 START_TEST (test_logging)
 
     char *stdout_tmp = "/tmp/testrunner-lite-stdout.log";
-    char cmd[1024];
+    char cmd[TEST_CMD_LEN];
     char message[LOG_MSG_MAX_SIZE + 1];
     int ret;
     FILE *fp, *fp2;
@@ -221,28 +221,33 @@ START_TEST (test_logging)
     fclose (fp);
     sleep (1);
     // And verify messages. */
-    sprintf (cmd, "grep -q \"[INFO]* INFO message: This works.\" %s", 
-	     stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN, 
+	      "grep -q \"[INFO]* INFO message: This works.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep -q \"[WARNING]* WARNING message: This works.\" %s", 
-	     stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q \"[WARNING]* WARNING message: This works.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep -q \"[ERROR]* ERROR message: This works.\" %s", 
-	     stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q \"[ERROR]* ERROR message: This works.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep -q aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab %s", 
-	     stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
-    sprintf (cmd, "grep -q bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb %s", 
-	     stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
@@ -251,8 +256,9 @@ START_TEST (test_logging)
     LOG_MSG (LOG_DEBUG, "DEBUG message: %s\n", "This should not work.");
     fp2 = freopen ("/dev/tty", "w", stdout);
     
-    sprintf (cmd, "grep -q \"[DEBUG]* DEBUG message: This should not work.\""
-	     " %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q \"[DEBUG]* DEBUG message: This should not work.\""
+	      " %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret == 0, cmd);
     
@@ -273,23 +279,27 @@ START_TEST (test_logging)
     fp2 = freopen ("/dev/tty", "w", stdout);
 
     // And verify messages. */
-    sprintf (cmd, "grep -q \"[INFO]* INFO message: This works.\" %s", 
-	     stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q \"[INFO]* INFO message: This works.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep -q \"[WARNING]* WARNING message: This works.\" %s", 
-	     stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q \"[WARNING]* WARNING message: This works.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep -q \"[ERROR]* ERROR message: This works.\" %s", 
-	     stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q \"[ERROR]* ERROR message: This works.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep -q \"[DEBUG]* DEBUG message: This works.\" %s", 
-	     stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q \"[DEBUG]* DEBUG message: This works.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -305,9 +315,10 @@ START_TEST (test_logging)
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
     
-    sprintf (cmd, "grep -q \"[INFO]* INFO message: Silent mode.\" %s", 
-	     stdout_tmp); 
-    
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep -q \"[INFO]* INFO message: Silent mode.\" %s", 
+	      stdout_tmp); 
+
     ret = system (cmd);
     fail_if (ret == 0, cmd);
     
@@ -348,7 +359,7 @@ static void run_server_socket(int portno, char* buffer, int length, char* error)
 			       &clilen);
 	    if (clientfd > 0) {
 		if (read(clientfd, buffer, length) < 0) {
-		    strcpy(error, strerror(errno));
+			strncpy(error, strerror(errno), length);
 		}
 
 		/* create a dummy reply, the same as from CITA */
@@ -356,18 +367,17 @@ static void run_server_socket(int portno, char* buffer, int length, char* error)
 		fail_if (written < strlen (reply_message));
 		close(clientfd);
 	    } else {
-		strcpy(error, strerror(errno));
+		    strncpy (error, strerror(errno), 128);
 	    }
 	} else {
-	    strcpy(error, strerror(errno));
+		strncpy (error, strerror(errno), 128);
 	}
-
     } else {
-	strcpy(error, strerror(errno));
+	    strncpy (error, strerror(errno), 128);
     }
-
+    
     if (serverfd > 0) {
-	close(serverfd);
+	    close (serverfd);
     }
 }
 
@@ -387,8 +397,7 @@ START_TEST (test_remote_logging)
 	/* child process to generate a log message */
 	memset (&opts, 0, sizeof(testrunner_lite_options));
 	opts.log_level = LOG_LEVEL_INFO;
-	opts.remote_logger = malloc(strlen(logger)+1);
-	strcpy(opts.remote_logger, logger);
+	opts.remote_logger = strdup (logger);
 
 	/* wait for parent's server socket to be opened */
 	usleep(200000);
@@ -433,7 +442,7 @@ START_TEST (test_remote_logging_command)
 	/* wait for parent's server socket to be opened */
 	usleep(200000);
 
-	sprintf(logger_option, "--logger=http://127.0.0.1:%d", portno);
+	snprintf(logger_option, 128, "--logger=http://127.0.0.1:%d", portno);
 
 	execl(TESTRUNNERLITE_BIN,
 	      TESTRUNNERLITE_BIN,
@@ -480,8 +489,8 @@ START_TEST (test_remote_logging_command_with_logid)
 	/* wait for parent's server socket to be opened */
 	usleep(200000);
 
-	sprintf(logger_option, "--logger=http://127.0.0.1:%d", portno);
-	sprintf(logid_option, "--logid=%s", logid);
+	snprintf(logger_option, 128, "--logger=http://127.0.0.1:%d", portno);
+	snprintf(logid_option, 64, "--logid=%s", logid);
 
 	execl(TESTRUNNERLITE_BIN,
 	      TESTRUNNERLITE_BIN,
@@ -498,7 +507,7 @@ START_TEST (test_remote_logging_command_with_logid)
 
     memset(buffer, 0, sizeof(buffer));
     memset(error, 0, sizeof(error));
-    sprintf(logid_option, "userDefinedId=%s", logid);
+    snprintf(logid_option, 64, "userDefinedId=%s", logid);
 
     run_server_socket(portno, buffer, sizeof(buffer) - 1, error);
 

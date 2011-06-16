@@ -53,7 +53,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-/* None */
+#define TEST_CMD_LEN 1024
 
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
@@ -83,49 +83,50 @@ START_TEST (test_parse_cmd_line_arguments)
 
     /* Test parsing command line arguments. */
     int ret;
-    char cmd[1024];
+    char cmd[TEST_CMD_LEN];
     char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
     
     /* Test -f and -o flag. */
-    sprintf (cmd, "%s -a -f %s -o %s", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -a -f %s -o %s", TESTRUNNERLITE_BIN, 
 	     TESTDATA_VALID_XML_1,  out_file);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
-    sprintf (cmd, "stat %s", out_file);
+    snprintf (cmd, TEST_CMD_LEN, "stat %s", out_file);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
     /* Test -A  */
-    sprintf (cmd, "%s -a -f %s -A", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    snprintf (cmd, TEST_CMD_LEN,
+	      "%s -a -f %s -A", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
     /* Test -S  */
-    sprintf (cmd, "%s -a -f %s -A -S", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -a -f %s -A -S", TESTRUNNERLITE_BIN, 
 	     TESTDATA_VALID_XML_1);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
     /* Test -A -s flag. */
-    sprintf (cmd, "%s -a -f %s -A --semantic", TESTRUNNERLITE_BIN, 
-	     TESTDATA_VALID_XML_1);
+    snprintf (cmd, TEST_CMD_LEN, "%s -a -f %s -A --semantic", 
+	      TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
     /* Test -E and -G */
-    sprintf (cmd, "%s -a -f %s -o %s -E true -G true",
+    snprintf (cmd, TEST_CMD_LEN, "%s -a -f %s -o %s -E true -G true",
              TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
     /* Test -r text */
-    sprintf (cmd, "%s -a -f %s -o %s -r text", TESTRUNNERLITE_BIN, 
-	     TESTDATA_VALID_XML_1, out_file);
+    snprintf (cmd, TEST_CMD_LEN, "%s -a -f %s -o %s -r text", 
+	      TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     /* Test -V */
-    sprintf (cmd, "%s -V", TESTRUNNERLITE_BIN);
+    snprintf (cmd, TEST_CMD_LEN, "%s -V", TESTRUNNERLITE_BIN);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 END_TEST
@@ -134,72 +135,74 @@ START_TEST (test_parse_cmd_line_invalid_arguments)
 
     /* Test parsing command line arguments. */
     int ret;
-    char cmd[256];
+    char cmd[TEST_CMD_LEN];
     char *out_file = "/tmp/out.xml";
 
     /* Test -f flag without argument. */
-    sprintf (cmd, "%s -f", TESTRUNNERLITE_BIN);
+    snprintf (cmd, TEST_CMD_LEN, "%s -f", TESTRUNNERLITE_BIN);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     memset (cmd, 0, sizeof(cmd));
     
     /* Test invalid flag. */
-    sprintf (cmd, "%s -x %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    snprintf (cmd, TEST_CMD_LEN,
+	      "%s -x %s", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     memset (cmd, 0, sizeof(cmd));
 
     /* Test -o flag only. */
-    sprintf (cmd, "%s -o %s", TESTRUNNERLITE_BIN, out_file);
+    snprintf (cmd, TEST_CMD_LEN, "%s -o %s", TESTRUNNERLITE_BIN, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     /* Test -a and -m both. */
-    sprintf (cmd, "%s -f  %s -a -m", TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1);
+    snprintf (cmd, TEST_CMD_LEN, "%s -f  %s -a -m", TESTRUNNERLITE_BIN, 
+	      TESTDATA_VALID_XML_1);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     /* Test invalid -r. */
-    sprintf (cmd, "%s -f %s -o %s -r foo", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -f %s -o %s -r foo", TESTRUNNERLITE_BIN, 
 	     TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     /* Test invalid -e without argument. */
-    sprintf (cmd, "%s -f %s -o %s -e", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -f %s -o %s -e", TESTRUNNERLITE_BIN, 
 	     TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     /* Test -C with mutually exclusive -t. */
-    sprintf (cmd, "%s -f %s -o %s -C /tmp -t localhost",
+    snprintf (cmd, TEST_CMD_LEN, "%s -f %s -o %s -C /tmp -t localhost",
              TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     /* Test -C with mutually exclusive -E/-G. */
-    sprintf (cmd, "%s -f %s -o %s -C /tmp -E true -G true",
-             TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    snprintf (cmd, TEST_CMD_LEN, "%s -f %s -o %s -C /tmp -E true -G true",
+	      TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     /* Test -t with mutually exclusive -E/-G. */
-    sprintf (cmd, "%s -f %s -o %s -t localhost -E true -G true",
+    snprintf (cmd, TEST_CMD_LEN, "%s -f %s -o %s -t localhost -E true -G true",
              TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     /* Test -E without -G. */
-    sprintf (cmd, "%s -f %s -o %s -E true",
-             TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    snprintf (cmd, TEST_CMD_LEN, "%s -f %s -o %s -E true",
+	      TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     /* Test -G without -E. */
-    sprintf (cmd, "%s -f %s -o %s -G true",
-             TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
+    snprintf (cmd, TEST_CMD_LEN, "%s -f %s -o %s -G true",
+	      TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
@@ -209,22 +212,22 @@ START_TEST (test_semantic_and_validate_only_flags)
 
     /* Test parsing command line arguments. */
     int ret;
-    char cmd[1024];
+    char cmd[TEST_CMD_LEN];
 
     /* Test invalid semantics with basic xsd  */
-    sprintf (cmd, "%s -A -f %s ", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -A -f %s ", TESTRUNNERLITE_BIN, 
 	     TESTDATA_INVALID_SEMANTIC_XML_1);
     ret = system (cmd);
     fail_if (ret, cmd);
 
     /* Test invalid semantics with stricter xsd  */
-    sprintf (cmd, "%s -s -A -f %s ", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -s -A -f %s ", TESTRUNNERLITE_BIN, 
 	     TESTDATA_INVALID_SEMANTIC_XML_1);
     ret = system (cmd);
     fail_unless (ret, cmd);
 
     /* Test invalid semantics with stricter xsd, but disable with -c  */
-    sprintf (cmd, "%s -c -s -A -f %s ", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -c -s -A -f %s ", TESTRUNNERLITE_BIN, 
 	     TESTDATA_INVALID_SEMANTIC_XML_1);
     ret = system (cmd);
     fail_if (ret, cmd);
@@ -235,68 +238,75 @@ START_TEST (test_verbosity_flags)
 
     /* Test parsing verbosity arguments. */
     int ret;
-    char cmd[1024];
+    char cmd[TEST_CMD_LEN];
     char *stdout_tmp = "/tmp/testrunner-lite-stdout.log";
 
     /* Test -v flag. */
-    sprintf (cmd, "%s -A -f %s -v > %s", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -A -f %s -v > %s", TESTRUNNERLITE_BIN, 
 	     TESTDATA_VALID_XML_1, stdout_tmp );
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
     
-    sprintf (cmd, "/bin/grep '[INFO]* Verbosity level set to: 1' %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN, 
+	      "/bin/grep '[INFO]* Verbosity level set to: 1' %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, "cmd %s, RET=%d", cmd, ret);
     
     /* Test -vv flag. */
-    sprintf (cmd, "%s -A -f %s -vv > %s", 
+    snprintf (cmd, TEST_CMD_LEN, "%s -A -f %s -vv > %s", 
 	     TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 2\" %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep \"[INFO]* Verbosity level set to: 2\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
     /* Test --verbose=INFO flag. */
-    sprintf (cmd, "%s -A -f %s --verbose=INFO > %s", 
+    snprintf (cmd, TEST_CMD_LEN, "%s -A -f %s --verbose=INFO > %s", 
 	     TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 1\" %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep \"[INFO]* Verbosity level set to: 1\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
     /* Test --verbose=DEBUG flag. */
-    sprintf (cmd, "%s -A -f %s --verbose=DEBUG > %s", 
+    snprintf (cmd, TEST_CMD_LEN, "%s -A -f %s --verbose=DEBUG > %s", 
 	     TESTRUNNERLITE_BIN, TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[INFO]* Verbosity level set to: 2\" %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep \"[INFO]* Verbosity level set to: 2\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
     
     /* Test without -v or --verbose= flag. */
-    sprintf (cmd, "%s -A -f %s > %s", TESTRUNNERLITE_BIN, 
-	     TESTDATA_VALID_XML_1, stdout_tmp);
+    snprintf (cmd, TEST_CMD_LEN, "%s -A -f %s > %s", TESTRUNNERLITE_BIN, 
+	      TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[INFO]* Verbosity level set to:*\" %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	      "grep \"[INFO]* Verbosity level set to:*\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret == 0, cmd);
     
     /* Test with invalid --verbose= flag. */
-    sprintf (cmd, "%s -A -f %s --verbose=FOO > %s", TESTRUNNERLITE_BIN, 
-	     TESTDATA_VALID_XML_1, stdout_tmp);
+    snprintf (cmd, TEST_CMD_LEN,
+	      "%s -A -f %s --verbose=FOO > %s", TESTRUNNERLITE_BIN, 
+	      TESTDATA_VALID_XML_1, stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
-    sprintf (cmd, "grep \"[INFO]* Verbosity level set to:*\" %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN,
+	     "grep \"[INFO]* Verbosity level set to:*\" %s", stdout_tmp); 
     ret = system (cmd);
     fail_if (ret == 0, cmd);
     
@@ -304,17 +314,17 @@ END_TEST
 
 START_TEST (test_remote_logger_flag)
     int ret;
-    char cmd[1024];
+    char cmd[TEST_CMD_LEN];
     char *out_file = "/tmp/out.xml";
 
     /* Test -L without required argument */
-    sprintf (cmd, "%s -f %s -o %s -L", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -f %s -o %s -L", TESTRUNNERLITE_BIN, 
 	     TESTDATA_SIMPLE_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
     /* Test --logger without required argument */
-    sprintf (cmd, "%s -f %s -o %s --logger", TESTRUNNERLITE_BIN, 
+    snprintf (cmd, TEST_CMD_LEN, "%s -f %s -o %s --logger", TESTRUNNERLITE_BIN, 
 	     TESTDATA_SIMPLE_XML_1, out_file);
     ret = system (cmd);
     fail_unless (ret != 0, cmd);

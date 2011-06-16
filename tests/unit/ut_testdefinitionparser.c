@@ -112,8 +112,7 @@ START_TEST (test_parse_test_definition)
     testrunner_lite_options test_opts;
 
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
-    test_opts.input_filename = malloc (strlen(TESTDATA_VALID_XML_1)+1);
-    strcpy (test_opts.input_filename, TESTDATA_VALID_XML_1); 
+    test_opts.input_filename = strdup (TESTDATA_VALID_XML_1); 
 
     fail_if (parse_test_definition(&test_opts) != 0, 
         "Parsing test definition failed!");
@@ -126,8 +125,7 @@ START_TEST (test_parse_test_definition_no_schema)
     testrunner_lite_options test_opts;
 
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
-    test_opts.input_filename = malloc (strlen(TESTDATA_VALID_XML_1)+1);
-    strcpy (test_opts.input_filename, TESTDATA_VALID_XML_1);
+    test_opts.input_filename = strdup (TESTDATA_VALID_XML_1);
 
     test_opts.disable_schema = 1;
 
@@ -143,8 +141,7 @@ START_TEST (test_parse_not_existing_test_definition)
     testrunner_lite_options test_opts;
 
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
-    test_opts.input_filename = malloc (strlen(file_not_existing)+1);
-    strcpy (test_opts.input_filename, file_not_existing);
+    test_opts.input_filename = strdup (file_not_existing);
 
     fail_if (parse_test_definition(&test_opts) == 0, NULL);
 
@@ -156,8 +153,7 @@ START_TEST (test_parse_invalid_test_definition)
     testrunner_lite_options test_opts;
 
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
-    test_opts.input_filename = malloc (strlen(TESTDATA_INVALID_XML_1)+1);
-    strcpy (test_opts.input_filename, TESTDATA_INVALID_XML_1);
+    test_opts.input_filename = strdup (TESTDATA_INVALID_XML_1);
 
     fail_if (parse_test_definition(&test_opts) == 0, NULL);
 
@@ -170,8 +166,7 @@ START_TEST (test_reader_null_callbacks)
 
     memset (&cbs, 0x0, sizeof (cbs));
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
-    test_opts.input_filename = malloc (strlen(TESTDATA_VALID_XML_1)+1);
-    strcpy (test_opts.input_filename, TESTDATA_VALID_XML_1);
+    test_opts.input_filename = strdup (TESTDATA_VALID_XML_1);
     fail_if (td_register_callbacks (&cbs));
     fail_if (td_reader_init(&test_opts));
     while (td_next_node() == 0);
@@ -195,8 +190,7 @@ START_TEST (test_reader_suite)
     
     memset (&cbs, 0x0, sizeof (cbs));
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
-    test_opts.input_filename = malloc (strlen(TESTDATA_VALID_XML_1)+1);
-    strcpy (test_opts.input_filename, TESTDATA_VALID_XML_1);
+    test_opts.input_filename = strdup (TESTDATA_VALID_XML_1);
     cbs.test_suite = ut_test_suite;
     cbs.test_suite_description = ut_test_suite_description;
 
@@ -224,8 +218,7 @@ START_TEST (test_reader_set)
     
     memset (&cbs, 0x0, sizeof (cbs));
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
-    test_opts.input_filename = malloc (strlen(TESTDATA_VALID_XML_1)+1);
-    strcpy (test_opts.input_filename, TESTDATA_VALID_XML_1);
+    test_opts.input_filename = strdup (TESTDATA_VALID_XML_1);
     cbs.test_suite = ut_test_suite;
     cbs.test_suite_description = ut_test_suite_description;
     cbs.test_set = ut_test_set;
@@ -259,8 +252,7 @@ START_TEST (test_entity_substitution)
     testrunner_lite_options test_opts;
 
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
-    test_opts.input_filename = malloc (strlen(TESTDATA_ENTITY_SUBSTITUTION)+1);
-    strcpy (test_opts.input_filename, TESTDATA_ENTITY_SUBSTITUTION); 
+    test_opts.input_filename = strdup (TESTDATA_ENTITY_SUBSTITUTION); 
 
     fail_if (parse_test_definition(&test_opts) != 0, 
         "Parsing test definition failed!");

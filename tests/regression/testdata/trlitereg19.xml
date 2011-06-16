@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+ <testdefinition version="0.1">
+  <suite name="exsuite" domain="AutomatedTesting">
+   <set name="exset" description="crash tests">
+     <case name="case1">
+       <step manual="false">ls</step>
+     </case>
+     <case name="case2">
+       <step manual="true">Can pass the Criteria in the description?</step>
+     </case>
+   </set>
+  </suite>
+ </testdefinition>

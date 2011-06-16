@@ -370,6 +370,7 @@ LOCAL int parse_series (FILE *f, xmlListPtr list)
 LOCAL int eval_meas (const void *data, const void *user)
 {
 	int retval = 1;
+	size_t len;
 	td_measurement *meas = (td_measurement *)data;
 	container *cont = (container *)user;
 
@@ -382,25 +383,21 @@ LOCAL int eval_meas (const void *data, const void *user)
 
 	if (meas->target > meas->failure) {
 		if (meas->value <= meas->failure) {
-			cont->failure_string = malloc (strlen ((char *)
-							       meas->name) + 
-						       strlen ("measured "
-							       "value too" 
-							       "small") + 5); 
-			sprintf (cont->failure_string, "%s - "
-				 "measured value too small", meas->name); 
+			len = strlen ((char *)meas->name) + 
+				strlen ("measured value too small") + 5;
+			cont->failure_string = malloc (len); 
+			snprintf (cont->failure_string, len, "%s - "
+				  "measured value too small", meas->name); 
 			cont->verdict = CASE_FAIL;
 			retval = 0;
 		}
 	} else if (meas->target < meas->failure) {
 		if (meas->value >= meas->failure) {
 			cont->verdict = CASE_FAIL;
-			cont->failure_string = malloc (strlen ((char *)
-							       meas->name) + 
-						       strlen ("measured "
-							       "value too" 
-							       "big") + 5);
-			sprintf (cont->failure_string, "%s - "
+			len = strlen ((char *)meas->name) + 
+				strlen ("measured value too big") + 5;
+			cont->failure_string = malloc (len);
+			snprintf (cont->failure_string, len, "%s - "
 				 "measured value too big", meas->name); 
 			retval = 0;
 		}
@@ -427,26 +424,25 @@ LOCAL int eval_measurement_item(const void *data, const void *user)
 	td_measurement_item *item = (td_measurement_item *)data;
 	item_extra_data *extra = (item_extra_data *)user;
 	td_measurement_series *series = (td_measurement_series *)extra->series;
+	size_t len;
 
 	if (series->target > series->failure) {
 		if (item->value <= series->failure) {
 			extra->cont->verdict = CASE_FAIL;
-			extra->cont->failure_string = (char *)
-				malloc (strlen ((char *)series->name) +
-					strlen (SERIES_FAIL_BELOW) +
-					5);
-			sprintf (extra->cont->failure_string, "%s - "
+			len = strlen ((char *)series->name) + 
+			      strlen (SERIES_FAIL_BELOW) + 5;
+			extra->cont->failure_string = (char *)malloc (len);
+			snprintf (extra->cont->failure_string, len, "%s - "
 				 SERIES_FAIL_BELOW, series->name);
 			retval = 0;
 		}
 	} else if (series->target < series->failure) {
 		if (item->value >= series->failure) {
 			extra->cont->verdict = CASE_FAIL;
-			extra->cont->failure_string = (char *)
-				malloc (strlen ((char *)series->name) +
-					strlen (SERIES_FAIL_OVER) +
-					5);
-			sprintf (extra->cont->failure_string, "%s - "
+			len = strlen ((char *)series->name) +
+				strlen (SERIES_FAIL_OVER) + 5;
+			extra->cont->failure_string = (char *)malloc (len);
+			snprintf (extra->cont->failure_string, len, "%s - "
 				 SERIES_FAIL_OVER, series->name);
 			retval = 0;
 		}

@@ -152,9 +152,10 @@ int remote_executor_init (const char *executor)
 	if (ret) {
 		LOG_MSG(LOG_ERR, "Failed to get host name: %s", 
 			strerror (errno));
-		strcpy (unique_id, "foo");
+		strncpy (unique_id, "foo", UNIQUE_ID_MAX_LEN);
 	}
-	sprintf (unique_id + strlen(unique_id), UNIQUE_ID_FMT, getpid());
+	snprintf (unique_id + strlen(unique_id),  UNIQUE_ID_MAX_LEN,
+		  UNIQUE_ID_FMT, getpid());
 
 	LOG_MSG(LOG_DEBUG, "unique_id set to %s", unique_id);
 	
@@ -183,6 +184,7 @@ int remote_execute (const char *executor, const char *command)
 	const char *casename;
 	const char *setname;
 	int   stepnum;
+	size_t len;
 	/*
 	 * Query the current set name, case name and step number 
 	 * from testdefinition processor so we can put some debug 
@@ -191,22 +193,22 @@ int remote_execute (const char *executor, const char *command)
 	casename = current_case_name();
 	stepnum  = current_step_num();
 	setname  = current_set_name();
-
-        cmd = (char *)malloc (PID_FILE_MAX_LEN + 256 + strlen (command)
-			      + strlen (casename) + strlen (setname));
+	len = PID_FILE_MAX_LEN + 256 + strlen (command) + strlen (casename) + 
+		strlen (setname);
+        cmd = (char *)malloc (len);
         if (!cmd) {
                 fprintf (stderr, "%s: could not allocate memory for "
                          "command %s\n", __FUNCTION__, command);
         }
 	if (strlen (casename) && strlen (setname)) 
-		sprintf (cmd, "logger set:%s-case:%s-step:%d || true;"
+		snprintf (cmd, len, "logger set:%s-case:%s-step:%d || true;"
 			 "sh < /tmp/mypid.sh > " 
 			 PID_FILE_FMT 
 			 "; if [ -e .profile ]; then source .profile >"
-			 " /dev/null; fi; %s",
-			 setname, casename, stepnum, unique_id, getpid(), command);
+			 " /dev/null; fi; %s", setname, casename, stepnum, 
+			 unique_id, getpid(), command);
 	else
-		sprintf (cmd, "sh < /tmp/mypid.sh > " 
+		snprintf (cmd, len, "sh < /tmp/mypid.sh > " 
 			 PID_FILE_FMT 
 			 "; if [ -e .profile ]; then source .profile >"
 			 " /dev/null; fi; %s",
@@ -225,7 +227,8 @@ int remote_check_conn (const char *executor)
 	int ret;
 	char cmd[1024];
 
-	sprintf (cmd, "%s \"echo echo from remote connection check\"", executor);
+	snprintf (cmd, 1024, "%s \"echo echo from remote connection check\"", 
+		 executor);
 	ret = system (cmd);
 	return ret;
 }
@@ -250,9 +253,10 @@ int remote_kill (const char *executor, pid_t id, int signal)
 	if (pid < 0)
 		return 1;
 	
-	sprintf(file, PID_FILE_FMT, unique_id, id);
-	sprintf (cmd, "[ -f %1$s ] && pkill -%2$d -P $(cat %1$s)"/*; rm -f %1$s"*/,
-		 file, signal);
+	snprintf(file, PID_FILE_MAX_LEN, PID_FILE_FMT, unique_id, id);
+	snprintf (cmd, PID_FILE_MAX_LEN * 3 + 80,
+		  "[ -f %1$s ] && pkill -%2$d -P $(cat %1$s)",
+		  file, signal);
 
 	ret = _execute (executor, cmd);
 
@@ -270,7 +274,8 @@ int remote_clean (const char *executor, pid_t id)
 	pid_t pid;
 	char cmd [PID_FILE_MAX_LEN + 80];
 
-	sprintf (cmd, "rm -f " PID_FILE_FMT, unique_id, id);
+	snprintf (cmd, PID_FILE_MAX_LEN + 80,
+		  "rm -f " PID_FILE_FMT, unique_id, id);
 
 	pid = fork();
 

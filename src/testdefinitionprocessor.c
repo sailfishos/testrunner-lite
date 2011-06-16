@@ -191,14 +191,17 @@ LOCAL int fetch_rich_core_dumps (const char *uuid, xmlListPtr crashids)
 
         pattern_len = strlen (opts.rich_core_dumps) + strlen (uuid) + 3;
         get_pattern = (char *) malloc (pattern_len);
-	sprintf (get_pattern, RICH_CORE_SEARCH_PATTERN,
+	snprintf (get_pattern, pattern_len, RICH_CORE_SEARCH_PATTERN,
 		 opts.rich_core_dumps, uuid);
 
         command = (char *) malloc (strlen(RICHCORE_SEARCH_COMMAND) +
 				   strlen (opts.rich_core_dumps) + 
 				   strlen (uuid) + 3);
-        sprintf (command, "%s %s %s", 
-		 RICHCORE_SEARCH_COMMAND, opts.rich_core_dumps, uuid);
+        snprintf (command, strlen(RICHCORE_SEARCH_COMMAND) +
+		  strlen (opts.rich_core_dumps) + 
+		  strlen (uuid) + 3,
+		  "%s %s %s", 
+		  RICHCORE_SEARCH_COMMAND, opts.rich_core_dumps, uuid);
 
         LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
         execute(command, &edata);
@@ -248,8 +251,7 @@ LOCAL int set_device_core_pattern (const char *uuid)
         edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
 	command_len = strlen(CORE_PATTERN_COMMAND) + strlen(uuid) + 1;
-	command = (char *) malloc (command_len);
-	strcpy (command, CORE_PATTERN_COMMAND);
+	command = strdup (CORE_PATTERN_COMMAND);
 
 	p = command;
 	command = replace_string (command, "<UUID>", uuid);
@@ -635,8 +637,9 @@ LOCAL int process_get (const void *data, const void *user)
 	exec_data edata;
 	char *p;
 	char *executor = opts.remote_executor;
-#ifdef ENABLE_LIBSSH2
 	int command_len;
+#ifdef ENABLE_LIBSSH2
+	int key_param_len = 0;
 	char *remote = opts.target_address;
 #endif
 	if (bail_out) {
@@ -650,26 +653,44 @@ LOCAL int process_get (const void *data, const void *user)
 
 	fname = malloc (strlen((char *)file->filename) + 1);
 	trim_string ((char *)file->filename, fname);
-
+	command_len = strlen ("rm -f ") + strlen (fname) + 1;
 	/*
 	** Compose command 
 	*/
 #ifdef ENABLE_LIBSSH2
 	if (opts.libssh2) {
+		if (opts.ssh_key) {
+			/* length of "-i keyfile + \'0'" */
+			key_param_len = strlen(opts.ssh_key) + 3 + 1;			
+		} else {
+			key_param_len = 1;
+		}
+
+		char key_param[key_param_len];
+
+		if (opts.ssh_key) {
+			snprintf(key_param, key_param_len, "-i %s", opts.ssh_key);
+		} else {
+			key_param[0] = '\0';
+		}
+		
 		opts.target_address = NULL; /* execute locally */
 		command_len = strlen ("scp ") +
 			strlen (opts.username) + 1 +
 			strlen (fname) +
 			strlen (opts.output_folder) +
-			strlen (remote) + 30;
+			strlen (remote) + 30 + 
+			key_param_len;
 		command = (char *)malloc (command_len);
 		if (opts.target_port)
-			sprintf (command, "scp -P %u ", opts.target_port);
+			snprintf (command, command_len,
+				  "scp -P %u ", opts.target_port);
 		else
-			sprintf (command, "scp ");
+			snprintf (command, command_len, "scp ");
 		p = (char *)(command + (strlen (command)));
-			sprintf (p, "%s@%s:\'%s\' %s", opts.username, remote,
-			 fname, opts.output_folder);
+		snprintf (p, command_len - strlen(command),
+			  "%s@%s:\'%s\' %s %s", opts.username, remote,
+			  fname, opts.output_folder, key_param);
 	} else
 #endif
 	if (executor) {
@@ -679,10 +700,10 @@ LOCAL int process_get (const void *data, const void *user)
 		command = replace_string (command, "<DEST>", opts.output_folder);
 		free(p);
 	} else {
-		command = (char *)malloc (strlen ("cp ") + 
-					     strlen (fname) +
-					     strlen (opts.output_folder) + 2);
-		sprintf (command, "cp %s %s", fname,
+		command_len = strlen ("cp ") + strlen (fname) +
+			strlen (opts.output_folder) + 2;
+		command = (char *)malloc (command_len);
+		snprintf (command, command_len, "cp %s %s", fname,
 			 opts.output_folder);
 	}
 
@@ -713,7 +734,7 @@ LOCAL int process_get (const void *data, const void *user)
 	init_exec_data(&edata);
 	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	sprintf (command, "rm -f %s", fname);
+	snprintf (command, command_len, "rm -f %s", fname);
 	LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
 	execute(command, &edata);
 	if (edata.result) {
@@ -744,6 +765,7 @@ LOCAL int process_get_case (const void *data, const void *user)
 	td_case *c = (td_case *)user;
 	char *trimmed_name, *fname, *filename, *failure_str = NULL;
 	int measurement_verdict = CASE_PASS;
+	size_t len;
 
 	ret = process_get (data, NULL);
 	if (!ret)
@@ -763,9 +785,9 @@ LOCAL int process_get_case (const void *data, const void *user)
 		fname = trimmed_name;
 	else
 		fname ++;
-	filename = malloc (strlen((char *)fname) + 2 + 
-			   strlen (opts.output_folder));
-	sprintf (filename, "%s%s", opts.output_folder, fname);
+	len = strlen((char *)fname) + 2 + strlen (opts.output_folder);
+	filename = malloc (len);
+	snprintf (filename, len, "%s%s", opts.output_folder, fname);
 
 	ret = get_measurements (filename, c, file->series);
 	free (trimmed_name);
@@ -885,7 +907,7 @@ LOCAL void end_suite ()
 LOCAL void process_set (td_set *s)
 {
 	td_case dummy;
-
+	td_steps *steps;
 	/*
 	** Check that the set is not filtered
 	*/
@@ -963,10 +985,14 @@ LOCAL void process_set (td_set *s)
 
  short_circuit:
 	write_post_set (s);
-	if (xmlListSize (s->pre_steps) > 0)
-		xmlListWalk (s->pre_steps, step_post_process, &dummy);
-	if (xmlListSize (s->post_steps) > 0)
-		xmlListWalk (s->post_steps, step_post_process, &dummy);
+	if (xmlListSize (s->pre_steps) > 0) {
+		steps = xmlLinkGetData(xmlListFront(s->pre_steps));
+		xmlListWalk (steps->steps, step_post_process, &dummy);
+	}
+	if (xmlListSize (s->post_steps) > 0) {
+		steps = xmlLinkGetData(xmlListFront(s->post_steps));
+		xmlListWalk (steps->steps, step_post_process, &dummy);
+	}
 	xml_end_element();
  skip_all:
 	td_set_delete (s);

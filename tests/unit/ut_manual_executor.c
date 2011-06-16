@@ -55,8 +55,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
-/* None */
-
+#define TEST_CMD_LEN 1024
 /* ------------------------------------------------------------------------- */
 /* LOCAL GLOBAL VARIABLES */
 
@@ -86,7 +85,7 @@ START_TEST (test_execute_manual_step_passed)
     td_step *t_step = NULL;
     FILE *fp, *fp2;
     int ret;
-    char cmd[1024];
+    char cmd[TEST_CMD_LEN];
     char *stdout_tmp = "/tmp/testrunner-lite-manual-exec-stdout.log";
     int pipefd[2], written;
     
@@ -108,7 +107,8 @@ START_TEST (test_execute_manual_step_passed)
     
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
-    sprintf (cmd, "grep -q \"This is manual test case.\" %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN, "grep -q \"This is manual test case.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -127,7 +127,8 @@ START_TEST (test_execute_manual_step_passed)
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep -q \"This is manual test step.\" %s", stdout_tmp);
+    snprintf (cmd, TEST_CMD_LEN, "grep -q \"This is manual test step.\" %s", 
+	      stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -141,7 +142,7 @@ START_TEST (test_execute_manual_step_passed)
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep -q \"PASSED.\" %s", stdout_tmp);
+    snprintf (cmd, TEST_CMD_LEN, "grep -q \"PASSED.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
@@ -156,7 +157,7 @@ START_TEST (test_execute_manual_step_failed)
     td_step *t_step = NULL;
     FILE *fp, *fp2;
     int ret;
-    char cmd[1024];
+    char cmd[TEST_CMD_LEN];
     char *stdout_tmp = "/tmp/testrunner-lite-manual-exec-stdout.log";
     int pipefd[2], written;
     
@@ -178,7 +179,8 @@ START_TEST (test_execute_manual_step_failed)
     
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
-    sprintf (cmd, "grep -q \"This is manual test case.\" %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN, "grep -q \"This is manual test case.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -197,7 +199,8 @@ START_TEST (test_execute_manual_step_failed)
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep -q \"This is manual test step.\" %s", stdout_tmp);
+    snprintf (cmd, TEST_CMD_LEN, "grep -q \"This is manual test step.\" %s", 
+	      stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -211,7 +214,7 @@ START_TEST (test_execute_manual_step_failed)
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep -q \"FAILED.\" %s", stdout_tmp);
+    snprintf (cmd, TEST_CMD_LEN, "grep -q \"FAILED.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 
@@ -227,7 +230,7 @@ START_TEST (test_execute_manual_step_na)
     td_step *t_step = NULL;
     FILE *fp, *fp2;
     int ret;
-    char cmd[1024];
+    char cmd[TEST_CMD_LEN];
     char *stdout_tmp = "/tmp/testrunner-lite-manual-exec-stdout.log";
     int pipefd[2], written;
     
@@ -249,7 +252,8 @@ START_TEST (test_execute_manual_step_na)
     
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
-    sprintf (cmd, "grep -q \"This is manual test case.\" %s", stdout_tmp); 
+    snprintf (cmd, TEST_CMD_LEN, "grep -q \"This is manual test case.\" %s", 
+	      stdout_tmp); 
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -268,7 +272,8 @@ START_TEST (test_execute_manual_step_na)
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep -q \"This is manual test step.\" %s", stdout_tmp);
+    snprintf (cmd, TEST_CMD_LEN,"grep -q \"This is manual test step.\" %s", 
+	      stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
     
@@ -282,7 +287,7 @@ START_TEST (test_execute_manual_step_na)
     /* Back to terminal. */
     fp2 = freopen ("/dev/tty", "w", stdout);
 
-    sprintf (cmd, "grep -q \"N/A.\" %s", stdout_tmp);
+    snprintf (cmd, TEST_CMD_LEN, "grep -q \"N/A.\" %s", stdout_tmp);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
 

@@ -260,8 +260,7 @@ void log_msg(int type, const char *file, const char *function,
 	/*
 	** module is the source file name w/o the .c
 	*/
-	module = (char *)malloc (strlen (file) + 1);
-	strcpy (module, file);
+	module = strdup(file);
 	if ((p = strchr (module, '.')))
 	    *p = '\0';
 
