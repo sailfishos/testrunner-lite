@@ -121,7 +121,7 @@ static int set_env_for_remote_tests()
 	ret = system ("grep myrsakey ~/.ssh/config");
 	if (ret) {
 		ret = system ("echo -e \"Host localhost\n"
-			      "\"IdentityFile=%d/.ssh/myrsakey\" >> "
+			      "IdentityFile=%d/.ssh/myrsakey\" >> "
 			      "~/.ssh/config");
 		if (ret)
 			goto err_out;
