@@ -65,7 +65,8 @@ typedef enum {
 } resume_testrun_action;
 
 enum {
-	TRLITE_LONG_OPTION_LOGID = 256
+	TRLITE_LONG_OPTION_LOGID = 256,
+	TRLITE_LONG_OPTION_UTF8_LIMIT
 };
 
 /** Used for storing and passing user (command line) options.*/
@@ -104,6 +105,7 @@ typedef struct {
 	char *hwinfo_target;	/**< Address where to ask hwinfo */
 	in_port_t hwinfo_port; /**< Optional port for hwinfo address */
 	char *rich_core_dumps;  /**< save rich-core dumps from DUT */
+	int   max_utf8_bytes;	/**< Maximum length of a UTF-8 byte sequence */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */

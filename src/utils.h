@@ -56,7 +56,7 @@
 char *replace_string (const char *orig, const char *from, const char *to);
 unsigned int trim_string (char *ins, char *outs);
 int list_contains(const char *list, const char *value, const char* delim);
-int utf8_validity_check(const unsigned char *data);
+int utf8_validity_check(const unsigned char *data, int maxlen);
 /* ------------------------------------------------------------------------- */
 
 #endif                          /* UTILS_H */

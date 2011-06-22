@@ -779,7 +779,8 @@ LOCAL void utf8_check (stream_data* data, const char *id, pid_t pid)
 	FILE *ofile = NULL;
 	size_t written = 0, len;
 	
-	if (utf8_validity_check (data->buffer)) {
+	if (utf8_validity_check (data->buffer, options->max_utf8_bytes ?
+				 options->max_utf8_bytes : 4)) {
 		return;
 	}
 	len = strlen (options->output_folder) + strlen ("id") + 10 + 1 + 1;

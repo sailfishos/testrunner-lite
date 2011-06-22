@@ -202,6 +202,10 @@ LOCAL void usage()
                 "to link each rich-cores and test cases in test reporting\n\t\t"
                 "NOTE: This feature requires working sp-rich-core package to be\n\t\t"
                 "installed in the Device Under Test.\n");
+	printf ("  --utf8-limit=MAXLENGTH\n\t\t"
+	        "Maximum allowed length of a UTF-8 byte sequence in output of a test step.\n\t\t"
+		"If the limit is exceeded, the whole output will be written into a separate\n\t\t"
+		"file as in case of any invalid UTF-8 output. Default value is 4.\n");
 	printf ("\nTest commands are executed locally by default.  Alternatively, one\n"
 		"of the following executors can be used:\n");
 	printf ("\nChroot Execution:\n");
@@ -783,6 +787,25 @@ LOCAL int parse_target_address_hwinfo(char *address, testrunner_lite_options *op
 	}
 }
 /* ------------------------------------------------------------------------- */
+/** Parse UTF-8 limit option
+ * @param limit Limit as a string
+ * @param opts Options struct
+ * @return 0 in success, 1 on failure
+ */
+LOCAL int parse_utf8_limit(char *limit, testrunner_lite_options *opts) {
+	long int value = 0;
+	char *endptr = NULL;
+
+	value = strtol(limit, &endptr, 10);
+	if (value > 0 && value < 5 && *endptr == '\0') {
+		opts->max_utf8_bytes = value;
+		return 0;
+	}
+
+	fprintf(stderr, "Invalid value for option utf8-limit\n");
+	return 1;
+}
+/* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
 /** main() for testrunnerlite - handle command line switches and call parser
@@ -848,6 +871,8 @@ int main (int argc, char *argv[], char *envp[])
 			 TRLITE_LONG_OPTION_LOGID},
 			{"hwinfo-target", required_argument, NULL, 'i'},
 			{"rich-core-dumps", required_argument, NULL, 'd'},
+			{"utf8-limit", required_argument, NULL,
+			 TRLITE_LONG_OPTION_UTF8_LIMIT},
 
 			{0, 0, 0, 0}
 		};
@@ -1053,6 +1078,12 @@ int main (int argc, char *argv[], char *envp[])
 			break;
 		case TRLITE_LONG_OPTION_LOGID:
 			if (parse_logid(optarg, &opts) != 0) {
+				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
+				goto OUT;
+			}
+			break;
+		case TRLITE_LONG_OPTION_UTF8_LIMIT:
+			if (parse_utf8_limit(optarg, &opts) != 0) {
 				retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 				goto OUT;
 			}
