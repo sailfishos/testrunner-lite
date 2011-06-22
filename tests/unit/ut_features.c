@@ -178,13 +178,22 @@ START_TEST (test_utf8_checker)
 
     /* check valid sequences */
     for (i = 0; i  < sizeof(valid_utf8_samples)/sizeof(char*); ++i) {
-	fail_unless(utf8_validity_check((const unsigned char*)valid_utf8_samples[i]));
+	fail_unless(utf8_validity_check((const unsigned char*)valid_utf8_samples[i], 4));
     }
 
     /* check invalid sequences */
     for (i = 0; i  < sizeof(invalid_utf8_samples)/sizeof(char*); ++i) {
-	fail_if(utf8_validity_check((const unsigned char*)invalid_utf8_samples[i]));
+	fail_if(utf8_validity_check((const unsigned char*)invalid_utf8_samples[i], 4));
     }
+
+    /* check that maxlen argument works. allowed values are 1-4 */
+    fail_if(utf8_validity_check("\xF0\x90\x80\x80", -1));
+    fail_if(utf8_validity_check("\xF0\x90\x80\x80", 0));
+    fail_if(utf8_validity_check("\xF0\x90\x80\x80", 1));
+    fail_if(utf8_validity_check("\xF0\x90\x80\x80", 2));
+    fail_if(utf8_validity_check("\xF0\x90\x80\x80", 3));
+    fail_if(utf8_validity_check("\xF0\x90\x80\x80", 5));
+    fail_if(utf8_validity_check("\xF0\x90\x80\x80", 6));
 END_TEST
 
 START_TEST (test_logging)

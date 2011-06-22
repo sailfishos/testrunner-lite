@@ -114,7 +114,7 @@ static inline int decode_utf8_length(unsigned char data)
 	return 0;
 }
 
-static inline int utf8_decode(const unsigned char **data)
+static inline int utf8_decode(const unsigned char **data, int maxlen)
 {
 	const unsigned char *p = *data;
 	unsigned long codepoint = 0L;
@@ -122,7 +122,7 @@ static inline int utf8_decode(const unsigned char **data)
 
 	l = decode_utf8_length(*p);
 
-	if (l > 1 && l < 5) {
+	if (l > 1 && l < maxlen + 1) {
 		codepoint = *p++ & 0x1F >> (l-2);
 		for (n = l - 1; n && *p; --n, ++p) {
 			if (!is_cont_byte(*p)) {
@@ -296,17 +296,22 @@ int list_contains(const char *list, const char *value, const char* delim)
 
 /** 
  * Check data is valid UTF-8. If invalid data is found, function
- * returns immediately. Maximum number of allowed bytes for an UTF-8
- * sequence is 4 and maximum code point value U+10FFFF. Validation
- * ends when null character is found.
+ * returns immediately. Maximum number of allowed bytes for a UTF-8
+ * sequence is given in argument maxlen (normally 4 when maximum code
+ * point value is U+10FFFF). Validation ends when null character is found.
  * 
  * @param data Data to be validated with terminating null
+ * @param maxlen Maximum allowed bytes in a UTF-8 sequence (1-4)
  * 
  * @return 1 when data is valid UTF-8 and 0 if not
  */
-int utf8_validity_check(const unsigned char *data)
+int utf8_validity_check(const unsigned char *data, int maxlen)
 {
 	const unsigned char *p = data;
+
+	if (maxlen < 1 || maxlen > 4) {
+		return 0;
+	}
 
 	while (*p != '\0') {
 		if (isascii(*p)) {
@@ -315,7 +320,7 @@ int utf8_validity_check(const unsigned char *data)
 		} else if (is_cont_byte(*p)) {
 			/* unexpected continuation byte */
 			return 0;
-		} else if (!utf8_decode(&p)) {
+		} else if (!utf8_decode(&p, maxlen)) {
 			return 0;
 		}
 	}

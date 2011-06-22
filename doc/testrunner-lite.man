@@ -92,6 +92,9 @@ Save rich-core dumps. PATH is the location, where rich-core dumps are produced i
 
 NOTE: This feature requires working sp-rich-core package to be installed in the Device Under Test.
 .TP
+\fB\-\-utf8\-limit\fR=\fIMAXLENGTH\fR
+Maximum allowed length of a UTF-8 byte sequence in output of a test step. If the limit is exceeded, the whole output will be written into a separate file as in case of any invalid UTF-8 output. Default value is 4.
+.TP
 Test commands are executed locally by default.  Alternatively, one of the following executors can be used:
 .TP
 \fIChroot Execution:\fI
