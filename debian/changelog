@@ -1,3 +1,9 @@
+testrunner-lite (1.7.1-2) unstable; urgency=low
+
+  * Fixes: NB#268202 - Option for maximum length of UTF-8 byte sequence
+
+ -- Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>  Thu, 23 Jun 2011 08:30:43 +0300
+
 testrunner-lite (1.7.1-1) unstable; urgency=low
 
   * Fix for remote executor unit tests (BMC 19577).
