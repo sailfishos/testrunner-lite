@@ -3,14 +3,16 @@
   <suite name="testrunner-lite-tests" domain="AutomatedTesting">
    <set name="testrunner-lite-unit-tests" description="Unit tests for testrunner-lite">
      <pre_steps>
-       <step>if [ -e ~/.ssh ]; then mkdir -p ~/.ssh/testrunner-lite-tests-backup; cp -r `ls -Ad ~/.ssh/* | grep -v 'testrunner-lite-tests-backup$'` ~/.ssh/testrunner-lite-tests-backup/; fi</step>
-       <step>sed -i '/localhost ssh-rsa/ d' ~/.ssh/known_hosts</step>
+       <step>if [ ! -e ~/.ssh ]; then mkdir -p ~/.ssh/; fi</step>
+       <step>rm -fr ~/.ssh/testrunner-lite-tests-backup</step>
+       <step>if [ -e ~/.ssh -a -n "$(ls -Ad ~/.ssh/*)" ]; then mkdir -p ~/.ssh/testrunner-lite-tests-backup; cp -r $(ls -Ad ~/.ssh/*) ~/.ssh/testrunner-lite-tests-backup/; fi</step>
+       <step>if [ -e ~/.ssh/known_hosts ]; then sed -i '/localhost ssh-rsa/ d' ~/.ssh/known_hosts; fi</step>
      </pre_steps>
     <case name="testrunnerlite_unit_tests_argumentparser" description="testrunner-lite argumentparser tests" timeout="180">
      <step>export CK_DEFAULT_TIMEOUT=10;LIBDIR/testrunner-lite-tests/testrunnerliteunittests argumentparser</step>
     </case>
     <case name="testrunnerlite_unit_tests_features" description="testrunner-lite features tests" timeout="180">
-     <step>export no_proxy="127.0.0.1,localhost"; export CK_DEFAULT_TIMEOUT=10;LIBDIR/testrunner-lite-tests/testrunnerliteunittests features</step>
+     <step>export CK_DEFAULT_TIMEOUT=10;LIBDIR/testrunner-lite-tests/testrunnerliteunittests features</step>
     </case>
     <case name="testrunnerlite_unit_tests_filters" description="testrunner-lite filters tests" timeout="180">
      <step>export CK_DEFAULT_TIMEOUT=10;LIBDIR/testrunner-lite-tests/testrunnerliteunittests filters</step>
@@ -28,7 +30,7 @@
      <step>export CK_DEFAULT_TIMEOUT=10;LIBDIR/testrunner-lite-tests/testrunnerliteunittests testresultlogger</step>
     </case>  
     <post_steps>
-      <step>if [ -e ~/.ssh/testrunner-lite-tests-backup ]; then rm -rf `ls -Ad ~/.ssh/* | grep -v 'testrunner-lite-tests-backup$'`; mv ~/.ssh/testrunner-lite-tests-backup/* ~/.ssh/; rm -rf ~/.ssh/testrunner-lite-tests-backup; else rm -rf~/.ssh/*; fi</step>
+      <step>if [ -e ~/.ssh/testrunner-lite-tests-backup ]; then rm -rf $(ls -Ad ~/.ssh/* | grep -v 'testrunner-lite-tests-backup$'); mv ~/.ssh/testrunner-lite-tests-backup/* ~/.ssh/; rm -rf ~/.ssh/testrunner-lite-tests-backup; else rm -f ~/.ssh/*; fi</step>
       <step>rm -f /tmp/get*test*.txt /tmp/loggertestout.xml /tmp/mypid.sh /tmp/res.xml</step>
       <step>rm -rf /tmp/testrunner*lite*test*</step>
       <step>rm -rf /tmp/resumetest*</step>
