@@ -1,3 +1,7 @@
+* Fri Aug 12 2011 Sami Lahtinen <ext-sami.t.lahtinen@nokia.com> 1.7.2
+- Fix <get><file> operation with libssh2 (BMC#22632)
+- Improvements and fixes to tests (BMC#22633)
+- New command line option --utf8-limit
 * Tue Jun 14 2011 Sampo Saaristo <sampo.saaristo@sofica.fi> 1.7.1
 - All strcpy() and sprintf() function calls replaced with safer alternatives (BMC#13887)
 - Errors reported by valgrind fixed (BMC#18861)
