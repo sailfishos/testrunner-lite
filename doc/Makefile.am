@@ -4,8 +4,8 @@ man1_MANS = testrunner-lite.man
 html-local: doxyhtml
 
 install-data-local:
-	mkdir -p $(DESTDIR)$(docdir)/testrunner-lite-doc
-	cp -r html $(DESTDIR)$(docdir)/testrunner-lite-doc
+	mkdir -p $(DESTDIR)$(docdir)/
+	cp -r html $(DESTDIR)$(docdir)/
 
 doxyhtml: 
 	doxygen 
