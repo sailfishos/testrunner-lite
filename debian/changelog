@@ -1,3 +1,9 @@
+testrunner-lite (1.7.3) unstable; urgency=low
+
+  * Fixed missing html from doc packaging (by kylanpaj)
+
+ -- Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>  Tue, 30 Aug 2011 10:48:11 +0300
+
 testrunner-lite (1.7.2) unstable; urgency=low
 
   * Fix <get><file> operation with libssh2 (BMC#22632)
