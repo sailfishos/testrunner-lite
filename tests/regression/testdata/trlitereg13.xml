@@ -3,11 +3,11 @@
   <hwiddetect>echo myhw</hwiddetect>
   <description>definition description </description>
   <suite name="get_tests"  description="suite 1 attr" requirement="10,11"
-	 timeout="10" type="User Experience" level="Component" manual="false"
+	 timeout="10" type="User experience" level="Component" manual="false"
 	 insignificant="true" hwid="myhw" domain="some domain">  
     <description>suite 1 description</description>
     <set name="set 1"  description="set 1 attr" requirement="11,12"
-	 timeout="11" type="User Experience" level="Component" manual="false"
+	 timeout="11" type="User experience" level="Component" manual="false"
 	 insignificant="true" hwid="myhw" feature="12121">    
       <description>set 1 description</description>
       <environments>hardware</environments>
@@ -18,7 +18,7 @@
         <step expected_result="0">echo ipsum  &gt;/tmp/gettest4.txt</step> <!-- result="PASS" -->
 	<step expected_result="0">echo dolor &gt;  /tmp/get\ test5.txt</step> <!-- result="PASS" -->
       </pre_steps>
-      <case name="case_1"  description="case 1 attr" requirement="12,13" timeout="11" type="User Experience" level="Component" manual="false" insignificant="true" hwid="myhw" subfeature="subfea" bugzilla_id="12121" feature="21231" domain="testing" component="testrunner-lite" state="Approved"> <!-- result="PASS" -->
+      <case name="case_1"  description="case 1 attr" requirement="12,13" timeout="11" type="User experience" level="Component" manual="false" insignificant="true" hwid="myhw" subfeature="subfea" bugzilla_id="12121" feature="21231" domain="testing" component="testrunner-lite" state="Approved"> <!-- result="PASS" -->
 	<description>case 1 description </description>
         <step expected_result="0">stat /tmp/gettest.txt</step> <!-- result="PASS" -->
         <step expected_result="0">stat /tmp/gettest2.txt</step> <!-- result="PASS" -->

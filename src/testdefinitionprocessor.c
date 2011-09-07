@@ -689,8 +689,8 @@ LOCAL int process_get (const void *data, const void *user)
 			snprintf (command, command_len, "scp ");
 		p = (char *)(command + (strlen (command)));
 		snprintf (p, command_len - strlen(command),
-			  "%s@%s:\'%s\' %s %s", opts.username, remote,
-			  fname, opts.output_folder, key_param);
+			  "%s %s@%s:\'%s\' %s", key_param, opts.username,
+			  remote, fname, opts.output_folder);
 	} else
 #endif
 	if (executor) {

@@ -3,6 +3,7 @@
   <suite name="get_tests"  timeout="10">  
     <set name="get_set" description="try get tag handling"  timeout="15">    
       <pre_steps>
+         <step>rm -f /tmp/get*.txt</step>
          <step>echo foo > /tmp/gettest.txt</step>
          <step>echo bar > /tmp/gettest2.txt</step>
          <step>echo lorem > /tmp/gettest3.txt</step>

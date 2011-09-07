@@ -120,7 +120,7 @@ static int set_env_for_remote_tests()
 	    
 	ret = system ("grep myrsakey ~/.ssh/config");
 	if (ret) {
-		ret = system ("echo -e \"Host localhost 127.0.0.1\n"
+		ret = system ("/bin/echo -e \"Host localhost 127.0.0.1\n"
 			      "IdentityFile=%d/.ssh/myrsakey\" >> "
 			      "~/.ssh/config");
 		if (ret)
@@ -207,7 +207,7 @@ START_TEST (test_executor_long_input_streams)
 	init_exec_data(&edata);
 	edata.soft_timeout = 2;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/share/testrunner-lite-tests/long_output.sh", 
+	fail_if (execute(DATADIR "/testrunner-lite-tests/long_output.sh", 
 			 &edata));
 	fail_unless (edata.result == 0);
 	fail_if (edata.stdout_data.buffer == NULL);
@@ -228,7 +228,7 @@ START_TEST (test_executor_terminating_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM);
 	fail_if (edata.stdout_data.buffer == NULL);
@@ -253,7 +253,7 @@ START_TEST (test_executor_killing_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 1;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	fail_unless (edata.result == SIGTERM || edata.result == SIGKILL);
 	fail_if (edata.stdout_data.buffer == NULL);
@@ -338,6 +338,8 @@ END_TEST
 START_TEST (test_executor_remote_command)
 	exec_data edata;
 	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
 	opts.target_port = 0;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
@@ -377,6 +379,8 @@ END_TEST
 START_TEST (test_executor_remote_command_port)
 	exec_data edata;
 	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
 	opts.target_port = 22;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR_PORT;
@@ -416,16 +420,18 @@ END_TEST
 START_TEST (test_executor_remote_long_command)
 	exec_data edata;
 	testrunner_lite_options opts;
-#ifdef ENABLE_LIBSSH2
-	opts.libssh2 = 0;
-#endif
 #define TEST_STRING_SIZE 5000
 	char test_string [TEST_STRING_SIZE];
 	char command [TEST_STRING_SIZE + 100];
+
+	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
 	opts.target_port = 0;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
 	opts.remote_getter = DEFAULT_REMOTE_GETTER;
+#ifdef ENABLE_LIBSSH2
+	opts.libssh2 = 0;
+#endif
 
 	executor_init (&opts);
 	init_exec_data (&edata);
@@ -454,6 +460,8 @@ END_TEST
 START_TEST (test_executor_remote_terminating_process)
 	exec_data edata;
 	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
 	opts.target_port = 0;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
@@ -466,7 +474,7 @@ START_TEST (test_executor_remote_terminating_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 2;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 	/* 128 + SIGKILL or 255 depends on ssh*/
 	fail_unless (edata.result == 143 ||
@@ -492,6 +500,8 @@ END_TEST
 START_TEST (test_executor_remote_killing_process)
 	exec_data edata;
 	testrunner_lite_options opts;
+
+	memset (&opts, 0x0, sizeof (opts));
 	opts.target_address = "localhost";
 	opts.target_port = 0;
 	opts.remote_executor = DEFAULT_REMOTE_EXECUTOR;
@@ -504,7 +514,7 @@ START_TEST (test_executor_remote_killing_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 2;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	/* 128 + SIGKILL or 255 depends on ssh */
 	fail_unless (edata.result == 137 ||
@@ -734,6 +744,10 @@ START_TEST (test_remote_get)
      int ret;
      char cmd[TEST_CMD_LEN];
      
+     snprintf (cmd, TEST_CMD_LEN, "rm -f /tmp/testrunnerlitetestdir2/get*.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
      snprintf (cmd, TEST_CMD_LEN, 
 	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml -t localhost", 
 	      TESTRUNNERLITE_BIN, TESTDATA_GET_XML_1);
@@ -819,6 +833,10 @@ START_TEST (test_remote_custom_key_get)
      int ret;
      char cmd[TEST_CMD_LEN];
      
+     snprintf (cmd, TEST_CMD_LEN, "rm -f /tmp/testrunnerlitetestdir2/get*.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
      snprintf (cmd, TEST_CMD_LEN,
 	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
 	       "-t localhost -k ~/.ssh/myrsakey", 
@@ -863,6 +881,10 @@ START_TEST (test_remote_custom_key_port_get)
      int ret;
      char cmd[TEST_CMD_LEN];
      
+     snprintf (cmd, TEST_CMD_LEN, "rm -f /tmp/testrunnerlitetestdir2/get*.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
      snprintf (cmd, TEST_CMD_LEN,
 	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
 	       "-t localhost:22 -k ~/.ssh/myrsakey", 
@@ -908,6 +930,11 @@ START_TEST (test_remote_custom_key_full_path_get)
      int ret;
      char cmd[TEST_CMD_LEN];
      char *homepath;
+
+     snprintf (cmd, TEST_CMD_LEN, "rm -f /tmp/testrunnerlitetestdir2/get*.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
      homepath = getenv("HOME");
      snprintf (cmd, TEST_CMD_LEN,
 	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
@@ -1148,7 +1175,7 @@ START_TEST (test_executor_remote_libssh2_terminating_process)
 	init_exec_data(&edata);
 	edata.soft_timeout = 5;
 	edata.hard_timeout = 5;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating " 
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/terminating " 
 			 "stdouttest stderrtest", &edata));
 
 	fail_if (edata.stdout_data.buffer == NULL);
@@ -1187,7 +1214,7 @@ START_TEST (test_executor_remote_libssh2_killing_process)
 	log_init(&opts);
 	edata.soft_timeout = 5;
 	edata.hard_timeout = 5;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/unterminating "
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/unterminating "
 			 "stdouttest stderrtest", &edata));
 	/* 128 + SIGKILL or 255 depends on ssh */
 	/* Let's skip this until we get recent enough
@@ -1229,7 +1256,7 @@ START_TEST (test_executor_remote_libssh2_bg_process)
 	log_init(&opts);
 	edata.soft_timeout = 20;
 	edata.hard_timeout = 5;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/terminating aa bb &"
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/terminating aa bb &"
 			 , &edata));
 	/* Check that the process stayed in bg */
 	fail_if (execute("PATH=$PATH:/sbin/ pidof terminating", &edata));
@@ -1264,7 +1291,7 @@ START_TEST (test_executor_remote_libssh2_daemon_process)
 	log_init(&opts);
 	edata.soft_timeout = 20;
 	edata.hard_timeout = 1;
-	fail_if (execute("/usr/lib/testrunner-lite-tests/trlite-test-daemon"
+	fail_if (execute(LIBDIR "/testrunner-lite-tests/trlite-test-daemon"
 			 , &edata));
 	/* Check that the process stayed in bg */
 	fail_if (execute("PATH=$PATH:/sbin/ pidof trlite-test-daemon", &edata));
@@ -1284,6 +1311,10 @@ START_TEST (test_remote_libssh2_get)
      char cmd[TEST_CMD_LEN];
      
      /* get doesn't use libssh2, but username parsing differs with -t option */
+
+     snprintf (cmd, TEST_CMD_LEN, "rm -f /tmp/testrunnerlitetestdir2/get*.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
 
      snprintf (cmd, TEST_CMD_LEN,
 	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
@@ -1333,6 +1364,10 @@ START_TEST (test_remote_libssh2_get_username)
 
      /* get doesn't use libssh2, but username parsing differs with -t option */
 
+     snprintf (cmd, TEST_CMD_LEN, "rm -f /tmp/testrunnerlitetestdir2/get*.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
      snprintf (cmd, TEST_CMD_LEN,
 	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
 	      "-n %s@localhost -k ~/.ssh/myrsakey", 
@@ -1378,6 +1413,10 @@ START_TEST (test_remote_libssh2_custom_key_get)
      int ret;
      char cmd[TEST_CMD_LEN];
      
+     snprintf (cmd, TEST_CMD_LEN, "rm -f /tmp/testrunnerlitetestdir2/get*.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
      snprintf (cmd, TEST_CMD_LEN,
 	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
 	       "-n localhost -k ~/.ssh/myrsakey", 
@@ -1423,6 +1462,10 @@ START_TEST (test_remote_libssh2_custom_key_port_get)
      int ret;
      char cmd[TEST_CMD_LEN];
      
+     snprintf (cmd, TEST_CMD_LEN, "rm -f /tmp/testrunnerlitetestdir2/get*.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
      snprintf (cmd, TEST_CMD_LEN,
 	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
 	       "-n localhost:22 -k ~/.ssh/myrsakey", 
@@ -1467,6 +1510,11 @@ START_TEST (test_remote_libssh2_custom_key_full_path_get)
      int ret;
      char cmd[TEST_CMD_LEN];
      char *homepath;
+
+     snprintf (cmd, TEST_CMD_LEN, "rm -f /tmp/testrunnerlitetestdir2/get*.txt");
+     ret = system (cmd);
+     fail_if (ret, cmd);
+
      homepath = getenv("HOME");
      snprintf (cmd, TEST_CMD_LEN,
 	       "%s -f %s -o /tmp/testrunnerlitetestdir2/res.xml "
@@ -1596,7 +1644,7 @@ Suite *make_testexecutor_suite (void)
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test get feature with remote host.");
-    tcase_set_timeout (tc, 25);
+    tcase_set_timeout (tc, 35);
     tcase_add_test (tc, test_remote_get);
     suite_add_tcase (s, tc);
     
@@ -1633,17 +1681,17 @@ Suite *make_testexecutor_suite (void)
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test custom ssh key get.");
-    tcase_set_timeout (tc, 20);
+    tcase_set_timeout (tc, 40);
     tcase_add_test (tc, test_remote_custom_key_get);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test custom ssh key port get.");
-    tcase_set_timeout (tc, 20);
+    tcase_set_timeout (tc, 40);
     tcase_add_test (tc, test_remote_custom_key_port_get);
     suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test custom ssh key get full path.");
-    tcase_set_timeout (tc, 20);
+    tcase_set_timeout (tc, 40);
     tcase_add_test (tc, test_remote_custom_key_full_path_get);
     suite_add_tcase (s, tc);
 

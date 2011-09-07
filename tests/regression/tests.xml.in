@@ -3,71 +3,71 @@
   <suite name="testrunner-lite-regression-tests">
     <set name="basic-regression-tests">
       <case name="trlitereg01">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg01.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg01.xml</step>
       </case>
 
       <case name="trlitereg02">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg02.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg02.xml</step>
       </case>
 
       <case name="trlitereg03">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg03.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg03.xml</step>
       </case>
 
       <case name="trlitereg04">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg04.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg04.xml</step>
       </case>
 
       <case name="trlitereg05">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg05.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg05.xml</step>
       </case>
 
       <case name="trlitereg06">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg06.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg06.xml</step>
       </case>
 
       <case name="trlitereg07">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg07.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg07.xml</step>
       </case>
 
       <case name="trlitereg08">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg08.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg08.xml</step>
       </case>
 
       <case name="trlitereg09">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg09.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg09.xml</step>
       </case>
 
       <case name="trlitereg10">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg10.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg10.xml</step>
       </case>
 
       <case name="trlitereg12" bugzilla_id="11032">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg12.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg12.xml</step>
       </case>
 
       <case name="trlitereg13" bugzilla_id="10726">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg13.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg13.xml</step>
       </case>
 
       <case name="trlitereg14" bugzilla_id="11475">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg14.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg14.xml</step>
       </case>
 
       <case name="trlitereg15" feature="11039">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg15.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg15.xml</step>
       </case>
 
       <case name="trlitereg16" feature="11039">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg16.xml -M</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg16.xml -M</step>
       </case>
 
       <case name="trlitereg17" bugzilla_id="12537">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg17.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg17.xml</step>
       </case>
 
       <case name="trlitereg18">
-	<step>/usr/share/testrunner-lite-regression-tests/regtester.sh /usr/share/testrunner-lite-regression-tests/trlitereg18.xml</step>
+	<step>DATADIR/testrunner-lite-regression-tests/regtester.sh BINDIR/testrunner-lite DATADIR/testrunner-lite-regression-tests/trlitereg18.xml</step>
       </case>
 
       <post_steps>
@@ -90,30 +90,30 @@
       </pre_steps>
 
       <case name="test_background_process_cleanup">
-	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-bg.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>BINDIR/testrunner-lite -v -f DATADIR/testrunner-lite-regression-tests/testdata/testrunner-tests-bg.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>sleep 1</step>
 	<step>! pidof unterminating</step>
       </case>
 
       <case name="test_presteps_failure_info">
-	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-pre_step-fail.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>BINDIR/testrunner-lite -v -f DATADIR/testrunner-lite-regression-tests/testdata/testrunner-tests-pre_step-fail.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>grep step /tmp/testrunnerlitetestdir/res.xml | grep &quot;pre_steps failed&quot; </step>
 	<step>grep case /tmp/testrunnerlitetestdir/res.xml | grep &quot;pre_steps failed&quot; </step>
       </case>
 
       <case name="test_domain_and_feature_results">
-	<step>testrunner-lite -a -v -f /usr/share/testrunner-lite-regression-tests/testdata/filter_tests.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>BINDIR/testrunner-lite -a -v -f DATADIR/testrunner-lite-regression-tests/testdata/filter_tests.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>grep feature2 /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>grep sample_suite_domain /tmp/testrunnerlitetestdir/res.xml</step>
       </case>
 
       <case name="test_bugzilla_id" bugzilla_id="10362">
-	<step>testrunner-lite -a -v -f /usr/share/testrunner-lite-regression-tests/trlitereg11.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>BINDIR/testrunner-lite -a -v -f DATADIR/testrunner-lite-regression-tests/trlitereg11.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>grep bugzilla_id /tmp/testrunnerlitetestdir/res.xml</step>
       </case>
 
       <case name="test_automatic_flag" bugzilla_id="17309">
-	<step>testrunner-lite -a -v -f /usr/share/testrunner-lite-regression-tests/trlitereg19.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>BINDIR/testrunner-lite -a -v -f DATADIR/testrunner-lite-regression-tests/trlitereg19.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
       </case>
 
 
@@ -134,8 +134,8 @@
       </pre_steps>
 
       <case name="test_utf8">
-	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-utf8.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
-	<step>grep &quot;$(cat /usr/share/testrunner-lite-tests/testdata/unicode.txt)&quot; /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>BINDIR/testrunner-lite -v -f DATADIR/testrunner-lite-regression-tests/testdata/testrunner-tests-utf8.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>grep &quot;$(cat DATADIR/testrunner-lite-tests/testdata/unicode.txt)&quot; /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>cat /tmp/testrunnerlitetestdir/utf8_testdata</step>
 	<step>grep -f /tmp/testrunnerlitetestdir/utf8_testdata /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>[ "$(stat /tmp/testrunnerlitetestdir/utf8_testdata | awk '/Size: [0-9]+/ { print $2 }')" = "17" ]</step>
@@ -143,7 +143,7 @@
       </case>
 
       <case name="test_non_utf8">
-	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-non-utf8.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>BINDIR/testrunner-lite -v -f DATADIR/testrunner-lite-regression-tests/testdata/testrunner-tests-non-utf8.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>stat /tmp/testrunnerlitetestdir/stdout.*</step>
       </case>
 
@@ -164,7 +164,7 @@
       </pre_steps>
 
       <case name="test_local_get_file">
-	<step>testrunner-lite -v -f /usr/share/testrunner-lite-regression-tests/testdata/testrunner-tests-get.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
+	<step>BINDIR/testrunner-lite -v -f DATADIR/testrunner-lite-regression-tests/testdata/testrunner-tests-get.xml -o /tmp/testrunnerlitetestdir/res.xml</step>
 	<step>[ -d /tmp/testrunnerlitetestdir/ ]</step>
 	<step>[ -f /tmp/testrunnerlitetestdir/gettest.txt ]</step>
 	<step>[ -f /tmp/testrunnerlitetestdir/gettest2.txt ]</step>
@@ -258,7 +258,7 @@
       </case>
 
       <case name="testrunner_lite_version">
-	<step>testrunner-lite -V | grep  "testrunner-lite version"</step>
+	<step>BINDIR/testrunner-lite -V | grep  "testrunner-lite version"</step>
       </case>
 
       <environments>
@@ -271,7 +271,7 @@
       <case name="basic-ut8-input">
 	<!-- testrunner-lite should not create stdout.PID file. step outputs valid utf-8 -->
 	<step>rm -f /tmp/stdout.*</step>
-	<step>testrunner-lite -f /usr/share/testrunner-lite-regression-tests/testdata/utf.xml -o /tmp/utftestresult.xml</step>
+	<step>BINDIR/testrunner-lite -f DATADIR/testrunner-lite-regression-tests/testdata/utf.xml -o /tmp/utftestresult.xml</step>
 	<step>[ ! -f /tmp/stdout.* ]</step>
       </case>
     </set>

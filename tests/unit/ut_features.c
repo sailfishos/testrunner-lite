@@ -163,7 +163,7 @@ START_TEST (test_ctrl_char_strip)
     init_exec_data(&edata);
     edata.soft_timeout = 0;
     edata.hard_timeout = 0;
-    snprintf (cmd, TEST_CMD_LEN, "echo -e %s", test_str); 
+    snprintf (cmd, TEST_CMD_LEN, "/bin/echo -e %s", test_str);
     fail_if (execute(cmd, &edata));
     fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
     fail_unless (strlen ((char *)edata.stderr_data.buffer) == 0);
@@ -632,7 +632,6 @@ Suite *make_features_suite (void)
     TCase *tc;
 
     tc = tcase_create ("Test stripping of ctrl chars.");
-    tcase_set_timeout(tc, 600);
     tcase_add_test (tc, test_ctrl_char_strip);
     suite_add_tcase (s, tc);
 
