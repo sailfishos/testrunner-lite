@@ -1,6 +1,6 @@
 testrunner-lite (1.7.3-0) unstable; urgency=low
 
-  * Merged release 1.7.3
+  * Fixes: NB#281508 - Testrunner-lite-tests failure
 
  -- Sami Lahtinen <ext-sami.t.lahtinen@nokia.com>  Thu, 08 Sep 2011 09:29:49 +0300
 
