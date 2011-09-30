@@ -658,13 +658,15 @@ LOCAL int process_get (const void *data, const void *user)
 		edata.disobey_chroot = 1;
 
 		/* source file must be prefixed with chroot dir */
-		tmpname = (char *)malloc(strlen(opts.chroot_folder) +
-					 strlen((char *)file->filename) + 2);
-		strcpy(tmpname, opts.chroot_folder);
-		strcat(tmpname, "/");
-		strcat(tmpname, strlen((char *)file->filename));
-		fname = (char *)malloc(strlen(tmpname) + 1);
-		trim_string (tmpname, fname);
+		fname = (char *)malloc(strlen(opts.chroot_folder) +
+				       strlen((char *)file->filename) + 2);
+		strcpy(fname, opts.chroot_folder);
+		strcat(fname, "/");
+
+		tmpname = malloc (strlen((char *)file->filename) + 1);
+		trim_string ((char *)file->filename, tmpname);
+
+		strcat(fname, tmpname);
 		free(tmpname);
 	} else {
 		fname = malloc (strlen((char *)file->filename) + 1);
