@@ -212,7 +212,10 @@ LOCAL int exec_wrapper(const char *command)
 	if (options->remote_executor) {
 		ret = remote_execute (options->remote_executor, command);
 	} else {
-		if (options->chroot_folder) {
+		if (current_data != NULL && current_data->disobey_chroot) {
+			LOG_MSG(LOG_DEBUG, "Disobeying chroot for command %s",
+				command);
+		} else if (options->chroot_folder) {
 			if (chdir(options->chroot_folder) == -1) {
 				LOG_MSG(LOG_ERR, "Failed to chdir into chroot '%s'",
 					options->chroot_folder);
@@ -937,6 +940,7 @@ void init_exec_data(exec_data* data) {
 	init_stream_data(&data->stderr_data, 1024);
 	init_stream_data(&data->failure_info, 0);
 	data->waited = 0;
+	data->disobey_chroot = 0;
 }
 /* ------------------------------------------------------------------------- */
 /** Clean the exec_data structure

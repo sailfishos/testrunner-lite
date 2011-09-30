@@ -83,6 +83,7 @@ struct _exec_data {
 	int result;
 	int signaled; /* In case step is terminated by signal */
 	int waited;   /* flag for that pid has been returned by waitpid */
+	int disobey_chroot; /* never execute command in chroot */
 };
 
 typedef struct _exec_data exec_data;

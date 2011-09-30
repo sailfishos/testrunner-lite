@@ -634,6 +634,7 @@ LOCAL int process_get (const void *data, const void *user)
 	td_file *file = (td_file *)data;
 	char *command;
 	char *fname;
+	char *tmpname;
 	exec_data edata;
 	char *p;
 	char *executor = opts.remote_executor;
@@ -651,8 +652,24 @@ LOCAL int process_get (const void *data, const void *user)
 	edata.soft_timeout = COMMON_SOFT_TIMEOUT;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 
-	fname = malloc (strlen((char *)file->filename) + 1);
-	trim_string ((char *)file->filename, fname);
+	if (opts.chroot_folder) {
+		/* Tell executor not to execute cp command in chroot
+		   but in "normal" environment */
+		edata.disobey_chroot = 1;
+
+		/* source file must be prefixed with chroot dir */
+		tmpname = (char *)malloc(strlen(opts.chroot_folder) +
+					 strlen((char *)file->filename) + 2);
+		strcpy(tmpname, opts.chroot_folder);
+		strcat(tmpname, "/");
+		strcat(tmpname, strlen((char *)file->filename));
+		fname = (char *)malloc(strlen(tmpname) + 1);
+		trim_string (tmpname, fname);
+		free(tmpname);
+	} else {
+		fname = malloc (strlen((char *)file->filename) + 1);
+		trim_string ((char *)file->filename, fname);
+	}
 	command_len = strlen ("rm -f ") + strlen (fname) + 1;
 	/*
 	** Compose command 
