@@ -104,9 +104,9 @@ LOCAL void free_args(char* argv[]);
 LOCAL void set_child_signal_handlers();
 /* ------------------------------------------------------------------------- */
 LOCAL pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, 
-				   const char *command);
+				   const char *command, exec_data* data);
 /* ------------------------------------------------------------------------- */
-LOCAL pid_t fork_process(const char *command);
+LOCAL pid_t fork_process(const char *command, exec_data* data);
 /* ------------------------------------------------------------------------- */
 LOCAL void* stream_data_realloc(stream_data* data, int size);
 /* ------------------------------------------------------------------------- */
@@ -205,14 +205,14 @@ LOCAL void set_child_signal_handlers()
  * @param command Command to execute
  * @return Does not return in success, error code from exec in case of error
  */
-LOCAL int exec_wrapper(const char *command) 
+LOCAL int exec_wrapper(const char *command, exec_data* data)
 {
 	int ret = 0;
 
 	if (options->remote_executor) {
 		ret = remote_execute (options->remote_executor, command);
 	} else {
-		if (current_data != NULL && current_data->disobey_chroot) {
+		if (data != NULL && data->disobey_chroot) {
 			LOG_MSG(LOG_DEBUG, "Disobeying chroot for command %s",
 				command);
 		} else if (options->chroot_folder) {
@@ -244,7 +244,8 @@ LOCAL int exec_wrapper(const char *command)
  * @param command Command to execute
  * @return PID of process on success, -1 in error
  */
-LOCAL pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *command) {
+LOCAL pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *command,
+                                 exec_data* data) {
 	int out_pipe[2];
 	int err_pipe[2];
 	pid_t pid;
@@ -287,7 +288,7 @@ LOCAL pid_t fork_process_redirect(int* stdout_fd, int* stderr_fd, const char *co
 			perror("dup(err_pipe[1])");
 		}
 		
-		exec_wrapper(command);
+		exec_wrapper(command, data);
 		/* execution should never reach this point */
 		exit(1);
 	} else {
@@ -311,7 +312,7 @@ error_out:
  * @param command Command to execute
  * @return PID of process on success, -1 in error
  */
-LOCAL pid_t fork_process(const char *command) {
+LOCAL pid_t fork_process(const char *command, exec_data* data) {
 	pid_t pid = fork();
 
 	if (pid > 0) {		/* parent */
@@ -324,7 +325,7 @@ LOCAL pid_t fork_process(const char *command) {
 		 * are set to PID (they were PPID) */
 		setsid();
 		
-		exec_wrapper(command);
+		exec_wrapper(command, data);
 		/* execution should never reach this point */
 		exit(1);
 	} else {
@@ -859,9 +860,9 @@ int execute(const char* command, exec_data* data) {
 	if (data->redirect_output == REDIRECT_OUTPUT) {
 		data->pid = fork_process_redirect(&stdout_fd, 
 		                                  &stderr_fd, 
-		                                  command);
+		                                  command, data);
 	} else {
-		data->pid = fork_process(command);
+		data->pid = fork_process(command, data);
 	}
 	current_data = data; 
 	

@@ -661,7 +661,7 @@ LOCAL int process_get (const void *data, const void *user)
 		fname = (char *)malloc(strlen(opts.chroot_folder) +
 				       strlen((char *)file->filename) + 2);
 		strcpy(fname, opts.chroot_folder);
-		/* strcat(fname, "/"); */
+		strcat(fname, "/");
 
 		tmpname = malloc (strlen((char *)file->filename) + 1);
 		trim_string ((char *)file->filename, tmpname);
