@@ -1,3 +1,9 @@
+testrunner-lite (1.7.4-0) unstable; urgency=low
+
+  * Fixes: NB#284696 - Testrunner not able to fetch screenshots.
+
+ -- Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com>  Fri, 07 Oct 2011 11:37:53 +0300
+
 testrunner-lite (1.7.3-0) unstable; urgency=low
 
   * Fixes: NB#281508 - Testrunner-lite-tests failure
