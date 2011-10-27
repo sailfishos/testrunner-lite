@@ -1157,8 +1157,10 @@ void wait_for_resume_execution()
  */
 void handle_sigint (int signum)
 {
-	global_failure = "Testrunner-lite interrupted by signal (2)";
-	bail_out = 255+SIGINT;
+	if(bail_out == 0) {
+		global_failure = "Testrunner-lite interrupted by signal (2)";
+		bail_out = 255+SIGINT;
+	}
 
 #ifdef ENABLE_LIBSSH2
 	if (options->libssh2) {
@@ -1183,8 +1185,10 @@ void handle_sigint (int signum)
  */
 void handle_sigterm (int signum)
 {
-	global_failure = "Testrunner-lite interrupted by signal (15)";
-	bail_out = 255+SIGTERM;
+	if(bail_out == 0) {
+		global_failure = "Testrunner-lite interrupted by signal (15)";
+		bail_out = 255+SIGTERM;
+	}
 
 #ifdef ENABLE_LIBSSH2
 	if (options->libssh2) {
