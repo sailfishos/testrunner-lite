@@ -49,7 +49,11 @@
 
 /* ------------------------------------------------------------------------- */
 /* CONSTANTS */
-/* None */
+const char* control_actions [] = {
+	"none",
+	"reboot",
+	"reboot_expected"
+};
 
 /* ------------------------------------------------------------------------- */
 /* MACROS */
@@ -341,6 +345,7 @@ LOCAL int xml_write_step (const void *data, const void *user)
 {
 	td_step *step = (td_step *)data;
 	struct tm *tm;
+	char* control = 0;
 
 #ifdef ENABLE_EVENTS
 	if (step->event)
@@ -355,6 +360,21 @@ LOCAL int xml_write_step (const void *data, const void *user)
 					 BAD_CAST (step->manual ? "true" :
 						   "false")) < 0)
 		goto err_out;
+
+	if(step->control) {
+		if(step->control <= sizeof(control_actions)) {
+			control = control_actions[step->control];
+		} else {
+			goto err_out;
+		}
+	}
+
+	if(control) {
+		if (xmlTextWriterWriteAttribute (writer,
+					 BAD_CAST "control",
+					 BAD_CAST control) < 0)
+			goto err_out;
+	}
 
 	if (step->step && xmlTextWriterWriteAttribute (writer, 
 						       BAD_CAST "command", 

@@ -133,6 +133,7 @@ typedef struct {
 	int      has_result;      /**< should we trust the return_code */
 	int      return_code;     /**< actual result of step */
 	int      manual;          /**< Manual flag (default from case) */
+	int      control;         /**< control the device (reboot etc) */
 #ifdef ENABLE_EVENTS
 	td_event*      event;     /**< event step */
 #endif

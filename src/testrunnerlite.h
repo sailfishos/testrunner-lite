@@ -64,6 +64,12 @@ typedef enum {
 	RESUME_TESTRUN_ACTION_CONTINUE
 } resume_testrun_action;
 
+typedef enum {
+	CONTROL_NONE = 0,
+	CONTROL_REBOOT,
+	CONTROL_REBOOT_EXPECTED
+} control_action;
+
 enum {
 	TRLITE_LONG_OPTION_LOGID = 256,
 	TRLITE_LONG_OPTION_UTF8_LIMIT

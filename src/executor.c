@@ -1151,6 +1151,54 @@ void wait_for_resume_execution()
 	/* restore original mask */
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 }
+
+void wait_for_reboot()
+{
+	sigset_t mask;
+	sigset_t waitmask;
+
+#ifdef ENABLE_LIBSSH2
+	if(lssh2_conn) {
+		lssh2_conn->status = SESSION_OK;
+		lssh2_conn->signaled = 0;
+	}
+#endif
+
+	/* block certain signals for this section */
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGTERM);
+	sigaddset(&mask, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &mask, &waitmask);
+
+	if (!bail_out) {
+		/* block certain signals during sigsuspend */
+		sigaddset(&waitmask, SIGCHLD);
+		/* set handler */
+		signal(SIGUSR1, handle_reboot);
+
+		/* signal parent we are suspending */
+		if (kill(getppid(), SIGUSR2) < 0) {
+			LOG_MSG (LOG_ERR, "Error sending signal to parent: %s",
+				 strerror(errno));
+		}
+
+		LOG_MSG(LOG_INFO, "Device reboot requested. Sending SIGUSR2 to conductor."
+						" Waiting for SIGUSR1");
+
+		/* wait for a signal  */
+		sigsuspend(&waitmask);
+
+		/* restore default handler */
+		signal(SIGUSR1, SIG_DFL);
+
+	}
+
+	/* restore original mask */
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+}
+
+
 /* ------------------------------------------------------------------------- */
 /** handler for SIGINT
  *  @param signum not used
@@ -1215,6 +1263,17 @@ void handle_resume_testrun(int signum)
 {
 	if (signum == SIGUSR1) {
 		resume_testrun_count++;
+	}
+}
+
+/* ------------------------------------------------------------------------- */
+/** handler for SIGUSR1
+ *  @param signum signal number
+ */
+void handle_reboot(int signum)
+{
+	if (signum == SIGUSR1) {
+		LOG_MSG(LOG_INFO, "Continuing after device reboot");
 	}
 }
 

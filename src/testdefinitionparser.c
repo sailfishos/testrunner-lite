@@ -224,6 +224,7 @@ LOCAL td_step *td_parse_step(int manual_default)
 
 	step = td_step_create();
 	step->manual = manual_default;
+	step->control = CONTROL_NONE;
 
 	while (xmlTextReaderMoveToNextAttribute(reader)) {
 		name = xmlTextReaderConstName(reader);
@@ -239,6 +240,17 @@ LOCAL td_step *td_parse_step(int manual_default)
 			step->manual = !xmlStrcmp (xmlTextReaderConstValue
 						   (reader), BAD_CAST "true");
 			continue;
+		}
+		if (!xmlStrcmp (name, BAD_CAST "control")) {
+			if (!xmlStrcmp (xmlTextReaderConstValue
+						   (reader), BAD_CAST "reboot")) {
+				step->control = CONTROL_REBOOT;
+				continue;
+			} else if (!xmlStrcmp (xmlTextReaderConstValue
+						   (reader), BAD_CAST "reboot_expected")) {
+				step->control = CONTROL_REBOOT_EXPECTED;
+				continue;
+			}
 		}
 	}
 	

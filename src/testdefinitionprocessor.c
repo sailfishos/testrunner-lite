@@ -312,10 +312,32 @@ LOCAL int step_execute (const void *data, const void *user)
 	cur_step_num++;
 
 	memset (&edata, 0x0, sizeof (exec_data));
+
+	LOG_MSG (LOG_DEBUG, "Value of control %d and bail_out %d",
+					 step->control, bail_out);
+
+	if (!bail_out && step->control == CONTROL_REBOOT) {
+		step->start = time(NULL);
+		wait_for_reboot();
+		step->end = time(NULL);
+		if(!bail_out) {
+			step->has_result = 1;
+			goto out;
+		}
+	}
+
 	if (bail_out) {
+		if(step->control) {
+			bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
+			global_failure =
+						"earlier connection failure";
+			step->failure_info = xmlCharStrdup("connection failure");
+			c->failure_info = xmlCharStrdup ((char *)
+							 step->failure_info);
+		}
 		step->has_result = 1;
 		step->return_code = bail_out;
-		if (global_failure) {
+		if (global_failure && !step->control) {
 			step->failure_info = xmlCharStrdup (global_failure);
 			if (!c->failure_info) {
 				c->failure_info = xmlCharStrdup(global_failure);
