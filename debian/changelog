@@ -1,3 +1,9 @@
+testrunner-lite (1.7.6) unstable; urgency=low
+
+  * Support for reboot feature
+
+ -- Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com>  Mon, 14 Nov 2011 10:04:20 +0200
+
 testrunner-lite (1.7.5) unstable; urgency=low
 
   * Fixes: NB#287947 - Testrunner-lite failed with unknown exit code -15
