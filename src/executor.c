@@ -1183,8 +1183,8 @@ void wait_for_reboot()
 				 strerror(errno));
 		}
 
-		LOG_MSG(LOG_INFO, "Device reboot requested. Sending SIGUSR2 to conductor."
-						" Waiting for SIGUSR1");
+		LOG_MSG(LOG_INFO, "Device reboot requested. Sending SIGUSR2 to conductor. "
+						"Waiting for SIGUSR1");
 
 		/* wait for a signal  */
 		sigsuspend(&waitmask);
@@ -1274,6 +1274,13 @@ void handle_reboot(int signum)
 {
 	if (signum == SIGUSR1) {
 		LOG_MSG(LOG_INFO, "Continuing after device reboot");
+#ifdef ENABLE_LIBSSH2
+		if (!options->libssh2) {
+#endif
+		remote_executor_init (options->remote_executor);
+#ifdef ENABLE_LIBSSH2
+		}
+#endif
 	}
 }
 
