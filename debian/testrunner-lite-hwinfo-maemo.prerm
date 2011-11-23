@@ -1,0 +1,5 @@
+#! /bin/sh
+#
+set -e
+rm  /usr/lib/testrunner-lite-hwinfo.so
+#DEBHELPER#

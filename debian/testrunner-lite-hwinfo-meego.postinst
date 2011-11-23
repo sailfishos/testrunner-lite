@@ -1,0 +1,5 @@
+#! /bin/sh
+#
+set -e
+ln -s /usr/lib/testrunner-lite-hwinfo-meego.so  /usr/lib/testrunner-lite-hwinfo.so
+#DEBHELPER#
