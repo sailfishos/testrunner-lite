@@ -319,7 +319,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	/* If step is forced reboot mark start time and wait for reboot*/
 	if (!bail_out && step->control == CONTROL_REBOOT) {
 		step->start = time(NULL);
-		wait_for_reboot();
+		wait_for_reboot(step->control);
 		step->end = time(NULL);
 		/* If no bail out is set, reboot succeeded */
 		if(!bail_out) {
@@ -411,7 +411,7 @@ LOCAL int step_execute (const void *data, const void *user)
 			/* Connection failure detected, wait for reboot and pass the case
 			 * if reboot was succesful */
 			if(bail_out == TESTRUNNER_LITE_REMOTE_FAIL) {
-				wait_for_reboot();
+				wait_for_reboot(step->control);
 				edata.end_time = time(NULL);
 				if(!bail_out) {
 					edata.result = step->expected_result;

@@ -1152,7 +1152,7 @@ void wait_for_resume_execution()
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 }
 
-void wait_for_reboot()
+void wait_for_reboot(int control)
 {
 	sigset_t mask;
 	sigset_t waitmask;
@@ -1175,13 +1175,24 @@ void wait_for_reboot()
 	sigaddset(&waitmask, SIGCHLD);
 	/* set handler */
 	signal(SIGUSR1, handle_reboot);
-		/* signal parent we are suspending */
-	if (kill(getppid(), SIGUSR2) < 0) {
-		LOG_MSG (LOG_ERR, "Error sending signal to parent: %s",
-			 strerror(errno));
-	}
+	/* signal parent we are suspending */
+	if(control == CONTROL_REBOOT) {
+		if (kill(getppid(), SIGUSR2) < 0) {
+			LOG_MSG (LOG_ERR, "Error sending signal to parent: %s",
+				 strerror(errno));
+		}
 		LOG_MSG(LOG_INFO, "Device reboot requested. Sending SIGUSR2 to conductor. "
-					"Waiting for SIGUSR1");
+						"Waiting for SIGUSR1 to continue");
+	} else if(control == CONTROL_REBOOT_EXPECTED) {
+		if (kill(getppid(), SIGUSR3) < 0) {
+			LOG_MSG (LOG_ERR, "Error sending signal to parent: %s",
+				 strerror(errno));
+		}
+		LOG_MSG(LOG_INFO, "Device reboot requested. Sending SIGUSR3(SIGRTMIN) to conductor. "
+						"Waiting for SIGUSR1 continue");
+
+
+	}
 		/* wait for a signal  */
 	sigsuspend(&waitmask);
 		/* restore default handler */
