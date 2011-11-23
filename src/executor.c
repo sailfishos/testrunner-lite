@@ -1171,27 +1171,25 @@ void wait_for_reboot()
 	sigaddset(&mask, SIGUSR1);
 	sigprocmask(SIG_BLOCK, &mask, &waitmask);
 
-	if (!bail_out) {
-		/* block certain signals during sigsuspend */
-		sigaddset(&waitmask, SIGCHLD);
-		/* set handler */
-		signal(SIGUSR1, handle_reboot);
-
+	/* block certain signals during sigsuspend */
+	sigaddset(&waitmask, SIGCHLD);
+	/* set handler */
+	signal(SIGUSR1, handle_reboot);
 		/* signal parent we are suspending */
-		if (kill(getppid(), SIGUSR2) < 0) {
-			LOG_MSG (LOG_ERR, "Error sending signal to parent: %s",
-				 strerror(errno));
-		}
-
+	if (kill(getppid(), SIGUSR2) < 0) {
+		LOG_MSG (LOG_ERR, "Error sending signal to parent: %s",
+			 strerror(errno));
+	}
 		LOG_MSG(LOG_INFO, "Device reboot requested. Sending SIGUSR2 to conductor. "
-						"Waiting for SIGUSR1");
-
+					"Waiting for SIGUSR1");
 		/* wait for a signal  */
-		sigsuspend(&waitmask);
-
+	sigsuspend(&waitmask);
 		/* restore default handler */
-		signal(SIGUSR1, SIG_DFL);
-
+	signal(SIGUSR1, SIG_DFL);
+		/* recheck bail_out value and then resume flag */
+	if (bail_out == TESTRUNNER_LITE_REMOTE_FAIL) {
+		LOG_MSG(LOG_INFO, "Continuing after expected reboot");
+		bail_out = 0;
 	}
 
 	/* restore original mask */

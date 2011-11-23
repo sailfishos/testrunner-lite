@@ -316,10 +316,12 @@ LOCAL int step_execute (const void *data, const void *user)
 	LOG_MSG (LOG_DEBUG, "Value of control %d and bail_out %d",
 					 step->control, bail_out);
 
+	/* If step is forced reboot mark start time and wait for reboot*/
 	if (!bail_out && step->control == CONTROL_REBOOT) {
 		step->start = time(NULL);
 		wait_for_reboot();
 		step->end = time(NULL);
+		/* If no bail out is set, reboot succeeded */
 		if(!bail_out) {
 			step->has_result = 1;
 			goto out;
@@ -327,22 +329,29 @@ LOCAL int step_execute (const void *data, const void *user)
 	}
 
 	if (bail_out) {
-		if(step->control) {
+		/* If forced reboot failed set failure_info */
+		if (step->control == CONTROL_REBOOT) {
 			bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
 			global_failure =
 						"earlier connection failure";
 			step->failure_info = xmlCharStrdup("connection failure");
 			c->failure_info = xmlCharStrdup ((char *)
 							 step->failure_info);
+			LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
+					 step->failure_info);
 		}
 		step->has_result = 1;
 		step->return_code = bail_out;
-		if (global_failure && !step->control) {
+		/* Dont set global_failure again if step was forced reboot case */
+		if (global_failure && step->control != CONTROL_REBOOT) {
 			step->failure_info = xmlCharStrdup (global_failure);
 			if (!c->failure_info) {
 				c->failure_info = xmlCharStrdup(global_failure);
 			}
+			LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
+					 step->failure_info);
 		}
+
 		c->case_res = CASE_FAIL;
 
 		return 1;
@@ -396,15 +405,59 @@ LOCAL int step_execute (const void *data, const void *user)
 		if (edata.stderr_data.buffer) {
 			step->stderr_ = edata.stderr_data.buffer;
 		}
-		if (edata.failure_info.buffer) {
-			step->failure_info = edata.failure_info.buffer;
-			c->failure_info = xmlCharStrdup ((char *)
-							 step->failure_info);
-			
-			LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
-				 step->failure_info);
+
+		/* If case is expected to reboot the device */
+		if (step->control == CONTROL_REBOOT_EXPECTED) {
+			/* Connection failure detected, wait for reboot and pass the case
+			 * if reboot was succesful */
+			if(bail_out == TESTRUNNER_LITE_REMOTE_FAIL) {
+				wait_for_reboot();
+				edata.end_time = time(NULL);
+				if(!bail_out) {
+					edata.result = step->expected_result;
+					global_failure = NULL;
+				} else {
+					bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
+					global_failure =
+								"earlier connection failure";
+					step->failure_info = xmlCharStrdup("connection failure");
+					c->failure_info = xmlCharStrdup ((char *)
+									 step->failure_info);
+					LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
+					 step->failure_info);
+
+					step->has_result = 1;
+					step->return_code = bail_out;
+					c->case_res = CASE_FAIL;
+					goto out;
+				}
+			} else {
+				if (edata.failure_info.buffer) {
+					step->failure_info = edata.failure_info.buffer;
+					c->failure_info = xmlCharStrdup ((char *)
+									 step->failure_info);
+
+					LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
+						 step->failure_info);
+				}
+				step->has_result = 1;
+				step->return_code = step->expected_result +1;
+				c->case_res = CASE_FAIL;
+				if(bail_out) {
+					goto out;
+				}
+			}
+		} else {
+			if (edata.failure_info.buffer) {
+				step->failure_info = edata.failure_info.buffer;
+				c->failure_info = xmlCharStrdup ((char *)
+								 step->failure_info);
+
+				LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
+					 step->failure_info);
+			}
 		}
-		
+
 		step->pgid = edata.pgid; 
 		step->pid = edata.pid;
 		step->has_result = 1;

@@ -85,7 +85,8 @@ LOCAL hw_info hwinfo;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
 #define SSH_REMOTE_EXECUTOR "/usr/bin/ssh -o StrictHostKeyChecking=no " \
-		"-o PasswordAuthentication=no -o ServerAliveInterval=15 %s %s %s"
+		"-o PasswordAuthentication=no -o ServerAliveInterval=5 " \
+		"-o ServerAliveCountMax=1 -o ConnectTimeout=7 %s %s %s"
 #define SCP_REMOTE_GETTER "/usr/bin/scp %s %s %s:'<FILE>' '<DEST>'"
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
