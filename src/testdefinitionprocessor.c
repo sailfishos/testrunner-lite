@@ -348,8 +348,6 @@ LOCAL int step_execute (const void *data, const void *user)
 			if (!c->failure_info) {
 				c->failure_info = xmlCharStrdup(global_failure);
 			}
-			LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
-					 step->failure_info);
 		}
 
 		c->case_res = CASE_FAIL;
@@ -442,10 +440,8 @@ LOCAL int step_execute (const void *data, const void *user)
 				}
 				step->has_result = 1;
 				step->return_code = step->expected_result +1;
-				c->case_res = CASE_FAIL;
-				if(bail_out) {
-					goto out;
-				}
+				res = CASE_FAIL;
+				goto out;
 			}
 		} else {
 			if (edata.failure_info.buffer) {

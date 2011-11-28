@@ -1184,24 +1184,22 @@ void wait_for_reboot(int control)
 		LOG_MSG(LOG_INFO, "Device reboot requested. Sending SIGUSR2 to conductor. "
 						"Waiting for SIGUSR1 to continue");
 	} else if(control == CONTROL_REBOOT_EXPECTED) {
+		/* Remove bail_out */
+		if (bail_out == TESTRUNNER_LITE_REMOTE_FAIL) {
+			bail_out = 0;
+		}
 		if (kill(getppid(), SIGUSR3) < 0) {
 			LOG_MSG (LOG_ERR, "Error sending signal to parent: %s",
 				 strerror(errno));
 		}
-		LOG_MSG(LOG_INFO, "Device reboot requested. Sending SIGUSR3(SIGRTMIN) to conductor. "
+		LOG_MSG(LOG_INFO, "Device rebooted. Sending SIGUSR3(SIGRTMIN) to conductor. "
 						"Waiting for SIGUSR1 continue");
-
-
 	}
-		/* wait for a signal  */
+
+	/* wait for a signal  */
 	sigsuspend(&waitmask);
-		/* restore default handler */
+	/* restore default handler */
 	signal(SIGUSR1, SIG_DFL);
-		/* recheck bail_out value and then resume flag */
-	if (bail_out == TESTRUNNER_LITE_REMOTE_FAIL) {
-		LOG_MSG(LOG_INFO, "Continuing after expected reboot");
-		bail_out = 0;
-	}
 
 	/* restore original mask */
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
