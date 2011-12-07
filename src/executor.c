@@ -564,8 +564,10 @@ LOCAL int execution_terminated(exec_data* data) {
 					bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
 					global_failure = 
 						"earlier connection failure";
-					LOG_MSG(LOG_ERR, 
-						"remote connection failure");
+					if(data->control != CONTROL_REBOOT_EXPECTED) {
+						LOG_MSG(LOG_ERR,
+							"remote connection failure");
+					}
 					stream_data_append(&data->failure_info,
 							   "connection "
 							   "failure");
@@ -942,6 +944,7 @@ void init_exec_data(exec_data* data) {
 	init_stream_data(&data->failure_info, 0);
 	data->waited = 0;
 	data->disobey_chroot = 0;
+	data->control = CONTROL_NONE;
 }
 /* ------------------------------------------------------------------------- */
 /** Clean the exec_data structure

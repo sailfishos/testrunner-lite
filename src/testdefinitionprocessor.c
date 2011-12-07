@@ -316,7 +316,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	LOG_MSG (LOG_DEBUG, "Value of control %d and bail_out %d",
 					 step->control, bail_out);
 
-	/* If step is forced reboot mark start time and wait for reboot*/
+	/* If step is forced reboot mark start time and wait for reboot */
 	if (!bail_out && step->control == CONTROL_REBOOT) {
 		step->start = time(NULL);
 		wait_for_reboot(step->control);
@@ -326,6 +326,8 @@ LOCAL int step_execute (const void *data, const void *user)
 			step->has_result = 1;
 			goto out;
 		}
+
+		/* Execute post_reboot_steps after forced reboot */
 	}
 
 	if (bail_out) {
@@ -386,6 +388,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	
 	init_exec_data(&edata);
 	
+	edata.control = step->control;	
 	edata.redirect_output = REDIRECT_OUTPUT;
 	edata.soft_timeout = c->gen.timeout;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
@@ -414,6 +417,8 @@ LOCAL int step_execute (const void *data, const void *user)
 				if(!bail_out) {
 					edata.result = step->expected_result;
 					global_failure = NULL;
+					/* Execute post_reboot_steps after expected reboot */
+
 				} else {
 					bail_out = TESTRUNNER_LITE_REMOTE_FAIL;
 					global_failure =

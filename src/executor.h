@@ -72,6 +72,7 @@ struct _exec_data {
 	int redirect_output;
 	unsigned soft_timeout;	/* in seconds, 0 = no timeout */
 	unsigned hard_timeout;	/* after soft_timeout, 0 = no timeout */
+	int control; /* Control parameter of the step */
 	/* output parameters */
 	pid_t pid;
 	pid_t pgid;
