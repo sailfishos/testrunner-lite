@@ -1195,7 +1195,7 @@ void wait_for_reboot(int control)
 			LOG_MSG (LOG_ERR, "Error sending signal to parent: %s",
 				 strerror(errno));
 		}
-		LOG_MSG(LOG_INFO, "Device rebooted. Sending SIGUSR3(SIGRTMIN) to conductor. "
+		LOG_MSG(LOG_INFO, "Device rebooted. Sending SIGRTMIN to conductor. "
 						"Waiting for SIGUSR1 continue");
 	}
 
