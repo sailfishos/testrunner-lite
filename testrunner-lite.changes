@@ -1,5 +1,7 @@
+* Mon Dec 9 2011 Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com> 1.7.7
+- Support for expected reboot feature
 * Mon Nov 14 2011 Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com> 1.7.6
-- Support for reboot feature
+- Support for intentional reboot feature
 * Tue Oct 27 2011 Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com> 1.7.5
 - Fixes: NB#287947 - Testrunner-lite failed with unknown exit code -15
 * Fri Oct 07 2011 Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com> 1.7.4
