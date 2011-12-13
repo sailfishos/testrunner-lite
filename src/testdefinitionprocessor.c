@@ -307,6 +307,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	int res = CASE_PASS;
 	td_step *step = (td_step *)data;
 	td_case *c = (td_case *)user;
+	td_case dummy;
 	exec_data edata;
 
 	cur_step_num++;
@@ -324,10 +325,28 @@ LOCAL int step_execute (const void *data, const void *user)
 		/* If no bail out is set, reboot succeeded */
 		if(!bail_out) {
 			step->has_result = 1;
+			/* Execute post_reboot_steps after forced reboot */
+			if (xmlListSize (c->post_reboot_steps) > 0) {
+				cur_case_name = (xmlChar *)"post_reboot_steps";
+				cur_step_num = 0;
+				memset (&dummy, 0x0, sizeof (td_case));
+				dummy.case_res = CASE_PASS;
+				dummy.dummy = 1;
+				LOG_MSG (LOG_INFO, "Executing post reboot steps");
+				xmlListWalk (c->post_reboot_steps, prepost_steps_execute, &dummy);
+				if (dummy.case_res != CASE_PASS) {
+					step->return_code = step->expected_result +1;
+					res = CASE_FAIL;
+					step->failure_info = xmlCharStrdup("post reboot steps failed");
+					c->failure_info = xmlCharStrdup ((char *)
+									step->failure_info);
+					LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
+							step->failure_info);
+				}
+			}
 			goto out;
 		}
 
-		/* Execute post_reboot_steps after forced reboot */
 	}
 
 	if (bail_out) {
@@ -388,7 +407,7 @@ LOCAL int step_execute (const void *data, const void *user)
 	
 	init_exec_data(&edata);
 	
-	edata.control = step->control;	
+	edata.control = step->control;
 	edata.redirect_output = REDIRECT_OUTPUT;
 	edata.soft_timeout = c->gen.timeout;
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
@@ -418,6 +437,26 @@ LOCAL int step_execute (const void *data, const void *user)
 					edata.result = step->expected_result;
 					global_failure = NULL;
 					/* Execute post_reboot_steps after expected reboot */
+					if (xmlListSize (c->post_reboot_steps) > 0) {
+						cur_case_name = (xmlChar *)"post_reboot_steps";
+						cur_step_num = 0;
+						memset (&dummy, 0x0, sizeof (td_case));
+						dummy.case_res = CASE_PASS;
+						dummy.dummy = 1;
+						LOG_MSG (LOG_INFO, "Executing post reboot steps");
+						xmlListWalk (c->post_reboot_steps, prepost_steps_execute, &dummy);
+						if (dummy.case_res != CASE_PASS) {
+							step->has_result = 1;
+							step->return_code = step->expected_result +1;
+							res = CASE_FAIL;
+							step->failure_info = xmlCharStrdup("post reboot steps failed");
+							c->failure_info = xmlCharStrdup ((char *)
+											step->failure_info);
+							LOG_MSG (LOG_INFO, "FAILURE INFO: %s",
+									step->failure_info);
+							goto out;
+						}
+					}
 
 				} else {
 					bail_out = TESTRUNNER_LITE_REMOTE_FAIL;

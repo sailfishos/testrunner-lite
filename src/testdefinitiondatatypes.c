@@ -255,6 +255,7 @@ td_set *td_set_create ()
 	memset (set, 0x0, sizeof (td_set));
 	set->pre_steps = xmlListCreate (td_steps_delete, list_dummy_compare);
 	set->post_steps = xmlListCreate (td_steps_delete, list_dummy_compare);
+	set->post_reboot_steps = xmlListCreate (td_steps_delete, list_dummy_compare);
 	set->cases = xmlListCreate (td_case_delete, list_dummy_compare);
 	set->environments = xmlListCreate (list_string_delete, 
 					   list_string_compare);
@@ -326,6 +327,7 @@ td_case *td_case_create()
 				      list_dummy_compare);
 	td_c->crashids = xmlListCreate (list_string_delete,
 					list_dummy_compare);
+	td_c->post_reboot_steps = xmlListCreate (td_steps_delete, list_dummy_compare);
 
 	return td_c;
 }

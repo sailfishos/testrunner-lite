@@ -90,6 +90,7 @@ typedef struct {
 	td_gen_attribs gen;      /**< General attributes */
 	xmlListPtr pre_steps;    /**< Steps executed before each test case */
 	xmlListPtr post_steps;   /**< Steps executed after each test case */
+	xmlListPtr post_reboot_steps; /**< Steps executed after reboot */
 	xmlListPtr cases;        /**< Test cases in this set */
 	xmlListPtr environments; /**< Environments (hardware, scratchbox) */
 	xmlListPtr gets;         /**< Get commands */
@@ -177,6 +178,7 @@ typedef struct {
 	xmlChar   *failure_info;   /**< Optional failure info */
 	xmlChar   *rich_core_uuid; /**< Optional UUID for rich core dumps */
 	xmlListPtr crashids;    /**< List of crashids related to this case */
+	xmlListPtr post_reboot_steps; /**< Steps executed after reboot */
 	int        dummy;       /**< Case is dummy - used with pre post steps */
 	int        filtered;    /**< Case is filtered */
 } td_case;

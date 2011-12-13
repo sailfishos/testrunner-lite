@@ -106,6 +106,8 @@ LOCAL void log_xml_error(void * ctx, const char * fmt, ...);
 /* ------------------------------------------------------------------------- */
 LOCAL void log_xml_warning(void * ctx, const char * fmt, ...);
 /* ------------------------------------------------------------------------- */
+LOCAL int add_post_reboot_step(const void *, const void *);
+/* ------------------------------------------------------------------------- */
 #ifdef ENABLE_EVENTS
 LOCAL td_step *td_parse_event();
 /* ------------------------------------------------------------------------- */
@@ -846,6 +848,8 @@ LOCAL int td_parse_set ()
 			ret = !td_parse_steps(s->pre_steps, "pre_steps");
 		if (!xmlStrcmp (name, BAD_CAST "post_steps"))
 			ret = !td_parse_steps(s->post_steps, "post_steps");
+		if (!xmlStrcmp (name, BAD_CAST "post_reboot_steps"))
+			ret = !td_parse_steps(s->post_reboot_steps, "post_reboot_steps");
 		if (!xmlStrcmp (name, BAD_CAST "case"))
 			ret = !td_parse_case(s);
 		if (!xmlStrcmp (name, BAD_CAST "environments"))
@@ -862,6 +866,12 @@ LOCAL int td_parse_set ()
 	} while (!(xmlTextReaderNodeType(reader) == 
 		   XML_READER_TYPE_END_ELEMENT &&
 		   !xmlStrcmp (name, BAD_CAST "set")));
+
+	/* If set had post_reboot_steps add them to cases also */
+	if (xmlListSize (s->post_reboot_steps) > 0) {
+		xmlListWalk(s->cases, add_post_reboot_step, s);
+	}
+
  OKOUT:
 	cbs->test_set(s);
 
@@ -872,6 +882,15 @@ LOCAL int td_parse_set ()
 	
 	return 1;
 }
+
+LOCAL int add_post_reboot_step(const void *data, const void *user) {
+	td_set *s = (td_set *)user;
+	td_case *c = (td_case *)data;
+	xmlListDelete(c->post_reboot_steps);
+	c->post_reboot_steps = s->post_reboot_steps;
+}
+
+
 /* ------------------------------------------------------------------------- */
 /** Create test definition data type and call callback function
  *  @return 0 on success
