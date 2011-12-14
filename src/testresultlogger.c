@@ -344,6 +344,8 @@ LOCAL int xml_write_general_attributes (td_gen_attribs *gen)
 LOCAL int xml_write_step (const void *data, const void *user)
 {
 	td_step *step = (td_step *)data;
+	td_case *c = (td_case *)user;
+	td_steps *steps;
 	struct tm *tm;
 	char* control = 0;
 
@@ -458,6 +460,26 @@ LOCAL int xml_write_step (const void *data, const void *user)
 					     BAD_CAST "") < 0)
 		goto err_out;
 
+	if(step->control == CONTROL_REBOOT
+		|| step->control == CONTROL_REBOOT_EXPECTED) {
+
+		if (xmlListSize (c->post_reboot_steps) > 0) {
+			steps = xmlLinkGetData (xmlListFront (c->post_reboot_steps));
+
+			if (xmlTextWriterStartElement (writer,
+						       BAD_CAST "post_reboot_steps") < 0)
+				goto err_out;
+
+			if (xmlTextWriterWriteFormatAttribute (writer,
+							       BAD_CAST "timeout",
+							       "%lu",
+							       steps->timeout) < 0)
+				goto err_out;
+
+			xmlListWalk (steps->steps, xml_write_pre_post_step, NULL);
+			xml_end_element ();
+		}
+	}
 
 	return !xml_end_element();
 	
@@ -729,10 +751,11 @@ LOCAL int xml_write_case (const void *data, const void *user)
                                                  c->rich_core_uuid) < 0)
                         goto err_out;
 
-	xmlListWalk (c->steps, xml_write_step, NULL);
+	xmlListWalk (c->steps, xml_write_step, c);
 	xmlListWalk (c->measurements, xml_write_measurement, NULL);
 	xmlListWalk (c->series, xml_write_series, NULL);
 	xmlListWalk (c->crashids, xml_write_crashid, NULL); 
+
 
 	return !xml_end_element ();
 
@@ -840,6 +863,7 @@ LOCAL int xml_write_post_set (td_set *set)
 LOCAL int xml_write_measurement (const void *data, const void *user)
 {
 	td_measurement *meas = (td_measurement *)data;
+
 
 	if (xmlTextWriterStartElement (writer, BAD_CAST "measurement") < 0)
 		goto err_out;
