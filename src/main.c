@@ -858,6 +858,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"target", required_argument, NULL, 't'},
 			{"executor", required_argument, NULL, 'E'},
 			{"getter", required_argument, NULL, 'G'},
+			{"chroot", required_argument, NULL, 'C'},
 #ifdef ENABLE_LIBSSH2
 			{"libssh2", required_argument, NULL, 'n'},
 			{"ssh-key", required_argument, NULL, 'k'},
