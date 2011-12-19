@@ -1,3 +1,5 @@
+* Mon Dec 13 2011 Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com> 1.8.0
+- Support for post reboot steps
 * Mon Dec 9 2011 Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com> 1.7.7
 - Support for expected reboot feature
 * Mon Nov 14 2011 Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com> 1.7.6
