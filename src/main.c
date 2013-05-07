@@ -99,8 +99,6 @@ LOCAL void usage();
 /* ------------------------------------------------------------------------- */
 LOCAL void version();
 /* ------------------------------------------------------------------------- */
-LOCAL void copyright();
-/* ------------------------------------------------------------------------- */
 LOCAL int create_output_folder ();
 /* ------------------------------------------------------------------------- */
 LOCAL int parse_remote_logger(char *url, testrunner_lite_options *opts);
@@ -274,17 +272,6 @@ LOCAL void version()
 	printf ("no version information available\n");
 #endif
 }
-/* ------------------------------------------------------------------------- */
-/** Display license information.
- */
-LOCAL void copyright () 
-{
-        printf ("testrunner-lite, © Nokia 2010 All rights reserved,\n"
-                "licensed under the Gnu Lesser General Public License "
-		"version 2.1,\n"
-                "Contact: MeeGo QA <meego-qa@lists.meego.com>\n");
-}
-/* ------------------------------------------------------------------------- */
 /** Create output folder based on the argument for -o
  *  @return 0 on success 1 on failure
  */
@@ -891,7 +878,6 @@ int main (int argc, char *argv[], char *envp[])
 	gettimeofday (&created, NULL);
 	signal (SIGINT, handle_sigint);
 	signal (SIGTERM, handle_sigterm);
-	copyright();
 	if (argc == 1)
 		h_flag = 1;
 
