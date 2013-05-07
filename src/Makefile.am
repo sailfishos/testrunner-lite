@@ -53,3 +53,5 @@ noinst_HEADERS          += remote_executor_libssh2.h
 testrunner_lite_LDADD   += $(LIBSSH2_LIBS)
 AM_CFLAGS               += $(LIBSSH2_CFLAGS) -DENABLE_LIBSSH2
 endif
+
+bin_SCRIPTS = run_tests.sh
