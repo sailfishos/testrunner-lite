@@ -1,3 +1,5 @@
+* Tue May 2013 Reto Zingg <reto.zingg@jollamobile.com> - 1.8.0-8
+- add run_tests.sh for convenient test runs
 * Mon Dec 13 2011 Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com> 1.8.0
 - Support for post reboot steps
 * Mon Dec 9 2011 Joonas Kylänpää <ext-joonas.kylanpaa@nokia.com> 1.7.7

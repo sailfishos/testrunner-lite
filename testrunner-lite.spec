@@ -1,13 +1,14 @@
 Name: testrunner-lite
 Version: 1.8.0
-# build.meego.com proposed patch > Release:7.1
-Release:7.1
+# build.meego.com proposed patch > Release: 8
+Release: 8
 Summary: Generic test executor tool
 Group: Development/Tools
 License: LGPL 2.1
 URL: http://meego.com
 Source0: %{name}-%{version}.tar.gz 
 Patch1:	0001-remove_copyright_print.patch
+Patch2:	0002-add-run_tests.sh-for-convenient-test-runs.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root 
    
 BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel, libtool, libuuid-devel
@@ -58,8 +59,9 @@ Library for obtaining hardware information in meego environment
 %prep
 # Adjusting %%setup since git-pkg unpacks to src/
 # %%setup -n %%{name}-%%{version}
-%setup -n %{name}-%{version} -n src
+%setup -n src
 %patch1 -p1
+%patch2 -p1
 
 %build
 CFLAGS="-DVERSIONSTR=%{version} -ldl"
@@ -78,6 +80,7 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
+%{_bindir}/run_tests.sh
 
 %files tests
 %defattr(-,root,root,-)
