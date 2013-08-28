@@ -28,6 +28,7 @@
 /* INCLUDES */
 #include <sys/time.h>
 #include <sys/types.h>
+#include <libxml/hash.h>
 #include <libxml/xmlstring.h>
 #include <libxml/list.h>
 #include "testrunnerlite.h"
@@ -177,7 +178,7 @@ typedef struct {
 	case_result_t  case_res; /**< Case result */
 	xmlChar   *failure_info;   /**< Optional failure info */
 	xmlChar   *rich_core_uuid; /**< Optional UUID for rich core dumps */
-	xmlListPtr crashids;    /**< List of crashids related to this case */
+	xmlHashTablePtr crashes; /**< Maps a crash log file to telemetry URL */
 	xmlListPtr post_reboot_steps; /**< Steps executed after reboot */
 	int        dummy;       /**< Case is dummy - used with pre post steps */
 	int        filtered;    /**< Case is filtered */

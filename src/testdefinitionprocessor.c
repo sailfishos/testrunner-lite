@@ -137,7 +137,7 @@ LOCAL int event_execute (const void *data, const void *user);
 #endif
 LOCAL void set_device_core_pattern (const char *);
 /* ------------------------------------------------------------------------- */
-LOCAL int fetch_rich_core_dumps (const char *, xmlListPtr);
+LOCAL int fetch_rich_core_dumps (const char *, xmlHashTablePtr);
 /* ------------------------------------------------------------------------- */
 
 /* FORWARD DECLARATIONS */
@@ -146,95 +146,206 @@ LOCAL int fetch_rich_core_dumps (const char *, xmlListPtr);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/* ------------------------------------------------------------------------- */
-/** Puts crashids from string to list
- * @param ids crash identifiers separetated by newlined
- * @param crashids list to store found crash identifier into
+
+/**
+ * @file a file name
+ * @return the file name prepended with path to rich-core-dumper's output
+ *         directory; has to be free()'d after use
  */
-LOCAL void parse_crashids(char *ids, xmlListPtr crashids)
+LOCAL char *path_in_core_dumps(const char *file)
 {
-	char *p;
-	char *id;
+	char *result =
+		(char*) malloc(strlen(opts.rich_core_dumps) + strlen(file) + 1);
+	sprintf(result, "%s%s", opts.rich_core_dumps, file);
 
-	if (!ids || strlen (ids) == 0)
-	      return;
-	p = strtok (ids, "\n");
-
-	while (p) {
-		id = strdup(p);
-                LOG_MSG (LOG_DEBUG, "Adding crash id: %s \n", id);
-		xmlListInsert (crashids, id);
-		p = strtok (NULL, "\n");
-	}
-	
+	return result;
 }
-/* ------------------------------------------------------------------------- */
-/** Fetch rich-core dumps from the device
- * @param uuid String identifier
- * @param crashids list to store found crash identifier into
- * @return 1, if found; otherwise 0
+
+/**
+ * For crash logs given as keys in a hash table reads their corresponding
+ * telemetry URLs from crash-reporter's upload log and stores them in the
+ * hash table as values to their respective keys.
+ *
+ * @param crashes xmlHashTablePtr pre-filled with crash-log filenames
  */
-LOCAL int fetch_rich_core_dumps (const char *uuid, xmlListPtr crashids)
+LOCAL void collect_urls_from_uploadlog (xmlHashTablePtr crashes)
 {
-        exec_data edata;
-        char *command;
-	char *get_pattern;
-        size_t pattern_len;
-	td_file *file;
-	int ret = 0;
-#define RICHCORE_SEARCH_COMMAND "rich-core-find-uuid"
-#define RICH_CORE_SEARCH_PATTERN "%s*%s*"
+	const char *UPLOADLOG_FILENAME = "uploadlog";
+	char *uploadlog_path = path_in_core_dumps(UPLOADLOG_FILENAME);
+	FILE *uploadlog = NULL;
+	char line[256];
 
-        memset (&edata, 0x0, sizeof (exec_data));
-        init_exec_data(&edata);
-        edata.soft_timeout = COMMON_SOFT_TIMEOUT;
-        edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	edata.redirect_output = REDIRECT_OUTPUT;
-
-        pattern_len = strlen (opts.rich_core_dumps) + strlen (uuid) + 3;
-        get_pattern = (char *) malloc (pattern_len);
-	snprintf (get_pattern, pattern_len, RICH_CORE_SEARCH_PATTERN,
-		 opts.rich_core_dumps, uuid);
-
-        command = (char *) malloc (strlen(RICHCORE_SEARCH_COMMAND) +
-				   strlen (opts.rich_core_dumps) + 
-				   strlen (uuid) + 3);
-        snprintf (command, strlen(RICHCORE_SEARCH_COMMAND) +
-		  strlen (opts.rich_core_dumps) + 
-		  strlen (uuid) + 3,
-		  "%s %s %s", 
-		  RICHCORE_SEARCH_COMMAND, opts.rich_core_dumps, uuid);
-
-        LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
-        execute(command, &edata);
-
-        free (command);
-
-        if (edata.result != 0) {
-                LOG_MSG (LOG_DEBUG, "%s: Rich core dumps not found with UUID: %s \n", 
-			PROGNAME, uuid);
+	uploadlog = fopen(uploadlog_path, "r");
+	if (!uploadlog) {
+		LOG_MSG(LOG_DEBUG, "Couldn't open crash-reporter upload log\n");
 		goto out;
-        } else {
-		parse_crashids ((char *)edata.stdout_data.buffer, crashids);
+	}
+
+	while (fgets(line, sizeof line, uploadlog)) {
+		char *filename;
+		char *url;
+		char *stored_filename;
+		size_t line_len = strlen(line);
+		if (line_len == 0) {
+			continue;
+		}
+
+		if (line[line_len - 1] == '\n') {
+			line[line_len - 1] = '\0';
+		}
+
+		url = strrchr(line, ' ');
+		if (!url) {
+			continue;
+		}
+		filename = url;
+		url += 1;
+
+		/* Zero-out any spaces between core file name and telemetry URL.
+		 * Then we'll be able to read both strings from line buffer. */
+		while (filename >= line && *filename == ' ') {
+			*filename = '\0';
+		}
+		filename = line;
+
+		stored_filename = xmlHashLookup(crashes, (xmlChar*)filename);
+		if (stored_filename && (strlen(stored_filename) == 0)) {
+			// New upload detected
+			xmlHashUpdateEntry(crashes, (xmlChar*)filename,
+					strdup(url),
+					(xmlHashDeallocator)xmlFree);
+			LOG_MSG(LOG_DEBUG, "Telemetry URL for %s is %s\n",
+					filename, url);
+		}
+	}
+
+out:
+	if (uploadlog)
+		fclose(uploadlog);
+	free(uploadlog_path);
+}
+
+/**
+ * Downloads a crash report file into testrunner's destination directory, if
+ * it wasn't already uploaded to telemetry server by crash-reporter. Should be
+ * used as a scanner function argument to xmlHashScan().
+ *
+ * @param url a crash report URL on telemetry server
+ * @param unused
+ * @param filename crash report's file name
+ */
+LOCAL void fetch_leftover_report (xmlChar *url, void *unused, char *filename)
+{
+	td_file *file;
+
+	if (xmlStrlen(url) > 0) {
+		return;
 	}
 
 	file = (td_file *)malloc (sizeof (td_file));
-		file->filename = (xmlChar *)get_pattern;
-                file->delete_after = 1;
-                file->measurement = 0;
-                file->series = 0;
-
+	file->filename = (xmlChar*)path_in_core_dumps(filename);
+	file->delete_after = 1;
+	file->measurement = 0;
+	file->series = 0;
 	process_get (file, 0);
-	ret = 1;
-out:
-        if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
-        if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
-        if (edata.failure_info.buffer) free (edata.failure_info.buffer);
 
-	if (get_pattern) free (get_pattern);
-	if (file) free (file);
+	td_file_delete(file);
+}
 
-        return ret;
+/**
+ * Into a hash table, stores file names of crash reports created during a run of
+ * a test case specified by its uuid. After this function is run, given hash
+ * table will contain pairs having crash report file name as a key and an empty
+ * string as a value.
+ *
+ * @param uuid a UUID of a test case
+ * @param crashes hash table where to store the crash report file names
+ */
+LOCAL void collect_crash_reports (const char *uuid, xmlHashTablePtr crashes)
+{
+	DIR *dir = opendir(opts.rich_core_dumps);
+	struct dirent *entry;
+
+	if (!dir) {
+		LOG_MSG(LOG_ERR, "%s: Couldn't open core dump directory",
+			PROGNAME);
+		return;
+	}
+
+	while ((entry = readdir(dir))) {
+		xmlChar *report_filename;
+		char *marker_path;
+
+		size_t marker_filename_len = strlen(entry->d_name);
+		size_t report_filename_len = marker_filename_len - strlen(uuid);
+
+
+		if (entry->d_type != DT_REG) {
+			continue;
+		}
+
+		if (strcmp(entry->d_name + report_filename_len, uuid)) {
+			/* Filename doesn't end with uuid, thus it's not a
+			 * crash report marker file, skip. */
+			continue;
+		}
+
+		// Get rid of a dot before uuid
+		report_filename_len--;
+
+		report_filename = xmlStrndup((xmlChar*)entry->d_name,
+				report_filename_len);
+
+		LOG_MSG (LOG_DEBUG, "Discovered crash report: %s\n",
+				report_filename);
+
+		xmlHashAddEntry(crashes, report_filename,
+				xmlStrdup((xmlChar *)""));
+		free(report_filename);
+
+		// Remove the marker file
+		marker_path = path_in_core_dumps(entry->d_name);
+		if (unlink(marker_path) != 0) {
+			LOG_MSG (LOG_ERR, "Couldn't unlink marker file %s\n",
+					entry->d_name);
+		}
+		free(marker_path);
+
+		// Rewind directory if its contents were changed
+		rewinddir(dir);
+	}
+
+	closedir(dir);
+}
+
+/**
+ * Collects information about crash reports created during a specified test case
+ * run. Function fills given hash table with pairs having crash report filename
+ * as a key and its corresponding report URL on a telemetry server as a value.
+ *
+ * Moreover, if the crash report wasn't for whatever reason uploaded to the
+ * server, this function downloads it into testrunner's output directory from
+ * the device.
+ *
+ * @param uuid an identifier of a test case
+ * @param crashes a hash table where to store found crash info
+ * @return 1, if any reports are found, otherwise 0
+ */
+LOCAL int fetch_rich_core_dumps (const char *uuid, xmlHashTablePtr crashes)
+{
+	collect_crash_reports (uuid, crashes);
+
+	if (xmlHashSize(crashes) == 0) {
+		LOG_MSG (LOG_DEBUG, "%s: Rich core dumps not found with UUID: %s\n",
+			PROGNAME, uuid);
+		return 0;
+	}
+
+	collect_urls_from_uploadlog (crashes);
+
+	xmlHashScan(crashes, (xmlHashScanner)fetch_leftover_report, NULL);
+
+	return 1;
 }
 
 /**
@@ -707,7 +818,7 @@ LOCAL int process_case (const void *data, const void *user)
 
 	if (opts.rich_core_dumps != NULL) {
 		unset_device_core_pattern();
-		if (fetch_rich_core_dumps (uuid_buf, c->crashids)) {
+		if (fetch_rich_core_dumps (uuid_buf, c->crashes)) {
 			c->rich_core_uuid = xmlCharStrdup (uuid_buf);
 		}
 	}
