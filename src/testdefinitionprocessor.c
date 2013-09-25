@@ -352,17 +352,18 @@ LOCAL void collect_crash_reports (const char *uuid, xmlHashTablePtr crashes)
  */
 LOCAL void collect_urls_from_uploadlog_timeout (xmlHashTablePtr crashes)
 {
-	const time_t CORE_UPLOAD_TIMEOUT_SECONDS = 60;
 	int inotify_fd = -1;
 	int inotify_wd = -1;
 
 	while (collect_urls_from_uploadlog(crashes)) {
-		fd_set set;
-		struct timeval timeout;
-		int res;
-
 		const size_t BUFFER_LEN = 1024;
 		char buffer[BUFFER_LEN];
+
+		if (opts.core_upload_timeout == 0) {
+			LOG_MSG(LOG_DEBUG, "%s: core upload timeout not set, "
+					"proceeding immediately", PROGNAME);
+			return;
+		}
 
 		if (inotify_fd == -1) {
 			// First time in loop, initialize inotify
@@ -385,20 +386,26 @@ LOCAL void collect_urls_from_uploadlog_timeout (xmlHashTablePtr crashes)
 			}
 		}
 
-		FD_ZERO(&set);
-		FD_SET(inotify_fd, &set);
-		timeout.tv_sec = CORE_UPLOAD_TIMEOUT_SECONDS;
-		timeout.tv_usec = 0;
+		if (opts.core_upload_timeout > 0) {
+			fd_set set;
+			struct timeval timeout;
+			int res;
 
-		res = select(inotify_fd + 1, &set, NULL, NULL, &timeout);
-		if (res == -1) {
-			LOG_MSG(LOG_ERR, "%s: Error while waiting for core upload",
-				PROGNAME);
-			break;
-		} else if (res == 0) {
-			LOG_MSG(LOG_ERR, "%s: Waiting for core upload timed out, proceeding anyway",
-				PROGNAME);
-			break;
+			FD_ZERO(&set);
+			FD_SET(inotify_fd, &set);
+			timeout.tv_sec = opts.core_upload_timeout;
+			timeout.tv_usec = 0;
+
+			res = select(inotify_fd + 1, &set, NULL, NULL, &timeout);
+			if (res == -1) {
+				LOG_MSG(LOG_ERR, "%s: Error while waiting for core upload",
+					PROGNAME);
+				break;
+			} else if (res == 0) {
+				LOG_MSG(LOG_ERR, "%s: Waiting for core upload timed out, proceeding anyway",
+					PROGNAME);
+				break;
+			}
 		}
 
 		if (read(inotify_fd, buffer, BUFFER_LEN) < 0) {
