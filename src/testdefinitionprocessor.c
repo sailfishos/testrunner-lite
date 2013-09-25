@@ -6,6 +6,9 @@
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
+ * Copyright (C) 2013 Jolla Ltd.
+ * Contact: Jakub Adam <jakub.adam@jollamobile.com>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
@@ -92,8 +95,7 @@ LOCAL int failcount = 0;
 LOCAL int casecount = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
-#define CORE_PATTERN_COMMAND "sysctl -q -w kernel.core_pattern=\'|/usr/sbin/rich-core-dumper "\
-	"--pid=%p --signal=%s --name=%e --tc-uuid=<UUID>\'"
+const char *TESTCASE_UUID_FILENAME = "testrunner-lite-testcase";
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -133,7 +135,7 @@ LOCAL int step_post_process (const void *, const void *);
 LOCAL int event_execute (const void *data, const void *user);
 /* ------------------------------------------------------------------------- */
 #endif
-LOCAL int set_device_core_pattern (const char *);
+LOCAL void set_device_core_pattern (const char *);
 /* ------------------------------------------------------------------------- */
 LOCAL int fetch_rich_core_dumps (const char *, xmlListPtr);
 /* ------------------------------------------------------------------------- */
@@ -235,46 +237,45 @@ out:
         return ret;
 }
 
-/** Set device core pattern
- * @param uuid String identifier
- * @return always 1 
+/**
+ * Stores current test case UUID into a file to be read by rich-core-dumper
+ * @param uuid Identifier if the test case
  */
-LOCAL int set_device_core_pattern (const char *uuid)
+LOCAL void set_device_core_pattern (const char *uuid)
 {
-	exec_data edata;
-	char *command, *p;
-	size_t command_len;
+	char *marker_file_path = path_in_core_dumps(TESTCASE_UUID_FILENAME);
+	FILE *file = fopen(marker_file_path, "w");
+	size_t uuid_len;
 
-	memset (&edata, 0x0, sizeof (exec_data));
-        init_exec_data(&edata);
-        edata.soft_timeout = COMMON_SOFT_TIMEOUT;
-        edata.hard_timeout = COMMON_HARD_TIMEOUT;
+	if (!file) {
+		LOG_MSG (LOG_ERR, "%s: Couldn't create %s\n", PROGNAME,
+				marker_file_path);
+		goto out;
+	}
 
-	command_len = strlen(CORE_PATTERN_COMMAND) + strlen(uuid) + 1;
-	command = strdup (CORE_PATTERN_COMMAND);
+	uuid_len = strlen(uuid);
+	if (fwrite(uuid, sizeof (char), uuid_len, file) != uuid_len) {
+		LOG_MSG (LOG_ERR, "%s: Couldn't write UUID for test case %s\n",
+				PROGNAME, uuid);
+	}
 
-	p = command;
-	command = replace_string (command, "<UUID>", uuid);
-	free (p);
-
-        LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
-        execute(command, &edata);
-
-        if (edata.result) {
-                LOG_MSG (LOG_WARNING, "%s: %s failed: %s\n", PROGNAME, command,
-                         (char *)(edata.stderr_data.buffer ?
-                                  edata.stderr_data.buffer : 
-                                  BAD_CAST "no info available"));
-        }
-
-	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
-        if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
-        if (edata.failure_info.buffer) free (edata.failure_info.buffer);
-
-	free (command);
-
-	return 1;
+out:
+	free(marker_file_path);
+	if (file) {
+		fclose(file);
+	}
 }
+
+/**
+ * Removes test case UUID marker file from rich-core-dumper's output directory
+ */
+LOCAL void unset_device_core_pattern ()
+{
+	char *marker_file_path = path_in_core_dumps(TESTCASE_UUID_FILENAME);
+	unlink(marker_file_path);
+	free(marker_file_path);
+}
+
 #ifdef ENABLE_EVENTS
 /** Process event
  *  @param data event data
@@ -704,9 +705,11 @@ LOCAL int process_case (const void *data, const void *user)
 		process_current_measurement(MEASUREMENT_FILE, c);
 	}
 
-	if (opts.rich_core_dumps != NULL && 
-	    fetch_rich_core_dumps (uuid_buf, c->crashids)) {
-		c->rich_core_uuid = xmlCharStrdup (uuid_buf);
+	if (opts.rich_core_dumps != NULL) {
+		unset_device_core_pattern();
+		if (fetch_rich_core_dumps (uuid_buf, c->crashids)) {
+			c->rich_core_uuid = xmlCharStrdup (uuid_buf);
+		}
 	}
 	xmlListWalk (c->gets, process_get_case, c);
 	
