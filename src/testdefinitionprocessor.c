@@ -27,19 +27,13 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
-#include <stdio.h>
+#include <dirent.h>
 #include <stdlib.h>
-#include <getopt.h>
 #include <errno.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <signal.h>
-#include <ctype.h>
+#include <sys/inotify.h>
 #include <uuid/uuid.h>
 
 #include "testrunnerlite.h"
@@ -162,13 +156,42 @@ LOCAL char *path_in_core_dumps(const char *file)
 }
 
 /**
+ * Checks whether given crash report entry misses its telemetry URL. Should be
+ * used as a scanner function argument to xmlHashScan().
+ *
+ * @param url a crash report URL on telemetry server
+ * @param result pointer to int that is set to 1 when url is empty
+ * @param unused
+ */
+LOCAL void check_empty_url (char *url, int *result, xmlChar *unused)
+{
+	if (strlen(url) == 0) {
+		*result = 1;
+	}
+}
+
+/**
+ * @return 1 when any crash report in given hash table misses its telemetry URL,
+ *         otherwise 0
+ */
+LOCAL int has_pending_core_uploads (xmlHashTablePtr crashes)
+{
+	int result = 0;
+
+	xmlHashScan(crashes, (xmlHashScanner)check_empty_url, &result);
+
+	return result;
+}
+
+/**
  * For crash logs given as keys in a hash table reads their corresponding
  * telemetry URLs from crash-reporter's upload log and stores them in the
  * hash table as values to their respective keys.
  *
  * @param crashes xmlHashTablePtr pre-filled with crash-log filenames
+ * @return 0 if URLs for all crash reports were found, otherwise 1
  */
-LOCAL void collect_urls_from_uploadlog (xmlHashTablePtr crashes)
+LOCAL int collect_urls_from_uploadlog (xmlHashTablePtr crashes)
 {
 	const char *UPLOADLOG_FILENAME = "uploadlog";
 	char *uploadlog_path = path_in_core_dumps(UPLOADLOG_FILENAME);
@@ -223,6 +246,8 @@ out:
 	if (uploadlog)
 		fclose(uploadlog);
 	free(uploadlog_path);
+
+	return has_pending_core_uploads(crashes);
 }
 
 /**
@@ -319,6 +344,76 @@ LOCAL void collect_crash_reports (const char *uuid, xmlHashTablePtr crashes)
 }
 
 /**
+ * Keeps collecting telemetry URLs from crash-reporter's upload log until either
+ * all are fetched or timeout is reached.
+ *
+ * @param crashes xmlHashTablePtr pre-filled with crash-log filenames
+ *
+ */
+LOCAL void collect_urls_from_uploadlog_timeout (xmlHashTablePtr crashes)
+{
+	const time_t CORE_UPLOAD_TIMEOUT_SECONDS = 60;
+	int inotify_fd = -1;
+	int inotify_wd = -1;
+
+	while (collect_urls_from_uploadlog(crashes)) {
+		fd_set set;
+		struct timeval timeout;
+		int res;
+
+		const size_t BUFFER_LEN = 1024;
+		char buffer[BUFFER_LEN];
+
+		if (inotify_fd == -1) {
+			// First time in loop, initialize inotify
+			LOG_MSG(LOG_DEBUG, "%s: waiting for core uploads to finish",
+					PROGNAME);
+
+			inotify_fd = inotify_init();
+			if (inotify_fd < 0) {
+				LOG_MSG(LOG_ERR, "%s: Couldn't initialize inotify",
+						PROGNAME);
+				return;
+			}
+
+			inotify_wd = inotify_add_watch(inotify_fd,
+					opts.rich_core_dumps, IN_DELETE);
+			if (inotify_wd == -1) {
+				LOG_MSG(LOG_ERR, "%s: Couldn't start watching "
+						"core dump directory", PROGNAME);
+				break;
+			}
+		}
+
+		FD_ZERO(&set);
+		FD_SET(inotify_fd, &set);
+		timeout.tv_sec = CORE_UPLOAD_TIMEOUT_SECONDS;
+		timeout.tv_usec = 0;
+
+		res = select(inotify_fd + 1, &set, NULL, NULL, &timeout);
+		if (res == -1) {
+			LOG_MSG(LOG_ERR, "%s: Error while waiting for core upload",
+				PROGNAME);
+			break;
+		} else if (res == 0) {
+			LOG_MSG(LOG_ERR, "%s: Waiting for core upload timed out, proceeding anyway",
+				PROGNAME);
+			break;
+		}
+
+		if (read(inotify_fd, buffer, BUFFER_LEN) < 0) {
+			LOG_MSG(LOG_ERR, "%s: Couldn't read from inotify",
+				PROGNAME);
+		}
+	}
+
+	if (inotify_wd != -1) {
+		inotify_rm_watch(inotify_fd, inotify_wd);
+	}
+	close(inotify_fd);
+}
+
+/**
  * Collects information about crash reports created during a specified test case
  * run. Function fills given hash table with pairs having crash report filename
  * as a key and its corresponding report URL on a telemetry server as a value.
@@ -341,7 +436,7 @@ LOCAL int fetch_rich_core_dumps (const char *uuid, xmlHashTablePtr crashes)
 		return 0;
 	}
 
-	collect_urls_from_uploadlog (crashes);
+	collect_urls_from_uploadlog_timeout (crashes);
 
 	xmlHashScan(crashes, (xmlHashScanner)fetch_leftover_report, NULL);
 
