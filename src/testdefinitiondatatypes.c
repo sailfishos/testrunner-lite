@@ -126,11 +126,9 @@ LOCAL int list_dummy_compare(const void * data0,
 /** Deallocator for list with td_file items
  *  @param lk list item
  */
-LOCAL void td_file_delete (xmlLinkPtr lk)
+LOCAL void td_file_delete_link (xmlLinkPtr lk)
 {
-	td_file *file = (td_file *)xmlLinkGetData (lk);
-	free (file->filename);
-	free (file);
+	td_file_delete((td_file *)xmlLinkGetData (lk));
 }
 /* ------------------------------------------------------------------------- */
 /** Deallocator for list with td_measurement items
@@ -268,7 +266,7 @@ td_set *td_set_create ()
 	env =  xmlCharStrdup ("scratchbox");
 	xmlListAppend (set->environments, env);
 
-	set->gets = xmlListCreate (td_file_delete, NULL);
+	set->gets = xmlListCreate (td_file_delete_link, NULL);
 
 	return set;
 }
@@ -320,13 +318,12 @@ td_case *td_case_create()
 	}
 	memset (td_c, 0x0, sizeof (td_case));
 	td_c->steps = xmlListCreate (td_step_delete, list_dummy_compare);
-	td_c->gets = xmlListCreate (td_file_delete, NULL);
+	td_c->gets = xmlListCreate (td_file_delete_link, NULL);
 	td_c->measurements = xmlListCreate (td_measurement_delete, 
 					    list_dummy_compare);
 	td_c->series = xmlListCreate (td_measurement_series_delete,
 				      list_dummy_compare);
-	td_c->crashids = xmlListCreate (list_string_delete,
-					list_dummy_compare);
+	td_c->crashes = xmlHashCreate (10);
 	td_c->post_reboot_steps = xmlListCreate (td_steps_delete, list_dummy_compare);
 
 	return td_c;
@@ -380,7 +377,8 @@ void td_case_delete(xmlLinkPtr lk)
 	xmlListDelete (td_c->gets);
 	xmlListDelete (td_c->measurements);
 	xmlListDelete (td_c->series);
-	xmlListDelete (td_c->crashids);
+
+	xmlHashFree (td_c->crashes, (xmlHashDeallocator) xmlFree);
 
 	xmlFree (td_c->comment);
 	xmlFree (td_c->failure_info);
@@ -469,6 +467,14 @@ void td_measurement_item_delete(xmlLinkPtr lk)
 {
 	td_measurement_item *i = xmlLinkGetData (lk);
 	free (i);
+}
+/* ------------------------------------------------------------------------- */
+/** Deallocator for td_file items
+ */
+void td_file_delete (td_file * file)
+{
+	free (file->filename);
+	free (file);
 }
 #ifdef ENABLE_EVENTS
 /* ------------------------------------------------------------------------- */

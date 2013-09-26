@@ -6,6 +6,9 @@
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
+ * Copyright (C) 2013 Jolla Ltd.
+ * Contact: Jakub Adam <jakub.adam@jollamobile.com>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
@@ -24,19 +27,13 @@
 
 /* ------------------------------------------------------------------------- */
 /* INCLUDE FILES */
-#include <stdio.h>
+#include <dirent.h>
 #include <stdlib.h>
-#include <getopt.h>
 #include <errno.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <signal.h>
-#include <ctype.h>
+#include <sys/inotify.h>
 #include <uuid/uuid.h>
 
 #include "testrunnerlite.h"
@@ -92,8 +89,7 @@ LOCAL int failcount = 0;
 LOCAL int casecount = 0;
 /* ------------------------------------------------------------------------- */
 /* LOCAL CONSTANTS AND MACROS */
-#define CORE_PATTERN_COMMAND "sysctl -q -w kernel.core_pattern=\'|/usr/sbin/rich-core-dumper "\
-	"--pid=%p --signal=%s --name=%e --tc-uuid=<UUID>\'"
+const char *TESTCASE_UUID_FILENAME = "testrunner-lite-testcase";
 /* ------------------------------------------------------------------------- */
 /* MODULE DATA STRUCTURES */
 /* None */
@@ -133,9 +129,9 @@ LOCAL int step_post_process (const void *, const void *);
 LOCAL int event_execute (const void *data, const void *user);
 /* ------------------------------------------------------------------------- */
 #endif
-LOCAL int set_device_core_pattern (const char *);
+LOCAL void set_device_core_pattern (const char *);
 /* ------------------------------------------------------------------------- */
-LOCAL int fetch_rich_core_dumps (const char *, xmlListPtr);
+LOCAL int fetch_rich_core_dumps (const char *, xmlHashTablePtr);
 /* ------------------------------------------------------------------------- */
 
 /* FORWARD DECLARATIONS */
@@ -144,137 +140,355 @@ LOCAL int fetch_rich_core_dumps (const char *, xmlListPtr);
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-/* ------------------------------------------------------------------------- */
-/** Puts crashids from string to list
- * @param ids crash identifiers separetated by newlined
- * @param crashids list to store found crash identifier into
+
+/**
+ * @file a file name
+ * @return the file name prepended with path to rich-core-dumper's output
+ *         directory; has to be free()'d after use
  */
-LOCAL void parse_crashids(char *ids, xmlListPtr crashids)
+LOCAL char *path_in_core_dumps(const char *file)
 {
-	char *p;
-	char *id;
+	char *result =
+		(char*) malloc(strlen(opts.rich_core_dumps) + strlen(file) + 1);
+	sprintf(result, "%s%s", opts.rich_core_dumps, file);
 
-	if (!ids || strlen (ids) == 0)
-	      return;
-	p = strtok (ids, "\n");
-
-	while (p) {
-		id = strdup(p);
-                LOG_MSG (LOG_DEBUG, "Adding crash id: %s \n", id);
-		xmlListInsert (crashids, id);
-		p = strtok (NULL, "\n");
-	}
-	
+	return result;
 }
-/* ------------------------------------------------------------------------- */
-/** Fetch rich-core dumps from the device
- * @param uuid String identifier
- * @param crashids list to store found crash identifier into
- * @return 1, if found; otherwise 0
+
+/**
+ * Checks whether given crash report entry misses its telemetry URL. Should be
+ * used as a scanner function argument to xmlHashScan().
+ *
+ * @param url a crash report URL on telemetry server
+ * @param result pointer to int that is set to 1 when url is empty
+ * @param unused
  */
-LOCAL int fetch_rich_core_dumps (const char *uuid, xmlListPtr crashids)
+LOCAL void check_empty_url (char *url, int *result, xmlChar *unused)
 {
-        exec_data edata;
-        char *command;
-	char *get_pattern;
-        size_t pattern_len;
-	td_file *file;
-	int ret = 0;
-#define RICHCORE_SEARCH_COMMAND "rich-core-find-uuid"
-#define RICH_CORE_SEARCH_PATTERN "%s*%s*"
+	if (strlen(url) == 0) {
+		*result = 1;
+	}
+}
 
-        memset (&edata, 0x0, sizeof (exec_data));
-        init_exec_data(&edata);
-        edata.soft_timeout = COMMON_SOFT_TIMEOUT;
-        edata.hard_timeout = COMMON_HARD_TIMEOUT;
-	edata.redirect_output = REDIRECT_OUTPUT;
+/**
+ * @return 1 when any crash report in given hash table misses its telemetry URL,
+ *         otherwise 0
+ */
+LOCAL int has_pending_core_uploads (xmlHashTablePtr crashes)
+{
+	int result = 0;
 
-        pattern_len = strlen (opts.rich_core_dumps) + strlen (uuid) + 3;
-        get_pattern = (char *) malloc (pattern_len);
-	snprintf (get_pattern, pattern_len, RICH_CORE_SEARCH_PATTERN,
-		 opts.rich_core_dumps, uuid);
+	xmlHashScan(crashes, (xmlHashScanner)check_empty_url, &result);
 
-        command = (char *) malloc (strlen(RICHCORE_SEARCH_COMMAND) +
-				   strlen (opts.rich_core_dumps) + 
-				   strlen (uuid) + 3);
-        snprintf (command, strlen(RICHCORE_SEARCH_COMMAND) +
-		  strlen (opts.rich_core_dumps) + 
-		  strlen (uuid) + 3,
-		  "%s %s %s", 
-		  RICHCORE_SEARCH_COMMAND, opts.rich_core_dumps, uuid);
+	return result;
+}
 
-        LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
-        execute(command, &edata);
+/**
+ * For crash logs given as keys in a hash table reads their corresponding
+ * telemetry URLs from crash-reporter's upload log and stores them in the
+ * hash table as values to their respective keys.
+ *
+ * @param crashes xmlHashTablePtr pre-filled with crash-log filenames
+ * @return 0 if URLs for all crash reports were found, otherwise 1
+ */
+LOCAL int collect_urls_from_uploadlog (xmlHashTablePtr crashes)
+{
+	const char *UPLOADLOG_FILENAME = "uploadlog";
+	char *uploadlog_path = path_in_core_dumps(UPLOADLOG_FILENAME);
+	FILE *uploadlog = NULL;
+	char line[256];
 
-        free (command);
-
-        if (edata.result != 0) {
-                LOG_MSG (LOG_DEBUG, "%s: Rich core dumps not found with UUID: %s \n", 
-			PROGNAME, uuid);
+	uploadlog = fopen(uploadlog_path, "r");
+	if (!uploadlog) {
+		LOG_MSG(LOG_DEBUG, "Couldn't open crash-reporter upload log\n");
 		goto out;
-        } else {
-		parse_crashids ((char *)edata.stdout_data.buffer, crashids);
+	}
+
+	while (fgets(line, sizeof line, uploadlog)) {
+		char *filename;
+		char *url;
+		char *stored_filename;
+		size_t line_len = strlen(line);
+		if (line_len == 0) {
+			continue;
+		}
+
+		if (line[line_len - 1] == '\n') {
+			line[line_len - 1] = '\0';
+		}
+
+		url = strrchr(line, ' ');
+		if (!url) {
+			continue;
+		}
+		filename = url;
+		url += 1;
+
+		/* Zero-out any spaces between core file name and telemetry URL.
+		 * Then we'll be able to read both strings from line buffer. */
+		while (filename >= line && *filename == ' ') {
+			*filename = '\0';
+		}
+		filename = line;
+
+		stored_filename = xmlHashLookup(crashes, (xmlChar*)filename);
+		if (stored_filename && (strlen(stored_filename) == 0)) {
+			// New upload detected
+			xmlHashUpdateEntry(crashes, (xmlChar*)filename,
+					strdup(url),
+					(xmlHashDeallocator)xmlFree);
+			LOG_MSG(LOG_DEBUG, "Telemetry URL for %s is %s\n",
+					filename, url);
+		}
+	}
+
+out:
+	if (uploadlog)
+		fclose(uploadlog);
+	free(uploadlog_path);
+
+	return has_pending_core_uploads(crashes);
+}
+
+/**
+ * Downloads a crash report file into testrunner's destination directory, if
+ * it wasn't already uploaded to telemetry server by crash-reporter. Should be
+ * used as a scanner function argument to xmlHashScan().
+ *
+ * @param url a crash report URL on telemetry server
+ * @param unused
+ * @param filename crash report's file name
+ */
+LOCAL void fetch_leftover_report (xmlChar *url, void *unused, char *filename)
+{
+	td_file *file;
+
+	if (xmlStrlen(url) > 0) {
+		return;
 	}
 
 	file = (td_file *)malloc (sizeof (td_file));
-		file->filename = (xmlChar *)get_pattern;
-                file->delete_after = 1;
-                file->measurement = 0;
-                file->series = 0;
-
+	file->filename = (xmlChar*)path_in_core_dumps(filename);
+	file->delete_after = 1;
+	file->measurement = 0;
+	file->series = 0;
 	process_get (file, 0);
-	ret = 1;
-out:
-        if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
-        if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
-        if (edata.failure_info.buffer) free (edata.failure_info.buffer);
 
-	if (get_pattern) free (get_pattern);
-	if (file) free (file);
-
-        return ret;
+	td_file_delete(file);
 }
 
-/** Set device core pattern
- * @param uuid String identifier
- * @return always 1 
+/**
+ * Into a hash table, stores file names of crash reports created during a run of
+ * a test case specified by its uuid. After this function is run, given hash
+ * table will contain pairs having crash report file name as a key and an empty
+ * string as a value.
+ *
+ * @param uuid a UUID of a test case
+ * @param crashes hash table where to store the crash report file names
  */
-LOCAL int set_device_core_pattern (const char *uuid)
+LOCAL void collect_crash_reports (const char *uuid, xmlHashTablePtr crashes)
 {
-	exec_data edata;
-	char *command, *p;
-	size_t command_len;
+	DIR *dir = opendir(opts.rich_core_dumps);
+	struct dirent *entry;
 
-	memset (&edata, 0x0, sizeof (exec_data));
-        init_exec_data(&edata);
-        edata.soft_timeout = COMMON_SOFT_TIMEOUT;
-        edata.hard_timeout = COMMON_HARD_TIMEOUT;
+	if (!dir) {
+		LOG_MSG(LOG_ERR, "%s: Couldn't open core dump directory",
+			PROGNAME);
+		return;
+	}
 
-	command_len = strlen(CORE_PATTERN_COMMAND) + strlen(uuid) + 1;
-	command = strdup (CORE_PATTERN_COMMAND);
+	while ((entry = readdir(dir))) {
+		xmlChar *report_filename;
+		char *marker_path;
 
-	p = command;
-	command = replace_string (command, "<UUID>", uuid);
-	free (p);
+		size_t marker_filename_len = strlen(entry->d_name);
+		size_t report_filename_len = marker_filename_len - strlen(uuid);
 
-        LOG_MSG (LOG_DEBUG, "%s:  Executing command: %s", PROGNAME, command);
-        execute(command, &edata);
 
-        if (edata.result) {
-                LOG_MSG (LOG_WARNING, "%s: %s failed: %s\n", PROGNAME, command,
-                         (char *)(edata.stderr_data.buffer ?
-                                  edata.stderr_data.buffer : 
-                                  BAD_CAST "no info available"));
-        }
+		if (entry->d_type != DT_REG) {
+			continue;
+		}
 
-	if (edata.stdout_data.buffer) free (edata.stdout_data.buffer);
-        if (edata.stderr_data.buffer) free (edata.stderr_data.buffer);
-        if (edata.failure_info.buffer) free (edata.failure_info.buffer);
+		if (strcmp(entry->d_name + report_filename_len, uuid)) {
+			/* Filename doesn't end with uuid, thus it's not a
+			 * crash report marker file, skip. */
+			continue;
+		}
 
-	free (command);
+		// Get rid of a dot before uuid
+		report_filename_len--;
+
+		report_filename = xmlStrndup((xmlChar*)entry->d_name,
+				report_filename_len);
+
+		LOG_MSG (LOG_DEBUG, "Discovered crash report: %s\n",
+				report_filename);
+
+		xmlHashAddEntry(crashes, report_filename,
+				xmlStrdup((xmlChar *)""));
+		free(report_filename);
+
+		// Remove the marker file
+		marker_path = path_in_core_dumps(entry->d_name);
+		if (unlink(marker_path) != 0) {
+			LOG_MSG (LOG_ERR, "Couldn't unlink marker file %s\n",
+					entry->d_name);
+		}
+		free(marker_path);
+
+		// Rewind directory if its contents were changed
+		rewinddir(dir);
+	}
+
+	closedir(dir);
+}
+
+/**
+ * Keeps collecting telemetry URLs from crash-reporter's upload log until either
+ * all are fetched or timeout is reached.
+ *
+ * @param crashes xmlHashTablePtr pre-filled with crash-log filenames
+ *
+ */
+LOCAL void collect_urls_from_uploadlog_timeout (xmlHashTablePtr crashes)
+{
+	int inotify_fd = -1;
+	int inotify_wd = -1;
+
+	while (collect_urls_from_uploadlog(crashes)) {
+		const size_t BUFFER_LEN = 1024;
+		char buffer[BUFFER_LEN];
+
+		if (opts.core_upload_timeout == 0) {
+			LOG_MSG(LOG_DEBUG, "%s: core upload timeout not set, "
+					"proceeding immediately", PROGNAME);
+			return;
+		}
+
+		if (inotify_fd == -1) {
+			// First time in loop, initialize inotify
+			LOG_MSG(LOG_DEBUG, "%s: waiting for core uploads to finish",
+					PROGNAME);
+
+			inotify_fd = inotify_init();
+			if (inotify_fd < 0) {
+				LOG_MSG(LOG_ERR, "%s: Couldn't initialize inotify",
+						PROGNAME);
+				return;
+			}
+
+			inotify_wd = inotify_add_watch(inotify_fd,
+					opts.rich_core_dumps, IN_DELETE);
+			if (inotify_wd == -1) {
+				LOG_MSG(LOG_ERR, "%s: Couldn't start watching "
+						"core dump directory", PROGNAME);
+				break;
+			}
+		}
+
+		if (opts.core_upload_timeout > 0) {
+			fd_set set;
+			struct timeval timeout;
+			int res;
+
+			FD_ZERO(&set);
+			FD_SET(inotify_fd, &set);
+			timeout.tv_sec = opts.core_upload_timeout;
+			timeout.tv_usec = 0;
+
+			res = select(inotify_fd + 1, &set, NULL, NULL, &timeout);
+			if (res == -1) {
+				LOG_MSG(LOG_ERR, "%s: Error while waiting for core upload",
+					PROGNAME);
+				break;
+			} else if (res == 0) {
+				LOG_MSG(LOG_ERR, "%s: Waiting for core upload timed out, proceeding anyway",
+					PROGNAME);
+				break;
+			}
+		}
+
+		if (read(inotify_fd, buffer, BUFFER_LEN) < 0) {
+			LOG_MSG(LOG_ERR, "%s: Couldn't read from inotify",
+				PROGNAME);
+		}
+	}
+
+	if (inotify_wd != -1) {
+		inotify_rm_watch(inotify_fd, inotify_wd);
+	}
+	close(inotify_fd);
+}
+
+/**
+ * Collects information about crash reports created during a specified test case
+ * run. Function fills given hash table with pairs having crash report filename
+ * as a key and its corresponding report URL on a telemetry server as a value.
+ *
+ * Moreover, if the crash report wasn't for whatever reason uploaded to the
+ * server, this function downloads it into testrunner's output directory from
+ * the device.
+ *
+ * @param uuid an identifier of a test case
+ * @param crashes a hash table where to store found crash info
+ * @return 1, if any reports are found, otherwise 0
+ */
+LOCAL int fetch_rich_core_dumps (const char *uuid, xmlHashTablePtr crashes)
+{
+	collect_crash_reports (uuid, crashes);
+
+	if (xmlHashSize(crashes) == 0) {
+		LOG_MSG (LOG_DEBUG, "%s: Rich core dumps not found with UUID: %s\n",
+			PROGNAME, uuid);
+		return 0;
+	}
+
+	collect_urls_from_uploadlog_timeout (crashes);
+
+	xmlHashScan(crashes, (xmlHashScanner)fetch_leftover_report, NULL);
 
 	return 1;
 }
+
+/**
+ * Stores current test case UUID into a file to be read by rich-core-dumper
+ * @param uuid Identifier if the test case
+ */
+LOCAL void set_device_core_pattern (const char *uuid)
+{
+	char *marker_file_path = path_in_core_dumps(TESTCASE_UUID_FILENAME);
+	FILE *file = fopen(marker_file_path, "w");
+	size_t uuid_len;
+
+	if (!file) {
+		LOG_MSG (LOG_ERR, "%s: Couldn't create %s\n", PROGNAME,
+				marker_file_path);
+		goto out;
+	}
+
+	uuid_len = strlen(uuid);
+	if (fwrite(uuid, sizeof (char), uuid_len, file) != uuid_len) {
+		LOG_MSG (LOG_ERR, "%s: Couldn't write UUID for test case %s\n",
+				PROGNAME, uuid);
+	}
+
+out:
+	free(marker_file_path);
+	if (file) {
+		fclose(file);
+	}
+}
+
+/**
+ * Removes test case UUID marker file from rich-core-dumper's output directory
+ */
+LOCAL void unset_device_core_pattern ()
+{
+	char *marker_file_path = path_in_core_dumps(TESTCASE_UUID_FILENAME);
+	unlink(marker_file_path);
+	free(marker_file_path);
+}
+
 #ifdef ENABLE_EVENTS
 /** Process event
  *  @param data event data
@@ -704,9 +918,11 @@ LOCAL int process_case (const void *data, const void *user)
 		process_current_measurement(MEASUREMENT_FILE, c);
 	}
 
-	if (opts.rich_core_dumps != NULL && 
-	    fetch_rich_core_dumps (uuid_buf, c->crashids)) {
-		c->rich_core_uuid = xmlCharStrdup (uuid_buf);
+	if (opts.rich_core_dumps != NULL) {
+		unset_device_core_pattern();
+		if (fetch_rich_core_dumps (uuid_buf, c->crashes)) {
+			c->rich_core_uuid = xmlCharStrdup (uuid_buf);
+		}
 	}
 	xmlListWalk (c->gets, process_get_case, c);
 	

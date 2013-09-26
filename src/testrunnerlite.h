@@ -113,6 +113,7 @@ typedef struct {
 	in_port_t hwinfo_port; /**< Optional port for hwinfo address */
 	char *rich_core_dumps;  /**< save rich-core dumps from DUT */
 	int   max_utf8_bytes;	/**< Maximum length of a UTF-8 byte sequence */
+	int   core_upload_timeout; /**< Maximum seconds to wait for core files to upload */
 } testrunner_lite_options;    
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
