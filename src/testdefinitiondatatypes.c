@@ -128,9 +128,7 @@ LOCAL int list_dummy_compare(const void * data0,
  */
 LOCAL void td_file_delete_link (xmlLinkPtr lk)
 {
-	td_file *file = (td_file *)xmlLinkGetData (lk);
-	free (file->filename);
-	free (file);
+	td_file_delete((td_file *)xmlLinkGetData (lk));
 }
 /* ------------------------------------------------------------------------- */
 /** Deallocator for list with td_measurement items
@@ -469,6 +467,14 @@ void td_measurement_item_delete(xmlLinkPtr lk)
 {
 	td_measurement_item *i = xmlLinkGetData (lk);
 	free (i);
+}
+/* ------------------------------------------------------------------------- */
+/** Deallocator for td_file items
+ */
+void td_file_delete (td_file * file)
+{
+	free (file->filename);
+	free (file);
 }
 #ifdef ENABLE_EVENTS
 /* ------------------------------------------------------------------------- */
