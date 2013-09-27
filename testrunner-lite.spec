@@ -1,19 +1,24 @@
 Name: testrunner-lite
-Version: 1.8.0
-# build.meego.com proposed patch > Release: 8
-Release: 8
+Version: 1.8.1
+Release: 1
 Summary: Generic test executor tool
 Group: Development/Tools
 License: LGPL 2.1
-URL: http://meego.com
+URL: https://github.com/mer-tools/testrunner-lite
 Source0: %{name}-%{version}.tar.gz 
-Patch1:	0001-remove_copyright_print.patch
-Patch2:	0002-add-run_tests.sh-for-convenient-test-runs.patch
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root 
    
-BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel, libtool, libuuid-devel
+BuildRequires: autoconf
+BuildRequires: doxygen
+BuildRequires: libxml2-devel
+BuildRequires: check-devel
+BuildRequires: libcurl-devel
+BuildRequires: libtool
+BuildRequires: libuuid-devel
 # libxml2 and libcurl are implicit dependencies  
-Requires: test-definition, openssh, testrunner-lite-hwinfo, libuuid
+Requires: test-definition
+Requires: openssh
+Requires: testrunner-lite-hwinfo
+Requires: libuuid
 
 %package tests
 Summary: Unit tests for testrunner-lite
@@ -21,7 +26,9 @@ Requires: testrunner-lite
 
 %package regression-tests
 Summary: Regression tests for testrunner-lite
-Requires: testrunner-lite, libxml2, diffutils
+Requires: testrunner-lite
+Requires: libxml2
+Requires: diffutils
 
 %package docs
 Summary: Testrunner-lite doxygen documentation in html format
@@ -60,8 +67,6 @@ Library for obtaining hardware information in meego environment
 # Adjusting %%setup since git-pkg unpacks to src/
 # %%setup -n %%{name}-%%{version}
 %setup -n src
-%patch1 -p1
-%patch2 -p1
 
 %build
 CFLAGS="-DVERSIONSTR=%{version} -ldl"
