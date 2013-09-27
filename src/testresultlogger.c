@@ -5,6 +5,9 @@
  *
  * Contact: Sampo Saaristo <sampo.saaristo@sofica.fi>
  *
+ * Copyright (C) 2013 Jolla Ltd.
+ * Contact: Jakub Adam <jakub.adam@jollamobile.com>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
@@ -113,7 +116,7 @@ LOCAL int xml_write_measurement (const void *, const void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_series (const void *, const void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_crashid (const void *, const void *);
+LOCAL int xml_write_crash (const void *, const void *, xmlChar *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_measurement_item (const void *, const void *);
 /* ------------------------------------------------------------------------- */
@@ -754,7 +757,7 @@ LOCAL int xml_write_case (const void *data, const void *user)
 	xmlListWalk (c->steps, xml_write_step, c);
 	xmlListWalk (c->measurements, xml_write_measurement, NULL);
 	xmlListWalk (c->series, xml_write_series, NULL);
-	xmlListWalk (c->crashids, xml_write_crashid, NULL); 
+	xmlHashScan (c->crashes, (xmlHashScanner)xml_write_crash, NULL);
 
 
 	return !xml_end_element ();
@@ -900,23 +903,33 @@ LOCAL int xml_write_measurement (const void *data, const void *user)
 	return 0;
 }
 /* ------------------------------------------------------------------------- */
-/** Write chrashid to results
- * @param data chrashid 
+/** Writes crash to results
+ * @param url telemetry URL of the crash report
  * @param user not used
+ * @param file filename of the crash report
  * @return 1 on success, 0 on error
  */
-LOCAL int xml_write_crashid (const void *data, const void *user)
+LOCAL int xml_write_crash (const void *url, const void *user, xmlChar *file)
 {
-	char *id = (char *)data;
-	if (xmlTextWriterWriteElement (writer, 
-				       BAD_CAST "crash_id", 
-				       BAD_CAST id) < 0) {
-		LOG_MSG (LOG_ERR, "%s:%s:failed to write crash_id\n",
-			 PROGNAME, __FUNCTION__);
-		return 0;
-	}
-	
+	if (xmlTextWriterStartElement (writer, BAD_CAST "crash") < 0)
+		goto err_out;
+
+	if (url && (strlen(url) > 0) &&
+	    xmlTextWriterWriteAttribute (writer, BAD_CAST "url",
+					(xmlChar *)url) < 0)
+		goto err_out;
+
+	if (xmlTextWriterWriteString (writer, file) < 0)
+		goto err_out;
+
+	if (xmlTextWriterEndElement (writer) < 0)
+		goto err_out;
+
 	return 1;
+
+err_out:
+	LOG_MSG (LOG_ERR, "%s:%s: error\n", PROGNAME, __FUNCTION__);
+	return 0;
 }
 /* ------------------------------------------------------------------------- */
 /** Write measurement series data

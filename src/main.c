@@ -201,6 +201,10 @@ LOCAL void usage()
                 "to link each rich-cores and test cases in test reporting\n\t\t"
                 "NOTE: This feature requires working sp-rich-core package to be\n\t\t"
                 "installed in the Device Under Test.\n");
+	printf ("  -T SECONDS, --core-upload-timeout=SECONDS\n\t\t"
+		"How long testrunner-lite will wait for crash reports generated during\n\t\t"
+		"a test case to upload to telemetry server. Default is 0 (no waiting),\n\t\t"
+		"-1 means wait never times out.\n");
 	printf ("  --utf8-limit=MAXLENGTH\n\t\t"
 	        "Maximum allowed length of a UTF-8 byte sequence in output of a test step.\n\t\t"
 		"If the limit is exceeded, the whole output will be written into a separate\n\t\t"
@@ -862,7 +866,7 @@ int main (int argc, char *argv[], char *envp[])
 			{"rich-core-dumps", required_argument, NULL, 'd'},
 			{"utf8-limit", required_argument, NULL,
 			 TRLITE_LONG_OPTION_UTF8_LIMIT},
-
+			{"core-upload-timeout", required_argument, NULL, 'T'},
 			{0, 0, 0, 0}
 		};
 
@@ -885,7 +889,7 @@ int main (int argc, char *argv[], char *envp[])
 		option_idx = 0;
      
 		opt_char = getopt_long (argc, argv, 
-					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:v::k:"
+					":hVaAHSMsmcPd:C:f:o:e:l:r:u:U:L:t:E:G:v::k:T:"
 #ifdef ENABLE_LIBSSH2
 					"n:"
 #endif
@@ -1063,6 +1067,9 @@ int main (int argc, char *argv[], char *envp[])
                                 retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
                                 goto OUT;
 			}
+			break;
+		case 'T':
+			opts.core_upload_timeout = atoi (optarg);
 			break;
 		case TRLITE_LONG_OPTION_LOGID:
 			if (parse_logid(optarg, &opts) != 0) {
