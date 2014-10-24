@@ -280,6 +280,7 @@ void td_set_delete(td_set *s)
 
 	xmlListDelete (s->pre_steps);
 	xmlListDelete (s->post_steps);
+	xmlListDelete (s->post_reboot_steps);
 	xmlListDelete (s->cases);
 	xmlListDelete (s->environments);
 	xmlListDelete (s->gets);
@@ -377,6 +378,7 @@ void td_case_delete(xmlLinkPtr lk)
 	xmlListDelete (td_c->gets);
 	xmlListDelete (td_c->measurements);
 	xmlListDelete (td_c->series);
+	xmlListDelete (td_c->post_reboot_steps);
 
 	xmlHashFree (td_c->crashes, (xmlHashDeallocator) xmlFree);
 

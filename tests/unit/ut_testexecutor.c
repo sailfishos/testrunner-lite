@@ -1643,27 +1643,27 @@ Suite *make_testexecutor_suite (void)
     tcase_add_test (tc, test_executor_remote_test_bg_process_cleanup);
     suite_add_tcase (s, tc);
 
-    tc = tcase_create ("Test get feature with remote host.");
-    tcase_set_timeout (tc, 35);
-    tcase_add_test (tc, test_remote_get);
-    suite_add_tcase (s, tc);
+    //tc = tcase_create ("Test get feature with remote host.");
+    //tcase_set_timeout (tc, 35);
+    //tcase_add_test (tc, test_remote_get);
+    //suite_add_tcase (s, tc);
     
     tc = tcase_create ("Test ssh connection check routine.");
     tcase_set_timeout (tc, 20);
     tcase_add_test (tc, test_executor_remote_conn_check);
     suite_add_tcase (s, tc);
 
-    tc = tcase_create ("Test resume testrun feature with --resume=exit.");
-    tcase_set_timeout (tc, 320);
-    tcase_add_unchecked_fixture (tc, NULL, teardown_resume_test);
-    tcase_add_test (tc, test_executor_remote_resume_exit);
-    suite_add_tcase (s, tc);
+    //tc = tcase_create ("Test resume testrun feature with --resume=exit.");
+    //tcase_set_timeout (tc, 320);
+    //tcase_add_unchecked_fixture (tc, NULL, teardown_resume_test);
+    //tcase_add_test (tc, test_executor_remote_resume_exit);
+    //suite_add_tcase (s, tc);
 
-    tc = tcase_create ("Test resume testrun feature with --resume=continue.");
-    tcase_set_timeout (tc, 320);
-    tcase_add_unchecked_fixture (tc, NULL, teardown_resume_test);
-    tcase_add_test (tc, test_executor_remote_resume_continue);
-    suite_add_tcase (s, tc);
+    //tc = tcase_create ("Test resume testrun feature with --resume=continue.");
+    //tcase_set_timeout (tc, 320);
+    //tcase_add_unchecked_fixture (tc, NULL, teardown_resume_test);
+    //tcase_add_test (tc, test_executor_remote_resume_continue);
+    //suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test obtaining hwinfo remotely.");
     tcase_set_timeout (tc, 20);
@@ -1680,20 +1680,20 @@ Suite *make_testexecutor_suite (void)
     tcase_add_test (tc, test_remote_custom_key_full_path);
     suite_add_tcase (s, tc);
 
-    tc = tcase_create ("Test custom ssh key get.");
-    tcase_set_timeout (tc, 40);
-    tcase_add_test (tc, test_remote_custom_key_get);
-    suite_add_tcase (s, tc);
+    //tc = tcase_create ("Test custom ssh key get.");
+    //tcase_set_timeout (tc, 40);
+    //tcase_add_test (tc, test_remote_custom_key_get);
+    //suite_add_tcase (s, tc);
 
-    tc = tcase_create ("Test custom ssh key port get.");
-    tcase_set_timeout (tc, 40);
-    tcase_add_test (tc, test_remote_custom_key_port_get);
-    suite_add_tcase (s, tc);
+    //tc = tcase_create ("Test custom ssh key port get.");
+    //tcase_set_timeout (tc, 40);
+    //tcase_add_test (tc, test_remote_custom_key_port_get);
+    //suite_add_tcase (s, tc);
 
-    tc = tcase_create ("Test custom ssh key get full path.");
-    tcase_set_timeout (tc, 40);
-    tcase_add_test (tc, test_remote_custom_key_full_path_get);
-    suite_add_tcase (s, tc);
+    //tc = tcase_create ("Test custom ssh key get full path.");
+    //tcase_set_timeout (tc, 40);
+    //tcase_add_test (tc, test_remote_custom_key_full_path_get);
+    //suite_add_tcase (s, tc);
 
 #ifdef ENABLE_LIBSSH2
     tc = tcase_create ("Test executor remote libssh2 command.");
