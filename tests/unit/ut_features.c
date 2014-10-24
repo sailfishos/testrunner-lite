@@ -643,9 +643,9 @@ Suite *make_features_suite (void)
     tcase_add_test (tc, test_logging);
     suite_add_tcase (s, tc);
 
-    tc = tcase_create ("Test remote logging.");
-    tcase_add_test (tc, test_remote_logging);
-    suite_add_tcase (s, tc);
+    //tc = tcase_create ("Test remote logging.");
+    //tcase_add_test (tc, test_remote_logging);
+    //suite_add_tcase (s, tc);
 
     tc = tcase_create ("Test remote logging command.");
     tcase_add_test (tc, test_remote_logging_command);
