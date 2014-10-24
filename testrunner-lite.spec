@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.8.1
+Version: 1.8.2
 Release: 1
 Summary: Generic test executor tool
 Group: Development/Tools
@@ -17,7 +17,7 @@ BuildRequires: libuuid-devel
 # libxml2 and libcurl are implicit dependencies  
 Requires: test-definition
 Requires: openssh
-Requires: testrunner-lite-hwinfo
+Requires: testrunner-lite-hwinfo-nemo
 Requires: libuuid
 
 %package tests
@@ -38,12 +38,21 @@ Summary: Provides commands for hardware information obtaining
 Requires: coreutils
 Provides: testrunner-lite-hwinfo
 Conflicts: testrunner-lite-hwinfo-meego
+Conflicts: testrunner-lite-hwinfo-nemo
 
 %package hwinfo-meego
 Summary: Provides commands for hardware information obtaining
 Requires: coreutils
 Provides: testrunner-lite-hwinfo
 Conflicts: testrunner-lite-hwinfo-maemo
+Conflicts: testrunner-lite-hwinfo-nemo
+
+%package hwinfo-nemo
+Summary: Provides commands for hardware information obtaining
+Requires: coreutils
+Provides: testrunner-lite-hwinfo
+Conflicts: testrunner-lite-hwinfo-maemo
+Conflicts: testrunner-lite-hwinfo-meego
 
 %description
 Generic test executor tool
@@ -62,6 +71,9 @@ Library for obtaining hardware information in maemo environment
 
 %description hwinfo-meego
 Library for obtaining hardware information in meego environment
+
+%description hwinfo-nemo
+Library for obtaining hardware information in nemo environment
 
 %prep
 # Adjusting %%setup since git-pkg unpacks to src/
@@ -89,11 +101,14 @@ rm -rf %{buildroot}
 
 %files tests
 %defattr(-,root,root,-)
+%dir %{_libdir}/testrunner-lite-tests
 %{_libdir}/testrunner-lite-tests/*
+%dir %{_datadir}/testrunner-lite-tests
 %{_datadir}/testrunner-lite-tests/*
 
 %files regression-tests
 %defattr(-,root,root,-)
+%dir %{_datadir}/testrunner-lite-regression-tests
 %{_datadir}/testrunner-lite-regression-tests/*
 
 %files docs
@@ -123,4 +138,14 @@ ln -s %{_libdir}/testrunner-lite-hwinfo-meego.so  %{_libdir}/testrunner-lite-hwi
 
 %postun hwinfo-meego
 rm %{_libdir}/testrunner-lite-hwinfo.so
+
+%files hwinfo-nemo
+%defattr(-,root,root,-)
+%{_libdir}/testrunner-lite-hwinfo-nemo*
+
+%post hwinfo-nemo
+ln -s %{_libdir}/testrunner-lite-hwinfo-nemo.so  %{_libdir}/testrunner-lite-hwinfo.so
+
+%postun hwinfo-nemo
+rm %{_libdir}/testrunner-lite-nemo.so
 
