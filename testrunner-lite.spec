@@ -1,5 +1,5 @@
 Name: testrunner-lite
-Version: 1.8.2
+Version: 1.8.3
 Release: 1
 Summary: Generic test executor tool
 Group: Development/Tools

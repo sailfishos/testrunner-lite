@@ -1,3 +1,6 @@
+* Thu Feb 19 2015 Matti Kosola <matti.kosola@jollamobile.com> - 1.8.3
+- Update configure ac for automake 1.12
+
 * Fri Oct 24 2014 Matti Kosola <matti.kosola@jollamobile.com> - 1.8.2
 - Add nemo hwinfo library
 - Fix memory leaks
