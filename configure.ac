@@ -4,6 +4,7 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AC_CONFIG_HEADERS([config.h])
 AM_PROG_LIBTOOL
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_ARG_ENABLE(
   [events],
   [AS_HELP_STRING([--enable-events],
