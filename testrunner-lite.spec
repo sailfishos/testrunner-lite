@@ -116,8 +116,6 @@ rm -rf %{buildroot}
 # 3 files in documention causes a duplicate warning by rpmlint
 %doc %{_docdir}/testrunner-lite/*
 %{_mandir}/man1/testrunner-lite.1.gz
-# need to remove executable flag because rpmlint complains about it
-%attr(644,root,root) %{_docdir}/testrunner-lite/html/installdox
 
 %files hwinfo-maemo
 %defattr(-,root,root,-)
