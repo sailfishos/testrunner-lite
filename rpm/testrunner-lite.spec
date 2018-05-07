@@ -1,17 +1,24 @@
 Name: testrunner-lite
-Version: 1.8.0
-# build.meego.com proposed patch > Release:7.1
-Release:7.1
+Version: 1.8.4
+Release: 1
 Summary: Generic test executor tool
 Group: Development/Tools
 License: LGPL 2.1
-URL: http://meego.com
-Source0: %{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+URL: https://github.com/mer-tools/testrunner-lite
+Source0: %{name}-%{version}.tar.gz 
    
-BuildRequires: autoconf, doxygen, libxml2-devel, check-devel, libcurl-devel, libtool, libssh2-devel, libuuid-devel
+BuildRequires: autoconf
+BuildRequires: doxygen
+BuildRequires: libxml2-devel
+BuildRequires: check-devel
+BuildRequires: libcurl-devel
+BuildRequires: libtool
+BuildRequires: libuuid-devel
 # libxml2 and libcurl are implicit dependencies  
-Requires: test-definition, openssh, testrunner-lite-hwinfo, libssh2, libuuid
+Requires: test-definition
+Requires: openssh
+Requires: testrunner-lite-hwinfo-nemo
+Requires: libuuid
 
 %package tests
 Summary: Unit tests for testrunner-lite
@@ -19,7 +26,9 @@ Requires: testrunner-lite
 
 %package regression-tests
 Summary: Regression tests for testrunner-lite
-Requires: testrunner-lite, test-definition, libxml2, diffutils
+Requires: testrunner-lite
+Requires: libxml2
+Requires: diffutils
 
 %package docs
 Summary: Testrunner-lite doxygen documentation in html format
@@ -29,12 +38,21 @@ Summary: Provides commands for hardware information obtaining
 Requires: coreutils
 Provides: testrunner-lite-hwinfo
 Conflicts: testrunner-lite-hwinfo-meego
+Conflicts: testrunner-lite-hwinfo-nemo
 
 %package hwinfo-meego
 Summary: Provides commands for hardware information obtaining
 Requires: coreutils
 Provides: testrunner-lite-hwinfo
 Conflicts: testrunner-lite-hwinfo-maemo
+Conflicts: testrunner-lite-hwinfo-nemo
+
+%package hwinfo-nemo
+Summary: Provides commands for hardware information obtaining
+Requires: coreutils
+Provides: testrunner-lite-hwinfo
+Conflicts: testrunner-lite-hwinfo-maemo
+Conflicts: testrunner-lite-hwinfo-meego
 
 %description
 Generic test executor tool
@@ -54,13 +72,16 @@ Library for obtaining hardware information in maemo environment
 %description hwinfo-meego
 Library for obtaining hardware information in meego environment
 
+%description hwinfo-nemo
+Library for obtaining hardware information in nemo environment
+
 %prep
-%setup -n %{name}-%{version}
+%setup -q -n %{name}-%{version}
 
 %build
 CFLAGS="-DVERSIONSTR=%{version} -ldl"
 autoreconf --install
-%configure --enable-libssh2
+%configure
 make %{?_smp_mflags}
 make html %{?_smp_mflags}
 
@@ -74,14 +95,18 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
+%{_bindir}/run_tests.sh
 
 %files tests
 %defattr(-,root,root,-)
+%dir %{_libdir}/testrunner-lite-tests
 %{_libdir}/testrunner-lite-tests/*
+%dir %{_datadir}/testrunner-lite-tests
 %{_datadir}/testrunner-lite-tests/*
 
 %files regression-tests
 %defattr(-,root,root,-)
+%dir %{_datadir}/testrunner-lite-regression-tests
 %{_datadir}/testrunner-lite-regression-tests/*
 
 %files docs
@@ -89,8 +114,6 @@ rm -rf %{buildroot}
 # 3 files in documention causes a duplicate warning by rpmlint
 %doc %{_docdir}/testrunner-lite/*
 %{_mandir}/man1/testrunner-lite.1.gz
-# need to remove executable flag because rpmlint complains about it
-%attr(644,root,root) %{_docdir}/testrunner-lite/html/installdox
 
 %files hwinfo-maemo
 %defattr(-,root,root,-)
@@ -111,4 +134,14 @@ ln -s %{_libdir}/testrunner-lite-hwinfo-meego.so  %{_libdir}/testrunner-lite-hwi
 
 %postun hwinfo-meego
 rm %{_libdir}/testrunner-lite-hwinfo.so
+
+%files hwinfo-nemo
+%defattr(-,root,root,-)
+%{_libdir}/testrunner-lite-hwinfo-nemo*
+
+%post hwinfo-nemo
+ln -s %{_libdir}/testrunner-lite-hwinfo-nemo.so  %{_libdir}/testrunner-lite-hwinfo.so
+
+%postun hwinfo-nemo
+rm %{_libdir}/testrunner-lite-nemo.so
 

@@ -1,0 +1,15 @@
+* Thu Feb 19 2015 Matti Kosola <matti.kosola@jollamobile.com> - 1.8.3
+- Update configure ac for automake 1.12
+
+* Fri Oct 24 2014 Matti Kosola <matti.kosola@jollamobile.com> - 1.8.2
+- Add nemo hwinfo library
+- Fix memory leaks
+- Disable some obsoleted tests
+- Fix backing up .ssh directory in tests.xml
+
+* Fri Sep 27 2013 Matti Kosola <matti.kosola@jollamobile.com> - 1.8.1
+- Add rich cores uploaded to telemetry info into test reports
+
+* Tue May 7 2013 Reto Zingg <reto.zingg@jollamobile.com> - 1.8.0-8
+- add run_tests.sh for convenient test runs
+
