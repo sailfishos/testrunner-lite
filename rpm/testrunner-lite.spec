@@ -17,63 +17,65 @@ BuildRequires: libuuid-devel
 # libxml2 and libcurl are implicit dependencies  
 Requires: test-definition
 Requires: openssh
-Requires: testrunner-lite-hwinfo-nemo
+Requires: %{name}-hwinfo-nemo = %{version}-%{release}
 Requires: libuuid
 
 %package tests
-Summary: Unit tests for testrunner-lite
-Requires: testrunner-lite
+Summary: Unit tests for %{name}
+Requires: %{name} = %{version}-%{release}
 
 %package regression-tests
-Summary: Regression tests for testrunner-lite
-Requires: testrunner-lite
+Summary: Regression tests for %{name}
+Requires: %{name} = %{version}-%{release}
 Requires: libxml2
 Requires: diffutils
 
-%package docs
+%package doc
 Summary: Testrunner-lite doxygen documentation in html format
+Requires:  %{name} = %{version}-%{release}
+Obsoletes: %{name}-docs
 
 %package hwinfo-maemo
 Summary: Provides commands for hardware information obtaining
 Requires: coreutils
-Provides: testrunner-lite-hwinfo
-Conflicts: testrunner-lite-hwinfo-meego
-Conflicts: testrunner-lite-hwinfo-nemo
+Provides: %{name}-hwinfo
+Conflicts: %{name}-hwinfo-meego
+Conflicts: %{name}-hwinfo-nemo
 
 %package hwinfo-meego
 Summary: Provides commands for hardware information obtaining
 Requires: coreutils
-Provides: testrunner-lite-hwinfo
-Conflicts: testrunner-lite-hwinfo-maemo
-Conflicts: testrunner-lite-hwinfo-nemo
+Provides: %{name}-hwinfo
+Conflicts: %{name}-hwinfo-maemo
+Conflicts: %{name}-hwinfo-nemo
 
 %package hwinfo-nemo
 Summary: Provides commands for hardware information obtaining
 Requires: coreutils
-Provides: testrunner-lite-hwinfo
-Conflicts: testrunner-lite-hwinfo-maemo
-Conflicts: testrunner-lite-hwinfo-meego
+Provides: %{name}-hwinfo
+Conflicts: %{name}-hwinfo-maemo
+Conflicts: %{name}-hwinfo-meego
 
 %description
-Generic test executor tool
+Generic test executor tool.
 
 %description tests
-Unit tests for testrunner-lite
+Unit tests for %{name}.
 
 %description regression-tests
-Regression tests for testrunner-lite
+Regression tests for %{name}.
 
-%description docs
-Testrunner-lite doxygen documentation in html format
+%description doc
+Testrunner-lite doxygen documentation in html format.
 
 %description hwinfo-maemo
-Library for obtaining hardware information in maemo environment
+Library for obtaining hardware information in maemo environment.
 
 %description hwinfo-meego
-Library for obtaining hardware information in meego environment
+Library for obtaining hardware information in meego environment.
 
 %description hwinfo-nemo
-Library for obtaining hardware information in nemo environment
+Library for obtaining hardware information in nemo environment.
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -89,59 +91,61 @@ make html %{?_smp_mflags}
 rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
 
+mv %{buildroot}%{_docdir}/%{name}{,-%{version}}
+
 %clean
 rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
+%license COPYING
 %{_bindir}/%{name}
 %{_bindir}/run_tests.sh
 
 %files tests
 %defattr(-,root,root,-)
-%dir %{_libdir}/testrunner-lite-tests
-%{_libdir}/testrunner-lite-tests/*
-%dir %{_datadir}/testrunner-lite-tests
-%{_datadir}/testrunner-lite-tests/*
+%{_libdir}/%{name}-tests
+%{_datadir}/%{name}-tests
 
 %files regression-tests
 %defattr(-,root,root,-)
-%dir %{_datadir}/testrunner-lite-regression-tests
-%{_datadir}/testrunner-lite-regression-tests/*
+%{_datadir}/%{name}-regression-tests
 
-%files docs
+%files doc
 %defattr(-,root,root,-)
 # 3 files in documention causes a duplicate warning by rpmlint
-%doc %{_docdir}/testrunner-lite/*
-%{_mandir}/man1/testrunner-lite.1.gz
+%{_docdir}/%{name}-%{version}
+%{_mandir}/man1/%{name}.1.gz
 
 %files hwinfo-maemo
 %defattr(-,root,root,-)
-%{_libdir}/testrunner-lite-hwinfo-maemo*
+%license COPYING
+%{_libdir}/%{name}-hwinfo-maemo*
 
 %post hwinfo-maemo
-ln -s %{_libdir}/testrunner-lite-hwinfo-maemo.so  %{_libdir}/testrunner-lite-hwinfo.so
+ln -s %{_libdir}/%{name}-hwinfo-maemo.so  %{_libdir}/%{name}-hwinfo.so
 
 %postun hwinfo-maemo
-rm %{_libdir}/testrunner-lite-hwinfo.so
+rm %{_libdir}/%{name}-hwinfo.so
 
 %files hwinfo-meego
 %defattr(-,root,root,-)
-%{_libdir}/testrunner-lite-hwinfo-meego*
+%license COPYING
+%{_libdir}/%{name}-hwinfo-meego*
 
 %post hwinfo-meego
-ln -s %{_libdir}/testrunner-lite-hwinfo-meego.so  %{_libdir}/testrunner-lite-hwinfo.so
+ln -s %{_libdir}/%{name}-hwinfo-meego.so  %{_libdir}/%{name}-hwinfo.so
 
 %postun hwinfo-meego
-rm %{_libdir}/testrunner-lite-hwinfo.so
+rm %{_libdir}/%{name}-hwinfo.so
 
 %files hwinfo-nemo
 %defattr(-,root,root,-)
-%{_libdir}/testrunner-lite-hwinfo-nemo*
+%license COPYING
+%{_libdir}/%{name}-hwinfo-nemo*
 
 %post hwinfo-nemo
-ln -s %{_libdir}/testrunner-lite-hwinfo-nemo.so  %{_libdir}/testrunner-lite-hwinfo.so
+ln -s %{_libdir}/%{name}-hwinfo-nemo.so  %{_libdir}/%{name}-hwinfo.so
 
 %postun hwinfo-nemo
-rm %{_libdir}/testrunner-lite-nemo.so
-
+rm %{_libdir}/%{name}-nemo.so
