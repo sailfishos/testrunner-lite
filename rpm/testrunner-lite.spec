@@ -2,8 +2,7 @@ Name: testrunner-lite
 Version: 1.8.4
 Release: 1
 Summary: Generic test executor tool
-Group: Development/Tools
-License: LGPL 2.1
+License: LGPLv2
 URL: https://github.com/mer-tools/testrunner-lite
 Source0: %{name}-%{version}.tar.gz 
    
@@ -123,10 +122,13 @@ rm -rf %{buildroot}
 %{_libdir}/%{name}-hwinfo-maemo*
 
 %post hwinfo-maemo
-ln -s %{_libdir}/%{name}-hwinfo-maemo.so  %{_libdir}/%{name}-hwinfo.so
+if [ ! -e %{_libdir}/%{name}-hwinfo.so ]
+then
+  ln -s %{_libdir}/%{name}-hwinfo-maemo.so  %{_libdir}/%{name}-hwinfo.so
+fi
 
 %postun hwinfo-maemo
-rm %{_libdir}/%{name}-hwinfo.so
+rm %{_libdir}/%{name}-hwinfo.so || :
 
 %files hwinfo-meego
 %defattr(-,root,root,-)
@@ -134,10 +136,13 @@ rm %{_libdir}/%{name}-hwinfo.so
 %{_libdir}/%{name}-hwinfo-meego*
 
 %post hwinfo-meego
-ln -s %{_libdir}/%{name}-hwinfo-meego.so  %{_libdir}/%{name}-hwinfo.so
+if [ ! -e %{_libdir}/%{name}-hwinfo.so ]
+then
+  ln -s %{_libdir}/%{name}-hwinfo-meego.so  %{_libdir}/%{name}-hwinfo.so
+fi
 
 %postun hwinfo-meego
-rm %{_libdir}/%{name}-hwinfo.so
+rm %{_libdir}/%{name}-hwinfo.so || :
 
 %files hwinfo-nemo
 %defattr(-,root,root,-)
@@ -145,7 +150,10 @@ rm %{_libdir}/%{name}-hwinfo.so
 %{_libdir}/%{name}-hwinfo-nemo*
 
 %post hwinfo-nemo
-ln -s %{_libdir}/%{name}-hwinfo-nemo.so  %{_libdir}/%{name}-hwinfo.so
+if [ ! -e %{_libdir}/%{name}-hwinfo.so ]
+then
+  ln -s %{_libdir}/%{name}-hwinfo-nemo.so  %{_libdir}/%{name}-hwinfo.so
+fi
 
 %postun hwinfo-nemo
-rm %{_libdir}/%{name}-nemo.so
+rm %{_libdir}/%{name}-hwinfo.so || :
