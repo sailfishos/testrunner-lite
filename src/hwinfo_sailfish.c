@@ -91,7 +91,7 @@
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-/** Return command for product information in sfos environment
+/** Return command for product information in sailfish environment
  */
 const char *hwinfo_product()
 {
@@ -101,7 +101,7 @@ const char *hwinfo_product()
 		"fi";
 }
 /* ------------------------------------------------------------------------- */
-/** Return command for hw-build information in sfos environment
+/** Return command for hw-build information in sailfish environment
  */
 const char *hwinfo_hw_build()
 {
@@ -111,7 +111,7 @@ const char *hwinfo_hw_build()
 		"fi";
 }
 /* ------------------------------------------------------------------------- */
-/** Return command for extra information in sfos environment
+/** Return command for extra information in sailfish environment
  */
 const char *hwinfo_extra()
 {

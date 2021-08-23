@@ -16,7 +16,7 @@ BuildRequires: libuuid-devel
 # libxml2 and libcurl are implicit dependencies  
 Requires: test-definition
 Requires: openssh
-Requires: %{name}-hwinfo-nemo = %{version}-%{release}
+Requires: %{name}-hwinfo-sailfish = %{version}-%{release}
 Requires: libuuid
 
 %package tests
@@ -39,16 +39,16 @@ Summary: Provides commands for hardware information obtaining
 Requires: coreutils
 Provides: %{name}-hwinfo
 Conflicts: %{name}-hwinfo-meego
-Conflicts: %{name}-hwinfo-nemo
+Conflicts: %{name}-hwinfo-sailfish
 
 %package hwinfo-meego
 Summary: Provides commands for hardware information obtaining
 Requires: coreutils
 Provides: %{name}-hwinfo
 Conflicts: %{name}-hwinfo-maemo
-Conflicts: %{name}-hwinfo-nemo
+Conflicts: %{name}-hwinfo-sailfish
 
-%package hwinfo-nemo
+%package hwinfo-sailfish
 Summary: Provides commands for hardware information obtaining
 Requires: coreutils
 Requires: which
@@ -56,6 +56,7 @@ Recommends: ssu-sysinfo
 Provides: %{name}-hwinfo
 Conflicts: %{name}-hwinfo-maemo
 Conflicts: %{name}-hwinfo-meego
+Obsoletes: %{name}-hwinfo-nemo
 
 %description
 Generic test executor tool.
@@ -75,8 +76,8 @@ Library for obtaining hardware information in maemo environment.
 %description hwinfo-meego
 Library for obtaining hardware information in meego environment.
 
-%description hwinfo-nemo
-Library for obtaining hardware information in nemo environment.
+%description hwinfo-sailfish
+Library for obtaining hardware information in sailfish environment.
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -146,16 +147,16 @@ fi
 %postun hwinfo-meego
 rm %{_libdir}/%{name}-hwinfo.so || :
 
-%files hwinfo-nemo
+%files hwinfo-sailfish
 %defattr(-,root,root,-)
 %license COPYING
-%{_libdir}/%{name}-hwinfo-nemo*
+%{_libdir}/%{name}-hwinfo-sailfish*
 
-%post hwinfo-nemo
+%post hwinfo-sailfish
 if [ ! -e %{_libdir}/%{name}-hwinfo.so ]
 then
-  ln -s %{_libdir}/%{name}-hwinfo-nemo.so  %{_libdir}/%{name}-hwinfo.so
+  ln -s %{_libdir}/%{name}-hwinfo-sailfish.so  %{_libdir}/%{name}-hwinfo.so
 fi
 
-%postun hwinfo-nemo
+%postun hwinfo-sailfish
 rm %{_libdir}/%{name}-hwinfo.so || :
