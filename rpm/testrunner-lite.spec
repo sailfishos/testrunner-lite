@@ -51,6 +51,8 @@ Conflicts: %{name}-hwinfo-nemo
 %package hwinfo-nemo
 Summary: Provides commands for hardware information obtaining
 Requires: coreutils
+Requires: which
+Recommends: ssu-sysinfo
 Provides: %{name}-hwinfo
 Conflicts: %{name}-hwinfo-maemo
 Conflicts: %{name}-hwinfo-meego

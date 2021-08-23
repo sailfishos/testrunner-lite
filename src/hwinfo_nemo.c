@@ -91,33 +91,33 @@
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-/** Return command for product information in nemo environment
+/** Return command for product information in sfos environment
  */
 const char *hwinfo_product()
 {
-	return  "if echo $PATH | grep -q scratchbox;"
-		"then echo scratchbox;"
-		"else ssu model -s;"
+	return  "if which ssu-sysinfo > /dev/null 2>&1;"
+		"then ssu-sysinfo -m;"
+		"else . /etc/os-release; echo $ID;"
 		"fi";
 }
 /* ------------------------------------------------------------------------- */
-/** Return command for hw-build information in nemo environment
+/** Return command for hw-build information in sfos environment
  */
 const char *hwinfo_hw_build()
 {
-	return  "if echo $PATH | grep -q scratchbox;"
-		"then echo scratchbox;"
-		"else ssu status | grep model | awk '{print substr($0,index($0,\":\")+2)}';"
+	return  "if which ssu-sysinfo > /dev/null 2>&1;"
+		"then ssu-sysinfo -p;"
+		"else . /etc/os-release; echo $PRETTY_NAME;"
 		"fi";
 }
 /* ------------------------------------------------------------------------- */
-/** Return command for extra information in nemo environment
+/** Return command for extra information in sfos environment
  */
 const char *hwinfo_extra()
 {
-	return "if echo $PATH | grep -q scratchbox;"
-		"then echo scratchbox;"
-		"else cat /proc/cpuinfo | grep Hardware | awk '{print substr($0,index($0,\":\")+2)}';"
+	return  "if which ssu-sysinfo > /dev/null 2>&1;"
+		"then ssu-sysinfo -D;"
+		"else . /etc/os-release; echo $HOME_URL;"
 		"fi";
 
 }
