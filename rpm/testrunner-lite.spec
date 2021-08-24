@@ -34,28 +34,14 @@ Summary: Testrunner-lite doxygen documentation in html format
 Requires:  %{name} = %{version}-%{release}
 Obsoletes: %{name}-docs
 
-%package hwinfo-maemo
-Summary: Provides commands for hardware information obtaining
-Requires: coreutils
-Provides: %{name}-hwinfo
-Conflicts: %{name}-hwinfo-meego
-Conflicts: %{name}-hwinfo-sailfish
-
-%package hwinfo-meego
-Summary: Provides commands for hardware information obtaining
-Requires: coreutils
-Provides: %{name}-hwinfo
-Conflicts: %{name}-hwinfo-maemo
-Conflicts: %{name}-hwinfo-sailfish
-
 %package hwinfo-sailfish
 Summary: Provides commands for hardware information obtaining
 Requires: coreutils
 Requires: which
 Recommends: ssu-sysinfo
 Provides: %{name}-hwinfo
-Conflicts: %{name}-hwinfo-maemo
-Conflicts: %{name}-hwinfo-meego
+Obsoletes: %{name}-hwinfo-maemo
+Obsoletes: %{name}-hwinfo-meego
 Obsoletes: %{name}-hwinfo-nemo
 
 %description
@@ -69,12 +55,6 @@ Regression tests for %{name}.
 
 %description doc
 Testrunner-lite doxygen documentation in html format.
-
-%description hwinfo-maemo
-Library for obtaining hardware information in maemo environment.
-
-%description hwinfo-meego
-Library for obtaining hardware information in meego environment.
 
 %description hwinfo-sailfish
 Library for obtaining hardware information in sailfish environment.
@@ -118,34 +98,6 @@ rm -rf %{buildroot}
 # 3 files in documention causes a duplicate warning by rpmlint
 %{_docdir}/%{name}-%{version}
 %{_mandir}/man1/%{name}.1.gz
-
-%files hwinfo-maemo
-%defattr(-,root,root,-)
-%license COPYING
-%{_libdir}/%{name}-hwinfo-maemo*
-
-%post hwinfo-maemo
-if [ ! -e %{_libdir}/%{name}-hwinfo.so ]
-then
-  ln -s %{_libdir}/%{name}-hwinfo-maemo.so  %{_libdir}/%{name}-hwinfo.so
-fi
-
-%postun hwinfo-maemo
-rm %{_libdir}/%{name}-hwinfo.so || :
-
-%files hwinfo-meego
-%defattr(-,root,root,-)
-%license COPYING
-%{_libdir}/%{name}-hwinfo-meego*
-
-%post hwinfo-meego
-if [ ! -e %{_libdir}/%{name}-hwinfo.so ]
-then
-  ln -s %{_libdir}/%{name}-hwinfo-meego.so  %{_libdir}/%{name}-hwinfo.so
-fi
-
-%postun hwinfo-meego
-rm %{_libdir}/%{name}-hwinfo.so || :
 
 %files hwinfo-sailfish
 %defattr(-,root,root,-)
