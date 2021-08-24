@@ -166,8 +166,7 @@ typedef struct {
 	xmlListPtr steps;       /**< Steps in this test case */
 	xmlChar   *tc_id;       /**< TC_ID */
 	xmlChar   *state;       /**< State attribute */
-	xmlChar   *bugzilla_id;  /**< Id mapping the case to bug or 
-				    feature number in bugs.meego.com */
+	xmlChar   *bugzilla_id;  /**< Id mapping the case to bug number */
         xmlChar   *description;  /**< Description element */
 	xmlListPtr gets;         /**< Get commands */
 
