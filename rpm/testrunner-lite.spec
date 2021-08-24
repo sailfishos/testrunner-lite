@@ -17,7 +17,6 @@ BuildRequires: libuuid-devel
 Requires: test-definition
 Requires: openssh
 Requires: %{name}-hwinfo-sailfish = %{version}-%{release}
-Requires: libuuid
 
 %package tests
 Summary: Unit tests for %{name}
@@ -70,13 +69,9 @@ make %{?_smp_mflags}
 make html %{?_smp_mflags}
 
 %install
-rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
 
 mv %{buildroot}%{_docdir}/%{name}{,-%{version}}
-
-%clean
-rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
