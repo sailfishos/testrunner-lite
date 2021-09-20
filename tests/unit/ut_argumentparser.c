@@ -79,7 +79,7 @@
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-START_TEST (test_parse_cmd_line_arguments)
+START_TEST (test_parse_cmd_line_arguments) {
 
     /* Test parsing command line arguments. */
     int ret;
@@ -129,9 +129,10 @@ START_TEST (test_parse_cmd_line_arguments)
     snprintf (cmd, TEST_CMD_LEN, "%s -V", TESTRUNNERLITE_BIN);
     ret = system (cmd);
     fail_if (ret != 0, cmd);
-END_TEST
 
-START_TEST (test_parse_cmd_line_invalid_arguments)
+} END_TEST
+
+START_TEST (test_parse_cmd_line_invalid_arguments) {
 
     /* Test parsing command line arguments. */
     int ret;
@@ -206,9 +207,9 @@ START_TEST (test_parse_cmd_line_invalid_arguments)
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
-END_TEST
+} END_TEST
 
-START_TEST (test_semantic_and_validate_only_flags)
+START_TEST (test_semantic_and_validate_only_flags) {
 
     /* Test parsing command line arguments. */
     int ret;
@@ -232,9 +233,9 @@ START_TEST (test_semantic_and_validate_only_flags)
     ret = system (cmd);
     fail_if (ret, cmd);
 
-END_TEST
+} END_TEST
 
-START_TEST (test_verbosity_flags)
+START_TEST (test_verbosity_flags) {
 
     /* Test parsing verbosity arguments. */
     int ret;
@@ -310,9 +311,10 @@ START_TEST (test_verbosity_flags)
     ret = system (cmd);
     fail_if (ret == 0, cmd);
     
-END_TEST
+} END_TEST
 
-START_TEST (test_remote_logger_flag)
+START_TEST (test_remote_logger_flag) {
+
     int ret;
     char cmd[TEST_CMD_LEN];
     char *out_file = "/tmp/out.xml";
@@ -329,7 +331,7 @@ START_TEST (test_remote_logger_flag)
     ret = system (cmd);
     fail_unless (ret != 0, cmd);
 
-END_TEST
+} END_TEST
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */

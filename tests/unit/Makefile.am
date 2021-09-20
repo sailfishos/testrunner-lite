@@ -20,7 +20,6 @@ testrunnerliteunittests_SOURCES = main.c \
 
 AM_CPPFLAGS = -DDATADIR=\"$(datadir)\" -DLIBDIR=\"$(libdir)\" -DBINDIR=\"$(bindir)\"
 AM_CFLAGS = -I. \
-            -I/usr/include \
 	    $(XML2_CFLAGS) \
             -I$(top_builddir)/src \
             -fprofile-arcs \

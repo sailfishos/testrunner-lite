@@ -141,7 +141,8 @@ static const char *invalid_utf8_samples[] = {
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-START_TEST (test_ctrl_char_strip)
+START_TEST (test_ctrl_char_strip) {
+
     exec_data edata;
     char cmd[TEST_CMD_LEN];
     const char test_str[] = {'t',0x02,'e','s','t','f',0x06,0x07,0x08,0x09,
@@ -171,9 +172,10 @@ START_TEST (test_ctrl_char_strip)
 		      strlen (valid_str)),
 	     "FAIL: stdout %s != %s", edata.stdout_data.buffer, valid_str);
 
-END_TEST
+} END_TEST
 
-START_TEST (test_utf8_checker)
+START_TEST (test_utf8_checker) {
+
     int i;
 
     /* check valid sequences */
@@ -194,9 +196,10 @@ START_TEST (test_utf8_checker)
     fail_if(utf8_validity_check("\xF0\x90\x80\x80", 3));
     fail_if(utf8_validity_check("\xF0\x90\x80\x80", 5));
     fail_if(utf8_validity_check("\xF0\x90\x80\x80", 6));
-END_TEST
 
-START_TEST (test_logging)
+} END_TEST
+
+START_TEST (test_logging) {
 
     char *stdout_tmp = "/tmp/testrunner-lite-stdout.log";
     char cmd[TEST_CMD_LEN];
@@ -331,7 +334,7 @@ START_TEST (test_logging)
     ret = system (cmd);
     fail_if (ret == 0, cmd);
     
-END_TEST
+} END_TEST
 
 /* Opens tcp server socket, listens for a connection, reads, and writes simple ack
  * @param portno TCP port number of socket
@@ -390,8 +393,7 @@ static void run_server_socket(int portno, char* buffer, int length, char* error)
     }
 }
 
-START_TEST (test_remote_logging)
-{
+START_TEST (test_remote_logging) {
     testrunner_lite_options opts;
     char buffer[1024];
     char error[128];
@@ -432,11 +434,11 @@ START_TEST (test_remote_logging)
     /* Check that buffer contains at least something we expected */
     fail_if(strstr(buffer, "HTTP") == NULL);
     fail_if(strstr(buffer, sample_message_url_enc) == NULL);
-}
-END_TEST
 
-START_TEST (test_remote_logging_command)
-{
+} END_TEST
+
+START_TEST (test_remote_logging_command) {
+
     char buffer[1024];
     char error[128];
     char logger_option[128];
@@ -477,11 +479,11 @@ START_TEST (test_remote_logging_command)
     /* Check that buffer contains at least something we expected */
     fail_if(strstr(buffer, "HTTP") == NULL);
     fail_if(strstr(buffer, "levelname") == NULL);
-}
-END_TEST
 
-START_TEST (test_remote_logging_command_with_logid)
-{
+} END_TEST
+
+START_TEST (test_remote_logging_command_with_logid) {
+
     char buffer[1024];
     char error[128];
     char logger_option[128];
@@ -529,11 +531,11 @@ START_TEST (test_remote_logging_command_with_logid)
     fail_if(strstr(buffer, "HTTP") == NULL);
     fail_if(strstr(buffer, "levelno") == NULL);
     fail_if(strstr(buffer, logid_option) == NULL);
-}
-END_TEST
 
-START_TEST (test_hwinfo)
-     
+} END_TEST
+
+START_TEST (test_hwinfo) {
+
      hw_info hi;
      testrunner_lite_options opts;
 
@@ -549,11 +551,11 @@ START_TEST (test_hwinfo)
      print_hwinfo (&hi);
 
      clean_hwinfo (&hi);
-    
-END_TEST
 
-START_TEST (test_replace_string)
-{
+} END_TEST
+
+START_TEST (test_replace_string) {
+
 	char *result, *orig, *from, *to;
 	fail_unless(replace_string(NULL, NULL, NULL) == NULL);
 	fail_unless(replace_string("a", "b", NULL) == NULL);
@@ -594,11 +596,11 @@ START_TEST (test_replace_string)
 	to = "";
 	result = replace_string(orig, from, to);
 	fail_if(strcmp(result, "erase ") != 0);
-}
-END_TEST
 
-START_TEST (test_list_contains)
-{
+} END_TEST
+
+START_TEST (test_list_contains) {
+
 	fail_unless(list_contains("foo","foo",","));
 	fail_unless(list_contains("foo,bar","foo",","));
 	fail_unless(list_contains("bar,foo","foo",","));
@@ -617,14 +619,14 @@ START_TEST (test_list_contains)
 	fail_unless(list_contains("foo;bar","foo",",;"));
 	fail_unless(list_contains("bar;dummy,foo","foo",";,"));
 	fail_unless(list_contains("bar:foo;dummy","foo",",:;"));
-}
-END_TEST
+
+} END_TEST
 
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */
-Suite *make_features_suite (void)
-{
+Suite *make_features_suite (void) {
+
     /* Create suite. */
     Suite *s = suite_create ("tests for various testrunner-lite features");
 
