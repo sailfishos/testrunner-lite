@@ -7,7 +7,6 @@ URL: https://github.com/mer-tools/testrunner-lite
 Source0: %{name}-%{version}.tar.gz 
    
 BuildRequires: autoconf
-BuildRequires: doxygen
 BuildRequires: libxml2-devel
 BuildRequires: check-devel
 BuildRequires: libcurl-devel
@@ -29,7 +28,7 @@ Requires: libxml2
 Requires: diffutils
 
 %package doc
-Summary: Testrunner-lite doxygen documentation in html format
+Summary: Testrunner-lite man documentation
 Requires:  %{name} = %{version}-%{release}
 Obsoletes: %{name}-docs
 
@@ -53,7 +52,7 @@ Unit tests for %{name}.
 Regression tests for %{name}.
 
 %description doc
-Testrunner-lite doxygen documentation in html format.
+Testrunner-lite man documentation.
 
 %description hwinfo-sailfish
 Library for obtaining hardware information in sailfish environment.
@@ -70,8 +69,6 @@ make html %{?_smp_mflags}
 
 %install
 make install DESTDIR=%{buildroot}
-
-mv %{buildroot}%{_docdir}/%{name}{,-%{version}}
 
 %files
 %defattr(-,root,root,-)
@@ -90,8 +87,6 @@ mv %{buildroot}%{_docdir}/%{name}{,-%{version}}
 
 %files doc
 %defattr(-,root,root,-)
-# 3 files in documention causes a duplicate warning by rpmlint
-%{_docdir}/%{name}-%{version}
 %{_mandir}/man1/%{name}.1.gz
 
 %files hwinfo-sailfish
