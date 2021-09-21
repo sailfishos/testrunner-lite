@@ -38,9 +38,9 @@ Requires: coreutils
 Requires: which
 Recommends: ssu-sysinfo
 Provides: %{name}-hwinfo
-Obsoletes: %{name}-hwinfo-maemo
-Obsoletes: %{name}-hwinfo-meego
-Obsoletes: %{name}-hwinfo-nemo
+Obsoletes: %{name}-hwinfo-maemo < 1.9.0
+Obsoletes: %{name}-hwinfo-meego < 1.9.0
+Obsoletes: %{name}-hwinfo-nemo < 1.9.0
 
 %description
 Generic test executor tool.
