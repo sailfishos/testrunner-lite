@@ -24,6 +24,7 @@ AM_CFLAGS = -I. \
             -I$(top_builddir)/src \
             -fprofile-arcs \
             -ftest-coverage \
+            -fcommon \
             $(CHECK_CFLAGS)
 
 testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \
