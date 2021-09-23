@@ -5,6 +5,7 @@ Summary: Generic test executor tool
 License: LGPLv2
 URL: https://github.com/mer-tools/testrunner-lite
 Source0: %{name}-%{version}.tar.gz 
+Source1: config.sub
    
 BuildRequires: autoconf
 BuildRequires: libxml2-devel
