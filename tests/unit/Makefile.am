@@ -20,11 +20,11 @@ testrunnerliteunittests_SOURCES = main.c \
 
 AM_CPPFLAGS = -DDATADIR=\"$(datadir)\" -DLIBDIR=\"$(libdir)\" -DBINDIR=\"$(bindir)\"
 AM_CFLAGS = -I. \
-            -I/usr/include \
 	    $(XML2_CFLAGS) \
             -I$(top_builddir)/src \
             -fprofile-arcs \
             -ftest-coverage \
+            -fcommon \
             $(CHECK_CFLAGS)
 
 testrunnerliteunittests_LDADD = $(top_builddir)/src/testdefinitionparser.o \

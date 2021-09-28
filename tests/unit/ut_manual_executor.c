@@ -79,7 +79,7 @@
 /* ------------------------------------------------------------------------- */
 /* ==================== LOCAL FUNCTIONS ==================================== */
 /* ------------------------------------------------------------------------- */
-START_TEST (test_execute_manual_step_passed)
+START_TEST (test_execute_manual_step_passed) {
 
     td_case *t_case = NULL;
     td_step *t_step = NULL;
@@ -149,9 +149,9 @@ START_TEST (test_execute_manual_step_passed)
     close(pipefd[0]);
     close(pipefd[1]);
     
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_execute_manual_step_failed)
+START_TEST (test_execute_manual_step_failed) {
 
     td_case *t_case = NULL;
     td_step *t_step = NULL;
@@ -221,10 +221,10 @@ START_TEST (test_execute_manual_step_failed)
     close(pipefd[0]);
     close(pipefd[1]);
     
-END_TEST
+} END_TEST
 
 /* ------------------------------------------------------------------------- */
-START_TEST (test_execute_manual_step_na)
+START_TEST (test_execute_manual_step_na) {
 
     td_case *t_case = NULL;
     td_step *t_step = NULL;
@@ -294,9 +294,9 @@ START_TEST (test_execute_manual_step_na)
     close(pipefd[0]);
     close(pipefd[1]);
     
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_execute_manual_set)
+START_TEST (test_execute_manual_set) {
      int ret;
      FILE *f;
 
@@ -319,9 +319,9 @@ START_TEST (test_execute_manual_set)
      ret = system ("grep -q testcomment /tmp/res.xml");
      fail_if (ret, "comment not found from result");
 
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_execute_semi_auto)
+START_TEST (test_execute_semi_auto) {
      int ret;
      FILE *f;
 
@@ -340,9 +340,9 @@ START_TEST (test_execute_semi_auto)
      ret = system ("grep -q FAIL /tmp/res.xml");
      fail_unless (ret, "/tmp/res.xml contains FAIL");
 
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_execute_manual_case_no_steps)
+START_TEST (test_execute_manual_case_no_steps) {
      int ret;
      FILE *f;
 
@@ -361,8 +361,8 @@ START_TEST (test_execute_manual_case_no_steps)
      ret = system ("grep -q PASS /tmp/res.xml");
      fail_unless (ret, "/tmp/res.xml contains FAIL");
     
-END_TEST
-START_TEST (test_execute_manual_empty_steps)
+} END_TEST
+START_TEST (test_execute_manual_empty_steps) {
      int ret;
      FILE *f;
 
@@ -390,7 +390,7 @@ START_TEST (test_execute_manual_empty_steps)
 
      
     
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */

@@ -109,6 +109,7 @@ LOCAL void ut_test_set (td_set *s)
 }
 /* ------------------------------------------------------------------------- */
 START_TEST (test_logger_init_inv_args)
+{
 
     testrunner_lite_options test_opts;
     hw_info hwinfo;
@@ -122,9 +123,11 @@ START_TEST (test_logger_init_inv_args)
     test_opts.output_type = OUTPUT_TYPE_TXT;
     fail_unless (init_result_logger(&test_opts, &hwinfo));
     
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_logger_write_xml)
+{
 
     td_parser_callbacks cbs;
     testrunner_lite_options test_opts;
@@ -166,9 +169,11 @@ START_TEST (test_logger_write_xml)
     td_set_delete (set);
     set = NULL;
 
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_logger_write_txt)
+{
 
     td_parser_callbacks cbs;
     testrunner_lite_options test_opts;
@@ -210,6 +215,7 @@ START_TEST (test_logger_write_txt)
     td_set_delete (set);
     set = NULL;
 
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */

@@ -107,7 +107,7 @@ LOCAL void ut_test_set (td_set *s)
 }
 /* ------------------------------------------------------------------------- */
 START_TEST (test_parse_test_definition)
-
+{
     /* Test parsing valid test definition xml. */
     testrunner_lite_options test_opts;
 
@@ -116,11 +116,11 @@ START_TEST (test_parse_test_definition)
 
     fail_if (parse_test_definition(&test_opts) != 0, 
         "Parsing test definition failed!");
-
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_parse_test_definition_no_schema)
-
+{
     /* Test parsing valid test definition xml (without schema). */
     testrunner_lite_options test_opts;
 
@@ -131,11 +131,11 @@ START_TEST (test_parse_test_definition_no_schema)
 
     fail_if (parse_test_definition(&test_opts) != 0, 
         "Parsing test definition failed!");
-
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_parse_not_existing_test_definition)
-
+{
     /* Test parsing not existing test definition xml. */
     char *file_not_existing = "not_existing_xml.xml";
     testrunner_lite_options test_opts;
@@ -144,11 +144,11 @@ START_TEST (test_parse_not_existing_test_definition)
     test_opts.input_filename = strdup (file_not_existing);
 
     fail_if (parse_test_definition(&test_opts) == 0, NULL);
-
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_parse_invalid_test_definition)
-
+{
     /* Test parsing invalid test definition xml. */
     testrunner_lite_options test_opts;
 
@@ -156,11 +156,11 @@ START_TEST (test_parse_invalid_test_definition)
     test_opts.input_filename = strdup (TESTDATA_INVALID_XML_1);
 
     fail_if (parse_test_definition(&test_opts) == 0, NULL);
-
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_reader_null_callbacks)
-
+{
     td_parser_callbacks cbs;
     testrunner_lite_options test_opts;
 
@@ -170,19 +170,20 @@ START_TEST (test_reader_null_callbacks)
     fail_if (td_register_callbacks (&cbs));
     fail_if (td_reader_init(&test_opts));
     while (td_next_node() == 0);
-
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_reader_init_null)
-
+{
     testrunner_lite_options test_opts;
     memset (&test_opts, 0x0, sizeof (testrunner_lite_options));
     fail_unless (td_reader_init(&test_opts));
 
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_reader_suite)
-
+{
     td_parser_callbacks cbs;
     testrunner_lite_options test_opts;
     
@@ -204,10 +205,11 @@ START_TEST (test_reader_suite)
     fail_if (strcmp ((const char *)suite->gen.domain, "sample_suite_domain"));
     td_suite_delete (suite);
     suite = NULL;
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_reader_set)
-
+{
     td_parser_callbacks cbs;
     testrunner_lite_options test_opts;
     
@@ -243,11 +245,11 @@ START_TEST (test_reader_set)
     fail_unless (xmlListSize(set->pre_steps) == 1);
     fail_unless (xmlListSize(set->cases) == 3);
     fail_unless (xmlListSize(set->gets) == 0);
-
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_entity_substitution)
-
+{
     /* Test parsing valid test definition xml with ENTITY references. */
     testrunner_lite_options test_opts;
 
@@ -256,7 +258,7 @@ START_TEST (test_entity_substitution)
 
     fail_if (parse_test_definition(&test_opts) != 0, 
         "Parsing test definition failed!");
-
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */

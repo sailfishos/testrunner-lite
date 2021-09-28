@@ -91,34 +91,34 @@ teardown (void)
 	cleanup_filters();
 }
 /* ------------------------------------------------------------------------- */
-START_TEST (test_filter_parsing_simple)
+START_TEST (test_filter_parsing_simple) {
 	fail_if (parse_filter_string ("testcase=testi"));
 	fail_if (parse_filter_string ("-testcase=testi"));
 	fail_if (parse_filter_string ("testcase=\"testi 1\""));
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_filter_parsing_complex)
+START_TEST (test_filter_parsing_complex) {
 	fail_if (parse_filter_string ("-requirement=1001,\"Some req\","
 				      "2001,other_req +testcase=testi"));
 
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_filter_parsing_inv_white_space)
+START_TEST (test_filter_parsing_inv_white_space) {
      fail_unless (parse_filter_string (" "));
      fail_unless (parse_filter_string ("level= "));
      fail_unless (parse_filter_string ("-requirement=1001,\"Some req\","
 				      "2001,other_req +testcase=testi "));
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_filter_invalid_type)
+START_TEST (test_filter_invalid_type) {
 	fail_unless (parse_filter_string ("foo=testi"));
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_filter_missing_quote)
+START_TEST (test_filter_missing_quote) {
 	fail_unless (parse_filter_string ("testcase=\"testi"));
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_test_case_filter)
+START_TEST (test_test_case_filter) {
      td_case c;
      test_filter filt;
      filt.value_list = xmlListCreate (filter_value_delete, 
@@ -132,9 +132,9 @@ START_TEST (test_test_case_filter)
      fail_if (test_case_filter (&filt, (void *)&c));
      filt.exclude = 1;
      fail_unless (test_case_filter (&filt, (void *)&c));
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_requirement_filter)
+START_TEST (test_requirement_filter) {
      td_case c;
      test_filter filt;
      filt.value_list = xmlListCreate (filter_value_delete, 
@@ -158,9 +158,9 @@ START_TEST (test_requirement_filter)
      filt.exclude = 1;
      fail_unless (requirement_filter (&filt, (void *)&c));
      
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_test_set_filter)
+START_TEST (test_test_set_filter) {
      td_set s;
      test_filter filt;
      filt.value_list = xmlListCreate (filter_value_delete, 
@@ -174,9 +174,9 @@ START_TEST (test_test_set_filter)
      fail_if (test_set_filter (&filt, (void *)&s));
      filt.exclude = 1;
      fail_unless (test_set_filter (&filt, (void *)&s));
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_type_filter)
+START_TEST (test_type_filter) {
      td_case c;
      test_filter filt;
      filt.value_list = xmlListCreate (filter_value_delete, 
@@ -190,9 +190,9 @@ START_TEST (test_type_filter)
      fail_if (type_filter (&filt, (void *)&c));
      filt.exclude = 1;
      fail_unless (type_filter (&filt, (void *)&c));
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (test_feature_filter)
+START_TEST (test_feature_filter) {
      td_set s;
      test_filter filt;
      filt.value_list = xmlListCreate (filter_value_delete, 
@@ -215,9 +215,9 @@ START_TEST (test_feature_filter)
 
      filt.exclude = 1;
      fail_unless (feature_filter (&filt, (void *)&s));
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (acceptance_test_case_filter)
+START_TEST (acceptance_test_case_filter) {
      int ret;
      char cmd[TEST_CMD_LEN];
 
@@ -254,9 +254,9 @@ START_TEST (acceptance_test_case_filter)
      ret = system ("grep abc112 /tmp/testrunnerlitetestdir/res.xml");
      fail_unless (ret);
 
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (acceptance_test_set_filter)
+START_TEST (acceptance_test_set_filter) {
      int ret;
      char cmd[TEST_CMD_LEN];
 
@@ -304,9 +304,9 @@ START_TEST (acceptance_test_set_filter)
      fail_if (ret);
 
 
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (acceptance_test_requirement_filter)
+START_TEST (acceptance_test_requirement_filter) {
      int ret;
      char cmd[TEST_CMD_LEN];
 
@@ -350,9 +350,9 @@ START_TEST (acceptance_test_requirement_filter)
      fail_if (ret);
      ret = system ("grep abc213 /tmp/testrunnerlitetestdir/res.xml");
      fail_unless (ret);
-END_TEST
+} END_TEST
 
-START_TEST (acceptance_test_feature_filter)
+START_TEST (acceptance_test_feature_filter) {
      int ret;
      char cmd[TEST_CMD_LEN];
 
@@ -372,9 +372,9 @@ START_TEST (acceptance_test_feature_filter)
      fail_if (ret);
      ret = system ("grep testset21 /tmp/testrunnerlitetestdir/res.xml");
      fail_if (ret);
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (acceptance_test_type_filter)
+START_TEST (acceptance_test_type_filter) {
      int ret;
      char cmd[TEST_CMD_LEN];
 
@@ -421,9 +421,9 @@ START_TEST (acceptance_test_type_filter)
      fail_if (ret);
      ret = system ("grep xxx313 /tmp/testrunnerlitetestdir/res.xml");
      fail_if (ret);
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (acceptance_test_filter_combo)
+START_TEST (acceptance_test_filter_combo) {
      int ret;
      char cmd[TEST_CMD_LEN];
 
@@ -470,9 +470,9 @@ START_TEST (acceptance_test_filter_combo)
      fail_unless (ret);
      ret = system ("grep xxx313 /tmp/testrunnerlitetestdir/res.xml");
      fail_if (ret);
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
-START_TEST (acceptance_test_environment_flag)
+START_TEST (acceptance_test_environment_flag) {
      int ret;
      char cmd[TEST_CMD_LEN];
 
@@ -509,7 +509,7 @@ START_TEST (acceptance_test_environment_flag)
      ret = system ("grep neither /tmp/testrunnerlitetestdir/res.xml");
      fail_unless (ret);
 
-END_TEST
+} END_TEST
 /* ------------------------------------------------------------------------- */
 /* ======================== FUNCTIONS ====================================== */
 /* ------------------------------------------------------------------------- */

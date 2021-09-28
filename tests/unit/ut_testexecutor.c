@@ -138,6 +138,7 @@ static int set_env_for_remote_tests()
  }	
 
 START_TEST (test_executor_null_command)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -149,9 +150,11 @@ START_TEST (test_executor_null_command)
 	edata.hard_timeout = COMMON_HARD_TIMEOUT;
 	fail_if (execute(NULL, &edata));
 
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_0_timeout)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -163,9 +166,11 @@ START_TEST (test_executor_0_timeout)
 	edata.hard_timeout = 0;
 	fail_if (execute(NULL, &edata));
 
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_stdout)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -179,9 +184,11 @@ START_TEST (test_executor_stdout)
 	fail_if (strlen ((char *)edata.stdout_data.buffer) == 0);
 	fail_unless (strlen ((char *)edata.stderr_data.buffer) == 0);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_stderr)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -195,9 +202,11 @@ START_TEST (test_executor_stderr)
 	fail_if (strlen ((char *)edata.stderr_data.buffer) == 0);
 	fail_unless (strlen ((char *)edata.stdout_data.buffer) == 0);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_long_input_streams)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -216,9 +225,11 @@ START_TEST (test_executor_long_input_streams)
 	fail_unless (edata.stderr_data.length == 2190);
 	fail_unless (strlen ((char *)edata.stdout_data.buffer) == 4380);
 	fail_unless (strlen ((char *)edata.stderr_data.buffer) == 2190);
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_terminating_process)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -241,9 +252,11 @@ START_TEST (test_executor_terminating_process)
 	fail_if (strstr((char*)edata.failure_info.buffer, 
 			    FAILURE_INFO_TIMEOUT) == NULL);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_killing_process)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -266,9 +279,11 @@ START_TEST (test_executor_killing_process)
 	fail_if (strstr((char*)edata.failure_info.buffer, 
 			    FAILURE_INFO_TIMEOUT) == NULL);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_piped_command)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -286,9 +301,11 @@ START_TEST (test_executor_piped_command)
 	fail_unless (strcmp((char*)edata.stdout_data.buffer, 
 			    "hello world\n") == 0);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_without_output_redirection)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -304,9 +321,11 @@ START_TEST (test_executor_without_output_redirection)
 	fail_unless (edata.stdout_data.length == 0);
 	fail_unless (edata.stderr_data.length == 0);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_exec_data_handling)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -333,9 +352,11 @@ START_TEST (test_executor_exec_data_handling)
 	fail_unless (edata.stdout_data.buffer == NULL);
 	fail_unless (edata.stderr_data.buffer == NULL);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_command)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -373,10 +394,12 @@ START_TEST (test_executor_remote_command)
 	   They have forked new process to do cleanup */
 	sleep(1);
 	executor_close();
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_command_port)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -415,9 +438,11 @@ START_TEST (test_executor_remote_command_port)
 	   They have forked new ssh process to do cleanup */
 	sleep(1);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_long_command)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 #define TEST_STRING_SIZE 5000
@@ -455,9 +480,11 @@ START_TEST (test_executor_remote_long_command)
 	   They have forked new ssh process to do cleanup */
 	sleep(1);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_terminating_process)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -495,9 +522,11 @@ START_TEST (test_executor_remote_terminating_process)
 	   They have forked new ssh process to do cleanup */
 	sleep(1);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_killing_process)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 
@@ -532,9 +561,11 @@ START_TEST (test_executor_remote_killing_process)
 	int ret = system("pidof unterminating");
 	fail_unless (ret);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST(test_executor_remote_test_bg_process_cleanup)
+{
      int ret;
      char cmd[TEST_CMD_LEN];
      char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
@@ -545,11 +576,15 @@ START_TEST(test_executor_remote_test_bg_process_cleanup)
      fail_if (ret != 0, cmd);
      ret = system("pidof unterminating");
      fail_unless (ret);
+
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_conn_check)
+{
         int ret = remote_check_conn (DEFAULT_REMOTE_EXECUTOR);
 	fail_if (ret, "ret=%d", ret);
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 
@@ -677,6 +712,7 @@ pid_t run_resume_test(const char *optionarg, int retval)
 }
 
 START_TEST (test_executor_remote_resume_exit)
+{
 	char result_file[128];
 	pid_t pid = 0;
 	int status = 0;
@@ -704,9 +740,11 @@ START_TEST (test_executor_remote_resume_exit)
 	unlink(result_file);
 	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
 	unlink("/tmp/testrunner-lite-tests/resumetest2.txt");
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_resume_continue)
+{
 	char result_file[128];
 	pid_t pid = 0;
 	int status = 0;
@@ -737,9 +775,11 @@ START_TEST (test_executor_remote_resume_continue)
 	unlink(result_file);
 	unlink("/tmp/testrunner-lite-tests/resumetest1.txt");
 	unlink("/tmp/testrunner-lite-tests/resumetest2.txt");
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_get)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -782,9 +822,12 @@ START_TEST (test_remote_get)
 	      "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 START_TEST(test_remote_hwinfo)
+{
      int ret;
      char cmd[TEST_CMD_LEN];
      char *out_file = "/tmp/testrunner-lite-tests/testrunner-lite.out.xml";
@@ -793,10 +836,13 @@ START_TEST(test_remote_hwinfo)
 	      TESTRUNNERLITE_BIN, TESTDATA_SIMPLE_XML_1,  out_file);
      ret = system (cmd);
      fail_if (ret != 0, cmd);
+
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_custom_key)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -808,10 +854,13 @@ START_TEST (test_remote_custom_key)
 	       TESTDATA_SIMPLE_XML_1);
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_custom_key_full_path)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -824,11 +873,14 @@ START_TEST (test_remote_custom_key_full_path)
 	       TESTDATA_SIMPLE_XML_1, homepath);
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_custom_key_get)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -873,10 +925,13 @@ START_TEST (test_remote_custom_key_get)
 	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_custom_key_port_get)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -922,10 +977,13 @@ START_TEST (test_remote_custom_key_port_get)
 	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_custom_key_full_path_get)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -972,12 +1030,15 @@ START_TEST (test_remote_custom_key_full_path_get)
 	  "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 #ifdef ENABLE_LIBSSH2
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_command)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 	memset (&opts, 0x0, sizeof (opts));
@@ -1010,10 +1071,12 @@ START_TEST (test_executor_remote_libssh2_command)
 	fail_unless (edata.stdout_data.buffer == NULL);
 	fail_unless (edata.stderr_data.buffer == NULL);
 	executor_close();
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_default_key)
+{
 /* Just to see if using default key causes problem.
    Not trying to connect */
 	testrunner_lite_options opts;
@@ -1027,10 +1090,12 @@ START_TEST (test_executor_remote_libssh2_default_key)
 	executor_init (&opts);
 	log_init(&opts);
 	executor_close();
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_nonexisting_key)
+{
     testrunner_lite_options opts;
     int ret = 0;
     memset (&opts, 0x0, sizeof (opts));
@@ -1056,10 +1121,12 @@ START_TEST (test_executor_remote_libssh2_nonexisting_key)
     fail_unless (ret != 0);
     log_init(&opts);
 	executor_close();
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_command_port)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 	memset (&opts, 0x0, sizeof (opts));
@@ -1092,9 +1159,11 @@ START_TEST (test_executor_remote_libssh2_command_port)
 	fail_unless (edata.stdout_data.buffer == NULL);
 	fail_unless (edata.stderr_data.buffer == NULL);
 	executor_close();
+}
 END_TEST
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_long_command)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 #define TEST_STRING_SIZE 5000
@@ -1126,10 +1195,12 @@ START_TEST (test_executor_remote_libssh2_long_command)
 			     TEST_STRING_SIZE -1) == 0,
 		     edata.stdout_data.buffer);
 	executor_close();
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_quotes_command)
+{
     exec_data edata;
     testrunner_lite_options opts;
     memset (&opts, 0x0, sizeof (opts));
@@ -1152,11 +1223,13 @@ START_TEST (test_executor_remote_libssh2_quotes_command)
                          output,
                          strlen(output)) == 0);
     executor_close();
+}
 END_TEST
 
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_terminating_process)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 	int ret;
@@ -1191,11 +1264,13 @@ START_TEST (test_executor_remote_libssh2_terminating_process)
 
 	/* check that killing was succesfull */
 	fail_unless (system("pidof terminating"));
+}
 END_TEST
 
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_killing_process)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 	int ret;
@@ -1234,10 +1309,12 @@ START_TEST (test_executor_remote_libssh2_killing_process)
 	executor_close();
 	/* Check that process doesn't exist anymore */
 	fail_unless (system("pidof unterminating"));
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_bg_process)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 	int ret;
@@ -1268,11 +1345,13 @@ START_TEST (test_executor_remote_libssh2_bg_process)
 	fail_if (execute("PATH=$PATH:/sbin/ pidof terminating", &edata));
 	fail_unless (edata.result == 1);
 	executor_close();
+}
 END_TEST
 
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_executor_remote_libssh2_daemon_process)
+{
 	exec_data edata;
 	testrunner_lite_options opts;
 	int ret;
@@ -1302,10 +1381,12 @@ START_TEST (test_executor_remote_libssh2_daemon_process)
 	init_exec_data(&edata);
 	fail_if (execute("PATH=$PATH:/sbin/ pidof trlite-test-daemon", &edata));
 	executor_close();
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_libssh2_get)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -1352,10 +1433,13 @@ START_TEST (test_remote_libssh2_get)
 	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_libssh2_get_username)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -1405,10 +1489,13 @@ START_TEST (test_remote_libssh2_get_username)
 	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_libssh2_custom_key_get)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -1453,11 +1540,14 @@ START_TEST (test_remote_libssh2_custom_key_get)
 	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_libssh2_custom_key_port_get)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -1502,10 +1592,13 @@ START_TEST (test_remote_libssh2_custom_key_port_get)
 	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 /* ------------------------------------------------------------------------- */
 START_TEST (test_remote_libssh2_custom_key_full_path_get)
+{
 
      int ret;
      char cmd[TEST_CMD_LEN];
@@ -1552,6 +1645,8 @@ START_TEST (test_remote_libssh2_custom_key_full_path_get)
 	       "stat /tmp/testrunnerlitetestdir2/get\\ test5.txt");
      ret = system (cmd);
      fail_if (ret, cmd);
+
+}
 END_TEST
 
 #endif /* ENABLE_LIBSSH2 */

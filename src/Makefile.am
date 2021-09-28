@@ -20,7 +20,7 @@ testrunner_lite_SOURCES = main.c \
 testrunner_lite_LDADD = $(XML2_LIBS) -lcurl -ldl -luuid
 
 AM_CPPFLAGS = -DLIBDIR=\"$(libdir)\"
-AM_CFLAGS = $(XML2_CFLAGS) -D_GNU_SOURCE -Wall
+AM_CFLAGS = $(XML2_CFLAGS) -D_GNU_SOURCE -Wall -fcommon
 
 noinst_HEADERS = testrunnerlite.h \
 	         testdefinitionparser.h \
