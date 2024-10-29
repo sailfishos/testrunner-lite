@@ -624,7 +624,7 @@ LOCAL int parse_default_scp_getter(testrunner_lite_options *opts)
 
 /* ------------------------------------------------------------------------- */
 /** Parse chroot option argument.
- * @param folder path to change root envrionment
+ * @param folder path to change root environment
  * @param opts Options struct containing field(s) to store path
  * @return 0 in success, 1 on generic error, 2 if folder doesn't exist,
  *    3 if folder isn't a directory, 4 if there is a problem with the chroot

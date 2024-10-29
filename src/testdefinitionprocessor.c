@@ -109,26 +109,28 @@ LOCAL void end_suite ();
 /* ------------------------------------------------------------------------- */
 LOCAL void process_set(td_set *);
 /* ------------------------------------------------------------------------- */
-LOCAL int process_case (const void *, const void *);
+LOCAL int process_case (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int case_result_fail (const void *, const void *);
+LOCAL int case_result_fail (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int process_get (const void *, const void *);
+LOCAL int process_get (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int process_get_case (const void *, const void *);
+LOCAL int process_get_case (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int step_execute (const void *, const void *);
+LOCAL int step_execute (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int prepost_steps_execute (const void *, const void *);
+LOCAL int prepost_steps_execute (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int step_result_fail (const void *, const void *);
+LOCAL int step_result_fail (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int step_post_process (const void *, const void *);
+LOCAL int step_post_process (const void *, void *);
 /* ------------------------------------------------------------------------- */
+
 #ifdef ENABLE_EVENTS
 LOCAL int event_execute (const void *data, const void *user);
 /* ------------------------------------------------------------------------- */
 #endif
+
 LOCAL void set_device_core_pattern (const char *);
 /* ------------------------------------------------------------------------- */
 LOCAL int fetch_rich_core_dumps (const char *, xmlHashTablePtr);
@@ -516,7 +518,7 @@ LOCAL int event_execute (const void *data, const void *user)
  *  @param user case data
  *  @return 1 if step is passed 0 if not
  */
-LOCAL int step_execute (const void *data, const void *user) 
+LOCAL int step_execute (const void *data, void *user)
 {
 	int res = CASE_PASS;
 	td_step *step = (td_step *)data;
@@ -755,7 +757,7 @@ LOCAL int step_execute (const void *data, const void *user)
  *  @param user dummy case data
  *  @return 1 always
  */
-LOCAL int prepost_steps_execute (const void *data, const void *user)
+LOCAL int prepost_steps_execute (const void *data, void *user)
 {
 	td_steps *steps = (td_steps *)data;
 	td_case *dummy = (td_case *)user;
@@ -774,7 +776,7 @@ LOCAL int prepost_steps_execute (const void *data, const void *user)
  *  @param user failure info string
  *  @return 1 always
  */
-LOCAL int step_result_fail (const void *data, const void *user) 
+LOCAL int step_result_fail (const void *data, void *user)
 {
 	td_step *step = (td_step *)data;
 	char *failure_info = (char *)user;
@@ -793,7 +795,7 @@ LOCAL int step_result_fail (const void *data, const void *user)
  *  @param user case data
  *  @return 1 always
  */
-LOCAL int step_post_process (const void *data, const void *user) 
+LOCAL int step_post_process (const void *data, void *user)
 {
 	td_step *step = (td_step *)data;
 	td_case *c = (td_case *)user;
@@ -833,7 +835,7 @@ LOCAL int step_post_process (const void *data, const void *user)
  *  @return 1 always
  */
 
-LOCAL int process_case (const void *data, const void *user) 
+LOCAL int process_case (const void *data, void *user)
 {
 	td_case *c = (td_case *)data;
 	char uuid_buf[36];
@@ -938,7 +940,7 @@ LOCAL int process_case (const void *data, const void *user)
  *  @param user failure info
  *  @return 1 always
  */
-LOCAL int case_result_fail (const void *data, const void *user)
+LOCAL int case_result_fail (const void *data, void *user)
 {
 
 	td_case *c = (td_case *)data;
@@ -959,7 +961,7 @@ LOCAL int case_result_fail (const void *data, const void *user)
  *  @param user not used
  *  @return 1 always
  */
-LOCAL int process_get (const void *data, const void *user)
+LOCAL int process_get (const void *data, void *user)
 {
 
 	td_file *file = (td_file *)data;
@@ -1108,7 +1110,7 @@ LOCAL int process_get (const void *data, const void *user)
  *  @param user case data
  *  @return 1 always
  */
-LOCAL int process_get_case (const void *data, const void *user)
+LOCAL int process_get_case (const void *data, void *user)
 {
 	int ret = 0;
 	td_file *file = (td_file *)data;
@@ -1355,7 +1357,6 @@ LOCAL void process_set (td_set *s)
  *  sets, cases and steps.
  */
 void td_process () {
-	int retval;
 	td_parser_callbacks cbs;
 
         memset (&cbs, 0x0, sizeof(td_parser_callbacks));
@@ -1369,7 +1370,7 @@ void td_process () {
 	cbs.test_suite_end = end_suite;
 	cbs.test_set = process_set;
 
-	retval = td_register_callbacks (&cbs);
+	td_register_callbacks (&cbs);
 	
 	/*
 	** Call td_next_node untill error occurs or the end of data is reached

@@ -96,29 +96,31 @@ LOCAL int xml_write_pre_set (td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_general_attributes (td_gen_attribs *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_step (const void *, const void *);
+LOCAL int xml_write_step (const void *, void *);
 /* ------------------------------------------------------------------------- */
+
 #ifdef ENABLE_EVENTS
-LOCAL int xml_write_event (const void *, const void *);
+LOCAL int xml_write_event (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_event_param (const void *, const void *);
+LOCAL int xml_write_event_param (const void *, void *);
 /* ------------------------------------------------------------------------- */
 #endif
-LOCAL int xml_write_pre_post_step (const void *, const void *);
+
+LOCAL int xml_write_pre_post_step (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_case (const void *, const void *);
+LOCAL int xml_write_case (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_file_data (const void *, const void *);
+LOCAL int xml_write_file_data (const void *, void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_post_set (td_set *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_measurement (const void *, const void *);
+LOCAL int xml_write_measurement (const void *, void *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_series (const void *, const void *);
+LOCAL int xml_write_series (const void *, void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int xml_write_crash (const void *, const void *, xmlChar *);
 /* ------------------------------------------------------------------------- */
-LOCAL int xml_write_measurement_item (const void *, const void *);
+LOCAL int xml_write_measurement_item (const void *, void *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_td_start (td_td *);
 /* ------------------------------------------------------------------------- */
@@ -132,7 +134,7 @@ LOCAL int txt_write_pre_set (td_set *);
 /* ------------------------------------------------------------------------- */
 LOCAL int txt_write_post_set (td_set *);
 /* ------------------------------------------------------------------------- */
-LOCAL int txt_write_case (const void *, const void *);
+LOCAL int txt_write_case (const void *, void *);
 /* ------------------------------------------------------------------------- */
 /* FORWARD DECLARATIONS */
 /* None */
@@ -344,13 +346,13 @@ LOCAL int xml_write_general_attributes (td_gen_attribs *gen)
  * @param user not used
  * @return 1 on success, 0 on error if the step is failed
  */
-LOCAL int xml_write_step (const void *data, const void *user)
+LOCAL int xml_write_step (const void *data, void *user)
 {
 	td_step *step = (td_step *)data;
 	td_case *c = (td_case *)user;
 	td_steps *steps;
 	struct tm *tm;
-	char* control = 0;
+	const char* control = 0;
 
 #ifdef ENABLE_EVENTS
 	if (step->event)
@@ -497,7 +499,7 @@ err_out:
  * @param user step data
  * @return 1 on success, 0 on error
  */
-LOCAL int xml_write_event (const void *data, const void *user)
+LOCAL int xml_write_event (const void *data, void *user)
 {
 	td_event *event = (td_event *)data;
 	td_step *step = (td_step *)user;
@@ -555,7 +557,7 @@ err_out:
  * @param user not used
  * @return 1 on success, 0 on error
  */
-LOCAL int xml_write_event_param (const void *data, const void *user)
+LOCAL int xml_write_event_param (const void *data, void *user)
 {
 	td_event_param *param = (td_event_param *)data;
 
@@ -592,7 +594,7 @@ err_out:
  * @param user not used
  * @return 1 on success, 0 on error if the step is failed
  */
-LOCAL int xml_write_pre_post_step (const void *data, const void *user)
+LOCAL int xml_write_pre_post_step (const void *data, void *user)
 {
 	td_step *step = (td_step *)data;
 	struct tm *tm;
@@ -690,7 +692,7 @@ err_out:
  * @param user not used
  * @return 1 on success, 0 on error
  */
-LOCAL int xml_write_case (const void *data, const void *user)
+LOCAL int xml_write_case (const void *data, void *user)
 {
 	td_case *c = (td_case *)data;
 
@@ -773,7 +775,7 @@ err_out:
  * @param user not used
  * @return 1 on success, 0 on error
  */
-LOCAL int xml_write_file_data (const void *data, const void *user)
+LOCAL int xml_write_file_data (const void *data, void *user)
 {
 	td_file *f = (td_file *)data;
 
@@ -863,7 +865,7 @@ LOCAL int xml_write_post_set (td_set *set)
  * @param user not used
  * @return 1 on success, 0 on error
  */
-LOCAL int xml_write_measurement (const void *data, const void *user)
+LOCAL int xml_write_measurement (const void *data, void *user)
 {
 	td_measurement *meas = (td_measurement *)data;
 
@@ -937,7 +939,7 @@ err_out:
  * @param user not used
  * @return 1 on success, 0 on error
  */
-LOCAL int xml_write_series (const void *data, const void *user)
+LOCAL int xml_write_series (const void *data, void *user)
 {
 	td_measurement_series *series = (td_measurement_series *)data;
 
@@ -1001,7 +1003,7 @@ LOCAL int xml_write_series (const void *data, const void *user)
  * @param user not used
  * @return 1 on success, 0 on error
  */
-LOCAL int xml_write_measurement_item (const void *data, const void *user)
+LOCAL int xml_write_measurement_item (const void *data, void *user)
 {
 	td_measurement_item *item = (td_measurement_item *)data;
 	char timestamp[64];
@@ -1041,7 +1043,7 @@ LOCAL int xml_write_measurement_item (const void *data, const void *user)
  * @param user not used
  * @return 1 on success, 0 on error
  */
-LOCAL int txt_write_step (const void *data, const void *user)
+LOCAL int txt_write_step (const void *data, void *user)
 {
 	td_step *step = (td_step *)data;
 	struct tm *tm;
@@ -1086,7 +1088,7 @@ LOCAL int txt_write_step (const void *data, const void *user)
  * @param user not used
  * @return 1 on success, 0 on error
  */
-LOCAL int txt_write_case (const void *data, const void *user)
+LOCAL int txt_write_case (const void *data, void *user)
 {
 	td_case *c = (td_case *)data;
 	
@@ -1229,7 +1231,6 @@ LOCAL int txt_write_post_set (td_set *set)
  */
 int init_result_logger (testrunner_lite_options *opts, hw_info *hwinfo)
 {
-
     switch (opts->output_type) {
     case OUTPUT_TYPE_XML:
 	    /*

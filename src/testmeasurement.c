@@ -90,11 +90,11 @@ LOCAL int parse_timestamp(char *line, struct timespec *timestamp);
 /* ------------------------------------------------------------------------- */
 LOCAL int parse_series (FILE *f, xmlListPtr list);
 /* ------------------------------------------------------------------------- */
-LOCAL int eval_meas (const void *data, const void *user);
+LOCAL int eval_meas (const void *data, void *user);
 /* ------------------------------------------------------------------------- */
-LOCAL int eval_measurement_item(const void *data, const void *user);
+LOCAL int eval_measurement_item(const void *data, void *user);
 /* ------------------------------------------------------------------------- */
-LOCAL int eval_measurement_series(const void *data, const void *user);
+LOCAL int eval_measurement_series(const void *data, void *user);
 /* ------------------------------------------------------------------------- */
 LOCAL void add_measurement_item(td_measurement_series *series,
 				struct timespec *timestamp,
@@ -367,7 +367,7 @@ LOCAL int parse_series (FILE *f, xmlListPtr list)
  *  @param user container for verdict and failure info
  *  @return 1 on success, 0 if measurement fails
  */
-LOCAL int eval_meas (const void *data, const void *user)
+LOCAL int eval_meas (const void *data, void *user)
 {
 	int retval = 1;
 	size_t len;
@@ -418,7 +418,7 @@ LOCAL int eval_meas (const void *data, const void *user)
  */
 #define SERIES_FAIL_BELOW  "measurement series value below failure limit"
 #define SERIES_FAIL_OVER   "measurement series value over failure limit"
-LOCAL int eval_measurement_item(const void *data, const void *user)
+LOCAL int eval_measurement_item(const void *data, void *user)
 {
 	int retval = 1;
 	td_measurement_item *item = (td_measurement_item *)data;
@@ -461,7 +461,7 @@ LOCAL int eval_measurement_item(const void *data, const void *user)
  * 
  * @return 1 on success, 0 if measurement fails
  */
-LOCAL int eval_measurement_series(const void *data, const void *user)
+LOCAL int eval_measurement_series(const void *data, void *user)
 {
 	int retval = 1;
 	td_measurement_series *series = (td_measurement_series *)data;

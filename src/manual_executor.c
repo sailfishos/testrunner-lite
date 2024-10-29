@@ -185,7 +185,7 @@ void pre_manual (td_case *c)
  */
 int execute_manual (td_step *step)
 {
-	char buff [256], *p;
+	char buff [256];
 	int ret = 0;
 
 	step->start = time (NULL);
@@ -197,10 +197,10 @@ int execute_manual (td_step *step)
 	buff [0] = '\0';
 	printf ("Please enter the result ([P/p]ass,[F/f]ail or [N/n]/a): ");
 	fflush(stdout);
-	p = fgets (buff, 256, stdin);
+	fgets (buff, 256, stdin);
 	while (check_user_input(buff, &ret)) {
 		printf ("Invalid input.\n");
-		p = fgets (buff, 256, stdin);
+		fgets (buff, 256, stdin);
 	}
 	switch (ret) {
 	case  CASE_NA:

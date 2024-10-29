@@ -106,14 +106,16 @@ LOCAL void log_xml_error(void * ctx, const char * fmt, ...);
 /* ------------------------------------------------------------------------- */
 LOCAL void log_xml_warning(void * ctx, const char * fmt, ...);
 /* ------------------------------------------------------------------------- */
-LOCAL int add_post_reboot_step(const void *, const void *);
+LOCAL int add_post_reboot_step(const void *, void *);
 /* ------------------------------------------------------------------------- */
+
 #ifdef ENABLE_EVENTS
 LOCAL td_step *td_parse_event();
 /* ------------------------------------------------------------------------- */
 LOCAL td_event_param *td_parse_event_param();
 /* ------------------------------------------------------------------------- */
 #endif
+
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -883,11 +885,12 @@ LOCAL int td_parse_set ()
 	return 1;
 }
 
-LOCAL int add_post_reboot_step(const void *data, const void *user) {
+LOCAL int add_post_reboot_step(const void *data, void *user) {
 	td_set *s = (td_set *)user;
 	td_case *c = (td_case *)data;
 	xmlListDelete(c->post_reboot_steps);
 	c->post_reboot_steps = s->post_reboot_steps;
+	return 1;
 }
 
 
@@ -925,7 +928,6 @@ LOCAL int td_parse_td ()
  */
 LOCAL int td_parse_hwiddetect ()
 {
-	int ret;
 	const xmlChar *name;
 
 	do {
@@ -934,7 +936,7 @@ LOCAL int td_parse_hwiddetect ()
 			LOG_MSG (LOG_INFO, "HW ID dectector command: %s",
 				 current_td->hw_detector);
 		}
-		ret = xmlTextReaderRead(reader);
+		xmlTextReaderRead(reader);
 		name = xmlTextReaderConstName(reader);
 	}
 	while(xmlTextReaderNodeType(reader) != XML_READER_TYPE_END_ELEMENT &&
@@ -1005,8 +1007,6 @@ int parse_test_definition (testrunner_lite_options *opts)
 	xmlSchemaValidCtxtPtr valid_ctxt = NULL;
 	xmlSchemaParserCtxtPtr schema_ctxt = NULL;
 	    
-        xmlSubstituteEntitiesDefault(1);
-
 	/*
 	 * 1) Create basic parser context and validate it.
 	 */

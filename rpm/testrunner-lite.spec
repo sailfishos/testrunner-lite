@@ -25,7 +25,6 @@ Requires: %{name} = %{version}-%{release}
 %package regression-tests
 Summary: Regression tests for %{name}
 Requires: %{name} = %{version}-%{release}
-Requires: libxml2
 Requires: diffutils
 
 %package doc
@@ -65,35 +64,12 @@ Library for obtaining hardware information in sailfish environment.
 CFLAGS="-DVERSIONSTR=%{version} -ldl"
 autoreconf --install
 %configure
-make %{?_smp_mflags}
+%make_build
 make html %{?_smp_mflags}
 
 %install
-make install DESTDIR=%{buildroot}
+%make_install
 
-%files
-%defattr(-,root,root,-)
-%license COPYING
-%{_bindir}/%{name}
-%{_bindir}/run_tests.sh
-
-%files tests
-%defattr(-,root,root,-)
-%{_libdir}/%{name}-tests
-%{_datadir}/%{name}-tests
-
-%files regression-tests
-%defattr(-,root,root,-)
-%{_datadir}/%{name}-regression-tests
-
-%files doc
-%defattr(-,root,root,-)
-%{_mandir}/man1/%{name}.1.gz
-
-%files hwinfo-sailfish
-%defattr(-,root,root,-)
-%license COPYING
-%{_libdir}/%{name}-hwinfo-sailfish*
 
 %post hwinfo-sailfish
 if [ ! -e %{_libdir}/%{name}-hwinfo.so ]
@@ -103,3 +79,22 @@ fi
 
 %postun hwinfo-sailfish
 rm %{_libdir}/%{name}-hwinfo.so || :
+
+%files
+%license COPYING
+%{_bindir}/%{name}
+%{_bindir}/run_tests.sh
+
+%files tests
+%{_libdir}/%{name}-tests
+%{_datadir}/%{name}-tests
+
+%files regression-tests
+%{_datadir}/%{name}-regression-tests
+
+%files doc
+%{_mandir}/man1/%{name}.1.gz
+
+%files hwinfo-sailfish
+%license COPYING
+%{_libdir}/%{name}-hwinfo-sailfish*
