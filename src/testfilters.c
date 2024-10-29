@@ -81,9 +81,9 @@ LOCAL int filter_list_compare (const void * data0, const void * data1);
 /* ------------------------------------------------------------------------- */
 LOCAL int validate_and_add_filter (char *key, char *values);
 /* ------------------------------------------------------------------------- */
-LOCAL int filter_exec (const void *data, const void *user) ;
+LOCAL int filter_exec (const void *data, void *user) ;
 /* ------------------------------------------------------------------------- */
-LOCAL int filter_value_print (const void *data, const void *user) ;
+LOCAL int filter_value_print (const void *data, void *user) ;
 /* ------------------------------------------------------------------------- */
 LOCAL int manual_filter (test_filter *filter, const void *data);
 /* ------------------------------------------------------------------------- */
@@ -301,7 +301,7 @@ LOCAL int validate_and_add_filter (char *key, char *values)
  *  @param user test suite, test set or test case
  *  @return 0 if data is to be filtered
  */
-LOCAL int filter_exec (const void *data, const void *user) 
+LOCAL int filter_exec (const void *data, void *user)
 {
 	test_filter *filter = (test_filter *)data;
 
@@ -313,7 +313,7 @@ LOCAL int filter_exec (const void *data, const void *user)
  *  @param user not used
  *  @return 1 always
  */
-LOCAL int filter_value_print (const void *data, const void *user) 
+LOCAL int filter_value_print (const void *data, void *user)
 {
 	xmlChar *val = BAD_CAST data;
 

@@ -106,7 +106,7 @@ LOCAL void log_xml_error(void * ctx, const char * fmt, ...);
 /* ------------------------------------------------------------------------- */
 LOCAL void log_xml_warning(void * ctx, const char * fmt, ...);
 /* ------------------------------------------------------------------------- */
-LOCAL int add_post_reboot_step(const void *, const void *);
+LOCAL int add_post_reboot_step(const void *, void *);
 /* ------------------------------------------------------------------------- */
 #ifdef ENABLE_EVENTS
 LOCAL td_step *td_parse_event();
@@ -883,7 +883,7 @@ LOCAL int td_parse_set ()
 	return 1;
 }
 
-LOCAL int add_post_reboot_step(const void *data, const void *user) {
+LOCAL int add_post_reboot_step(const void *data, void *user) {
 	td_set *s = (td_set *)user;
 	td_case *c = (td_case *)data;
 	xmlListDelete(c->post_reboot_steps);
