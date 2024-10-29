@@ -352,7 +352,7 @@ LOCAL int xml_write_step (const void *data, void *user)
 	td_case *c = (td_case *)user;
 	td_steps *steps;
 	struct tm *tm;
-	char* control = 0;
+	const char* control = 0;
 
 #ifdef ENABLE_EVENTS
 	if (step->event)
