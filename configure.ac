@@ -1,4 +1,4 @@
-AC_INIT([testrunner-lite], [1.0], [meego-qa@lists.meego.com])
+AC_INIT([testrunner-lite],[1.0],[meego-qa@lists.meego.com])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
@@ -40,7 +40,7 @@ AM_CONDITIONAL([ENABLE_LIBSSH2], [test "$libssh2_feature" = "yes"])
 AM_COND_IF([ENABLE_LIBSSH2],
            [PKG_CHECK_MODULES([LIBSSH2], [libssh2 >= 1.2.2])])
 AM_CONDITIONAL([GENERATE_DOCS], [test "$GENERATE_DOCS" != "no"])
-AC_OUTPUT(\
+AC_CONFIG_FILES([\
 	Makefile \
 	src/Makefile \
 	doc/Makefile \
@@ -48,4 +48,5 @@ AC_OUTPUT(\
 	tests/utils/Makefile \
 	tests/unit/Makefile \
 	tests/regression/Makefile \
-	testdata/Makefile )
+	testdata/Makefile ])
+AC_OUTPUT
