@@ -108,12 +108,14 @@ LOCAL void log_xml_warning(void * ctx, const char * fmt, ...);
 /* ------------------------------------------------------------------------- */
 LOCAL int add_post_reboot_step(const void *, void *);
 /* ------------------------------------------------------------------------- */
+
 #ifdef ENABLE_EVENTS
 LOCAL td_step *td_parse_event();
 /* ------------------------------------------------------------------------- */
 LOCAL td_event_param *td_parse_event_param();
 /* ------------------------------------------------------------------------- */
 #endif
+
 /* FORWARD DECLARATIONS */
 /* None */
 
@@ -888,6 +890,7 @@ LOCAL int add_post_reboot_step(const void *data, void *user) {
 	td_case *c = (td_case *)data;
 	xmlListDelete(c->post_reboot_steps);
 	c->post_reboot_steps = s->post_reboot_steps;
+	return 1;
 }
 
 
