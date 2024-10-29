@@ -1357,7 +1357,6 @@ LOCAL void process_set (td_set *s)
  *  sets, cases and steps.
  */
 void td_process () {
-	int retval;
 	td_parser_callbacks cbs;
 
         memset (&cbs, 0x0, sizeof(td_parser_callbacks));
@@ -1371,7 +1370,7 @@ void td_process () {
 	cbs.test_suite_end = end_suite;
 	cbs.test_set = process_set;
 
-	retval = td_register_callbacks (&cbs);
+	td_register_callbacks (&cbs);
 	
 	/*
 	** Call td_next_node untill error occurs or the end of data is reached

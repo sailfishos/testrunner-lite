@@ -928,7 +928,6 @@ LOCAL int td_parse_td ()
  */
 LOCAL int td_parse_hwiddetect ()
 {
-	int ret;
 	const xmlChar *name;
 
 	do {
@@ -937,7 +936,7 @@ LOCAL int td_parse_hwiddetect ()
 			LOG_MSG (LOG_INFO, "HW ID dectector command: %s",
 				 current_td->hw_detector);
 		}
-		ret = xmlTextReaderRead(reader);
+		xmlTextReaderRead(reader);
 		name = xmlTextReaderConstName(reader);
 	}
 	while(xmlTextReaderNodeType(reader) != XML_READER_TYPE_END_ELEMENT &&
