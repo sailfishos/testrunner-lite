@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
+
 #include <libxml/xmlwriter.h>
 #include <dlfcn.h>
 #include "testrunnerlite.h"
