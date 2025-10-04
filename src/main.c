@@ -1241,7 +1241,7 @@ int main (int argc, char *argv[], char *envp[])
 		retval = TESTRUNNER_LITE_INVALID_ARGUMENTS;
 		goto OUT;
 	}
-	if (create_output_folder(&opts)) {
+	if (create_output_folder()) {
 		retval = TESTRUNNER_LITE_OUTPUT_FOLDER_CREATE_FAIL;
 		goto OUT;
 	}
