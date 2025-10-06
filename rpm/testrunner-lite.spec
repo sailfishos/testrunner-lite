@@ -3,7 +3,7 @@ Version: 1.8.4
 Release: 1
 Summary: Generic test executor tool
 License: LGPLv2
-URL: https://github.com/mer-tools/testrunner-lite
+URL: https://github.com/sailfishos/testrunner-lite
 Source0: %{name}-%{version}.tar.gz 
 Source1: config.sub
    
@@ -30,7 +30,6 @@ Requires: diffutils
 %package doc
 Summary: Testrunner-lite man documentation
 Requires:  %{name} = %{version}-%{release}
-Obsoletes: %{name}-docs
 
 %package hwinfo-sailfish
 Summary: Provides commands for hardware information obtaining
@@ -65,7 +64,7 @@ CFLAGS="-DVERSIONSTR=%{version} -ldl"
 autoreconf --install
 %configure
 %make_build
-make html %{?_smp_mflags}
+%make_build html
 
 %install
 %make_install

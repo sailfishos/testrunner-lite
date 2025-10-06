@@ -807,7 +807,7 @@ LOCAL int td_parse_suite ()
 
 	if (xmlTextReaderIsEmptyElement (reader)) {
 	        parsing_level--;
-	        cbs->test_suite_end(s);
+	        cbs->test_suite_end();
 	}
 	return 0;
 }
